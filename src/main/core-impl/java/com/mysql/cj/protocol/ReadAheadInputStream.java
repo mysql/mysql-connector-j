@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -156,7 +156,7 @@ public class ReadAheadInputStream extends InputStream {
             }
         }
 
-        int bytesActuallyRead = (avail < len) ? avail : len;
+        int bytesActuallyRead = avail < len ? avail : len;
 
         System.arraycopy(this.buf, this.currentPosition, b, off, bytesActuallyRead);
 
@@ -168,7 +168,7 @@ public class ReadAheadInputStream extends InputStream {
     @Override
     public synchronized int read(byte b[], int off, int len) throws IOException {
         checkClosed(); // Check for closed stream
-        if ((off | len | (off + len) | (b.length - (off + len))) < 0) {
+        if ((off | len | off + len | b.length - (off + len)) < 0) {
             throw new IndexOutOfBoundsException();
         } else if (len == 0) {
             return 0;
@@ -191,12 +191,8 @@ public class ReadAheadInputStream extends InputStream {
             totalBytesRead += bytesReadThisRound;
 
             // Read _at_least_ enough bytes
-            if (totalBytesRead >= len) {
-                break;
-            }
-
             // Nothing to read?
-            if (this.underlyingStream.available() <= 0) {
+            if (totalBytesRead >= len || this.underlyingStream.available() <= 0) {
                 break;
             }
         }
@@ -222,11 +218,10 @@ public class ReadAheadInputStream extends InputStream {
     public int available() throws IOException {
         checkClosed();
 
-        return this.underlyingStream.available() + (this.endOfCurrentData - this.currentPosition);
+        return this.underlyingStream.available() + this.endOfCurrentData - this.currentPosition;
     }
 
     private void checkClosed() throws IOException {
-
         if (this.buf == null) {
             throw new IOException("Stream closed");
         }
@@ -279,8 +274,9 @@ public class ReadAheadInputStream extends InputStream {
             }
         }
 
-        long bytesSkipped = (bytesAvailInBuffer < n) ? bytesAvailInBuffer : n;
+        long bytesSkipped = bytesAvailInBuffer < n ? bytesAvailInBuffer : n;
         this.currentPosition += bytesSkipped;
         return bytesSkipped;
     }
+
 }

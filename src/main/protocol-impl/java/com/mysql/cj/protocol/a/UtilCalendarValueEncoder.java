@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2022, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -109,7 +109,6 @@ public class UtilCalendarValueEncoder extends AbstractValueEncoder {
                         Messages.getString("PreparedStatement.67", new Object[] { binding.getValue().getClass().getName(), binding.getMysqlType().toString() }),
                         this.exceptionInterceptor);
         }
-
     }
 
     @Override
@@ -180,4 +179,5 @@ public class UtilCalendarValueEncoder extends AbstractValueEncoder {
         internalTimestamp.setOffset((int) TimeUnit.MILLISECONDS.toMinutes(calendar.getTimeZone().getOffset(calendar.getTimeInMillis())));
         writeDateTimeWithOffset(msg, internalTimestamp);
     }
+
 }

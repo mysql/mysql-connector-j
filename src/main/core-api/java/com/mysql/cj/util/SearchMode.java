@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,6 +37,7 @@ import java.util.Set;
  * Search mode flags enumeration. Primarily used by {@link StringInspector}.
  */
 public enum SearchMode {
+
     /**
      * Allow backslash escapes.
      */
@@ -121,4 +122,5 @@ public enum SearchMode {
      * There must be at least one element so that the Set may be later duplicated if needed.
      */
     public static final Set<SearchMode> __NONE = Collections.unmodifiableSet(EnumSet.of(VOID));
+
 }

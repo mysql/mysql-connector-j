@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2007, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -66,13 +66,11 @@ public class ServerStatusDiffInterceptor implements QueryInterceptor {
 
     @Override
     public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
-
         populateMapWithSessionStatusValues(this.postExecuteValues);
 
         this.log.logInfo("Server status change for query:\n" + Util.calculateDifferences(this.preExecuteValues, this.postExecuteValues));
 
         return null; // we don't actually modify a result set
-
     }
 
     private void populateMapWithSessionStatusValues(Map<String, String> toPopulate) {
@@ -93,7 +91,6 @@ public class ServerStatusDiffInterceptor implements QueryInterceptor {
 
     @Override
     public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
-
         populateMapWithSessionStatusValues(this.preExecuteValues);
 
         return null; // we don't actually modify a result set
@@ -109,4 +106,5 @@ public class ServerStatusDiffInterceptor implements QueryInterceptor {
         this.connection = null;
         this.log = null;
     }
+
 }

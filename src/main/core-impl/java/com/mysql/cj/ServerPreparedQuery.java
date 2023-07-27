@@ -188,9 +188,7 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
     public <T extends Resultset> T serverExecute(int maxRowsToRetrieve, boolean createStreamingResultSet, ColumnDefinition metadata,
             ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) {
         if (this.session.shouldIntercept()) {
-            T interceptedResults = this.session.invokeQueryInterceptorsPre(() -> {
-                return getOriginalSql();
-            }, this, true);
+            T interceptedResults = this.session.invokeQueryInterceptorsPre(this::getOriginalSql, this, true);
 
             if (interceptedResults != null) {
                 return interceptedResults;
@@ -312,9 +310,7 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
 
         } catch (CJException sqlEx) {
             if (this.session.shouldIntercept()) {
-                this.session.invokeQueryInterceptorsPost(() -> {
-                    return getOriginalSql();
-                }, this, null, true);
+                this.session.invokeQueryInterceptorsPost(this::getOriginalSql, this, null, true);
             }
 
             throw sqlEx;
@@ -333,9 +329,7 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
                     metadata != null ? metadata : this.resultFields, resultSetFactory);
 
             if (this.session.shouldIntercept()) {
-                T interceptedResults = this.session.invokeQueryInterceptorsPost(() -> {
-                    return getOriginalSql();
-                }, this, rs, true);
+                T interceptedResults = this.session.invokeQueryInterceptorsPost(this::getOriginalSql, this, rs, true);
 
                 if (interceptedResults != null) {
                     rs = interceptedResults;
@@ -364,22 +358,19 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
                     this.session.getExceptionInterceptor());
         } catch (CJException sqlEx) {
             if (this.session.shouldIntercept()) {
-                this.session.invokeQueryInterceptorsPost(() -> {
-                    return getOriginalSql();
-                }, this, null, true);
+                this.session.invokeQueryInterceptorsPost(this::getOriginalSql, this, null, true);
             }
 
             throw sqlEx;
         }
-
     }
 
     /**
      * Sends stream-type data parameters to the server.
-     * 
+     *
      * <pre>
      *  Long data handling:
-     * 
+     *
      *  - Server gets the long data in pieces with command type 'COM_LONG_DATA'.
      *  - The packet received will have the format:
      *    [COM_LONG_DATA:     1][STMT_ID:4][parameter_number:2][type:2][data]
@@ -390,12 +381,12 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
      *    data  or not; if there is any error; then during execute; the error
      *    will  be returned
      * </pre>
-     * 
+     *
      * @param parameterIndex
      *            parameter index
      * @param binding
      *            {@link BindValue containing long data}
-     * 
+     *
      */
     private void serverLongData(int parameterIndex, BindValue binding) {
         synchronized (this) {
@@ -502,7 +493,7 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
                 packet.setPosition(0);
                 this.commandBuilder.buildComStmtSendLongDataHeader(packet, this.serverStatementId, parameterIndex);
 
-                while ((numRead = (isStream ? ((InputStream) streamOrReader).read(bBuf) : ((Reader) streamOrReader).read(cBuf))) != -1) {
+                while ((numRead = isStream ? ((InputStream) streamOrReader).read(bBuf) : ((Reader) streamOrReader).read(cBuf)) != -1) {
                     readAny = true;
 
                     if (isStream) {

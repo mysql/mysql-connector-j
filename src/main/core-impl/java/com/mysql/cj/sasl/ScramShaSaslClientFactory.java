@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,6 +47,7 @@ import com.mysql.cj.util.StringUtils;
  * A {@link SaslClientFactory} for {@link ScramSha1SaslClient} and {@link ScramSha256SaslClient} instances.
  */
 public class ScramShaSaslClientFactory implements SaslClientFactory {
+
     private static final String[] SUPPORTED_MECHANISMS = { ScramSha1SaslClient.MECHANISM_NAME, ScramSha256SaslClient.MECHANISM_NAME };
 
     @Override
@@ -70,7 +71,7 @@ public class ScramShaSaslClientFactory implements SaslClientFactory {
 
     /**
      * Gets the authentication id, which is provided by a {@link CallbackHandler} to be implemented by the requester of this service.
-     * 
+     *
      * @param prefix
      *            the prefix to use in the prompt.
      * @param authorizationId
@@ -101,7 +102,7 @@ public class ScramShaSaslClientFactory implements SaslClientFactory {
 
     /**
      * Gets the password, which is provided by a {@link CallbackHandler} to be implemented by the requester of this service.
-     * 
+     *
      * @param prefix
      *            the prefix to use in the prompt.
      * @param cbh
@@ -128,4 +129,5 @@ public class ScramShaSaslClientFactory implements SaslClientFactory {
             throw new SaslException("Cannot get password", e);
         }
     }
+
 }

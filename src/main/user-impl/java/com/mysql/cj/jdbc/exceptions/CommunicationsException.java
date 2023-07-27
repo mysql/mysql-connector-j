@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,7 +41,7 @@ import com.mysql.cj.protocol.PacketSentTimeHolder;
 
 /**
  * An exception to represent communications errors with the database.
- * 
+ *
  * Attempts to provide 'friendlier' error messages to end-users, including the last time a packet was sent to the database,
  * what the client-timeout is set to, and whether the idle time has been exceeded.
  */
@@ -80,4 +80,5 @@ public class CommunicationsException extends SQLRecoverableException implements 
         // replace exception message
         this.exceptionMessage = Messages.getString("CommunicationsException.ClientWasStreaming");
     }
+
 }

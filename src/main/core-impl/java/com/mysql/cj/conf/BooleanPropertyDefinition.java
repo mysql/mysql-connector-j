@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,6 +41,7 @@ public class BooleanPropertyDefinition extends AbstractPropertyDefinition<Boolea
     private static final long serialVersionUID = -7288366734350231540L;
 
     public enum AllowableValues {
+
         TRUE(true), FALSE(false), YES(true), NO(false);
 
         private boolean asBoolean;
@@ -52,6 +53,7 @@ public class BooleanPropertyDefinition extends AbstractPropertyDefinition<Boolea
         public boolean asBoolean() {
             return this.asBoolean;
         }
+
     }
 
     public BooleanPropertyDefinition(PropertyKey key, Boolean defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
@@ -71,7 +73,7 @@ public class BooleanPropertyDefinition extends AbstractPropertyDefinition<Boolea
 
     /**
      * Creates instance of BooleanProperty.
-     * 
+     *
      * @return RuntimeProperty
      */
     @Override

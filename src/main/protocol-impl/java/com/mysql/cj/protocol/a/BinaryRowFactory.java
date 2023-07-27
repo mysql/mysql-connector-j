@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -62,7 +62,6 @@ public class BinaryRowFactory extends AbstractRowFactory implements ProtocolEnti
 
     @Override
     public ResultsetRow createFromMessage(NativePacketPayload rowPacket) {
-
         // use a buffer row for reusable packets (streaming results), blobs and long strings
         // or if we're over the threshold
         boolean useBufferRow = this.canReuseRowPacketForBufferRow || this.columnDefinition.hasLargeFields()
@@ -85,12 +84,12 @@ public class BinaryRowFactory extends AbstractRowFactory implements ProtocolEnti
 
     /**
      * Un-packs binary-encoded result set data for one row
-     * 
+     *
      * @param fields
      *            {@link Field}s array
      * @param binaryData
      *            data
-     * 
+     *
      * @return byte[][]
      */
     private final ResultsetRow unpackBinaryResultSetRow(Field[] fields, NativePacketPayload binaryData) {
@@ -127,7 +126,7 @@ public class BinaryRowFactory extends AbstractRowFactory implements ProtocolEnti
 
     /**
      * Copy the raw result bytes from the
-     * 
+     *
      * @param binaryData
      *            packet to the
      * @param fields
@@ -152,4 +151,5 @@ public class BinaryRowFactory extends AbstractRowFactory implements ProtocolEnti
             throw ExceptionFactory.createException(Messages.getString("MysqlIO.97", new Object[] { type, columnIndex, fields.length }));
         }
     }
+
 }

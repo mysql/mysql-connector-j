@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -44,6 +44,7 @@ import com.mysql.cj.conf.PropertyKey;
 import testsuite.BaseTestCase;
 
 public class NumbersTest extends BaseTestCase {
+
     private static final long TEST_BIGINT_VALUE = 6147483647L;
 
     @Test
@@ -145,4 +146,5 @@ public class NumbersTest extends BaseTestCase {
 
         } while ((useSPS = !useSPS) || (rewriteBS = !rewriteBS));
     }
+
 }

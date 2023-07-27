@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -52,6 +52,7 @@ import com.mysql.cj.result.Field;
  * Result builder producing a streaming {@link SqlResult} instance.
  */
 public class StreamingSqlResultBuilder implements ResultBuilder<SqlResult> {
+
     TimeZone defaultTimeZone;
     PropertySet pset;
     XProtocol protocol;
@@ -71,7 +72,6 @@ public class StreamingSqlResultBuilder implements ResultBuilder<SqlResult> {
 
     @Override
     public boolean addProtocolEntity(ProtocolEntity entity) {
-
         if (entity instanceof Notice) {
             this.statementExecuteOkBuilder.addProtocolEntity(entity);
         } else {
@@ -123,4 +123,5 @@ public class StreamingSqlResultBuilder implements ResultBuilder<SqlResult> {
     public SqlResult build() {
         return this.result;
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import testsuite.BaseTestCase;
 
 public class TransactionTest extends BaseTestCase {
+
     private static final double DOUBLE_CONST = 25.4312;
     private static final double EPSILON = .0000001;
 
@@ -51,7 +52,7 @@ public class TransactionTest extends BaseTestCase {
             this.rs = this.stmt.executeQuery("SELECT * from trans_test");
 
             boolean hasResults = this.rs.next();
-            assertTrue(hasResults != true, "Results returned, rollback to empty table failed");
+            assertTrue(!hasResults, "Results returned, rollback to empty table failed");
             this.stmt.executeUpdate("INSERT INTO trans_test (id, decdata) VALUES (2, " + DOUBLE_CONST + ")");
             this.conn.commit();
             this.rs = this.stmt.executeQuery("SELECT * from trans_test where id=2");
@@ -60,9 +61,10 @@ public class TransactionTest extends BaseTestCase {
 
             double doubleVal = this.rs.getDouble(2);
             double delta = Math.abs(DOUBLE_CONST - doubleVal);
-            assertTrue((delta < EPSILON), "Double value returned != " + DOUBLE_CONST);
+            assertTrue(delta < EPSILON, "Double value returned != " + DOUBLE_CONST);
         } finally {
             this.conn.setAutoCommit(true);
         }
     }
+
 }

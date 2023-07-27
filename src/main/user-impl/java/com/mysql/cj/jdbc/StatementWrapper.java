@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -678,7 +678,6 @@ public class StatementWrapper extends WrapperBase implements Statement {
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-
         boolean isInstance = iface.isInstance(this);
 
         if (isInstance) {
@@ -687,8 +686,8 @@ public class StatementWrapper extends WrapperBase implements Statement {
 
         String interfaceClassName = iface.getName();
 
-        return (interfaceClassName.equals("com.mysql.cj.jdbc.Statement") || interfaceClassName.equals("java.sql.Statement")
-                || interfaceClassName.equals("java.sql.Wrapper")); // TODO check other interfaces
+        return interfaceClassName.equals("com.mysql.cj.jdbc.Statement") || interfaceClassName.equals("java.sql.Statement")
+                || interfaceClassName.equals("java.sql.Wrapper"); // TODO check other interfaces
     }
 
     @Override
@@ -877,4 +876,5 @@ public class StatementWrapper extends WrapperBase implements Statement {
             checkAndFireConnectionError(sqlEx);
         }
     }
+
 }

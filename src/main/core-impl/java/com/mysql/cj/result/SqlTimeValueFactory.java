@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -49,6 +49,7 @@ import com.mysql.cj.protocol.InternalTimestamp;
  * time values returned from the server.
  */
 public class SqlTimeValueFactory extends AbstractDateTimeValueFactory<Time> {
+
     private WarningListener warningListener;
     // cached per instance to avoid re-creation on every create*() call
     private Calendar cal;
@@ -92,7 +93,7 @@ public class SqlTimeValueFactory extends AbstractDateTimeValueFactory<Time> {
                 // c.f. java.sql.Time "The date components should be set to the "zero epoch" value of January 1, 1970 and should not be accessed."
                 this.cal.set(1970, 0, 1, it.getHours(), it.getMinutes(), it.getSeconds());
                 this.cal.set(Calendar.MILLISECOND, 0);
-                long ms = (it.getNanos() / 1000000) + this.cal.getTimeInMillis();
+                long ms = it.getNanos() / 1000000 + this.cal.getTimeInMillis();
                 return new Time(ms);
             } catch (IllegalArgumentException e) {
                 throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
@@ -122,7 +123,9 @@ public class SqlTimeValueFactory extends AbstractDateTimeValueFactory<Time> {
         return createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos(), its.getScale()));
     }
 
+    @Override
     public String getTargetTypeName() {
         return Time.class.getName();
     }
+
 }

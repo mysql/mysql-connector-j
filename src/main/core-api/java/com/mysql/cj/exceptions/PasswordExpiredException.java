@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,7 +32,7 @@ package com.mysql.cj.exceptions;
 /**
  * Equivalent to SQLSTATE ER_MUST_CHANGE_PASSWORD = 1820
  * "You must SET PASSWORD before executing this statement"
- * 
+ *
  * Server entered to sandbox morde when this failure happens.
  */
 public class PasswordExpiredException extends CJException {

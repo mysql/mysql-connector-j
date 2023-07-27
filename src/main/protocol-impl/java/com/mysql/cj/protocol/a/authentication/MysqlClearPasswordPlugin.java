@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2012, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -43,6 +43,7 @@ import com.mysql.cj.util.StringUtils;
  * MySQL Clear Password Authentication Plugin
  */
 public class MysqlClearPasswordPlugin implements AuthenticationPlugin<NativePacketPayload> {
+
     public static String PLUGIN_NAME = "mysql_clear_password";
 
     private Protocol<NativePacketPayload> protocol = null;
@@ -55,6 +56,7 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin<NativePack
         this.usernameCallbackHandler = cbh;
     }
 
+    @Override
     public void destroy() {
         reset();
         this.protocol = null;
@@ -62,18 +64,22 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin<NativePack
         this.password = null;
     }
 
+    @Override
     public String getProtocolPluginName() {
         return PLUGIN_NAME;
     }
 
+    @Override
     public boolean requiresConfidentiality() {
         return true;
     }
 
+    @Override
     public boolean isReusable() {
         return true;
     }
 
+    @Override
     public void setAuthenticationParameters(String user, String password) {
         this.password = password;
         if (user == null && this.usernameCallbackHandler != null) {
@@ -82,6 +88,7 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin<NativePack
         }
     }
 
+    @Override
     public boolean nextAuthenticationStep(NativePacketPayload fromServer, List<NativePacketPayload> toServer) {
         toServer.clear();
 
@@ -95,4 +102,5 @@ public class MysqlClearPasswordPlugin implements AuthenticationPlugin<NativePack
         toServer.add(packet);
         return true;
     }
+
 }

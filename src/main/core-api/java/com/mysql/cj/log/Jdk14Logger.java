@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,6 +36,7 @@ import java.util.logging.Logger;
  * Logging functionality for JDK1.4
  */
 public class Jdk14Logger implements Log {
+
     private static final Level DEBUG = Level.FINE;
 
     private static final Level ERROR = Level.SEVERE;
@@ -55,7 +56,7 @@ public class Jdk14Logger implements Log {
 
     /**
      * Creates a new Jdk14Logger object.
-     * 
+     *
      * @param name
      *            logger name as per {@link Logger#getLogger(String)}
      */
@@ -63,158 +64,176 @@ public class Jdk14Logger implements Log {
         this.jdkLogger = Logger.getLogger(name);
     }
 
+    @Override
     public boolean isDebugEnabled() {
         return this.jdkLogger.isLoggable(Level.FINE);
     }
 
+    @Override
     public boolean isErrorEnabled() {
         return this.jdkLogger.isLoggable(Level.SEVERE);
     }
 
+    @Override
     public boolean isFatalEnabled() {
         return this.jdkLogger.isLoggable(Level.SEVERE);
     }
 
+    @Override
     public boolean isInfoEnabled() {
         return this.jdkLogger.isLoggable(Level.INFO);
     }
 
+    @Override
     public boolean isTraceEnabled() {
         return this.jdkLogger.isLoggable(Level.FINEST);
     }
 
+    @Override
     public boolean isWarnEnabled() {
         return this.jdkLogger.isLoggable(Level.WARNING);
     }
 
     /**
      * Logs the given message instance using the 'debug' level
-     * 
+     *
      * @param message
      *            the message to log
      */
+    @Override
     public void logDebug(Object message) {
         logInternal(DEBUG, message, null);
     }
 
     /**
      * Logs the given message and Throwable at the 'debug' level.
-     * 
+     *
      * @param message
      *            the message to log
      * @param exception
      *            the throwable to log (may be null)
      */
+    @Override
     public void logDebug(Object message, Throwable exception) {
         logInternal(DEBUG, message, exception);
     }
 
     /**
      * Logs the given message instance using the 'error' level
-     * 
+     *
      * @param message
      *            the message to log
      */
+    @Override
     public void logError(Object message) {
         logInternal(ERROR, message, null);
     }
 
     /**
      * Logs the given message and Throwable at the 'error' level.
-     * 
+     *
      * @param message
      *            the message to log
      * @param exception
      *            the throwable to log (may be null)
      */
+    @Override
     public void logError(Object message, Throwable exception) {
         logInternal(ERROR, message, exception);
     }
 
     /**
      * Logs the given message instance using the 'fatal' level
-     * 
+     *
      * @param message
      *            the message to log
      */
+    @Override
     public void logFatal(Object message) {
         logInternal(FATAL, message, null);
     }
 
     /**
      * Logs the given message and Throwable at the 'fatal' level.
-     * 
+     *
      * @param message
      *            the message to log
      * @param exception
      *            the throwable to log (may be null)
      */
+    @Override
     public void logFatal(Object message, Throwable exception) {
         logInternal(FATAL, message, exception);
     }
 
     /**
      * Logs the given message instance using the 'info' level
-     * 
+     *
      * @param message
      *            the message to log
      */
+    @Override
     public void logInfo(Object message) {
         logInternal(INFO, message, null);
     }
 
     /**
      * Logs the given message and Throwable at the 'info' level.
-     * 
+     *
      * @param message
      *            the message to log
      * @param exception
      *            the throwable to log (may be null)
      */
+    @Override
     public void logInfo(Object message, Throwable exception) {
         logInternal(INFO, message, exception);
     }
 
     /**
      * Logs the given message instance using the 'trace' level
-     * 
+     *
      * @param message
      *            the message to log
      */
+    @Override
     public void logTrace(Object message) {
         logInternal(TRACE, message, null);
     }
 
     /**
      * Logs the given message and Throwable at the 'trace' level.
-     * 
+     *
      * @param message
      *            the message to log
      * @param exception
      *            the throwable to log (may be null)
      */
+    @Override
     public void logTrace(Object message, Throwable exception) {
         logInternal(TRACE, message, exception);
     }
 
     /**
      * Logs the given message instance using the 'warn' level
-     * 
+     *
      * @param message
      *            the message to log
      */
+    @Override
     public void logWarn(Object message) {
         logInternal(WARN, message, null);
     }
 
     /**
      * Logs the given message and Throwable at the 'warn' level.
-     * 
+     *
      * @param message
      *            the message to log
      * @param exception
      *            the throwable to log (may be null)
      */
+    @Override
     public void logWarn(Object message, Throwable exception) {
         logInternal(WARN, message, exception);
     }
@@ -271,4 +290,5 @@ public class Jdk14Logger implements Log {
             }
         }
     }
+
 }

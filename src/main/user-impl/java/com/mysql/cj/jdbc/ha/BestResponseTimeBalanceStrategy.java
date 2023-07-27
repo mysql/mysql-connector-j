@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -45,7 +45,6 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
     @Override
     public ConnectionImpl pickConnection(InvocationHandler proxy, List<String> configuredHosts, Map<String, JdbcConnection> liveConnections,
             long[] responseTimes, int numRetries) throws SQLException {
-
         Map<String, Long> blockList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlocklist();
 
         SQLException ex = null;
@@ -114,4 +113,5 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
 
         return null; // we won't get here, compiler can't tell
     }
+
 }

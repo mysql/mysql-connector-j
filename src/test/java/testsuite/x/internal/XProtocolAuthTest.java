@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -50,6 +50,7 @@ import com.mysql.cj.xdevapi.Session;
  * Tests for protocol-level auth APIs against X Plugin via X Protocol.
  */
 public class XProtocolAuthTest extends InternalXBaseTestCase {
+
     private static XProtocol protocol;
     private XMessageBuilder messageBuilder;
 
@@ -72,7 +73,7 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
     /**
      * Test that we are disconnected with an error if we send a bad authentication message. The server responds by immediately closing the socket. The async
      * implementation may block indefinitely here and we need to prevent any regression.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -165,4 +166,5 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
         protocol.send(this.messageBuilder.buildPlainAuthStart(getTestUser(), getTestPassword(), null), 0);
         protocol.readAuthenticateOk();
     }
+
 }

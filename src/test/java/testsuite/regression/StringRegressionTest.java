@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -57,7 +57,7 @@ public class StringRegressionTest extends BaseTestCase {
 
     /**
      * Tests newline being treated correctly.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -80,7 +80,7 @@ public class StringRegressionTest extends BaseTestCase {
 
     /**
      * Tests that single-byte character conversion works correctly.
-     * 
+     *
      * @throws Exception
      */
     // TODO: Use Unicode Literal escapes for this, for now, this test is broken :(
@@ -93,7 +93,7 @@ public class StringRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#7601, '+' duplicated in fixDecimalExponent().
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -106,6 +106,7 @@ public class StringRegressionTest extends BaseTestCase {
     @Test
     public void testBug11629() throws Exception {
         class TeeByteArrayOutputStream extends ByteArrayOutputStream {
+
             PrintStream branch;
             StackTraceElement[] callStackTrace = null;
 
@@ -147,6 +148,7 @@ public class StringRegressionTest extends BaseTestCase {
                     }
                 }
             }
+
         }
 
         PrintStream oldOut = System.out;
@@ -190,7 +192,7 @@ public class StringRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#11614 - StringUtils.getBytes() doesn't work when using multibyte character encodings and a length in _characters_ is specified.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -244,9 +246,9 @@ public class StringRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#25047 - StringUtils.indexOfIgnoreCaseRespectQuotes() isn't case-insensitive on the first character of the target.
-     * 
+     *
      * UPD: Method StringUtils.indexOfIgnoreCaseRespectQuotes() was replaced by StringUtils.indexOfIgnoreCase()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -262,7 +264,7 @@ public class StringRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#64731 - StringUtils.getBytesWrapped throws StringIndexOutOfBoundsException.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -310,4 +312,5 @@ public class StringRegressionTest extends BaseTestCase {
     private void testBase64DecoderItem(String source, String expected) throws Exception {
         assertEquals(expected, new String(Base64Decoder.decode(source.getBytes(), 0, source.length())));
     }
+
 }

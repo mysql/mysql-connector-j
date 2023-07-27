@@ -38,6 +38,7 @@ import com.mysql.cj.log.Log;
 import com.mysql.cj.util.Util;
 
 public class ExceptionInterceptorChain implements ExceptionInterceptor {
+
     private List<ExceptionInterceptor> interceptors;
 
     public ExceptionInterceptorChain(String interceptorClasses, Properties props, Log log) {
@@ -49,6 +50,7 @@ public class ExceptionInterceptorChain implements ExceptionInterceptor {
         this.interceptors.add(0, interceptor);
     }
 
+    @Override
     public Exception interceptException(Exception sqlEx) {
         for (ExceptionInterceptor ie : this.interceptors) {
             sqlEx = ie.interceptException(sqlEx);
@@ -56,10 +58,12 @@ public class ExceptionInterceptorChain implements ExceptionInterceptor {
         return sqlEx;
     }
 
+    @Override
     public void destroy() {
         this.interceptors.forEach(ExceptionInterceptor::destroy);
     }
 
+    @Override
     public ExceptionInterceptor init(Properties properties, Log log) {
         this.interceptors = this.interceptors.stream().map(i -> i.init(properties, log)).collect(Collectors.toCollection(LinkedList::new));
         return this;
@@ -68,4 +72,5 @@ public class ExceptionInterceptorChain implements ExceptionInterceptor {
     public List<ExceptionInterceptor> getInterceptors() {
         return this.interceptors;
     }
+
 }

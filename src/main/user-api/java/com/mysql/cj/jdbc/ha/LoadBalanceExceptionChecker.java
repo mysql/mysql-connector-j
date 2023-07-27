@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2010, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,10 +35,10 @@ public interface LoadBalanceExceptionChecker {
 
     /**
      * Called once per connection that wants to use the extension
-     * 
+     *
      * The properties are the same ones passed in in the URL or arguments to
      * Driver.connect() or DriverManager.getConnection().
-     * 
+     *
      * @param props
      *            configuration values as passed to the connection. Note that
      *            in order to support javax.sql.DataSources, configuration properties specific
@@ -58,13 +58,13 @@ public interface LoadBalanceExceptionChecker {
     /**
      * Invoked to determine whether or a given SQLException should
      * trigger a failover in a load-balanced deployment.
-     * 
+     *
      * The driver will not pass in a Connection instance when calling init(), but it
      * will pass in the Properties, otherwise it acts like a normal Extension.
-     * 
+     *
      * One instance of a handler *per* JDBC connection instance will be created. If
      * you need singleton-like behavior, you're on your own to provide it.
-     * 
+     *
      * @param ex
      *            exception
      * @return true if the exception should trigger failover.

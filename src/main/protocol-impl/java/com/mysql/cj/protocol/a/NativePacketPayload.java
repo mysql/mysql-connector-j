@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -48,12 +48,13 @@ import com.mysql.cj.util.StringUtils;
  * packet's underlying buffer when sending commands with writeInteger(),
  * writeBytes(), etc. We can check the packet type with isEOFPacket(), etc
  * predicates.
- * 
+ *
  * A position is maintained for reading/writing data. A payload length is
  * maintained allowing the PacketPayload to be decoupled from the size of
  * the underlying buffer.
  */
 public class NativePacketPayload implements Message {
+
     static final int NO_LENGTH_LIMIT = -1;
     public static final long NULL_LENGTH = -1;
 
@@ -113,18 +114,18 @@ public class NativePacketPayload implements Message {
     /**
      * Checks that underlying buffer has enough space to store additionalData bytes starting from current position.
      * If buffer size is smaller than required then it is re-allocated with bigger size.
-     * 
+     *
      * @param additionalData
      *            additional data size in bytes
      */
     public final void ensureCapacity(int additionalData) {
-        if ((this.position + additionalData) > this.byteBuffer.length) {
+        if (this.position + additionalData > this.byteBuffer.length) {
             //
             // Resize, and pad so we can avoid allocing again in the near future
             //
             int newLength = (int) (this.byteBuffer.length * 1.25);
 
-            if (newLength < (this.byteBuffer.length + additionalData)) {
+            if (newLength < this.byteBuffer.length + additionalData) {
                 newLength = this.byteBuffer.length + (int) (additionalData * 1.25);
             }
 
@@ -146,7 +147,7 @@ public class NativePacketPayload implements Message {
 
     /**
      * Sets the array of bytes to use as a buffer to read from.
-     * 
+     *
      * @param byteBufferToSet
      *            the array of bytes to use as a buffer
      */
@@ -157,7 +158,7 @@ public class NativePacketPayload implements Message {
     /**
      * Get the actual length of payload the buffer contains.
      * It can be smaller than underlying buffer size because it can be reused after a big packet.
-     * 
+     *
      * @return payload length
      */
     public int getPayloadLength() {
@@ -167,7 +168,7 @@ public class NativePacketPayload implements Message {
     /**
      * Set the actual length of payload written to buffer.
      * It can be smaller or equal to underlying buffer size.
-     * 
+     *
      * @param bufLengthToSet
      *            length
      */
@@ -195,7 +196,7 @@ public class NativePacketPayload implements Message {
 
     /**
      * Set the current position to write to/ read from
-     * 
+     *
      * @param positionToSet
      *            the position (0-based index)
      */
@@ -205,7 +206,7 @@ public class NativePacketPayload implements Message {
 
     /**
      * Is it a ERROR packet.
-     * 
+     *
      * @return true if it is a ERROR packet
      */
     public boolean isErrorPacket() {
@@ -215,17 +216,17 @@ public class NativePacketPayload implements Message {
     /**
      * Is it a EOF packet.
      * See https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_eof_packet.html
-     * 
+     *
      * @return true if it is a EOF packet
      */
     public final boolean isEOFPacket() {
-        return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && (this.payloadLength <= 5);
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && this.payloadLength <= 5;
     }
 
     /**
      * Is it a Protocol::AuthSwitchRequest packet.
      * See https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_packets_protocol_auth_switch_request.html
-     * 
+     *
      * @return true if it is a Protocol::AuthSwitchRequest packet
      */
     public final boolean isAuthMethodSwitchRequestPacket() {
@@ -235,7 +236,7 @@ public class NativePacketPayload implements Message {
     /**
      * Is it an OK packet.
      * See https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_ok_packet.html
-     * 
+     *
      * @return true if it is an OK packet
      */
     public final boolean isOKPacket() {
@@ -245,17 +246,17 @@ public class NativePacketPayload implements Message {
     /**
      * Is it an OK packet for ResultSet. Unlike usual 0x00 signature it has 0xfe signature.
      * See https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_ok_packet.html
-     * 
+     *
      * @return true if it is an OK packet for ResultSet
      */
     public final boolean isResultSetOKPacket() {
-        return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && (this.payloadLength > 5) && (this.payloadLength < 16777215);
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_EOF && this.payloadLength > 5 && this.payloadLength < 16777215;
     }
 
     /**
      * Is it a Protocol::AuthMoreData packet.
      * See https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_packets_protocol_auth_more_data.html
-     * 
+     *
      * @return true if it is a Protocol::AuthMoreData packet
      */
     public final boolean isAuthMoreDataPacket() {
@@ -265,7 +266,7 @@ public class NativePacketPayload implements Message {
     /**
      * Is it a Protocol::AuthNextFactor packet.
      * See https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_phase_packets_protocol_auth_next_factor_request.html
-     * 
+     *
      * @return true if it is a Protocol::AuthNextFactor packet
      */
     public final boolean isAuthNextFactorPacket() {
@@ -274,7 +275,7 @@ public class NativePacketPayload implements Message {
 
     /**
      * Write data according to provided Integer type.
-     * 
+     *
      * @param type
      *            {@link IntegerDataType}
      * @param l
@@ -364,7 +365,7 @@ public class NativePacketPayload implements Message {
 
     /**
      * Read data according to provided Integer type.
-     * 
+     *
      * @param type
      *            {@link IntegerDataType}
      * @return long
@@ -373,26 +374,26 @@ public class NativePacketPayload implements Message {
         byte[] b = this.byteBuffer;
         switch (type) {
             case INT1:
-                return (b[this.position++] & 0xff);
+                return b[this.position++] & 0xff;
 
             case INT2:
-                return (b[this.position++] & 0xff) | ((b[this.position++] & 0xff) << 8);
+                return b[this.position++] & 0xff | (b[this.position++] & 0xff) << 8;
 
             case INT3:
-                return (b[this.position++] & 0xff) | ((b[this.position++] & 0xff) << 8) | ((b[this.position++] & 0xff) << 16);
+                return b[this.position++] & 0xff | (b[this.position++] & 0xff) << 8 | (b[this.position++] & 0xff) << 16;
 
             case INT4:
-                return ((long) b[this.position++] & 0xff) | (((long) b[this.position++] & 0xff) << 8) | ((long) (b[this.position++] & 0xff) << 16)
-                        | ((long) (b[this.position++] & 0xff) << 24);
+                return (long) b[this.position++] & 0xff | ((long) b[this.position++] & 0xff) << 8 | (long) (b[this.position++] & 0xff) << 16
+                        | (long) (b[this.position++] & 0xff) << 24;
 
             case INT6:
-                return (b[this.position++] & 0xff) | ((long) (b[this.position++] & 0xff) << 8) | ((long) (b[this.position++] & 0xff) << 16)
-                        | ((long) (b[this.position++] & 0xff) << 24) | ((long) (b[this.position++] & 0xff) << 32) | ((long) (b[this.position++] & 0xff) << 40);
+                return b[this.position++] & 0xff | (long) (b[this.position++] & 0xff) << 8 | (long) (b[this.position++] & 0xff) << 16
+                        | (long) (b[this.position++] & 0xff) << 24 | (long) (b[this.position++] & 0xff) << 32 | (long) (b[this.position++] & 0xff) << 40;
 
             case INT8:
-                return (b[this.position++] & 0xff) | ((long) (b[this.position++] & 0xff) << 8) | ((long) (b[this.position++] & 0xff) << 16)
-                        | ((long) (b[this.position++] & 0xff) << 24) | ((long) (b[this.position++] & 0xff) << 32) | ((long) (b[this.position++] & 0xff) << 40)
-                        | ((long) (b[this.position++] & 0xff) << 48) | ((long) (b[this.position++] & 0xff) << 56);
+                return b[this.position++] & 0xff | (long) (b[this.position++] & 0xff) << 8 | (long) (b[this.position++] & 0xff) << 16
+                        | (long) (b[this.position++] & 0xff) << 24 | (long) (b[this.position++] & 0xff) << 32 | (long) (b[this.position++] & 0xff) << 40
+                        | (long) (b[this.position++] & 0xff) << 48 | (long) (b[this.position++] & 0xff) << 56;
 
             case INT_LENENC:
                 int sw = b[this.position++] & 0xff;
@@ -410,13 +411,13 @@ public class NativePacketPayload implements Message {
                 }
 
             default:
-                return (b[this.position++] & 0xff);
+                return b[this.position++] & 0xff;
         }
     }
 
     /**
      * Write all bytes from given byte array into internal buffer starting with current buffer position.
-     * 
+     *
      * @param type
      *            on-wire data type
      * @param b
@@ -428,7 +429,7 @@ public class NativePacketPayload implements Message {
 
     /**
      * Write all bytes from given byte array into internal buffer starting with current buffer position.
-     * 
+     *
      * @param type
      *            on-wire data type
      * @param b
@@ -441,7 +442,7 @@ public class NativePacketPayload implements Message {
     /**
      * Write len bytes from given byte array into internal buffer.
      * Read starts from given offset, write starts with current buffer position.
-     * 
+     *
      * @param type
      *            on-wire data type
      * @param b
@@ -476,7 +477,7 @@ public class NativePacketPayload implements Message {
     /**
      * Write len bytes from given byte array into internal buffer.
      * Read starts from given offset, write starts with current buffer position.
-     * 
+     *
      * @param type
      *            on-wire data type
      * @param b
@@ -502,7 +503,7 @@ public class NativePacketPayload implements Message {
     /**
      * Read bytes from internal buffer starting from current position into the new byte array.
      * The length of data to read depends on {@link StringSelfDataType}.
-     * 
+     *
      * @param type
      *            {@link StringSelfDataType}
      * @return bytes
@@ -512,7 +513,7 @@ public class NativePacketPayload implements Message {
         switch (type) {
             case STRING_TERM:
                 int i = this.position;
-                while ((i < this.payloadLength) && (this.byteBuffer[i] != 0)) {
+                while (i < this.payloadLength && this.byteBuffer[i] != 0) {
                     i++;
                 }
                 b = readBytes(StringLengthDataType.STRING_FIXED, i - this.position);
@@ -521,7 +522,7 @@ public class NativePacketPayload implements Message {
 
             case STRING_LENENC:
                 long l = readInteger(IntegerDataType.INT_LENENC);
-                return l == NULL_LENGTH ? null : (l == 0 ? Constants.EMPTY_BYTE_ARRAY : readBytes(StringLengthDataType.STRING_FIXED, (int) l));
+                return l == NULL_LENGTH ? null : l == 0 ? Constants.EMPTY_BYTE_ARRAY : readBytes(StringLengthDataType.STRING_FIXED, (int) l);
 
             case STRING_EOF:
                 return readBytes(StringLengthDataType.STRING_FIXED, this.payloadLength - this.position);
@@ -531,14 +532,14 @@ public class NativePacketPayload implements Message {
 
     /**
      * Set position to next value in internal buffer skipping the current value according to {@link StringSelfDataType}.
-     * 
+     *
      * @param type
      *            {@link StringSelfDataType}
      */
     public void skipBytes(StringSelfDataType type) {
         switch (type) {
             case STRING_TERM:
-                while ((this.position < this.payloadLength) && (this.byteBuffer[this.position] != 0)) {
+                while (this.position < this.payloadLength && this.byteBuffer[this.position] != 0) {
                     this.position++;
                 }
                 this.position++; // skip terminating byte
@@ -559,7 +560,7 @@ public class NativePacketPayload implements Message {
 
     /**
      * Read len bytes from internal buffer starting from current position into the new byte array.
-     * 
+     *
      * @param type
      *            {@link StringLengthDataType}
      * @param len
@@ -582,7 +583,7 @@ public class NativePacketPayload implements Message {
     /**
      * Read bytes from internal buffer starting from current position decoding them into String using the specified character encoding.
      * The length of data to read depends on {@link StringSelfDataType}.
-     * 
+     *
      * @param type
      *            {@link StringSelfDataType}
      * @param encoding
@@ -594,7 +595,7 @@ public class NativePacketPayload implements Message {
         switch (type) {
             case STRING_TERM:
                 int i = this.position;
-                while ((i < this.payloadLength) && (this.byteBuffer[i] != 0)) {
+                while (i < this.payloadLength && this.byteBuffer[i] != 0) {
                     i++;
                 }
                 res = readString(StringLengthDataType.STRING_FIXED, encoding, i - this.position);
@@ -603,7 +604,7 @@ public class NativePacketPayload implements Message {
 
             case STRING_LENENC:
                 long l = readInteger(IntegerDataType.INT_LENENC);
-                return l == NULL_LENGTH ? null : (l == 0 ? "" : readString(StringLengthDataType.STRING_FIXED, encoding, (int) l));
+                return l == NULL_LENGTH ? null : l == 0 ? "" : readString(StringLengthDataType.STRING_FIXED, encoding, (int) l);
 
             case STRING_EOF:
                 return readString(StringLengthDataType.STRING_FIXED, encoding, this.payloadLength - this.position);
@@ -614,7 +615,7 @@ public class NativePacketPayload implements Message {
 
     /**
      * Read len bytes from internal buffer starting from current position decoding them into String using the specified character encoding.
-     * 
+     *
      * @param type
      *            {@link StringLengthDataType}
      * @param encoding
@@ -628,7 +629,7 @@ public class NativePacketPayload implements Message {
         switch (type) {
             case STRING_FIXED:
             case STRING_VAR:
-                if ((this.position + len) > this.payloadLength) {
+                if (this.position + len > this.payloadLength) {
                     throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Buffer.1"));
                 }
 
@@ -665,7 +666,7 @@ public class NativePacketPayload implements Message {
                 truncated = true;
             }
 
-            extractedSql = StringUtils.toString(packet.getByteBuffer(), 1, (extractPosition - 1));
+            extractedSql = StringUtils.toString(packet.getByteBuffer(), 1, extractPosition - 1);
 
             if (truncated) {
                 extractedSql += Messages.getString("MysqlIO.25");
@@ -677,7 +678,7 @@ public class NativePacketPayload implements Message {
 
     /**
      * Tag current position with the given key for future reference.
-     * 
+     *
      * @param key
      *            the position tag key name.
      * @return
@@ -690,7 +691,7 @@ public class NativePacketPayload implements Message {
 
     /**
      * Gets the value of the position tag for the given key.
-     * 
+     *
      * @param key
      *            the position tag key name.
      * @return
@@ -700,4 +701,5 @@ public class NativePacketPayload implements Message {
         Integer pos = this.tags.get(key);
         return pos == null ? -1 : pos;
     }
+
 }

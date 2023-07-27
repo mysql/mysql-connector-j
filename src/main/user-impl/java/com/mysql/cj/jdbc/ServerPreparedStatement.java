@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -78,7 +78,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
     /**
      * Creates a prepared statement instance
-     * 
+     *
      * @param conn
      *            the connection creating us.
      * @param sql
@@ -100,7 +100,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
     /**
      * Creates a new ServerPreparedStatement object.
-     * 
+     *
      * @param conn
      *            the connection creating us.
      * @param sql
@@ -111,7 +111,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
      *            ResultSet type
      * @param resultSetConcurrency
      *            ResultSet concurrency
-     * 
+     *
      * @throws SQLException
      *             If an error occurs
      */
@@ -308,7 +308,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                     }
                 }
 
-                return (updateCounts != null) ? updateCounts : new long[0];
+                return updateCounts != null ? updateCounts : new long[0];
             } finally {
                 ((ServerPreparedQuery) this.query).getQueryBindings().setBindValues(oldBindValues);
                 ((ServerPreparedQuery) this.query).getQueryBindings().getSendTypesToServer().set(true);
@@ -379,7 +379,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
     /**
      * Returns the structure representing the value that (can be)/(is)
      * bound at the given parameter index.
-     * 
+     *
      * @param parameterIndex
      *            1-based
      * @param forLongData
@@ -435,7 +435,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
             if (this.connection != null) {
                 //
                 // Don't communicate with the server if we're being called from the finalizer...
-                // 
+                //
                 // This will leak server resources, but if we don't do this, we'll deadlock (potentially, because there's no guarantee when, what order, and
                 // what concurrency finalizers will be called with). Well-behaved programs won't rely on finalizers to clean up their statements.
                 //
@@ -473,7 +473,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
     /**
      * Used by Connection when auto-reconnecting to retrieve 'lost' prepared
      * statements.
-     * 
+     *
      * @throws CJException
      *             if an error occurs.
      */
@@ -521,23 +521,23 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
     /**
      * Tells the server to execute this prepared statement with the current
      * parameter bindings.
-     * 
+     *
      * <pre>
      *    -   Server gets the command 'COM_EXECUTE' to execute the
      *        previously         prepared query. If there is any param markers;
      *  then client will send the data in the following format:
-     * 
+     *
      *  [COM_EXECUTE:1]
      *  [STMT_ID:4]
      *  [NULL_BITS:(param_count+7)/8)]
      *  [TYPES_SUPPLIED_BY_CLIENT(0/1):1]
      *  [[length]data]
      *  [[length]data] .. [[length]data].
-     * 
+     *
      *  (Note: Except for string/binary types; all other types will not be
      *  supplied with length field)
      * </pre>
-     * 
+     *
      * @param maxRowsToRetrieve
      *            rows limit
      * @param createStreamingResultSet
@@ -602,7 +602,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                     this.session.getExceptionInterceptor());
         }
 
-        if ((parameterIndex < 0) || (parameterIndex > paramCount)) {
+        if (parameterIndex < 0 || parameterIndex > paramCount) {
             throw ExceptionFactory.createException(WrongArgumentException.class,
                     Messages.getString("ServerPreparedStatement.9") + (parameterIndex + 1) + Messages.getString("ServerPreparedStatement.10") + paramCount,
                     this.session.getExceptionInterceptor());
@@ -669,4 +669,5 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
             }
         }
     }
+
 }

@@ -411,26 +411,25 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
                 pStmt.close();
             }
         }
-
     }
 
     private String generateOptionalRefContraintsJoin() {
-        return ("JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON (R.CONSTRAINT_NAME = B.CONSTRAINT_NAME "
-                + "AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ");
+        return "JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON (R.CONSTRAINT_NAME = B.CONSTRAINT_NAME "
+                + "AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) ";
     }
 
     private String generateDeleteRuleClause() {
-        return ("CASE WHEN R.DELETE_RULE='CASCADE' THEN " + String.valueOf(importedKeyCascade) + " WHEN R.DELETE_RULE='SET NULL' THEN "
+        return "CASE WHEN R.DELETE_RULE='CASCADE' THEN " + String.valueOf(importedKeyCascade) + " WHEN R.DELETE_RULE='SET NULL' THEN "
                 + String.valueOf(importedKeySetNull) + " WHEN R.DELETE_RULE='SET DEFAULT' THEN " + String.valueOf(importedKeySetDefault)
                 + " WHEN R.DELETE_RULE='RESTRICT' THEN " + String.valueOf(importedKeyRestrict) + " WHEN R.DELETE_RULE='NO ACTION' THEN "
-                + String.valueOf(importedKeyRestrict) + " ELSE " + String.valueOf(importedKeyRestrict) + " END ");
+                + String.valueOf(importedKeyRestrict) + " ELSE " + String.valueOf(importedKeyRestrict) + " END ";
     }
 
     private String generateUpdateRuleClause() {
-        return ("CASE WHEN R.UPDATE_RULE='CASCADE' THEN " + String.valueOf(importedKeyCascade) + " WHEN R.UPDATE_RULE='SET NULL' THEN "
+        return "CASE WHEN R.UPDATE_RULE='CASCADE' THEN " + String.valueOf(importedKeyCascade) + " WHEN R.UPDATE_RULE='SET NULL' THEN "
                 + String.valueOf(importedKeySetNull) + " WHEN R.UPDATE_RULE='SET DEFAULT' THEN " + String.valueOf(importedKeySetDefault)
                 + " WHEN R.UPDATE_RULE='RESTRICT' THEN " + String.valueOf(importedKeyRestrict) + " WHEN R.UPDATE_RULE='NO ACTION' THEN "
-                + String.valueOf(importedKeyRestrict) + " ELSE " + String.valueOf(importedKeyRestrict) + " END ");
+                + String.valueOf(importedKeyRestrict) + " ELSE " + String.valueOf(importedKeyRestrict) + " END ";
     }
 
     @Override
@@ -579,7 +578,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
     @Override
     public ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern) throws SQLException {
-
         String db = getDatabase(catalog, schemaPattern);
 
         db = this.pedantic ? db : StringUtils.unQuoteIdentifier(db, this.quotedId);
@@ -644,7 +642,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
     @Override
     public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern) throws SQLException {
-
         String db = getDatabase(catalog, schemaPattern);
 
         db = this.pedantic ? db : StringUtils.unQuoteIdentifier(db, this.quotedId);
@@ -943,7 +940,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
     @Override
     public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) throws SQLException {
-
         String db = getDatabase(catalog, schemaPattern);
 
         db = this.pedantic ? db : StringUtils.unQuoteIdentifier(db, this.quotedId);
@@ -1094,10 +1090,10 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
     /**
      * Getter to DatabaseMetaData.function* constants.
-     * 
+     *
      * @param constant
      *            the constant id from DatabaseMetaData fields to return.
-     * 
+     *
      * @return one of the java.sql.DatabaseMetaData#function* fields.
      */
     protected int getFunctionConstant(FunctionConstant constant) {
@@ -1127,7 +1123,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
     @Override
     public java.sql.ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
-
         String db = getDatabase(catalog, schemaPattern);
 
         db = this.pedantic ? db : StringUtils.unQuoteIdentifier(db, this.quotedId);
@@ -1206,7 +1201,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
     }
 
     private final void appendJdbcTypeMappingQuery(StringBuilder buf, String mysqlTypeColumnName, String fullMysqlTypeColumnName) {
-
         buf.append("CASE ");
         for (MysqlType mysqlType : MysqlType.values()) {
 
@@ -1253,7 +1247,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
         buf.append(" ELSE 1111");
         buf.append(" END ");
-
     }
 
     @Override
@@ -1285,4 +1278,5 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         // TODO Implement with I_S
         return super.getBestRowIdentifier(catalog, schema, table, scope, nullable);
     }
+
 }

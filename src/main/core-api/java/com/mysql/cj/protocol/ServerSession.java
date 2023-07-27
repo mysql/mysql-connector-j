@@ -71,7 +71,7 @@ public interface ServerSession {
 
     /**
      * Sets new server status (from response) without saving it's old state
-     * 
+     *
      * @param statusFlags
      *            server status flags
      */
@@ -79,7 +79,7 @@ public interface ServerSession {
 
     /**
      * Sets new server status (from response)
-     * 
+     *
      * @param statusFlags
      *            new server status flags
      * @param saveOldStatusFlags
@@ -96,7 +96,7 @@ public interface ServerSession {
 
     /**
      * Server will only open a cursor and set this flag if it can, otherwise it punts and goes back to mysql_store_results() behavior.
-     * 
+     *
      * @return SERVER_STATUS_CURSOR_EXISTS <a href=http://dev.mysql.com/doc/internals/en/status-flags.html>status flag</a> value.
      */
     boolean cursorExists();
@@ -135,7 +135,7 @@ public interface ServerSession {
 
     /**
      * Get the version of the MySQL server we are talking to.
-     * 
+     *
      * @return {@link ServerVersion}
      */
     ServerVersion getServerVersion();
@@ -143,10 +143,10 @@ public interface ServerSession {
     /**
      * Is the version of the MySQL server we are connected to the given
      * version?
-     * 
+     *
      * @param version
      *            the version to check for
-     * 
+     *
      * @return true if the version of the MySQL server we are connected is the
      *         given version
      */
@@ -154,7 +154,7 @@ public interface ServerSession {
 
     /**
      * Is the server configured to use lower-case table names only?
-     * 
+     *
      * @return true if lower_case_table_names is 'on'
      */
     boolean isLowerCaseTableNames();
@@ -192,4 +192,5 @@ public interface ServerSession {
     CharsetSettings getCharsetSettings();
 
     void setCharsetSettings(CharsetSettings charsetSettings);
+
 }

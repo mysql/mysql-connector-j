@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,9 +33,10 @@ package com.mysql.cj.xdevapi;
  * A statement adding documents to a collection.
  */
 public interface AddStatement extends Statement<AddStatement, AddResult> {
+
     /**
      * Add a document as a JSON string.
-     * 
+     *
      * @param jsonString
      *            document as a JSON string
      * @return {@link AddStatement}
@@ -44,7 +45,7 @@ public interface AddStatement extends Statement<AddStatement, AddResult> {
 
     /**
      * Add a sequence of DbDocs.
-     * 
+     *
      * @param documents
      *            one or more {@link DbDoc} documents
      * @return {@link AddStatement}
@@ -53,17 +54,18 @@ public interface AddStatement extends Statement<AddStatement, AddResult> {
 
     /**
      * Check the upsert flag.
-     * 
+     *
      * @return true if this is an upsert statement.
      */
     boolean isUpsert();
 
     /**
      * Set upsert flag on this statement. Used internally by the {@link Collection#addOrReplaceOne(String, DbDoc)} method.
-     * 
+     *
      * @param upsert
      *            if true then this statement will be executed as an upsert statement
      * @return {@link AddStatement}
      */
     AddStatement setUpsert(boolean upsert);
+
 }

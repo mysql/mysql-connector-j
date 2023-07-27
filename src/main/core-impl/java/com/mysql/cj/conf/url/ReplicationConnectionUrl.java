@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -45,6 +45,7 @@ import com.mysql.cj.conf.HostsListView;
 import com.mysql.cj.conf.PropertyKey;
 
 public class ReplicationConnectionUrl extends ConnectionUrl {
+
     private static final String TYPE_SOURCE = "SOURCE";
     private static final String TYPE_REPLICA = "REPLICA";
     @Deprecated
@@ -57,7 +58,7 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
 
     /**
      * Constructs an instance of {@link ReplicationConnectionUrl}, performing all the required initializations.
-     * 
+     *
      * @param connStrParser
      *            a {@link ConnectionUrlParser} instance containing the parsed version of the original connection string
      * @param info
@@ -111,7 +112,7 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
      * Constructs an instance of a {@link ReplicationConnectionUrl} based on a list of source hosts, a list of replica hosts and a global set of properties
      * instead of connection string parsing.
      * {@link ConnectionUrl} instances created by this process are not cached.
-     * 
+     *
      * @param sources
      *            the source hosts list to use in this connection string
      * @param replicas
@@ -132,7 +133,7 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
 
     /**
      * Returns a list of the hosts in this connection URL, filtered for the given view.
-     * 
+     *
      * @param view
      *            the type of the view to use in the returned list of hosts.
      * @return
@@ -152,7 +153,7 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
 
     /**
      * Returns an existing source host info with the same host:port part or spawns a new isolated host info based on this connection URL if none was found.
-     * 
+     *
      * @param hostPortPair
      *            the host:port part to search for
      * @return the existing host info or a new independent one
@@ -163,17 +164,17 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
 
     /**
      * Returns a list of this connection URL source hosts in the form of host:port pairs.
-     * 
+     *
      * @return a list of this connection URL source hosts in the form of host:port pairs
      */
     public List<String> getSourcesListAsHostPortPairs() {
-        return this.sourceHosts.stream().map(hi -> hi.getHostPortPair()).collect(Collectors.toList());
+        return this.sourceHosts.stream().map(HostInfo::getHostPortPair).collect(Collectors.toList());
     }
 
     /**
      * Returns the list of {@link HostInfo} instances that matches the given collection of host:port pairs in the corresponding hosts list. Isolated host info
      * elements are spawned for the missing elements.
-     * 
+     *
      * @param hostPortPairs
      *            a list of host:port pairs
      * @return a list of {@link HostInfo} instances corresponding to the given host:port pairs
@@ -184,7 +185,7 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
 
     /**
      * Returns an existing replica host info with the same host:port part or spawns a new isolated host info based on this connection URL if none was found.
-     * 
+     *
      * @param hostPortPair
      *            the host:port part to search for
      * @return the existing host info or a new independent one
@@ -195,17 +196,17 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
 
     /**
      * Returns a list of this connection URL replica hosts in the form of host:port pairs.
-     * 
+     *
      * @return a list of this connection URL replica hosts in the form of host:port pairs
      */
     public List<String> getReplicasListAsHostPortPairs() {
-        return this.replicaHosts.stream().map(hi -> hi.getHostPortPair()).collect(Collectors.toList());
+        return this.replicaHosts.stream().map(HostInfo::getHostPortPair).collect(Collectors.toList());
     }
 
     /**
      * Returns the list of {@link HostInfo} instances that matches the given collection of host:port pairs in the corresponding hosts list. Isolated host info
      * elements are spawned for the missing elements.
-     * 
+     *
      * @param hostPortPairs
      *            a list of host:port pairs
      * @return a list of {@link HostInfo} instances corresponding to the given host:port pairs
@@ -213,4 +214,5 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
     public List<HostInfo> getReplicaHostsListFromHostPortPairs(Collection<String> hostPortPairs) {
         return hostPortPairs.stream().map(this::getReplicaHostOrSpawnIsolated).collect(Collectors.toList());
     }
+
 }

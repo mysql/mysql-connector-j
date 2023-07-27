@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,6 +36,7 @@ import com.mysql.cj.x.protobuf.Mysqlx.Error;
  * An Error returned from X Plugin.
  */
 public class XProtocolError extends CJException {
+
     private static final long serialVersionUID = 6991120628391138584L;
 
     /**
@@ -63,7 +64,7 @@ public class XProtocolError extends CJException {
 
     /**
      * Format the error message's contents into a complete error description for the exception.
-     * 
+     *
      * @param msg
      *            {@link Error}
      * @return string error message
@@ -86,4 +87,5 @@ public class XProtocolError extends CJException {
     public String getSQLState() {
         return this.msg == null ? super.getSQLState() : this.msg.getSqlState();
     }
+
 }

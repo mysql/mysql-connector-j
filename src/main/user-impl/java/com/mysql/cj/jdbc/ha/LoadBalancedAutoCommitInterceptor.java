@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2010, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -45,6 +45,7 @@ import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.util.StringUtils;
 
 public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
+
     private int matchingAfterStatementCount = 0;
     private int matchingAfterStatementThreshold = 0;
     private String matchingAfterStatementRegex;
@@ -80,13 +81,11 @@ public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
             this.matchingAfterStatementRegex = autoCommitSwapRegex;
         }
         return this;
-
     }
 
     @Override
     @SuppressWarnings("resource")
     public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
-
         try {
             // Don't count SETs, SHOWs neither USEs. Those are mostly used internally and must not trigger a connection switch.
             if (!this.countStatements || StringUtils.startsWithIgnoreCase(sql.get(), "SET") || StringUtils.startsWithIgnoreCase(sql.get(), "SHOW")
@@ -150,4 +149,5 @@ public class LoadBalancedAutoCommitInterceptor implements QueryInterceptor {
     void resumeCounters() {
         this.countStatements = true;
     }
+
 }

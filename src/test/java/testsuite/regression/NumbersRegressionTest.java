@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -49,9 +49,10 @@ import testsuite.BaseTestCase;
  * Tests various number-handling issues that have arisen in the JDBC driver at one time or another.
  */
 public class NumbersRegressionTest extends BaseTestCase {
+
     /**
      * Tests that BIGINT retrieval works correctly
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -79,7 +80,7 @@ public class NumbersRegressionTest extends BaseTestCase {
 
     /**
      * Tests correct type assignment for MySQL FLOAT and REAL datatypes.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -105,7 +106,7 @@ public class NumbersRegressionTest extends BaseTestCase {
 
     /**
      * Tests that ResultSetMetaData precision and scale methods work correctly for all numeric types.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -194,7 +195,7 @@ public class NumbersRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#5729, UNSIGNED BIGINT returned incorrectly
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -212,7 +213,7 @@ public class NumbersRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#8484 - ResultSet.getBigDecimal() throws exception when rounding would need to occur to set scale.
-     * 
+     *
      * @throws Exception
      * @deprecated
      */
@@ -235,7 +236,7 @@ public class NumbersRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#105915 (33678490), Connector/J 8 server prepared statement precision loss in execute batch.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -277,4 +278,5 @@ public class NumbersRegressionTest extends BaseTestCase {
 
         } while ((useSPS = !useSPS) || (useCursorFetch = !useCursorFetch));
     }
+
 }

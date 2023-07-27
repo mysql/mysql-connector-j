@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,9 +47,10 @@ import testsuite.BaseTestCase;
  * Regression test cases for the ResultSet class.
  */
 public class CachedRowsetTest extends BaseTestCase {
+
     /**
      * Tests fix for BUG#5188, CachedRowSet errors using PreparedStatement. Uses Sun's "com.sun.rowset.CachedRowSetImpl"
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -84,4 +85,5 @@ public class CachedRowsetTest extends BaseTestCase {
         assertEquals("test data stuff !", cachedRowSet.getString("datafield"));
         assertFalse(cachedRowSet.next());
     }
+
 }

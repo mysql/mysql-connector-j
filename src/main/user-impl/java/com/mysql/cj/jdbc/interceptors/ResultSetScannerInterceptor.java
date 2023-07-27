@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2007, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -69,21 +69,19 @@ public class ResultSetScannerInterceptor implements QueryInterceptor {
             throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("ResultSetScannerInterceptor.1"), t);
         }
         return this;
-
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
-
         // requirement of anonymous class
         final T finalResultSet = originalResultSet;
 
         return (T) Proxy.newProxyInstance(originalResultSet.getClass().getClassLoader(), new Class<?>[] { Resultset.class, ResultSetInternalMethods.class },
                 new InvocationHandler() {
 
+                    @Override
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-
                         if ("equals".equals(method.getName())) {
                             // Let args[0] "unwrap" to its InvocationHandler if it is a proxy.
                             return args[0].equals(this);
@@ -104,8 +102,8 @@ public class ResultSetScannerInterceptor implements QueryInterceptor {
 
                         return invocationResult;
                     }
-                });
 
+                });
     }
 
     @Override
@@ -123,6 +121,6 @@ public class ResultSetScannerInterceptor implements QueryInterceptor {
 
     @Override
     public void destroy() {
-
     }
+
 }

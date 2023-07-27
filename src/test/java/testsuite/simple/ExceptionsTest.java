@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,7 +30,6 @@
 package testsuite.simple;
 
 import java.sql.SQLException;
-import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
@@ -53,6 +52,7 @@ import com.mysql.cj.protocol.PacketSentTimeHolder;
 import testsuite.BaseTestCase;
 
 public class ExceptionsTest extends BaseTestCase {
+
     static String TEST_MESSAGE = "Test message";
     static String TEST_SQL_STATE = "Test SQLState";
 
@@ -61,25 +61,19 @@ public class ExceptionsTest extends BaseTestCase {
         // java.sql.Driver methods
         assertThrows(SQLException.class,
                 "Communications link failure\n\nThe last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.",
-                new Callable<Void>() {
-                    public Void call() throws Exception {
-                        new NonRegisteringDriver().connect("jdbc:mysql://wrongurl?user=usr", null);
-                        return null;
-                    }
+                () -> {
+                    new NonRegisteringDriver().connect("jdbc:mysql://wrongurl?user=usr", null);
+                    return null;
                 });
-        assertThrows(SQLException.class, ".*Can't find configuration template named 'wrongvalue'", new Callable<Void>() {
-            public Void call() throws Exception {
-                new NonRegisteringDriver().connect(dbUrl + "&useConfigs=wrongvalue", null);
-                return null;
-            }
+        assertThrows(SQLException.class, ".*Can't find configuration template named 'wrongvalue'", () -> {
+            new NonRegisteringDriver().connect(dbUrl + "&useConfigs=wrongvalue", null);
+            return null;
         });
         assertThrows(SQLException.class,
                 "The connection property 'useServerPrepStmts' acceptable values are: 'TRUE', 'FALSE', 'YES' or 'NO'\\. The value 'wrongvalue' is not acceptable\\.",
-                new Callable<Void>() {
-                    public Void call() throws Exception {
-                        new NonRegisteringDriver().getPropertyInfo(dbUrl + "&useServerPrepStmts=wrongvalue", null);
-                        return null;
-                    }
+                () -> {
+                    new NonRegisteringDriver().getPropertyInfo(dbUrl + "&useServerPrepStmts=wrongvalue", null);
+                    return null;
                 });
     }
 
@@ -126,4 +120,5 @@ public class ExceptionsTest extends BaseTestCase {
 
         new SQLError();
     }
+
 }

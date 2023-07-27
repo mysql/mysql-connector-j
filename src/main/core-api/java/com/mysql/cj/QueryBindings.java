@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -55,7 +55,7 @@ public interface QueryBindings {
     void setBindValues(BindValue[] bindValues);
 
     /**
-     * 
+     *
      * @return true if bind values had long data
      */
     boolean clearBindValues();
@@ -131,4 +131,5 @@ public interface QueryBindings {
     void setTimestamp(int parameterIndex, Timestamp x, Calendar targetCalendar, Field field, MysqlType targetMysqlType);
 
     byte[] getBytesRepresentation(int parameterIndex);
+
 }

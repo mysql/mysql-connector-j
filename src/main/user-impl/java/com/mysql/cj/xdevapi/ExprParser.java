@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -80,6 +80,7 @@ import com.mysql.cj.x.protobuf.MysqlxExpr.Operator;
  * Expression parser for X protocol.
  */
 public class ExprParser {
+
     private static HashMap<Character, Character> escapeChars = new HashMap<>();
     static { // Replicated from JsonParser.EscapeChar
         escapeChars.put('"', '"');
@@ -112,7 +113,7 @@ public class ExprParser {
 
     /**
      * Constructor.
-     * 
+     *
      * @param s
      *            expression string to parse
      */
@@ -122,7 +123,7 @@ public class ExprParser {
 
     /**
      * Constructor.
-     * 
+     *
      * @param s
      *            expression string to parse
      * @param allowRelationalColumns
@@ -150,6 +151,7 @@ public class ExprParser {
      * Token. Includes type and string value of the token.
      */
     static class Token {
+
         TokenType type;
         String value;
 
@@ -170,6 +172,7 @@ public class ExprParser {
             }
             return this.type.toString();
         }
+
     }
 
     /** Mapping of reserved words to token types. */
@@ -232,7 +235,7 @@ public class ExprParser {
 
     /**
      * Does the next character equal the given character? (respects bounds)
-     * 
+     *
      * @param i
      *            The current position in the string
      * @param c
@@ -240,7 +243,7 @@ public class ExprParser {
      * @return true if equals
      */
     boolean nextCharEquals(int i, char c) {
-        return (i + 1 < this.string.length()) && this.string.charAt(i + 1) == c;
+        return i + 1 < this.string.length() && this.string.charAt(i + 1) == c;
     }
 
     /**
@@ -422,7 +425,7 @@ public class ExprParser {
                         try {
                             boolean escapeNextChar = false;
                             for (c = this.string.charAt(++i); c != quoteChar || escapeNextChar
-                                    || (i + 1 < this.string.length() && this.string.charAt(i + 1) == quoteChar); c = this.string.charAt(++i)) {
+                                    || i + 1 < this.string.length() && this.string.charAt(i + 1) == quoteChar; c = this.string.charAt(++i)) {
                                 if (escapeNextChar) {
                                     if (escapeChars.containsKey(c)) {
                                         val.append(escapeChars.get(c));
@@ -441,12 +444,10 @@ public class ExprParser {
                                         val.append('\\').append(c);
                                     }
                                     escapeNextChar = false;
+                                } else if (c == '\\' || c == quoteChar) { // Escape sequence or two consecutive quotes
+                                    escapeNextChar = true;
                                 } else {
-                                    if (c == '\\' || c == quoteChar) { // Escape sequence or two consecutive quotes
-                                        escapeNextChar = true;
-                                    } else {
-                                        val.append(c);
-                                    }
+                                    val.append(c);
                                 }
                             }
                             if (escapeNextChar) {
@@ -489,7 +490,7 @@ public class ExprParser {
 
     /**
      * Assert that the token at <i>pos</i> is of type <i>type</i>.
-     * 
+     *
      * @param pos
      *            The current position in the string
      * @param type
@@ -506,7 +507,7 @@ public class ExprParser {
 
     /**
      * Does the current token have type `t'?
-     * 
+     *
      * @param t
      *            {@link TokenType}
      * @return true if equals
@@ -517,7 +518,7 @@ public class ExprParser {
 
     /**
      * Does the next token have type `t'?
-     * 
+     *
      * @param t
      *            {@link TokenType}
      * @return true if equals
@@ -528,7 +529,7 @@ public class ExprParser {
 
     /**
      * Does the token at position `pos' have type `t'?
-     * 
+     *
      * @param pos
      *            The current position in the string
      * @param t
@@ -592,7 +593,7 @@ public class ExprParser {
 
     /**
      * Parse an identifier for a function call: [schema.]name
-     * 
+     *
      * @return {@link Identifier}
      */
     Identifier identifier() {
@@ -611,7 +612,7 @@ public class ExprParser {
 
     /**
      * Parse a document path member.
-     * 
+     *
      * @return {@link DocumentPathItem}
      */
     DocumentPathItem docPathMember() {
@@ -639,7 +640,7 @@ public class ExprParser {
 
     /**
      * Parse a document path array index.
-     * 
+     *
      * @return {@link DocumentPathItem}
      */
     DocumentPathItem docPathArrayLoc() {
@@ -664,7 +665,7 @@ public class ExprParser {
 
     /**
      * Parse a JSON-style document path, like WL#7909, but prefix by @. instead of $.
-     * 
+     *
      * @return list of {@link DocumentPathItem} objects
      */
     public List<DocumentPathItem> documentPath() {
@@ -692,7 +693,7 @@ public class ExprParser {
 
     /**
      * Parse a document field.
-     * 
+     *
      * @return {@link Expr}
      */
     public Expr documentField() {
@@ -706,7 +707,7 @@ public class ExprParser {
 
     /**
      * Parse a column identifier (which may optionally include a JSON document path).
-     * 
+     *
      * @return {@link Expr}
      */
     Expr columnIdentifier() {
@@ -756,7 +757,7 @@ public class ExprParser {
 
     /**
      * Build a unary operator expression.
-     * 
+     *
      * @param name
      *            operator name
      * @param param
@@ -764,14 +765,14 @@ public class ExprParser {
      * @return {@link Expr}
      */
     Expr buildUnaryOp(String name, Expr param) {
-        String opName = "-".equals(name) ? "sign_minus" : ("+".equals(name) ? "sign_plus" : name);
+        String opName = "-".equals(name) ? "sign_minus" : "+".equals(name) ? "sign_plus" : name;
         Operator op = Operator.newBuilder().setName(opName).addParam(param).build();
         return Expr.newBuilder().setType(Expr.Type.OPERATOR).setOperator(op).build();
     }
 
     /**
      * Parse an atomic expression. (c.f. grammar at top)
-     * 
+     *
      * @return {@link Expr}
      */
     Expr atomicExpr() { // constant, identifier, variable, function call, etc
@@ -827,9 +828,7 @@ public class ExprParser {
             case LSQBRACKET: { // Array
                 Array.Builder builder = Expr.newBuilder().setType(Expr.Type.ARRAY).getArrayBuilder();
                 if (!currentTokenTypeEquals(TokenType.RSQBRACKET)) {
-                    parseCommaSeparatedList(() -> {
-                        return expr();
-                    }).stream().forEach(builder::addValue);
+                    parseCommaSeparatedList(this::expr).stream().forEach(builder::addValue);
                 }
                 consumeToken(TokenType.RSQBRACKET);
                 return Expr.newBuilder().setType(Expr.Type.ARRAY).setArray(builder).build();
@@ -908,8 +907,8 @@ public class ExprParser {
             case IDENT:
                 this.tokenPos--; // stay on the identifier
                 // check for function call which may be: func(...) or schema.func(...)
-                if (nextTokenTypeEquals(TokenType.LPAREN) || (posTokenTypeEquals(this.tokenPos + 1, TokenType.DOT)
-                        && posTokenTypeEquals(this.tokenPos + 2, TokenType.IDENT) && posTokenTypeEquals(this.tokenPos + 3, TokenType.LPAREN))) {
+                if (nextTokenTypeEquals(TokenType.LPAREN) || posTokenTypeEquals(this.tokenPos + 1, TokenType.DOT)
+                        && posTokenTypeEquals(this.tokenPos + 2, TokenType.IDENT) && posTokenTypeEquals(this.tokenPos + 3, TokenType.LPAREN)) {
                     return functionCall();
                 }
                 if (this.allowRelationalColumns) {
@@ -927,7 +926,9 @@ public class ExprParser {
      */
     @FunctionalInterface
     static interface ParseExpr {
+
         Expr parseExpr();
+
     }
 
     /**
@@ -1136,7 +1137,7 @@ public class ExprParser {
 
     /**
      * Parse an ORDER BY specification which is a comma-separated list of expressions, each may be optionally suffixed by ASC/DESC.
-     * 
+     *
      * @return list of {@link Order} objects
      */
     public List<Order> parseOrderSpec() {
@@ -1156,7 +1157,7 @@ public class ExprParser {
 
     /**
      * Parse a SELECT projection which is a comma-separated list of expressions, each optionally suffixed with a target alias.
-     * 
+     *
      * @return list of {@link Projection} objects
      */
     public List<Projection> parseTableSelectProjection() {
@@ -1173,7 +1174,7 @@ public class ExprParser {
 
     /**
      * Parse an INSERT field name.
-     * 
+     *
      * @return {@link Column}
      */
     // TODO unit test
@@ -1183,7 +1184,7 @@ public class ExprParser {
 
     /**
      * Parse an UPDATE field which can include can document paths.
-     * 
+     *
      * @return {@link ColumnIdentifier}
      */
     public ColumnIdentifier parseTableUpdateField() {
@@ -1192,7 +1193,7 @@ public class ExprParser {
 
     /**
      * Parse a document projection which is similar to SELECT but with document paths as the target alias.
-     * 
+     *
      * @return list of {@link Projection} objects
      */
     public List<Projection> parseDocumentProjection() {
@@ -1209,7 +1210,7 @@ public class ExprParser {
 
     /**
      * Parse a list of expressions used for GROUP BY.
-     * 
+     *
      * @return list of {@link Expr} objects
      */
     public List<Expr> parseExprList() {
@@ -1218,7 +1219,7 @@ public class ExprParser {
 
     /**
      * Return the number of positional placeholders in the expression.
-     * 
+     *
      * @return the number of positional placeholders in the expression
      */
     public int getPositionalPlaceholderCount() {
@@ -1227,10 +1228,11 @@ public class ExprParser {
 
     /**
      * Get a mapping of parameter names to positions.
-     * 
+     *
      * @return a mapping of parameter names to positions.
      */
     public Map<String, Integer> getPlaceholderNameToPositionMap() {
         return Collections.unmodifiableMap(this.placeholderNameToPosition);
     }
+
 }

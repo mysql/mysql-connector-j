@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -56,7 +56,6 @@ public class TextResultsetReader implements ProtocolEntityReader<Resultset, Nati
     @Override
     public Resultset read(int maxRows, boolean streamResults, NativePacketPayload resultPacket, ColumnDefinition metadata,
             ProtocolEntityFactory<Resultset, NativePacketPayload> resultSetFactory) throws IOException {
-
         Resultset rs = null;
         //try {
         long columnCount = resultPacket.readInteger(IntegerDataType.INT_LENENC);
@@ -81,7 +80,7 @@ public class TextResultsetReader implements ProtocolEntityReader<Resultset, Nati
 
                 ResultsetRow row = this.protocol.read(ResultsetRow.class, trf);
                 while (row != null) {
-                    if ((maxRows == -1) || (rowList.size() < maxRows)) {
+                    if (maxRows == -1 || rowList.size() < maxRows) {
                         rowList.add(row);
                     }
                     row = this.protocol.read(ResultsetRow.class, trf);
@@ -124,4 +123,5 @@ public class TextResultsetReader implements ProtocolEntityReader<Resultset, Nati
         //            this.protocol.getPacketReceivedTimeHolder().getLastPacketReceivedTime(), ioEx, this.protocol.getExceptionInterceptor());
         //}
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -56,6 +56,7 @@ import com.mysql.cj.x.protobuf.Mysqlx.ServerMessages;
  * Tests for {@link SyncMessageReader}.
  */
 public class SyncMessageReaderTest {
+
     private SyncMessageReader reader;
 
     private static final byte[] okMsgPacket = serializeMessage(Ok.newBuilder().build(), ServerMessages.Type.OK_VALUE);
@@ -64,7 +65,7 @@ public class SyncMessageReaderTest {
 
     /**
      * Serialize a message for testing.
-     * 
+     *
      * @param msg
      * @param type
      * @return a byte array
@@ -127,7 +128,7 @@ public class SyncMessageReaderTest {
 
     /**
      * This is a 'mini'-stress test that encompasses the check of <i>clearHeader()</i> being called correctly.
-     * 
+     *
      * @throws IOException
      */
     @Test
@@ -170,9 +171,9 @@ public class SyncMessageReaderTest {
 
     /**
      * Verification test to help prevent bugs in the typecode/class/parser mapping tables. We check that all classes that are mapped have a parser.
-     * 
+     *
      * @throws InvalidProtocolBufferException
-     * 
+     *
      * @todo Test in the other direction also
      */
     @Test
@@ -186,4 +187,5 @@ public class SyncMessageReaderTest {
             assertEquals(messageClass, partiallyParsed.getClass(), "Parsed class should equal the class that mapped to it via type tag");
         }
     }
+
 }

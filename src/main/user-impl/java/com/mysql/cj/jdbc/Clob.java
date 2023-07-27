@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -52,6 +52,7 @@ import com.mysql.cj.util.StringUtils;
  * Simplistic implementation of java.sql.Clob for MySQL Connector/J
  */
 public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
+
     private String charData;
     private ExceptionInterceptor exceptionInterceptor;
 
@@ -125,13 +126,13 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
         }
 
         if (this.charData != null) {
-            if ((startPos - 1) > this.charData.length()) {
+            if (startPos - 1 > this.charData.length()) {
                 throw SQLError.createSQLException(Messages.getString("Clob.10"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
 
             int pos = this.charData.indexOf(stringToFind, (int) (startPos - 1));
 
-            return (pos == -1) ? (-1) : (pos + 1);
+            return pos == -1 ? -1 : pos + 1;
         }
 
         return -1;
@@ -268,4 +269,5 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
     public Reader getCharacterStream(long pos, long length) throws SQLException {
         return new StringReader(getSubString(pos, (int) length));
     }
+
 }

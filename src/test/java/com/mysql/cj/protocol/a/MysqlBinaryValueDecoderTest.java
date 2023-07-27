@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,6 +46,7 @@ import com.mysql.cj.result.ValueFactory;
  * Tests for {@link MysqlBinaryValueDecoder}.
  */
 public class MysqlBinaryValueDecoderTest {
+
     private MysqlBinaryValueDecoder valueDecoder = new MysqlBinaryValueDecoder();
 
     @Test
@@ -75,7 +76,7 @@ public class MysqlBinaryValueDecoderTest {
         decoded = this.valueDecoder.decodeInt4(signedInt4Max, 0, 4, vf);
         assertEquals(String.valueOf(Integer.MAX_VALUE), decoded);
 
-        byte[] unsignedInt4Max = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(((long) Integer.MAX_VALUE) * 2 + 1).array();
+        byte[] unsignedInt4Max = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong((long) Integer.MAX_VALUE * 2 + 1).array();
         decoded = this.valueDecoder.decodeUInt4(unsignedInt4Max, 0, 4, vf);
         assertEquals("4294967295", decoded);
     }
@@ -104,4 +105,5 @@ public class MysqlBinaryValueDecoderTest {
         decoded = this.valueDecoder.decodeUInt8(unsignedInt8Max, 0, 8, vf);
         assertEquals("18446744073709551615", decoded);
     }
+
 }

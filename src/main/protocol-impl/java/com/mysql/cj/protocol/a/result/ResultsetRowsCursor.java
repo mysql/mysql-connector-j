@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -80,7 +80,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
 
     /**
      * Creates a new cursor-backed row provider.
-     * 
+     *
      * @param ioChannel
      *            connection to the server.
      * @param columnDefinition
@@ -121,19 +121,17 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
 
     @Override
     public boolean isLast() {
-        return this.lastRowFetched && this.currentPositionInFetchedRows == (this.fetchedRows.size() - 1);
+        return this.lastRowFetched && this.currentPositionInFetchedRows == this.fetchedRows.size() - 1;
     }
 
     @Override
     public void close() {
-
         this.metadata = null;
         this.owner = null;
     }
 
     @Override
     public boolean hasNext() {
-
         if (this.fetchedRows != null && this.fetchedRows.size() == 0) {
             return false;
         }
@@ -148,7 +146,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
 
         if (this.currentPositionInEntireResult != BEFORE_START_OF_ROWS) {
             // Case, we've fetched some rows, but are not at end of fetched block
-            if (this.currentPositionInFetchedRows < (this.fetchedRows.size() - 1)) {
+            if (this.currentPositionInFetchedRows < this.fetchedRows.size() - 1) {
                 return true;
             } else if (this.currentPositionInFetchedRows == this.fetchedRows.size() && this.lastRowFetched) {
                 return false;
@@ -156,7 +154,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
                 // need to fetch to determine
                 fetchMoreRows();
 
-                return (this.fetchedRows.size() > 0);
+                return this.fetchedRows.size() > 0;
             }
         }
 
@@ -186,7 +184,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
             return null;
         }
 
-        if ((this.fetchedRows == null) || (this.currentPositionInFetchedRows > (this.fetchedRows.size() - 1))) {
+        if (this.fetchedRows == null || this.currentPositionInFetchedRows > this.fetchedRows.size() - 1) {
             fetchMoreRows();
             this.currentPositionInFetchedRows = 0;
         }
@@ -262,22 +260,27 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
         // they could be read by next() after all fetches are done
     }
 
+    @Override
     public void afterLast() {
         throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
     }
 
+    @Override
     public void beforeFirst() {
         throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
     }
 
+    @Override
     public void beforeLast() {
         throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
     }
 
+    @Override
     public void moveRowRelative(int rows) {
         throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
     }
 
+    @Override
     public void setCurrentRow(int rowNumber) {
         throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
     }

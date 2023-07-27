@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,7 +40,7 @@ public class AssertionFailedException extends CJException {
 
     /**
      * Convenience method.
-     * 
+     *
      * @param ex
      *            the exception that should never have been thrown.
      * @return {@link AssertionFailedException}
@@ -56,7 +56,7 @@ public class AssertionFailedException extends CJException {
      *
      * <P>
      * Typical use is as follows:
-     * 
+     *
      * <PRE>
      * if (something == null) {
      *     throw AssertionFailedException.shouldNotHappen("Something cannot be null");
@@ -76,7 +76,7 @@ public class AssertionFailedException extends CJException {
     /**
      * Creates an AssertionFailedException for the given exception that should
      * never have been thrown.
-     * 
+     *
      * @param ex
      *            the exception that should never have been thrown.
      */
@@ -86,11 +86,12 @@ public class AssertionFailedException extends CJException {
 
     /**
      * Creates an AssertionFailedException for the reason given.
-     * 
+     *
      * @param assertion
      *            a description of the assertion that failed
      */
     public AssertionFailedException(String assertion) {
         super(Messages.getString("AssertionFailedException.2", new Object[] { assertion }));
     }
+
 }

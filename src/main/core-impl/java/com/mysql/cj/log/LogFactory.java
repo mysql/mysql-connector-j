@@ -42,7 +42,7 @@ public class LogFactory {
     /**
      * Returns a logger instance of the given class, with the given instance
      * name.
-     * 
+     *
      * @param className
      *            the class to instantiate
      * @param instanceName
@@ -50,7 +50,6 @@ public class LogFactory {
      * @return a logger instance
      */
     public static Log getLogger(String className, String instanceName) {
-
         if (className == null) {
             throw ExceptionFactory.createException(WrongArgumentException.class, "Logger class can not be NULL");
         }
@@ -74,4 +73,5 @@ public class LogFactory {
             throw e1;
         }
     }
+
 }

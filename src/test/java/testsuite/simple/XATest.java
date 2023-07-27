@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2005, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -60,6 +60,7 @@ import testsuite.BaseTestCase;
  * Unit tests for our XA implementation.
  */
 public class XATest extends BaseTestCase {
+
     MysqlXADataSource xaDs;
 
     @BeforeEach
@@ -73,7 +74,7 @@ public class XATest extends BaseTestCase {
 
     /**
      * Tests that simple distributed transaction processing works as expected.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -176,7 +177,7 @@ public class XATest extends BaseTestCase {
 
     /**
      * Tests that XA RECOVER works as expected.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -266,7 +267,7 @@ public class XATest extends BaseTestCase {
 
     /**
      * Tests operation of local transactions on XAConnections when global transactions are in or not in progress (follows from BUG#17401).
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -412,7 +413,7 @@ public class XATest extends BaseTestCase {
             xaConn1.close();
 
             /*
-             * 
+             *
              * -- fails using JOIN
              * xa start 0x123,0x456;
              * select * from foo;
@@ -470,4 +471,5 @@ public class XATest extends BaseTestCase {
 
         return xid;
     }
+
 }

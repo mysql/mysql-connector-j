@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -45,6 +45,7 @@ import com.mysql.cj.x.protobuf.Mysqlx.Error;
  * A {@link MessageListener} to handle result data and propagate it to a {@link ResultBuilder}.
  */
 public class ResultMessageListener<R> implements MessageListener<XMessage> {
+
     private ResultBuilder<?> resultBuilder;
     private CompletableFuture<R> future;
 
@@ -58,6 +59,7 @@ public class ResultMessageListener<R> implements MessageListener<XMessage> {
         this.future = future;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public boolean processMessage(XMessage message) {
         Class<? extends GeneratedMessageV3> msgClass = (Class<? extends GeneratedMessageV3>) message.getMessage().getClass();
@@ -78,6 +80,7 @@ public class ResultMessageListener<R> implements MessageListener<XMessage> {
         return true; /* done reading */
     }
 
+    @Override
     public void error(Throwable ex) {
         this.future.completeExceptionally(ex);
     }

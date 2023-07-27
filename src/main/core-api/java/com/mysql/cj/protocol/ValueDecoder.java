@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,10 +35,11 @@ import com.mysql.cj.result.ValueFactory;
 /**
  * A value decoder is responsible for interpreting a byte array as a value. The type of the value is encoded in the method call. After decoding, the value
  * decoder passes an <i>intermediate representation</i> of the value to a {@link ValueFactory} for result value creation.
- * 
+ *
  * @since 6.0
  */
 public interface ValueDecoder {
+
     <T> T decodeDate(byte[] bytes, int offset, int length, ValueFactory<T> vf);
 
     <T> T decodeTime(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf);
@@ -76,4 +77,5 @@ public interface ValueDecoder {
     <T> T decodeSet(byte[] bytes, int offset, int length, Field f, ValueFactory<T> vf);
 
     <T> T decodeYear(byte[] bytes, int offset, int length, ValueFactory<T> vf);
+
 }

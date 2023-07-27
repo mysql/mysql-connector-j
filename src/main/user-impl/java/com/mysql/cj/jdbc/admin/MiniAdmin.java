@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -42,14 +42,15 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
  * Utility functions for admin functionality from Java.
  */
 public class MiniAdmin {
+
     private JdbcConnection conn;
 
     /**
      * Create a new MiniAdmin using the given connection
-     * 
+     *
      * @param conn
      *            the existing connection to use.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -68,10 +69,10 @@ public class MiniAdmin {
 
     /**
      * Create a new MiniAdmin, connecting using the given JDBC URL.
-     * 
+     *
      * @param jdbcUrl
      *            the JDBC URL to use
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -82,27 +83,28 @@ public class MiniAdmin {
     /**
      * Create a new MiniAdmin, connecting using the given JDBC URL and
      * properties
-     * 
+     *
      * @param jdbcUrl
      *            the JDBC URL to use
      * @param props
      *            the properties to use when connecting
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
     public MiniAdmin(String jdbcUrl, Properties props) throws SQLException {
-        this.conn = (JdbcConnection) (new Driver().connect(jdbcUrl, props));
+        this.conn = (JdbcConnection) new Driver().connect(jdbcUrl, props);
     }
 
     /**
      * Shuts down the MySQL server at the other end of the connection that this
      * MiniAdmin was created from/for.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
     public void shutdown() throws SQLException {
         this.conn.shutdownServer();
     }
+
 }

@@ -45,11 +45,12 @@ import com.mysql.cj.util.Util;
 
 /**
  * MySQL 'authentication_fido_client' authentication plugin.
- * 
+ *
  * This authentication plugin requires a callback handler implemented in the client application that performs all the interactions with the authenticator
  * device. This callback handler is injected into the driver via the connection property 'authenticationFidoCallbackHandler'.
  */
 public class AuthenticationFidoClient implements AuthenticationPlugin<NativePacketPayload> {
+
     public static String PLUGIN_NAME = "authentication_fido_client";
 
     private String sourceOfAuthData = PLUGIN_NAME;
@@ -143,4 +144,5 @@ public class AuthenticationFidoClient implements AuthenticationPlugin<NativePack
 
         return true;
     }
+
 }

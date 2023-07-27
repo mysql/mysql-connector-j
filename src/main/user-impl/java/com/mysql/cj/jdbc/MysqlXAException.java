@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2005, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,6 +35,7 @@ import javax.transaction.xa.XAException;
  * The stock XAException class isn't too friendly (i.e. no error messages), so we extend it a bit.
  */
 class MysqlXAException extends XAException {
+
     private static final long serialVersionUID = -9075817535836563004L;
 
     private String message;
@@ -69,4 +70,5 @@ class MysqlXAException extends XAException {
 
         return returnedMessage.toString();
     }
+
 }

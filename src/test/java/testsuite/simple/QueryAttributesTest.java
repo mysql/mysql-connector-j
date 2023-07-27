@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -73,6 +73,7 @@ import com.mysql.cj.jdbc.JdbcStatement;
 import testsuite.BaseTestCase;
 
 public class QueryAttributesTest extends BaseTestCase {
+
     @BeforeEach
     public void setUp() throws Exception {
         assumeTrue(versionMeetsMinimum(8, 0, 26), "MySQL 8.0.26+ is required to run this test.");
@@ -92,7 +93,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests all supported query attributes types when used in plain statements.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -180,7 +181,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests all supported query attributes types when used in client prepared statements.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -278,7 +279,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests all supported query attributes types when used in server prepared statements.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -376,7 +377,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests all supported query attributes types when used in callable statements.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -470,7 +471,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests if query attributes are preserved between plain statement executions and cleared after calling the 'clearAttributes' method.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -501,7 +502,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests if query attributes are preserved between client prepared statement executions and cleared after calling the 'clearAttributes' method.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -541,7 +542,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests if query attributes are preserved between server prepared statement executions and cleared after calling the 'clearAttributes' method.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -581,7 +582,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests if query attributes are preserved between callable statement executions and cleared after calling the 'clearAttributes' method.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -615,7 +616,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests if query attributes hold in plain statements with multi-queries.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -649,7 +650,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests if query attributes hold in prepared statements with multi-queries.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -685,7 +686,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests whether the query attributes are propagated to the internally created statement on query rewrites in plain statements.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -734,7 +735,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests whether the query attributes are propagated to the internally created statement on query rewrites in client prepared statements.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -789,7 +790,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests whether the query attributes are propagated to the internally created statement on query rewrites in server prepared statements.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -844,7 +845,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests if server prepared statements get their query attributes cleared automatically when cached.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -909,7 +910,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests whether proxied plain statement objects created in multi-host connections handle query attributes correctly.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -965,7 +966,7 @@ public class QueryAttributesTest extends BaseTestCase {
 
     /**
      * Tests whether proxied server prepared statement objects created in multi-host connections handle query attributes correctly.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1023,4 +1024,5 @@ public class QueryAttributesTest extends BaseTestCase {
 
         testConn.close();
     }
+
 }

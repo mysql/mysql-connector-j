@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,11 +38,12 @@ package com.mysql.cj.xdevapi;
  *            result interface
  */
 public abstract class FilterableStatement<STMT_T, RES_T> extends PreparableStatement<RES_T> implements Statement<STMT_T, RES_T> {
+
     protected FilterParams filterParams;
 
     /**
      * Constructor.
-     * 
+     *
      * @param filterParams
      *            {@link FilterParams} object.
      */
@@ -52,11 +53,11 @@ public abstract class FilterableStatement<STMT_T, RES_T> extends PreparableState
 
     /**
      * Add search condition to this statement.
-     * 
+     *
      * <pre>
      * table.delete().where("age == 13").execute();
      * </pre>
-     * 
+     *
      * @param searchCondition
      *            expression
      * @return this statement
@@ -70,12 +71,12 @@ public abstract class FilterableStatement<STMT_T, RES_T> extends PreparableState
 
     /**
      * Add sort expressions to this statement. Synonym to {@link #orderBy(String...)}.
-     * 
+     *
      * <pre>
      * DocResult docs = this.collection.find().orderBy("$._id").execute();
      * docs = this.collection.find().sort("$.x", "$.y").execute();
      * </pre>
-     * 
+     *
      * @param sortFields
      *            sort expressions
      * @return this statement
@@ -86,12 +87,12 @@ public abstract class FilterableStatement<STMT_T, RES_T> extends PreparableState
 
     /**
      * Add sort expressions to this statement.
-     * 
+     *
      * <pre>
      * DocResult docs = this.collection.find().orderBy("$._id").execute();
      * docs = this.collection.find().sort("$.x", "$.y").execute();
      * </pre>
-     * 
+     *
      * @param sortFields
      *            sort expressions
      * @return this statement
@@ -105,15 +106,15 @@ public abstract class FilterableStatement<STMT_T, RES_T> extends PreparableState
 
     /**
      * Add row limit to this statement.
-     * 
+     *
      * <p>
      * For example, to find only 3 rows:
      * </p>
-     * 
+     *
      * <pre>
      * docs = this.collection.find().orderBy("$._id").limit(3).execute();
      * </pre>
-     * 
+     *
      * @param numberOfRows
      *            maximum rows to process
      * @return this statement
@@ -129,15 +130,15 @@ public abstract class FilterableStatement<STMT_T, RES_T> extends PreparableState
 
     /**
      * Add maximum number of rows to skip before find others.
-     * 
+     *
      * <p>
      * For example, to skip 2 rows:
      * </p>
-     * 
+     *
      * <pre>
      * docs = this.collection.find().orderBy("$._id").offset(2).execute();
      * </pre>
-     * 
+     *
      * @param limitOffset
      *            number of rows to skip
      * @return this statement
@@ -151,22 +152,25 @@ public abstract class FilterableStatement<STMT_T, RES_T> extends PreparableState
 
     /**
      * Are relational columns identifiers allowed in this statement?
-     * 
+     *
      * @return true if allowed
      */
     public boolean isRelational() {
         return this.filterParams.isRelational();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public STMT_T clearBindings() {
         this.filterParams.clearArgs();
         return (STMT_T) this;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public STMT_T bind(String argName, Object value) {
         this.filterParams.addArg(argName, value);
         return (STMT_T) this;
     }
+
 }

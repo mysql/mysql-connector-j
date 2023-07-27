@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,6 +40,7 @@ import com.mysql.cj.protocol.x.XMessageBuilder;
  * {@link UpdateStatement} implementation.
  */
 public class UpdateStatementImpl extends FilterableStatement<UpdateStatement, Result> implements UpdateStatement {
+
     private UpdateParams updateParams = new UpdateParams();
 
     /* package private */ UpdateStatementImpl(MysqlxSession mysqlxSession, String schema, String table) {
@@ -62,21 +63,25 @@ public class UpdateStatementImpl extends FilterableStatement<UpdateStatement, Re
         return this.mysqlxSession.query(getMessageBuilder().buildPrepareExecute(this.preparedStatementId, this.filterParams), new UpdateResultBuilder<>());
     }
 
+    @Override
     public CompletableFuture<Result> executeAsync() {
         return this.mysqlxSession.queryAsync(
                 ((XMessageBuilder) this.mysqlxSession.<XMessage>getMessageBuilder()).buildRowUpdate(this.filterParams, this.updateParams),
                 new UpdateResultBuilder<>());
     }
 
+    @Override
     public UpdateStatement set(Map<String, Object> fieldsAndValues) {
         resetPrepareState();
         this.updateParams.setUpdates(fieldsAndValues);
         return this;
     }
 
+    @Override
     public UpdateStatement set(String field, Object value) {
         resetPrepareState();
         this.updateParams.addUpdate(field, value);
         return this;
     }
+
 }

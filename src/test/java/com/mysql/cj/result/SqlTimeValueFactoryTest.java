@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,7 +37,6 @@ import java.math.BigInteger;
 import java.sql.Time;
 import java.time.LocalTime;
 import java.util.TimeZone;
-import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
@@ -55,6 +54,7 @@ import com.mysql.cj.protocol.InternalTimestamp;
  * Tests for JDBC {@link java.sql.Time} creation.
  */
 public class SqlTimeValueFactoryTest extends CommonAsserts {
+
     PropertySet pset = new DefaultPropertySet();
     SqlTimeValueFactory vf = new SqlTimeValueFactory(this.pset, null, TimeZone.getDefault());
 
@@ -77,22 +77,16 @@ public class SqlTimeValueFactoryTest extends CommonAsserts {
 
         assertThrows(DataReadException.class,
                 "The value '-1:00:00' is an invalid TIME value. JDBC Time objects represent a wall-clock time and not a duration as MySQL treats them. If you are treating this type as a duration, consider retrieving this value as a string and dealing with it according to your requirements.",
-                new Callable<Void>() {
-                    @Override
-                    public Void call() throws Exception {
-                        SqlTimeValueFactoryTest.this.vf.createFromTime(new InternalTime(-1, 0, 0, 0, 9));
-                        return null;
-                    }
+                () -> {
+                    SqlTimeValueFactoryTest.this.vf.createFromTime(new InternalTime(-1, 0, 0, 0, 9));
+                    return null;
                 });
 
         assertThrows(DataReadException.class,
                 "The value '44:00:00' is an invalid TIME value. JDBC Time objects represent a wall-clock time and not a duration as MySQL treats them. If you are treating this type as a duration, consider retrieving this value as a string and dealing with it according to your requirements.",
-                new Callable<Void>() {
-                    @Override
-                    public Void call() throws Exception {
-                        SqlTimeValueFactoryTest.this.vf.createFromTime(new InternalTime(44, 0, 0, 0, 9));
-                        return null;
-                    }
+                () -> {
+                    SqlTimeValueFactoryTest.this.vf.createFromTime(new InternalTime(44, 0, 0, 0, 9));
+                    return null;
                 });
     }
 
@@ -113,45 +107,33 @@ public class SqlTimeValueFactoryTest extends CommonAsserts {
 
     @Test
     public void testCreateFromLong() {
-        assertThrows(DataConversionException.class, "Unsupported conversion from LONG to java.sql.Time", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                SqlTimeValueFactoryTest.this.vf.createFromLong(22L);
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Unsupported conversion from LONG to java.sql.Time", () -> {
+            SqlTimeValueFactoryTest.this.vf.createFromLong(22L);
+            return null;
         });
     }
 
     @Test
     public void testCreateFromBigInteger() {
-        assertThrows(DataConversionException.class, "Unsupported conversion from BIGINT to java.sql.Time", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                SqlTimeValueFactoryTest.this.vf.createFromBigInteger(new BigInteger("2018"));
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Unsupported conversion from BIGINT to java.sql.Time", () -> {
+            SqlTimeValueFactoryTest.this.vf.createFromBigInteger(new BigInteger("2018"));
+            return null;
         });
     }
 
     @Test
     public void testCreateFromDouble() {
-        assertThrows(DataConversionException.class, "Unsupported conversion from DOUBLE to java.sql.Time", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                SqlTimeValueFactoryTest.this.vf.createFromDouble(new Double(2018));
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Unsupported conversion from DOUBLE to java.sql.Time", () -> {
+            SqlTimeValueFactoryTest.this.vf.createFromDouble(new Double(2018));
+            return null;
         });
     }
 
     @Test
     public void testCreateFromBigDecimal() {
-        assertThrows(DataConversionException.class, "Unsupported conversion from DECIMAL to java.sql.Time", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                SqlTimeValueFactoryTest.this.vf.createFromBigDecimal(new BigDecimal("2018"));
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Unsupported conversion from DECIMAL to java.sql.Time", () -> {
+            SqlTimeValueFactoryTest.this.vf.createFromBigDecimal(new BigDecimal("2018"));
+            return null;
         });
     }
 
@@ -160,21 +142,15 @@ public class SqlTimeValueFactoryTest extends CommonAsserts {
         Field f = new Field("test", "test", 33, "UTF-8", MysqlType.VARCHAR, 10);
 
         this.pset.getBooleanProperty(PropertyKey.emptyStringsConvertToZero).setValue(true);
-        assertThrows(DataConversionException.class, "Unsupported conversion from LONG to java.sql.Time", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                SqlTimeValueFactoryTest.this.vf.createFromBytes("".getBytes(), 0, 0, f);
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Unsupported conversion from LONG to java.sql.Time", () -> {
+            SqlTimeValueFactoryTest.this.vf.createFromBytes("".getBytes(), 0, 0, f);
+            return null;
         });
 
         this.pset.getBooleanProperty(PropertyKey.emptyStringsConvertToZero).setValue(false);
-        assertThrows(DataConversionException.class, "Cannot convert string '' to java.sql.Time value", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                SqlTimeValueFactoryTest.this.vf.createFromBytes("".getBytes(), 0, 0, f);
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Cannot convert string '' to java.sql.Time value", () -> {
+            SqlTimeValueFactoryTest.this.vf.createFromBytes("".getBytes(), 0, 0, f);
+            return null;
         });
 
         assertEquals(Time.valueOf(LocalTime.of(3, 4, 5, 600000000)).toString(),
@@ -182,39 +158,27 @@ public class SqlTimeValueFactoryTest extends CommonAsserts {
         assertEquals(Time.valueOf(LocalTime.of(3, 4, 5, 600000000)).toString(), this.vf.createFromBytes("03:04:05.6".getBytes(), 0, 10, f).toString());
         assertEquals(Time.valueOf(LocalTime.of(0, 0)).toString(), this.vf.createFromBytes("2018-01-02".getBytes(), 0, 10, f).toString());
 
-        assertThrows(DataConversionException.class, "Cannot convert string '1' to java.sql.Time value", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                SqlTimeValueFactoryTest.this.vf.createFromBytes(new byte[] { '1' }, 0, 1, f);
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Cannot convert string '1' to java.sql.Time value", () -> {
+            SqlTimeValueFactoryTest.this.vf.createFromBytes(new byte[] { '1' }, 0, 1, f);
+            return null;
         });
 
-        assertThrows(DataConversionException.class, "Cannot convert string '-1.0' to java.sql.Time value", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                SqlTimeValueFactoryTest.this.vf.createFromBytes("-1.0".getBytes(), 0, 4, f);
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Cannot convert string '-1.0' to java.sql.Time value", () -> {
+            SqlTimeValueFactoryTest.this.vf.createFromBytes("-1.0".getBytes(), 0, 4, f);
+            return null;
         });
 
-        assertThrows(DataConversionException.class, "Cannot convert string 'just a string' to java.sql.Time value", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                SqlTimeValueFactoryTest.this.vf.createFromBytes("just a string".getBytes(), 0, 13, f);
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Cannot convert string 'just a string' to java.sql.Time value", () -> {
+            SqlTimeValueFactoryTest.this.vf.createFromBytes("just a string".getBytes(), 0, 13, f);
+            return null;
         });
     }
 
     @Test
     public void testCreateFromBit() {
-        assertThrows(DataConversionException.class, "Unsupported conversion from BIT to java.sql.Time", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                SqlTimeValueFactoryTest.this.vf.createFromBit(new byte[] { 1 }, 0, 2);
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Unsupported conversion from BIT to java.sql.Time", () -> {
+            SqlTimeValueFactoryTest.this.vf.createFromBit(new byte[] { 1 }, 0, 2);
+            return null;
         });
     }
 
@@ -222,4 +186,5 @@ public class SqlTimeValueFactoryTest extends CommonAsserts {
     public void testCreateFromNull() {
         assertNull(this.vf.createFromNull());
     }
+
 }

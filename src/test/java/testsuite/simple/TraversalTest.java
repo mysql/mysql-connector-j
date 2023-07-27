@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -45,6 +45,7 @@ import testsuite.BaseTestCase;
  * Tests result set traversal methods.
  */
 public class TraversalTest extends BaseTestCase {
+
     @BeforeEach
     public void setUp() throws Exception {
         createTestTable();
@@ -101,7 +102,7 @@ public class TraversalTest extends BaseTestCase {
                     forwardOk = false;
                 }
 
-                assertTrue(pos == (this.rs.getRow() - 1), "ResultSet.getRow() failed.");
+                assertTrue(pos == this.rs.getRow() - 1, "ResultSet.getRow() failed.");
 
                 count++;
 
@@ -149,7 +150,7 @@ public class TraversalTest extends BaseTestCase {
 
             // Test bogus absolute index
             boolean onResultSet = this.rs.absolute(200);
-            assertTrue(onResultSet == false, "ResultSet.absolute() to point off result set failed");
+            assertTrue(!onResultSet, "ResultSet.absolute() to point off result set failed");
             onResultSet = this.rs.absolute(100);
             assertTrue(onResultSet, "ResultSet.absolute() from off this.rs to on this.rs failed");
 
@@ -185,4 +186,5 @@ public class TraversalTest extends BaseTestCase {
             this.stmt.executeUpdate("INSERT INTO TRAVERSAL VALUES (" + i + ", 'StringData')");
         }
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -43,7 +43,7 @@ import com.mysql.cj.protocol.InternalTimestamp;
 /**
  * The default value factory provides a base class that can be used for value factories that do not support creation from every type. The default value factory
  * will thrown an UnsupportedOperationException for every method and individual methods must be overridden by subclasses.
- * 
+ *
  * @param <T>
  *            value type
  */
@@ -70,14 +70,17 @@ public abstract class DefaultValueFactory<T> implements ValueFactory<T> {
         throw new DataConversionException(Messages.getString("ResultSet.UnsupportedConversion", new Object[] { sourceType, getTargetTypeName() }));
     }
 
+    @Override
     public T createFromDate(InternalDate idate) {
         return unsupported("DATE");
     }
 
+    @Override
     public T createFromTime(InternalTime it) {
         return unsupported("TIME");
     }
 
+    @Override
     public T createFromTimestamp(InternalTimestamp its) {
         return unsupported("TIMESTAMP");
     }
@@ -87,22 +90,27 @@ public abstract class DefaultValueFactory<T> implements ValueFactory<T> {
         return unsupported("DATETIME");
     }
 
+    @Override
     public T createFromLong(long l) {
         return unsupported("LONG");
     }
 
+    @Override
     public T createFromBigInteger(BigInteger i) {
         return unsupported("BIGINT");
     }
 
+    @Override
     public T createFromDouble(double d) {
         return unsupported("DOUBLE");
     }
 
+    @Override
     public T createFromBigDecimal(BigDecimal d) {
         return unsupported("DECIMAL");
     }
 
+    @Override
     public T createFromBit(byte[] bytes, int offset, int length) {
         return unsupported("BIT");
     }
@@ -112,7 +120,9 @@ public abstract class DefaultValueFactory<T> implements ValueFactory<T> {
         return unsupported("YEAR");
     }
 
+    @Override
     public T createFromNull() {
         return null;
     }
+
 }

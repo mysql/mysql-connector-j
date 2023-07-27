@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -56,7 +56,6 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
@@ -75,9 +74,10 @@ import testsuite.BufferingLogger;
  * Tests callable statement functionality.
  */
 public class CallableStatementTest extends BaseTestCase {
+
     /**
      * Tests functioning of inout parameters
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -173,7 +173,7 @@ public class CallableStatementTest extends BaseTestCase {
 
     /**
      * Tests functioning of output parameters.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -241,7 +241,7 @@ public class CallableStatementTest extends BaseTestCase {
 
     /**
      * Tests functioning of output parameters.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -295,7 +295,7 @@ public class CallableStatementTest extends BaseTestCase {
 
     /**
      * Tests parsing of stored procedures
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -310,12 +310,11 @@ public class CallableStatementTest extends BaseTestCase {
 
     /**
      * Tests parsing/execution of stored procedures with no parameters...
-     * 
+     *
      * @throws Exception
      */
     @Test
     public void testSPNoParams() throws Exception {
-
         CallableStatement storedProc = null;
 
         createProcedure("testSPNoParams", "()\nBEGIN\nSELECT 1;\nend\n");
@@ -326,7 +325,7 @@ public class CallableStatementTest extends BaseTestCase {
 
     /**
      * Tests parsing of stored procedures
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -419,7 +418,7 @@ public class CallableStatementTest extends BaseTestCase {
     /**
      * Tests the new parameter parser that doesn't require "BEGIN" or "\n" at
      * end of parameter declaration
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -478,1389 +477,936 @@ public class CallableStatementTest extends BaseTestCase {
         int scale = 3;
         String typeName = String.class.getName();
         InputStream istr = new InputStream() {
+
             @Override
             public int read() throws IOException {
                 return 0;
             }
+
         };
         Reader reader = new StringReader(sql);
 
         MysqlPooledConnection con = new MysqlPooledConnection((JdbcConnection) this.conn);
         CallableStatementWrapper w = new CallableStatementWrapper(new ConnectionWrapper(con, (JdbcConnection) this.conn, false), con, null);
 
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.addBatch();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.addBatch();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.addBatch(sql);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.addBatch(sql);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.cancel();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.cancel();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.clearBatch();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.clearBatch();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.clearParameters();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.clearParameters();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.clearWarnings();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.clearWarnings();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.closeOnCompletion();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.closeOnCompletion();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.enableStreamingResults();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.enableStreamingResults();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.execute();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.execute();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.execute("SELECT 1");
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.execute("SELECT 1");
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.execute(sql, autoGeneratedKeys);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.execute(sql, autoGeneratedKeys);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.execute(sql, columnIndexes);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.execute(sql, columnIndexes);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.execute(sql, columnNames);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.execute(sql, columnNames);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.executeBatch();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.executeBatch();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.executeLargeBatch();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.executeLargeBatch();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.executeLargeUpdate();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.executeLargeUpdate();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.executeLargeUpdate(sql);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.executeLargeUpdate(sql);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.executeLargeUpdate(sql, autoGeneratedKeys);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.executeLargeUpdate(sql, autoGeneratedKeys);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.executeLargeUpdate(sql, columnIndexes);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.executeLargeUpdate(sql, columnIndexes);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.executeLargeUpdate(sql, columnNames);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.executeLargeUpdate(sql, columnNames);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.executeQuery();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.executeQuery();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.executeQuery(sql);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.executeQuery(sql);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.executeUpdate();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.executeUpdate();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.executeUpdate(sql);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.executeUpdate(sql);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.executeUpdate(sql, autoGeneratedKeys);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.executeUpdate(sql, autoGeneratedKeys);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.executeUpdate(sql, columnIndexes);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.executeUpdate(sql, columnIndexes);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.executeUpdate(sql, columnNames);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.executeUpdate(sql, columnNames);
+            return null;
         });
 
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getArray(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getArray(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getArray(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getArray(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getBigDecimal(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getBigDecimal(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getBigDecimal(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getBigDecimal(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getBigDecimal(parameterIndex, 10);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getBigDecimal(parameterIndex, 10);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getBlob(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getBlob(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getBlob(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getBlob(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getBoolean(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getBoolean(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getBoolean(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getBoolean(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getByte(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getByte(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getByte(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getByte(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getBytes(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getBytes(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getCharacterStream(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getCharacterStream(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getCharacterStream(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getCharacterStream(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getClob(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getClob(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getClob(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getClob(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getDate(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getDate(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getDate(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getDate(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getDate(parameterIndex, cal);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getDate(parameterIndex, cal);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getDate(parameterName, cal);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getDate(parameterName, cal);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getDouble(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getDouble(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getDouble(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getDouble(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getFloat(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getFloat(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getFloat(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getFloat(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getInt(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getInt(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getInt(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getInt(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getLong(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getLong(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getLong(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getLong(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getNCharacterStream(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getNCharacterStream(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getNCharacterStream(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getNCharacterStream(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getNClob(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getNClob(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getNClob(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getNClob(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getNString(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getNString(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getNString(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getNString(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getObject(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getObject(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getObject(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getObject(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getObject(parameterIndex, String.class);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getObject(parameterIndex, String.class);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getObject(parameterName, String.class);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getObject(parameterName, String.class);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getObject(parameterIndex, typeMap);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getObject(parameterIndex, typeMap);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getObject(parameterName, typeMap);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getObject(parameterName, typeMap);
+            return null;
         });
 
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getParameterMetaData();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getParameterMetaData();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getQueryTimeout();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getQueryTimeout();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getRef(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getRef(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getRef(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getRef(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getResultSet();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getResultSet();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getResultSetConcurrency();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getResultSetConcurrency();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getResultSetHoldability();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getResultSetHoldability();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getResultSetType();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getResultSetType();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getRowId(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getRowId(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getRowId(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getRowId(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getShort(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getShort(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getShort(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getShort(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getSQLXML(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getSQLXML(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getSQLXML(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getSQLXML(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getString(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getString(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getString(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getString(parameterName);
+            return null;
         });
 
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getTime(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getTime(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getTime(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getTime(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getTime(parameterIndex, cal);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getTime(parameterIndex, cal);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getTime(parameterName, cal);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getTime(parameterName, cal);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getTimestamp(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getTimestamp(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getTimestamp(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getTimestamp(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getTimestamp(parameterIndex, cal);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getTimestamp(parameterIndex, cal);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getTimestamp(parameterName, cal);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getTimestamp(parameterName, cal);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getUpdateCount();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getUpdateCount();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getURL(parameterIndex);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getURL(parameterIndex);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getURL(parameterName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getURL(parameterName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getWarnings();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getWarnings();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getConnection();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getConnection();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getFetchDirection();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getFetchDirection();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getFetchSize();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getFetchSize();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getGeneratedKeys();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getGeneratedKeys();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getLargeMaxRows();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getLargeMaxRows();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getLargeUpdateCount();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getLargeUpdateCount();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getMaxFieldSize();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getMaxFieldSize();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getMaxRows();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getMaxRows();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getMetaData();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getMetaData();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getMoreResults();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getMoreResults();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.getMoreResults(0);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.getMoreResults(0);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.isClosed();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.isClosed();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.isCloseOnCompletion();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.isCloseOnCompletion();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.isPoolable();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.isPoolable();
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.registerOutParameter(parameterIndex, Types.VARCHAR);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.registerOutParameter(parameterIndex, Types.VARCHAR);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.registerOutParameter(parameterIndex, MysqlType.VARCHAR);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.registerOutParameter(parameterIndex, MysqlType.VARCHAR);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.registerOutParameter(parameterName, Types.VARCHAR);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.registerOutParameter(parameterName, Types.VARCHAR);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.registerOutParameter(parameterName, MysqlType.VARCHAR);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.registerOutParameter(parameterName, MysqlType.VARCHAR);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.registerOutParameter(parameterIndex, Types.VARCHAR, scale);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.registerOutParameter(parameterIndex, Types.VARCHAR, scale);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.registerOutParameter(parameterIndex, MysqlType.VARCHAR, scale);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.registerOutParameter(parameterIndex, MysqlType.VARCHAR, scale);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.registerOutParameter(parameterIndex, Types.VARCHAR, typeName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.registerOutParameter(parameterIndex, Types.VARCHAR, typeName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.registerOutParameter(parameterIndex, MysqlType.VARCHAR, typeName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.registerOutParameter(parameterIndex, MysqlType.VARCHAR, typeName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.registerOutParameter(parameterName, Types.VARCHAR, scale);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.registerOutParameter(parameterName, Types.VARCHAR, scale);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.registerOutParameter(parameterName, Types.VARCHAR, typeName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.registerOutParameter(parameterName, Types.VARCHAR, typeName);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.registerOutParameter(parameterName, MysqlType.VARCHAR, scale);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.registerOutParameter(parameterName, MysqlType.VARCHAR, scale);
+            return null;
         });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.registerOutParameter(parameterName, MysqlType.VARCHAR, typeName);
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.registerOutParameter(parameterName, MysqlType.VARCHAR, typeName);
+            return null;
         });
 
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setArray(parameterIndex, (java.sql.Array) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setAsciiStream(parameterIndex, istr);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setAsciiStream(parameterName, istr);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setAsciiStream(parameterIndex, istr, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setAsciiStream(parameterIndex, istr, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setAsciiStream(parameterName, istr, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setAsciiStream(parameterName, istr, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBigDecimal(parameterIndex, BigDecimal.valueOf(1L));
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBigDecimal(parameterName, BigDecimal.valueOf(1L));
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBinaryStream(parameterIndex, istr);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBinaryStream(parameterName, istr);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBinaryStream(parameterIndex, istr, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBinaryStream(parameterIndex, istr, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBinaryStream(parameterName, istr, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBinaryStream(parameterName, istr, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBlob(parameterIndex, (Blob) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBlob(parameterIndex, istr);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBlob(parameterName, (Blob) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBlob(parameterName, istr);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBlob(parameterIndex, istr, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBlob(parameterName, istr, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBoolean(parameterIndex, true);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBoolean(parameterName, true);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setByte(parameterIndex, (byte) 0);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setByte(parameterName, (byte) 0);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBytes(parameterIndex, (byte[]) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setBytes(parameterName, (byte[]) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setCharacterStream(parameterIndex, reader);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setCharacterStream(parameterName, reader);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setCharacterStream(parameterIndex, reader, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setCharacterStream(parameterIndex, reader, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setCharacterStream(parameterName, reader, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setCharacterStream(parameterName, reader, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setClob(parameterIndex, (Clob) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setClob(parameterIndex, reader);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setClob(parameterName, (Clob) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setClob(parameterName, reader);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setClob(parameterIndex, reader, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setClob(parameterName, reader, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setCursorName("qqq");
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setDate(parameterIndex, (Date) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setDate(parameterName, (Date) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setDate(parameterIndex, (Date) null, cal);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setDate(parameterName, (Date) null, cal);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setDouble(parameterIndex, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setDouble(parameterName, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setEscapeProcessing(true);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setFetchDirection(ResultSet.FETCH_FORWARD);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setFetchSize(1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setFloat(parameterIndex, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setFloat(parameterName, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setInt(parameterIndex, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setInt(parameterName, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setLargeMaxRows(1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setLong(parameterIndex, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setLong(parameterName, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setMaxFieldSize(1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setMaxRows(1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNCharacterStream(parameterIndex, reader);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNCharacterStream(parameterName, reader);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNCharacterStream(parameterIndex, reader, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNCharacterStream(parameterName, reader, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNClob(parameterIndex, (NClob) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNClob(parameterIndex, reader);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNClob(parameterName, (NClob) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNClob(parameterName, reader);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNClob(parameterIndex, reader, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNClob(parameterName, reader, 1L);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNString(parameterIndex, "");
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNString(parameterName, "");
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNull(parameterIndex, Types.VARCHAR);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNull(parameterName, Types.VARCHAR);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNull(parameterIndex, Types.VARCHAR, typeName);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setNull(parameterName, Types.VARCHAR, typeName);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setObject(parameterIndex, (Object) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setObject(parameterName, (Object) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setObject(parameterIndex, (Object) null, Types.VARCHAR);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setObject(parameterIndex, (Object) null, MysqlType.VARCHAR);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setObject(parameterName, (Object) null, Types.VARCHAR);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setObject(parameterName, (Object) null, MysqlType.VARCHAR);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setObject(parameterIndex, (Object) null, Types.VARCHAR, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setObject(parameterIndex, (Object) null, MysqlType.VARCHAR, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setObject(parameterName, (Object) null, Types.VARCHAR, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setObject(parameterName, (Object) null, MysqlType.VARCHAR, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setPoolable(true);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setQueryTimeout(5);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setRef(parameterIndex, (Ref) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setRowId(parameterIndex, (RowId) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setRowId(parameterName, (RowId) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setShort(parameterIndex, (short) 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setShort(parameterName, (short) 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setSQLXML(parameterIndex, (SQLXML) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setSQLXML(parameterName, (SQLXML) null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setString(parameterIndex, "");
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setString(parameterName, "");
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setTime(parameterIndex, null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setTime(parameterName, null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setTime(parameterIndex, null, cal);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setTime(parameterName, null, cal);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setTimestamp(parameterIndex, null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setTimestamp(parameterName, null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setTimestamp(parameterIndex, null, cal);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setTimestamp(parameterName, null, cal);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setUnicodeStream(parameterIndex, istr, 1);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setURL(parameterIndex, null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.setURL(parameterName, null);
-                return null;
-            }
-        });
-        assertThrows(SQLException.class, "No operations allowed after statement closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                w.wasNull();
-                return null;
-            }
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setArray(parameterIndex, (java.sql.Array) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setAsciiStream(parameterIndex, istr);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setAsciiStream(parameterName, istr);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setAsciiStream(parameterIndex, istr, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setAsciiStream(parameterIndex, istr, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setAsciiStream(parameterName, istr, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setAsciiStream(parameterName, istr, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBigDecimal(parameterIndex, BigDecimal.valueOf(1L));
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBigDecimal(parameterName, BigDecimal.valueOf(1L));
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBinaryStream(parameterIndex, istr);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBinaryStream(parameterName, istr);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBinaryStream(parameterIndex, istr, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBinaryStream(parameterIndex, istr, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBinaryStream(parameterName, istr, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBinaryStream(parameterName, istr, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBlob(parameterIndex, (Blob) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBlob(parameterIndex, istr);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBlob(parameterName, (Blob) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBlob(parameterName, istr);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBlob(parameterIndex, istr, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBlob(parameterName, istr, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBoolean(parameterIndex, true);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBoolean(parameterName, true);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setByte(parameterIndex, (byte) 0);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setByte(parameterName, (byte) 0);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBytes(parameterIndex, (byte[]) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setBytes(parameterName, (byte[]) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setCharacterStream(parameterIndex, reader);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setCharacterStream(parameterName, reader);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setCharacterStream(parameterIndex, reader, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setCharacterStream(parameterIndex, reader, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setCharacterStream(parameterName, reader, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setCharacterStream(parameterName, reader, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setClob(parameterIndex, (Clob) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setClob(parameterIndex, reader);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setClob(parameterName, (Clob) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setClob(parameterName, reader);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setClob(parameterIndex, reader, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setClob(parameterName, reader, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setCursorName("qqq");
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setDate(parameterIndex, (Date) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setDate(parameterName, (Date) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setDate(parameterIndex, (Date) null, cal);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setDate(parameterName, (Date) null, cal);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setDouble(parameterIndex, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setDouble(parameterName, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setEscapeProcessing(true);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setFetchDirection(ResultSet.FETCH_FORWARD);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setFetchSize(1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setFloat(parameterIndex, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setFloat(parameterName, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setInt(parameterIndex, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setInt(parameterName, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setLargeMaxRows(1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setLong(parameterIndex, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setLong(parameterName, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setMaxFieldSize(1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setMaxRows(1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNCharacterStream(parameterIndex, reader);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNCharacterStream(parameterName, reader);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNCharacterStream(parameterIndex, reader, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNCharacterStream(parameterName, reader, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNClob(parameterIndex, (NClob) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNClob(parameterIndex, reader);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNClob(parameterName, (NClob) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNClob(parameterName, reader);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNClob(parameterIndex, reader, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNClob(parameterName, reader, 1L);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNString(parameterIndex, "");
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNString(parameterName, "");
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNull(parameterIndex, Types.VARCHAR);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNull(parameterName, Types.VARCHAR);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNull(parameterIndex, Types.VARCHAR, typeName);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setNull(parameterName, Types.VARCHAR, typeName);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setObject(parameterIndex, (Object) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setObject(parameterName, (Object) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setObject(parameterIndex, (Object) null, Types.VARCHAR);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setObject(parameterIndex, (Object) null, MysqlType.VARCHAR);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setObject(parameterName, (Object) null, Types.VARCHAR);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setObject(parameterName, (Object) null, MysqlType.VARCHAR);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setObject(parameterIndex, (Object) null, Types.VARCHAR, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setObject(parameterIndex, (Object) null, MysqlType.VARCHAR, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setObject(parameterName, (Object) null, Types.VARCHAR, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setObject(parameterName, (Object) null, MysqlType.VARCHAR, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setPoolable(true);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setQueryTimeout(5);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setRef(parameterIndex, (Ref) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setRowId(parameterIndex, (RowId) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setRowId(parameterName, (RowId) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setShort(parameterIndex, (short) 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setShort(parameterName, (short) 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setSQLXML(parameterIndex, (SQLXML) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setSQLXML(parameterName, (SQLXML) null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setString(parameterIndex, "");
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setString(parameterName, "");
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setTime(parameterIndex, null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setTime(parameterName, null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setTime(parameterIndex, null, cal);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setTime(parameterName, null, cal);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setTimestamp(parameterIndex, null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setTimestamp(parameterName, null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setTimestamp(parameterIndex, null, cal);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setTimestamp(parameterName, null, cal);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setUnicodeStream(parameterIndex, istr, 1);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setURL(parameterIndex, null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.setURL(parameterName, null);
+            return null;
+        });
+        assertThrows(SQLException.class, "No operations allowed after statement closed.", () -> {
+            w.wasNull();
+            return null;
         });
 
         w.close();
     }
+
 }

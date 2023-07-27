@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -54,6 +54,7 @@ import com.mysql.cj.result.Field;
  * determining the position of a pattern of bytes within a BLOB value. This class is new in the JDBC 2.0 API.
  */
 public class BlobFromLocator implements java.sql.Blob {
+
     private List<String> primaryKeyColumns = null;
 
     private List<String> primaryKeyValues = null;
@@ -75,7 +76,7 @@ public class BlobFromLocator implements java.sql.Blob {
 
     /**
      * Creates an updatable BLOB that can update in-place
-     * 
+     *
      * @param creatorResultSetToSet
      *            result set
      * @param blobColumnIndex
@@ -104,7 +105,7 @@ public class BlobFromLocator implements java.sql.Blob {
 
                     String originalColumnName = fields[i].getOriginalName();
 
-                    if ((originalColumnName != null) && (originalColumnName.length() > 0)) {
+                    if (originalColumnName != null && originalColumnName.length() > 0) {
                         keyName.append(originalColumnName);
                     } else {
                         keyName.append(fields[i].getName());
@@ -131,7 +132,7 @@ public class BlobFromLocator implements java.sql.Blob {
 
             String databaseName = fields[0].getDatabaseName();
 
-            if ((databaseName != null) && (databaseName.length() > 0)) {
+            if (databaseName != null && databaseName.length() > 0) {
                 tableNameBuffer.append(this.quotedId);
                 tableNameBuffer.append(databaseName);
                 tableNameBuffer.append(this.quotedId);
@@ -176,7 +177,7 @@ public class BlobFromLocator implements java.sql.Blob {
     public int setBytes(long writeAt, byte[] bytes, int offset, int length) throws SQLException {
         java.sql.PreparedStatement pStmt = null;
 
-        if ((offset + length) > bytes.length) {
+        if (offset + length > bytes.length) {
             length = bytes.length - offset;
         }
 
@@ -464,7 +465,6 @@ public class BlobFromLocator implements java.sql.Blob {
     }
 
     byte[] getBytesInternal(java.sql.PreparedStatement pStmt, long pos, int length) throws SQLException {
-
         java.sql.ResultSet blobRs = null;
 
         try {
@@ -497,6 +497,7 @@ public class BlobFromLocator implements java.sql.Blob {
     }
 
     class LocatorInputStream extends InputStream {
+
         long currentPositionInBlob = 0;
 
         long length = 0;
@@ -520,12 +521,7 @@ public class BlobFromLocator implements java.sql.Blob {
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, BlobFromLocator.this.exceptionInterceptor);
             }
 
-            if (pos < 1) {
-                throw SQLError.createSQLException(Messages.getString("Blob.invalidStreamPos"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        BlobFromLocator.this.exceptionInterceptor);
-            }
-
-            if (pos > blobLength) {
+            if (pos < 1 || pos > blobLength) {
                 throw SQLError.createSQLException(Messages.getString("Blob.invalidStreamPos"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                         BlobFromLocator.this.exceptionInterceptor);
             }
@@ -538,7 +534,7 @@ public class BlobFromLocator implements java.sql.Blob {
             }
 
             try {
-                byte[] asBytes = getBytesInternal(this.pStmt, (this.currentPositionInBlob++) + 1, 1);
+                byte[] asBytes = getBytesInternal(this.pStmt, this.currentPositionInBlob++ + 1, 1);
 
                 if (asBytes == null) {
                     return -1;
@@ -557,7 +553,7 @@ public class BlobFromLocator implements java.sql.Blob {
             }
 
             try {
-                byte[] asBytes = getBytesInternal(this.pStmt, (this.currentPositionInBlob) + 1, len);
+                byte[] asBytes = getBytesInternal(this.pStmt, this.currentPositionInBlob + 1, len);
 
                 if (asBytes == null) {
                     return -1;
@@ -580,7 +576,7 @@ public class BlobFromLocator implements java.sql.Blob {
             }
 
             try {
-                byte[] asBytes = getBytesInternal(this.pStmt, (this.currentPositionInBlob) + 1, b.length);
+                byte[] asBytes = getBytesInternal(this.pStmt, this.currentPositionInBlob + 1, b.length);
 
                 if (asBytes == null) {
                     return -1;
@@ -608,6 +604,7 @@ public class BlobFromLocator implements java.sql.Blob {
 
             super.close();
         }
+
     }
 
     @Override
@@ -621,4 +618,5 @@ public class BlobFromLocator implements java.sql.Blob {
     public InputStream getBinaryStream(long pos, long length) throws SQLException {
         return new LocatorInputStream(pos, length);
     }
+
 }

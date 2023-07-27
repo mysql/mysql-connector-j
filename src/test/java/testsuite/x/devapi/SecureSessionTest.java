@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -70,6 +70,7 @@ import com.mysql.cj.xdevapi.SessionImpl;
 import com.mysql.cj.xdevapi.SqlResult;
 
 public class SecureSessionTest extends DevApiBaseTestCase {
+
     final String trustStoreUrl = "file:src/test/config/ssl-test-certs/ca-truststore";
     final String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
     final String trustStorePassword = "password";
@@ -382,7 +383,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
     /**
      * Tests that PLAIN, MYSQL41, SHA256_MEMORY, and EXTERNAL authentication mechanisms.
-     * 
+     *
      * @throws Throwable
      */
     @Test
@@ -710,7 +711,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
     /**
      * Tests TLSv1.2
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -758,7 +759,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         SqlResult rset = sess.sql("SHOW STATUS LIKE 'Rsa_public_key'").execute();
         if (rset.hasNext()) {
             String value = rset.fetchOne().getString(1);
-            allowsRSA = (value != null && value.length() > 0);
+            allowsRSA = value != null && value.length() > 0;
         }
         return allowsRSA;
     }
@@ -799,7 +800,6 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         System.out.println("Highest common TLS protocol: " + highestCommonTlsVersion);
 
         return highestCommonTlsVersion;
-
     }
 
     /**
@@ -838,7 +838,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             assertSessionStatusEquals(sess, "ssl_cipher", "");
             sess.close();
 
-            // 3. Check connection with required client certificate 
+            // 3. Check connection with required client certificate
             props.setProperty(PropertyKey.USER.getKeyName(), "bug25494338user");
             props.setProperty(PropertyKey.PASSWORD.getKeyName(), "pwd");
 
@@ -879,7 +879,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
     /**
      * Tests fix for Bug#26227653, WL#10528 DIFF BEHAVIOUR WHEN SYSTEM PROP JAVAX.NET.SSL.TRUSTSTORETYPE IS SET
-     * 
+     *
      * The actual bug is: if wrong system-wide SSL settings are provided, the session should not fail if 'xdevapi.ssl-mode=REQUIRED'.
      */
     @Test
@@ -1326,7 +1326,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
     /**
      * Tests that given SSL/TLS related session properties values are processed as expected.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1509,7 +1509,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
     /**
      * Tests connection property 'xdevapi.fallback-to-system-truststore' behavior.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1606,7 +1606,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
     /**
      * Tests connection property 'xdevapi.fallback-to-system-keystore' behavior.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1709,7 +1709,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
     /**
      * Tests WL#14805, Remove support for TLS 1.0 and 1.1.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1934,7 +1934,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
     /**
      * Tests WL#14835, Align TLS option checking across connectors
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2077,4 +2077,5 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertNonSecureSession(testSess);
         testSess.close();
     }
+
 }

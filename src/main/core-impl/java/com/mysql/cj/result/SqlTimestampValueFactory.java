@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -49,6 +49,7 @@ import com.mysql.cj.protocol.InternalTimestamp;
  * to create a <i>point-in-time</i>, a time zone must be provided to interpret the fields.
  */
 public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Timestamp> {
+
     // cached per instance to avoid re-creation on every create*() call
     private Calendar cal;
 
@@ -197,7 +198,9 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
         }
     }
 
+    @Override
     public String getTargetTypeName() {
         return Timestamp.class.getName();
     }
+
 }

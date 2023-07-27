@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,7 +47,6 @@ public class ColumnDefinitionReader implements ProtocolEntityReader<ColumnDefini
 
     @Override
     public ColumnDefinition read(ProtocolEntityFactory<ColumnDefinition, NativePacketPayload> sf) {
-
         ColumnDefinitionFactory cdf = (ColumnDefinitionFactory) sf;
 
         long columnCount = cdf.getColumnCount();
@@ -73,12 +72,12 @@ public class ColumnDefinitionReader implements ProtocolEntityReader<ColumnDefini
 
     /**
      * Unpacks the Field information from the given packet.
-     * 
+     *
      * @param packet
      *            the packet containing the field information
      * @param characterSetMetadata
      *            encoding of the metadata in the packet
-     * 
+     *
      * @return the unpacked field
      */
     protected Field unpackField(NativePacketPayload packet, String characterSetMetadata) {
@@ -158,7 +157,7 @@ public class ColumnDefinitionReader implements ProtocolEntityReader<ColumnDefini
             case DOUBLE_UNSIGNED:
                 // According to SQL standard, NUMERIC_SCALE should be NULL for approximate numeric data types.
                 // DECIMAL_NOT_SPECIFIED=31 is the MySQL internal constant value used to indicate that NUMERIC_SCALE is not applicable.
-                // It's probably a mistake that it's exposed by protocol as a decimals and it should be replaced with 0. 
+                // It's probably a mistake that it's exposed by protocol as a decimals and it should be replaced with 0.
                 if (colDecimals == 31) {
                     colDecimals = 0;
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,6 +47,7 @@ import com.mysql.cj.protocol.PacketSentTimeHolder;
  * Synchronous-only implementation of {@link MessageSender}.
  */
 public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTimeHolder {
+
     /**
      * Header length of X Protocol packet.
      */
@@ -64,6 +65,7 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
         this.outputStream = os;
     }
 
+    @Override
     public void send(XMessage message) {
         synchronized (this.waitingAsyncOperationMonitor) {
             MessageLite msg = message.getMessage();
@@ -104,6 +106,7 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
         }
     }
 
+    @Override
     public long getLastPacketSentTime() {
         return this.lastPacketSentTime;
     }
@@ -113,7 +116,9 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
         return this.previousPacketSentTime;
     }
 
+    @Override
     public void setMaxAllowedPacket(int maxAllowedPacket) {
         this.maxAllowedPacket = maxAllowedPacket;
     }
+
 }

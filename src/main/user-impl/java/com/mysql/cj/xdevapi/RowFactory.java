@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,13 +41,14 @@ import com.mysql.cj.protocol.x.XMessage;
  * Create {@link Row} objects from internal row representation.
  */
 public class RowFactory implements ProtocolEntityFactory<Row, XMessage> {
+
     private ColumnDefinition metadata;
     private TimeZone defaultTimeZone;
     private PropertySet pset;
 
     /**
      * Constructor.
-     * 
+     *
      * @param metadata
      *            {@link ColumnDefinition} object to use for new rows.
      * @param defaultTimeZone
@@ -65,4 +66,5 @@ public class RowFactory implements ProtocolEntityFactory<Row, XMessage> {
     public Row createFromProtocolEntity(ProtocolEntity internalRow) {
         return new RowImpl((com.mysql.cj.result.Row) internalRow, this.metadata, this.defaultTimeZone, this.pset);
     }
+
 }

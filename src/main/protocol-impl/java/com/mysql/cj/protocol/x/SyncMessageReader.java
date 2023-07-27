@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -58,6 +58,7 @@ import com.mysql.cj.x.protobuf.MysqlxNotice.Frame;
  * Synchronous-only implementation of {@link MessageReader}. This implementation wraps a {@link java.io.InputStream}.
  */
 public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage> {
+
     /** Stream as a source of messages. */
     private FullReadInputStream inputStream;
 
@@ -124,7 +125,6 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
     }
 
     private XMessageHeader readHeaderLocal() throws IOException {
-
         XMessageHeader header;
         try {
             /*
@@ -146,7 +146,6 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
 
     @SuppressWarnings("unchecked")
     private <T extends GeneratedMessageV3> T readMessageLocal(Class<T> messageClass, boolean fromQueue) {
-
         XMessageHeader header;
         if (fromQueue) {
             header = this.headersQueue.poll();
@@ -231,6 +230,7 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
         }
     }
 
+    @Override
     public void pushMessageListener(final MessageListener<XMessage> listener) {
         try {
             this.messageListenerQueue.put(listener);
@@ -265,6 +265,7 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
     }
 
     private class ListenersDispatcher implements Runnable {
+
         /**
          * The timeout value for queue.poll(timeout, unit) defining the time after which we close and unregister the dispatching thread.
          * On the other hand, a bigger timeout value allows us to keep dispatcher thread running while multiple concurrent asynchronous
@@ -307,5 +308,7 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
                 }
             }
         }
+
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,15 +47,15 @@ public interface SocketFactory extends SocketMetadata {
      * socket factory with the class name given in the property
      * &quot;socketFactory&quot;, where the standard is <code>com.mysql.cj.protocol.StandardSocketFactory</code> Implementing classes
      * are responsible for handling synchronization of this method (if needed).
-     * 
+     *
      * @param host
      *            the hostname passed in the URL. It will be a single
      *            hostname, as the driver parses multi-hosts (for failover) and
      *            calls this method for each host connection attempt.
-     * 
+     *
      * @param portNumber
      *            the port number to connect to (if required).
-     * 
+     *
      * @param props
      *            properties passed to the driver via the URL and/or properties
      *            instance.
@@ -63,7 +63,7 @@ public interface SocketFactory extends SocketMetadata {
      *            login timeout in milliseconds
      * @param <T>
      *            result type
-     * 
+     *
      * @return a socket connected to the given host
      * @throws IOException
      *             if an I/O error occurs
@@ -72,7 +72,7 @@ public interface SocketFactory extends SocketMetadata {
 
     /**
      * Called by the driver before issuing the MySQL protocol handshake.
-     * 
+     *
      * @throws IOException
      *             if an I/O error occurs
      */
@@ -82,7 +82,7 @@ public interface SocketFactory extends SocketMetadata {
     /**
      * If required, called by the driver during MySQL protocol handshake to transform
      * original socket to SSL socket and perform TLS handshake.
-     * 
+     *
      * @param socketConnection
      *            current SocketConnection
      * @param serverSession
@@ -98,7 +98,7 @@ public interface SocketFactory extends SocketMetadata {
     /**
      * If required, called by the driver during MySQL protocol handshake to transform
      * original socket to SSL socket and perform TLS handshake.
-     * 
+     *
      * @param socketConnection
      *            current SocketConnection
      * @param serverSession
@@ -118,10 +118,11 @@ public interface SocketFactory extends SocketMetadata {
     /**
      * Called by the driver after completing the MySQL protocol handshake and
      * reading the results of the authentication.
-     * 
+     *
      * @throws IOException
      *             if an I/O error occurs
      */
     default void afterHandshake() throws IOException {
     }
+
 }

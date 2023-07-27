@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,7 +46,7 @@ public interface SocketConnection {
 
     /**
      * Connect to the MySQL server and setup a stream connection.
-     * 
+     *
      * @param host
      *            the hostname to connect to
      * @param port
@@ -66,7 +66,7 @@ public interface SocketConnection {
 
     /**
      * Start a TLS handshake
-     * 
+     *
      * @param serverSession
      *            server session state object
      * @param log
@@ -88,7 +88,7 @@ public interface SocketConnection {
 
     /**
      * Returns the host this IO is connected to
-     * 
+     *
      * @return host name
      */
     String getHost();

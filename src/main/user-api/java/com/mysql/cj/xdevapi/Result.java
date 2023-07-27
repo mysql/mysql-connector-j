@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,24 +37,26 @@ import com.mysql.cj.QueryResult;
  * Base result.
  */
 public interface Result extends QueryResult {
+
     /**
      * Get the count of affected items from manipulation statements. This method forces internal buffering of the result.
-     * 
+     *
      * @return count
      */
     long getAffectedItemsCount();
 
     /**
      * Get the number of warnings generated during statement execution. This method forces internal buffering of the result.
-     * 
+     *
      * @return number of warnings
      */
     int getWarningsCount();
 
     /**
      * Get warnings generated during statement execution. This method forces internal buffering of the result.
-     * 
+     *
      * @return iterator over warnings
      */
     Iterator<Warning> getWarnings();
+
 }

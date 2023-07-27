@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,6 +41,7 @@ public interface FilterParams {
      * The type of row lock.
      */
     public enum RowLock {
+
         /**
          * Lock matching rows against updates.
          */
@@ -58,18 +59,20 @@ public interface FilterParams {
 
         /**
          * Get the row lock type id.
-         * 
+         *
          * @return row lock type id
          */
         public int asNumber() {
-            return rowLock;
+            return this.rowLock;
         }
+
     }
 
     /**
      * Options that define the behavior while retrieving locked rows.
      */
     public enum RowLockOptions {
+
         /**
          * Do not wait to acquire row lock, fail with an error if a requested row is locked.
          */
@@ -87,45 +90,46 @@ public interface FilterParams {
 
         /**
          * Get the row lock option id.
-         * 
+         *
          * @return row lock option id
          */
         public int asNumber() {
-            return rowLockOption;
+            return this.rowLockOption;
         }
+
     }
 
     /**
      * Get X Protocol Collection object.
-     * 
+     *
      * @return X Protocol Collection object
      */
     Object getCollection();
 
     /**
      * Get X Protocol Order objects.
-     * 
+     *
      * @return List of X Protocol Order objects
      */
     Object getOrder();
 
     /**
      * Parse order expressions into X Protocol Order objects.
-     * 
+     *
      * <pre>
      * DocResult docs = this.collection.find().orderBy("$._id").execute();
      * docs = this.collection.find().sort("$.x", "$.y").execute();
      * </pre>
-     * 
+     *
      * @param orderExpression
      *            order expressions
-     * 
+     *
      */
     void setOrder(String... orderExpression);
 
     /**
      * Get max number of rows to filter.
-     * 
+     *
      * @return limit
      */
     Long getLimit();
@@ -135,11 +139,11 @@ public interface FilterParams {
      * <p>
      * For example, to find the 3 first rows:
      * </p>
-     * 
+     *
      * <pre>
      * docs = this.collection.find().orderBy("$._id").limit(3).execute();
      * </pre>
-     * 
+     *
      * @param limit
      *            maximum rows to find
      */
@@ -147,7 +151,7 @@ public interface FilterParams {
 
     /**
      * Get number of rows to skip before finding others.
-     * 
+     *
      * @return maximum rows to skip
      */
     Long getOffset();
@@ -157,11 +161,11 @@ public interface FilterParams {
      * <p>
      * For example, to skip 1 row and find other 3 rows:
      * </p>
-     * 
+     *
      * <pre>
      * docs = this.collection.find().orderBy("$._id").limit(3).skip(1).execute();
      * </pre>
-     * 
+     *
      * @param offset
      *            maximum rows to skip
      */
@@ -172,7 +176,7 @@ public interface FilterParams {
      * <p>
      * Note that setting offset values is always possible, even if they are not supported.
      * </p>
-     * 
+     *
      * @return
      *         <code>true</code> if <i>offset</i> clause is supported
      */
@@ -180,19 +184,19 @@ public interface FilterParams {
 
     /**
      * Get the search criteria.
-     * 
+     *
      * @return X Protocol Expr object
      */
     Object getCriteria();
 
     /**
      * Parse criteriaString into X Protocol Expr object.
-     * 
+     *
      * <pre>
      * docs = this.collection.find("$.x1 = 29 | 15").execute();
      * table.delete().where("age == 13").execute();
      * </pre>
-     * 
+     *
      * @param criteriaString
      *            expression
      */
@@ -200,18 +204,18 @@ public interface FilterParams {
 
     /**
      * Get binding arguments.
-     * 
+     *
      * @return List of X Protocol Scalar object
      */
     Object getArgs();
 
     /**
      * Set binding.
-     * 
+     *
      * <pre>
      * this.collection.find("a = :arg1 or b = :arg2").bind("arg1", 1).bind("arg2", 2).execute();
      * </pre>
-     * 
+     *
      * @param name
      *            bind key
      * @param value
@@ -231,20 +235,20 @@ public interface FilterParams {
 
     /**
      * Are relational columns identifiers allowed?
-     * 
+     *
      * @return true if allowed
      */
     boolean isRelational();
 
     /**
      * Parse projection expressions into X Protocol Projection objects.
-     * 
+     *
      * <pre>
      * collection.find().fields("CAST($.x as SIGNED) as x").execute();
      * table.select("_id, name, birthday, age").execute();
      * table.select("age as age_group, count(name) as cnt, something").execute();
      * </pre>
-     * 
+     *
      * @param projection
      *            projection expression
      */
@@ -252,19 +256,19 @@ public interface FilterParams {
 
     /**
      * Get X Protocol Projection objects.
-     * 
+     *
      * @return List of X Protocol Projection objects.
      */
     Object getFields();
 
     /**
      * Parse groupBy expressions into X Protocol Expr objects.
-     * 
+     *
      * <pre>
      * SelectStatement stmt = table.select("age as age_group, count(name) as cnt, something");
      * stmt.groupBy("something", "age_group");
      * </pre>
-     * 
+     *
      * @param groupBy
      *            groupBy expression
      */
@@ -272,20 +276,20 @@ public interface FilterParams {
 
     /**
      * Get X Protocol Expr objects for groupBy.
-     * 
+     *
      * @return List of X Protocol Expr objects
      */
     Object getGrouping();
 
     /**
      * Parse having expressions into X Protocol Expr objects.
-     * 
+     *
      * <pre>
      * SelectStatement stmt = table.select("age as age_group, count(name) as cnt, something");
      * stmt.groupBy("something", "age_group");
      * stmt.having("cnt &gt; 1");
      * </pre>
-     * 
+     *
      * @param having
      *            having expression
      */
@@ -293,21 +297,21 @@ public interface FilterParams {
 
     /**
      * Get X Protocol Expr objects for grouping criteria.
-     * 
+     *
      * @return List of X Protocol Expr objects
      */
     Object getGroupingCriteria();
 
     /**
      * Get {@link RowLock} value.
-     * 
+     *
      * @return {@link RowLock}
      */
     RowLock getLock();
 
     /**
      * Set {@link RowLock} value.
-     * 
+     *
      * @param rowLock
      *            {@link RowLock}
      */
@@ -315,16 +319,17 @@ public interface FilterParams {
 
     /**
      * Get {@link RowLockOptions} value.
-     * 
+     *
      * @return {@link RowLockOptions}
      */
     RowLockOptions getLockOption();
 
     /**
      * Set {@link RowLockOptions} value.
-     * 
+     *
      * @param rowLockOption
      *            {@link RowLockOptions}
      */
     void setLockOption(RowLockOptions rowLockOption);
+
 }

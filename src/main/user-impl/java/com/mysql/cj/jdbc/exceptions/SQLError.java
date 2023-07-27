@@ -49,17 +49,17 @@ import com.mysql.cj.util.Util;
  * SQLError is a utility class that maps MySQL error codes to SQL error codes as is required by the JDBC spec.
  */
 public class SQLError {
+
     /*
      * SQL State Class SQLNonTransientException Subclass 08
      * SQLNonTransientConnectionException 22 SQLDataException 23
      * SQLIntegrityConstraintViolationException N/A
      * SQLInvalidAuthorizationException 42 SQLSyntaxErrorException
-     * 
+     *
      * SQL State Class SQLTransientException Subclass 08
      * SQLTransientConnectionException 40 SQLTransactionRollbackException N/A
      * SQLTimeoutException
      */
-
     public static SQLException createSQLException(String message, String sqlState, ExceptionInterceptor interceptor) {
         return createSQLException(message, sqlState, 0, interceptor);
     }
@@ -155,7 +155,6 @@ public class SQLError {
 
     public static SQLException createCommunicationsException(JdbcConnection conn, PacketSentTimeHolder packetSentTimeHolder,
             PacketReceivedTimeHolder packetReceivedTimeHolder, Exception underlyingException, ExceptionInterceptor interceptor) {
-
         SQLException exToReturn = new CommunicationsException(conn, packetSentTimeHolder, packetReceivedTimeHolder, underlyingException);
 
         if (underlyingException != null) {
@@ -187,7 +186,7 @@ public class SQLError {
 
     /**
      * Run exception through an ExceptionInterceptor chain.
-     * 
+     *
      * @param exInterceptor
      *            exception interceptor
      * @param sqlEx
@@ -207,7 +206,7 @@ public class SQLError {
 
     /**
      * Create a BatchUpdateException.
-     * 
+     *
      * @param underlyingEx
      *            underlying exception
      * @param updateCounts
@@ -228,7 +227,7 @@ public class SQLError {
 
     /**
      * Create a SQLFeatureNotSupportedException or a NotImplemented exception according to the JDBC version in use.
-     * 
+     *
      * @return SQLException
      */
     public static SQLException createSQLFeatureNotSupportedException() {
@@ -237,7 +236,7 @@ public class SQLError {
 
     /**
      * Create a SQLFeatureNotSupportedException or a NotImplemented exception according to the JDBC version in use.
-     * 
+     *
      * @param message
      *            error message
      * @param sqlState
@@ -252,4 +251,5 @@ public class SQLError {
         SQLException newEx = new SQLFeatureNotSupportedException(message, sqlState);
         return runThroughExceptionInterceptor(interceptor, newEx);
     }
+
 }

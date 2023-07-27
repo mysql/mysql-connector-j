@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,6 +47,7 @@ import com.mysql.cj.protocol.InternalTimestamp;
  * Value factory to create {@link Calendar} instances.
  */
 public class UtilCalendarValueFactory extends AbstractDateTimeValueFactory<Calendar> {
+
     private TimeZone defaultTimeZone;
     private TimeZone connectionTimeZone;
 
@@ -144,7 +145,9 @@ public class UtilCalendarValueFactory extends AbstractDateTimeValueFactory<Calen
         }
     }
 
+    @Override
     public String getTargetTypeName() {
         return Calendar.class.getName();
     }
+
 }

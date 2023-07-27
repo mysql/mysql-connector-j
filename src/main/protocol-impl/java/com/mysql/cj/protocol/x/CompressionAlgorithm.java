@@ -43,6 +43,7 @@ import com.mysql.cj.exceptions.WrongArgumentException;
  * Contains all information about a compression algorithm, its name, compression mode and classes that implement the inflating and deflating streams of data.
  */
 public class CompressionAlgorithm {
+
     private static final Map<String, String> ALIASES = new HashMap<>();
     static {
         ALIASES.put("deflate", "deflate_stream");
@@ -57,7 +58,7 @@ public class CompressionAlgorithm {
 
     /**
      * Returns a list of the compression algorithms supported natively. Additional algorithms can be registered by user.
-     * 
+     *
      * @return a list of the compression algorithms supported natively.
      */
     public static Map<String, CompressionAlgorithm> getDefaultInstances() {
@@ -70,7 +71,7 @@ public class CompressionAlgorithm {
     /**
      * Returns the normalized compression algorithm identifier. A normalized identifier is composed by a compression algorithm name followed by '_' and then the
      * the compression operation mode ("stream" vs "message").
-     * 
+     *
      * @param name
      *            the non-normalized compression algorithm identifier.
      * @return
@@ -113,7 +114,7 @@ public class CompressionAlgorithm {
 
     /**
      * Gets this algorithm's identifier.
-     * 
+     *
      * @return an algorithm identifier.
      */
     public String getAlgorithmIdentifier() {
@@ -122,7 +123,7 @@ public class CompressionAlgorithm {
 
     /**
      * Gets this algorithm's compression mode.
-     * 
+     *
      * @return an algorithm {@link CompressionMode}
      */
     public CompressionMode getCompressionMode() {
@@ -131,7 +132,7 @@ public class CompressionAlgorithm {
 
     /**
      * Gets this algorithm's {@link InputStream} implementation class name that can be used to inflate data.
-     * 
+     *
      * @return an {@link InputStream} that knows how to inflate data.
      */
     public String getInputStreamClassName() {
@@ -140,10 +141,11 @@ public class CompressionAlgorithm {
 
     /**
      * Gets this algorithm's {@link OutputStream} implementation class name that can be used to deflate data.
-     * 
+     *
      * @return an {@link OutputStream} that knows how to deflate data.
      */
     public String getOutputStreamClassName() {
         return this.outputStreamClassFqn;
     }
+
 }

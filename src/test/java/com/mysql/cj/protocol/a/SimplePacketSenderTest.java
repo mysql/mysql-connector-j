@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -42,6 +42,7 @@ import org.junit.jupiter.api.Test;
  * Tests for simple/direct packet sender.
  */
 public class SimplePacketSenderTest extends PacketSenderTestBase {
+
     private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     private SimplePacketSender sender = new SimplePacketSender(new BufferedOutputStream(this.outputStream));
 
@@ -73,7 +74,7 @@ public class SimplePacketSenderTest extends PacketSenderTestBase {
         final int leftoverPacketLen = 4000;
         // test 2, 3, 4 multipackets
         for (int multiPackets = 2; multiPackets <= 4; ++multiPackets) {
-            final int packetLen = ((multiPackets - 1) * NativeConstants.MAX_PACKET_SIZE) + leftoverPacketLen;
+            final int packetLen = (multiPackets - 1) * NativeConstants.MAX_PACKET_SIZE + leftoverPacketLen;
 
             byte[] packet = new byte[packetLen];
 
@@ -84,7 +85,7 @@ public class SimplePacketSenderTest extends PacketSenderTestBase {
             packet[packetLen - 1] = (byte) (20 + multiPackets);
             for (int i = 1; i < multiPackets; ++i) {
                 // last byte of full packet
-                packet[(NativeConstants.MAX_PACKET_SIZE * i) - 1] = (byte) (20 + i);
+                packet[NativeConstants.MAX_PACKET_SIZE * i - 1] = (byte) (20 + i);
                 // first byte of next packet
                 packet[NativeConstants.MAX_PACKET_SIZE * i] = (byte) (10 + i + 1);
             }
@@ -97,8 +98,8 @@ public class SimplePacketSenderTest extends PacketSenderTestBase {
             int offset = 0;
             byte[] sentPacket = this.outputStream.toByteArray();
             // size of ALL packets written to output stream
-            int sizeOfAllPackets = (NativeConstants.HEADER_LENGTH * multiPackets) + // header for each full packet + one leftover
-                    (NativeConstants.MAX_PACKET_SIZE * (multiPackets - 1)) + // FULL packet payloads
+            int sizeOfAllPackets = NativeConstants.HEADER_LENGTH * multiPackets + // header for each full packet + one leftover
+                    NativeConstants.MAX_PACKET_SIZE * (multiPackets - 1) + // FULL packet payloads
                     leftoverPacketLen;
             assertEquals(sizeOfAllPackets, sentPacket.length);
 
@@ -122,7 +123,7 @@ public class SimplePacketSenderTest extends PacketSenderTestBase {
 
     /**
      * Test the case where the packet size is a multiple of the max packet size. We need to send an extra empty packet to signal that the payload is complete.
-     * 
+     *
      * @throws IOException
      */
     @Test
@@ -141,8 +142,8 @@ public class SimplePacketSenderTest extends PacketSenderTestBase {
             int offset = 0;
             byte[] sentPacket = this.outputStream.toByteArray();
             // size of ALL packets written to output stream
-            int sizeOfAllPackets = (NativeConstants.HEADER_LENGTH * (multiple + 1)) + // header for each full packet + one empty
-                    (NativeConstants.MAX_PACKET_SIZE * multiple); // FULL packet payloads
+            int sizeOfAllPackets = NativeConstants.HEADER_LENGTH * (multiple + 1) + // header for each full packet + one empty
+                    NativeConstants.MAX_PACKET_SIZE * multiple; // FULL packet payloads
             assertEquals(sizeOfAllPackets, sentPacket.length);
             // check that `multiple' packets are sent plus one empty packet
             for (int i = 0; i < multiple + 1; ++i) {
@@ -158,4 +159,5 @@ public class SimplePacketSenderTest extends PacketSenderTestBase {
             }
         }
     }
+
 }

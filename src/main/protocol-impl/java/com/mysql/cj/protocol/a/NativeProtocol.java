@@ -75,6 +75,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TimeZone;
 import java.util.function.Supplier;
@@ -177,7 +178,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     /**
      * Packet used for 'LOAD DATA LOCAL INFILE'
-     * 
+     *
      * We use a SoftReference, so that we don't penalize intermittent use of this feature
      */
     private SoftReference<NativePacketPayload> loadFileBufRef;
@@ -308,7 +309,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         protocolEntityClassToBinaryReader.put(ColumnDefinition.class, new ColumnDefinitionReader(this));
         protocolEntityClassToBinaryReader.put(Resultset.class, new BinaryResultsetReader(this));
         this.PROTOCOL_ENTITY_CLASS_TO_BINARY_READER = Collections.unmodifiableMap(protocolEntityClassToBinaryReader);
-
     }
 
     @Override
@@ -331,6 +331,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         return this.commandBuilder = new NativeMessageBuilder(this.serverSession.supportsQueryAttributes());
     }
 
+    @Override
     public Supplier<ValueEncoder> getValueEncoderSupplier(Object obj) {
         if (obj == null) {
             return NullValueEncoder::new;
@@ -338,7 +339,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         Supplier<ValueEncoder> res = DEFAULT_ENCODERS.get(obj.getClass());
         if (res == null) {
             Optional<Supplier<ValueEncoder>> mysqlType = DEFAULT_ENCODERS.entrySet().stream().filter(m -> m.getKey().isAssignableFrom(obj.getClass()))
-                    .map(m -> m.getValue()).findFirst();
+                    .map(Entry::getValue).findFirst();
             if (mysqlType.isPresent()) {
                 res = mysqlType.get();
             }
@@ -422,19 +423,17 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
         // Read the first packet
         this.serverSession.setCapabilities(readServerCapabilities());
-
     }
 
     @Override
     public void afterHandshake() {
-
         checkTransactionState();
 
         try {
             //
             // Can't enable compression until after handshake
             //
-            if (((this.serverSession.getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_COMPRESS) != 0)
+            if ((this.serverSession.getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_COMPRESS) != 0
                     && this.propertySet.getBooleanProperty(PropertyKey.useCompression).getValue()
                     && !(this.socketConnection.getMysqlInput().getUnderlyingStream() instanceof CompressedInputStream)) {
                 this.useCompression = true;
@@ -482,7 +481,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     /**
      * Apply optional decorators to configured PacketSender and PacketReader.
-     * 
+     *
      * @param sender
      *            {@link MessageSender}
      * @param messageReader
@@ -515,7 +514,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                     this.propertySet.getIntegerProperty(PropertyKey.packetDebugBufferSize));
         }
 
-        // do it after other decorators to have trace and debug applied to individual packets 
+        // do it after other decorators to have trace and debug applied to individual packets
         messageReader = new MultiPacketReader(messageReader);
 
         // atomic replacement of currently used objects
@@ -532,6 +531,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         }
     }
 
+    @Override
     public NativeCapabilities readServerCapabilities() {
         // Read the first packet
         NativePacketPayload buf = readMessage(null);
@@ -694,7 +694,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             NativePacketPayload returnPacket = null;
 
             if (!skipCheck) {
-                if ((command == NativeConstants.COM_STMT_EXECUTE) || (command == NativeConstants.COM_STMT_RESET)) {
+                if (command == NativeConstants.COM_STMT_EXECUTE || command == NativeConstants.COM_STMT_RESET) {
                     this.packetReader.resetMessageSequence();
                 }
 
@@ -735,6 +735,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         }
     }
 
+    @Override
     public NativePacketPayload checkErrorMessage() {
         return checkErrorMessage(-1);
     }
@@ -742,7 +743,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     /**
      * Checks for errors in the reply packet, and if none, returns the reply
      * packet, ready for reading
-     * 
+     *
      * @param command
      *            the command being issued (if used)
      * @return NativePacketPayload
@@ -752,7 +753,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      *             if a database error occurs
      */
     private NativePacketPayload checkErrorMessage(int command) {
-
         NativePacketPayload resultPacket = null;
         this.serverSession.setStatusFlags(0);
 
@@ -774,7 +774,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     public void checkErrorMessage(NativePacketPayload resultPacket) {
-
         resultPacket.setPosition(0);
         byte statusCode = (byte) resultPacket.readInteger(IntegerDataType.INT1);
 
@@ -852,7 +851,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     private void reclaimLargeSharedSendPacket() {
-        if ((this.sharedSendPacket != null) && (this.sharedSendPacket.getCapacity() > 1048576)) {
+        if (this.sharedSendPacket != null && this.sharedSendPacket.getCapacity() > 1048576) {
             this.sharedSendPacket = new NativePacketPayload(INITIAL_PACKET_SIZE);
         }
     }
@@ -876,14 +875,14 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      * Don't hold on to overly-large packets
      */
     public void reclaimLargeReusablePacket() {
-        if ((this.reusablePacket != null) && (this.reusablePacket.getCapacity() > 1048576)) {
+        if (this.reusablePacket != null && this.reusablePacket.getCapacity() > 1048576) {
             this.reusablePacket = new NativePacketPayload(INITIAL_PACKET_SIZE);
         }
     }
 
     /**
      * Build a query packet from the given string and send it to the server.
-     * 
+     *
      * @param <T>
      *            extends {@link Resultset}
      * @param callingQuery
@@ -914,7 +913,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
         // We don't know exactly how many bytes we're going to get from the query. Since we're dealing with UTF-8, the max is 4, so pad it
         // (4 * query) + space for headers
-        int packLength = 1 /* com_query */ + (query.length() * 4) + 2;
+        int packLength = 1 /* com_query */ + query.length() * 4 + 2;
 
         byte[] commentAsBytes = null;
 
@@ -1000,7 +999,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     /**
      * Send a query stored in a packet to the server.
-     * 
+     *
      * @param <T>
      *            extends {@link Resultset}
      * @param callingQuery
@@ -1021,7 +1020,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      */
     public final <T extends Resultset> T sendQueryPacket(Query callingQuery, NativePacketPayload queryPacket, int maxRows, boolean streamResults,
             ColumnDefinition cachedMetadata, ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
-
         final long queryStartTime = getCurrentTimeNanosOrMillis();
 
         this.statementExecutionDepth++;
@@ -1029,7 +1027,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         byte[] queryBuf = queryPacket.getByteBuffer();
         int oldPacketPosition = queryPacket.getPosition(); // save the packet position
         int queryPosition = queryPacket.getTag("QUERY");
-        LazyString query = new LazyString(queryBuf, queryPosition, (oldPacketPosition - queryPosition));
+        LazyString query = new LazyString(queryBuf, queryPosition, oldPacketPosition - queryPosition);
 
         try {
 
@@ -1070,7 +1068,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                 // Extract the actual query from the network packet
                 boolean truncated = oldPacketPosition - queryPosition > this.maxQuerySizeToLog.getValue();
                 int extractPosition = truncated ? this.maxQuerySizeToLog.getValue() + queryPosition : oldPacketPosition;
-                String extractedQuery = StringUtils.toString(queryBuf, queryPosition, (extractPosition - queryPosition));
+                String extractedQuery = StringUtils.toString(queryBuf, queryPosition, extractPosition - queryPosition);
                 if (truncated) {
                     extractedQuery += Messages.getString("Protocol.2");
                 }
@@ -1086,7 +1084,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
                         if (this.propertySet.getBooleanProperty(PropertyKey.explainSlowQueries).getValue()) {
                             if (oldPacketPosition - queryPosition < MAX_QUERY_SIZE_TO_EXPLAIN) {
-                                queryPacket.setPosition(queryPosition); // skip until the query is located in the packet 
+                                queryPacket.setPosition(queryPosition); // skip until the query is located in the packet
                                 explainSlowQuery(query.toString(), extractedQuery);
                             } else {
                                 this.log.logWarn(Messages.getString("Protocol.3", new Object[] { MAX_QUERY_SIZE_TO_EXPLAIN }));
@@ -1110,7 +1108,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
                 if (this.profileSQL) {
                     eventSink.processEvent(ProfilerEvent.TYPE_QUERY, this.session, callingQuery, rs, queryDuration, new Throwable(), extractedQuery);
-                    eventSink.processEvent(ProfilerEvent.TYPE_FETCH, this.session, callingQuery, rs, (fetchEndTime - fetchBeginTime), new Throwable(), null);
+                    eventSink.processEvent(ProfilerEvent.TYPE_FETCH, this.session, callingQuery, rs, fetchEndTime - fetchBeginTime, new Throwable(), null);
                 }
             }
 
@@ -1148,7 +1146,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             QueryInterceptor interceptor = this.queryInterceptors.get(i);
 
             boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
-            boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute)) || (!executeTopLevelOnly);
+            boolean shouldExecute = executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute) || !executeTopLevelOnly;
 
             if (shouldExecute) {
                 T interceptedResultSet = interceptor.preProcess(sql, interceptedQuery);
@@ -1163,7 +1161,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     /**
-     * 
+     *
      * @param <M>
      *            extends {@link Message}
      * @param queryPacket
@@ -1194,12 +1192,11 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     public <T extends Resultset> T invokeQueryInterceptorsPost(Supplier<String> sql, Query interceptedQuery, T originalResultSet, boolean forceExecute) {
-
         for (int i = 0, s = this.queryInterceptors.size(); i < s; i++) {
             QueryInterceptor interceptor = this.queryInterceptors.get(i);
 
             boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
-            boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute)) || (!executeTopLevelOnly);
+            boolean shouldExecute = executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute) || !executeTopLevelOnly;
 
             if (shouldExecute) {
                 T interceptedResultSet = interceptor.postProcess(sql, interceptedQuery, originalResultSet, this.serverSession);
@@ -1214,7 +1211,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     /**
-     * 
+     *
      * @param <M>
      *            extends {@link Message}
      * @param queryPacket
@@ -1226,7 +1223,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      * @return T instance
      */
     public <M extends Message> M invokeQueryInterceptorsPost(M queryPacket, M originalResponsePacket, boolean forceExecute) {
-
         for (int i = 0, s = this.queryInterceptors.size(); i < s; i++) {
             QueryInterceptor interceptor = this.queryInterceptors.get(i);
 
@@ -1259,16 +1255,16 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     /**
      * Runs an 'EXPLAIN' on the given query and dumps the results to the log
-     * 
+     *
      * @param query
      *            full query string
      * @param truncatedQuery
      *            query string truncated for profiling
-     * 
+     *
      */
     public void explainSlowQuery(String query, String truncatedQuery) {
         if (StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT)
-                || (versionMeetsMinimum(5, 6, 3) && StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT_EXTENSION) != -1)) {
+                || versionMeetsMinimum(5, 6, 3) && StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT_EXTENSION) != -1) {
 
             try {
                 NativePacketPayload resultPacket = sendCommand(getCommandBuilder().buildComQuery(getSharedSendPacket(), "EXPLAIN " + query), false, 0);
@@ -1293,7 +1289,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     /**
      * Reads and discards a single MySQL packet.
-     * 
+     *
      * @throws CJException
      *             if the network fails while skipping the
      *             packet.
@@ -1309,7 +1305,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     /**
      * Log-off of the MySQL server and close the socket.
-     * 
+     *
      */
     public final void quit() {
         try {
@@ -1340,7 +1336,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     /**
      * Returns the packet used for sending data (used by PreparedStatement) with position set to 0.
      * Guarded by external synchronization on a mutex.
-     * 
+     *
      * @return A packet to send data with
      */
     public NativePacketPayload getSharedSendPacket() {
@@ -1368,15 +1364,16 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     /**
      * Re-authenticates as the given user and password
-     * 
+     *
      * @param user
      *            user name
      * @param password
      *            password
      * @param database
      *            database name
-     * 
+     *
      */
+    @Override
     public void changeUser(String user, String password, String database) {
         this.packetSequence = -1;
         this.packetSender = this.packetSender.undecorateAll();
@@ -1422,6 +1419,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         }
     }
 
+    @Override
     public void connect(String user, String password, String database) {
         // session creation & initialization happens here
 
@@ -1469,25 +1467,27 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         }
     }
 
+    @Override
     public boolean versionMeetsMinimum(int major, int minor, int subminor) {
         return this.serverSession.getServerVersion().meetsMinimum(new ServerVersion(major, minor, subminor));
     }
 
     public static MysqlType findMysqlType(PropertySet propertySet, int mysqlTypeId, short colFlag, long length, LazyString tableName,
             LazyString originalTableName, int collationIndex, String encoding) {
-
-        boolean isUnsigned = ((colFlag & MysqlType.FIELD_FLAG_UNSIGNED) > 0);
+        boolean isUnsigned = (colFlag & MysqlType.FIELD_FLAG_UNSIGNED) > 0;
         boolean isFromFunction = originalTableName.length() == 0;
-        boolean isBinary = ((colFlag & MysqlType.FIELD_FLAG_BINARY) > 0);
+        boolean isBinary = (colFlag & MysqlType.FIELD_FLAG_BINARY) > 0;
         /**
          * Is this field owned by a server-created temporary table?
          */
         boolean isImplicitTemporaryTable = tableName.length() > 0 && tableName.toString().startsWith("#sql_");
 
-        boolean isOpaqueBinary = (isBinary && collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary && (mysqlTypeId == MysqlType.FIELD_TYPE_STRING
-                || mysqlTypeId == MysqlType.FIELD_TYPE_VAR_STRING || mysqlTypeId == MysqlType.FIELD_TYPE_VARCHAR)) ?
-        // queries resolved by temp tables also have this 'signature', check for that
-                        !isImplicitTemporaryTable : "binary".equalsIgnoreCase(encoding);
+        boolean isOpaqueBinary = isBinary && collationIndex == CharsetMapping.MYSQL_COLLATION_INDEX_binary
+                && (mysqlTypeId == MysqlType.FIELD_TYPE_STRING || mysqlTypeId == MysqlType.FIELD_TYPE_VAR_STRING || mysqlTypeId == MysqlType.FIELD_TYPE_VARCHAR)
+                        ?
+                        // queries resolved by temp tables also have this 'signature', check for that
+                        !isImplicitTemporaryTable
+                        : "binary".equalsIgnoreCase(encoding);
 
         switch (mysqlTypeId) {
             case MysqlType.FIELD_TYPE_DECIMAL:
@@ -1570,7 +1570,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             case MysqlType.FIELD_TYPE_TINY_BLOB:
                 if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
                         || propertySet.getBooleanProperty(PropertyKey.blobsAreStrings).getValue()
-                        || isFromFunction && (propertySet.getBooleanProperty(PropertyKey.functionsNeverReturnBlobs).getValue())) {
+                        || isFromFunction && propertySet.getBooleanProperty(PropertyKey.functionsNeverReturnBlobs).getValue()) {
                     return MysqlType.TINYTEXT;
                 }
                 return MysqlType.TINYBLOB;
@@ -1578,7 +1578,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             case MysqlType.FIELD_TYPE_MEDIUM_BLOB:
                 if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
                         || propertySet.getBooleanProperty(PropertyKey.blobsAreStrings).getValue()
-                        || isFromFunction && (propertySet.getBooleanProperty(PropertyKey.functionsNeverReturnBlobs).getValue())) {
+                        || isFromFunction && propertySet.getBooleanProperty(PropertyKey.functionsNeverReturnBlobs).getValue()) {
                     return MysqlType.MEDIUMTEXT;
                 }
                 return MysqlType.MEDIUMBLOB;
@@ -1586,7 +1586,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             case MysqlType.FIELD_TYPE_LONG_BLOB:
                 if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
                         || propertySet.getBooleanProperty(PropertyKey.blobsAreStrings).getValue()
-                        || isFromFunction && (propertySet.getBooleanProperty(PropertyKey.functionsNeverReturnBlobs).getValue())) {
+                        || isFromFunction && propertySet.getBooleanProperty(PropertyKey.functionsNeverReturnBlobs).getValue()) {
                     return MysqlType.LONGTEXT;
                 }
                 return MysqlType.LONGBLOB;
@@ -1604,7 +1604,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                 } else if (length <= MysqlType.BLOB.getPrecision()) {
                     if (!isBinary || collationIndex != CharsetMapping.MYSQL_COLLATION_INDEX_binary
                             || propertySet.getBooleanProperty(PropertyKey.blobsAreStrings).getValue()
-                            || isFromFunction && (propertySet.getBooleanProperty(PropertyKey.functionsNeverReturnBlobs).getValue())) {
+                            || isFromFunction && propertySet.getBooleanProperty(PropertyKey.functionsNeverReturnBlobs).getValue()) {
                         newMysqlTypeId = MysqlType.FIELD_TYPE_VARCHAR;
                         return MysqlType.TEXT;
                     }
@@ -1663,7 +1663,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     /**
      * Read next result set from multi-result chain.
-     * 
+     *
      * @param <T>
      *            extends {@link ProtocolEntity}
      * @param currentProtocolEntity
@@ -1682,7 +1682,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      */
     public <T extends ProtocolEntity> T readNextResultset(T currentProtocolEntity, int maxRows, boolean streamResults, boolean isBinaryEncoded,
             ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
-
         T result = null;
         if (Resultset.class.isAssignableFrom(currentProtocolEntity.getClass()) && this.serverSession.useMultiResults()) {
             if (this.serverSession.hasMoreResults()) {
@@ -1701,7 +1700,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                         result = currentResultSet;
                     }
                 } while (streamResults && this.serverSession.hasMoreResults() // we need to consume all result sets which don't contain rows from streamer right now,
-                        && !((Resultset) currentResultSet).hasRows()); // because next data portion from streamer is available only via ResultsetRows.next() 
+                        && !((Resultset) currentResultSet).hasRows()); // because next data portion from streamer is available only via ResultsetRows.next()
 
             }
         }
@@ -1710,7 +1709,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     public <T extends Resultset> T readAllResults(int maxRows, boolean streamResults, NativePacketPayload resultPacket, boolean isBinaryEncoded,
             ColumnDefinition metadata, ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
-
         resultPacket.setPosition(0);
         T topLevelResultSet = read(Resultset.class, maxRows, streamResults, resultPacket, isBinaryEncoded, metadata, resultSetFactory);
 
@@ -1769,29 +1767,31 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
+    @Override
     public InputStream getLocalInfileInputStream() {
         return this.localInfileInputStream;
     }
 
+    @Override
     public void setLocalInfileInputStream(InputStream stream) {
         this.localInfileInputStream = stream;
     }
 
     /**
      * Reads and sends a file to the server for LOAD DATA LOCAL INFILE
-     * 
+     *
      * @param fileName
      *            the file name to send.
      * @return NativePacketPayload
      */
     public final NativePacketPayload sendFileToServer(String fileName) {
-        NativePacketPayload filePacket = (this.loadFileBufRef == null) ? null : this.loadFileBufRef.get();
+        NativePacketPayload filePacket = this.loadFileBufRef == null ? null : this.loadFileBufRef.get();
 
-        int bigPacketLength = Math.min(this.maxAllowedPacket.getValue() - (NativeConstants.HEADER_LENGTH * 3),
-                alignPacketSize(this.maxAllowedPacket.getValue() - 16, 4096) - (NativeConstants.HEADER_LENGTH * 3));
+        int bigPacketLength = Math.min(this.maxAllowedPacket.getValue() - NativeConstants.HEADER_LENGTH * 3,
+                alignPacketSize(this.maxAllowedPacket.getValue() - 16, 4096) - NativeConstants.HEADER_LENGTH * 3);
         int oneMeg = 1024 * 1024;
-        int smallerPacketSizeAligned = Math.min(oneMeg - (NativeConstants.HEADER_LENGTH * 3),
-                alignPacketSize(oneMeg - 16, 4096) - (NativeConstants.HEADER_LENGTH * 3));
+        int smallerPacketSizeAligned = Math.min(oneMeg - NativeConstants.HEADER_LENGTH * 3,
+                alignPacketSize(oneMeg - 16, 4096) - NativeConstants.HEADER_LENGTH * 3);
         int packetLength = Math.min(smallerPacketSizeAligned, bigPacketLength);
 
         if (filePacket == null) {
@@ -1952,7 +1952,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     private int alignPacketSize(int a, int l) {
-        return ((((a) + (l)) - 1) & ~((l) - 1));
+        return a + l - 1 & ~(l - 1);
     }
 
     private ResultsetRows streamingData = null;
@@ -2142,13 +2142,13 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     /**
      * Turns output of 'SHOW WARNINGS' into JDBC SQLWarning instances.
-     * 
+     *
      * If 'forTruncationOnly' is true, only looks for truncation warnings, and
      * actually throws DataTruncation as an exception.
-     * 
+     *
      * @param forTruncationOnly
      *            if this method should only scan for data truncation warnings
-     * 
+     *
      * @return the SQLWarning chain (or null if no warnings)
      */
     public SQLWarning convertShowWarningsToSQLWarnings(boolean forTruncationOnly) {
@@ -2195,7 +2195,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                         }
                     }
                 } else {
-                    //String level = warnRs.getString("Level"); 
+                    //String level = warnRs.getString("Level");
                     String message = r.getValue(messageFieldIndex, svf);
 
                     SQLWarning newWarning = new SQLWarning(message, MysqlErrorNumbers.mysqlToSqlState(code), code);
@@ -2207,7 +2207,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                 }
             }
 
-            if (forTruncationOnly && (currentWarning != null)) {
+            if (forTruncationOnly && currentWarning != null) {
                 throw ExceptionFactory.createException(currentWarning.getMessage(), currentWarning);
             }
 
@@ -2233,11 +2233,12 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     /**
      * Configures the client's timezone if required.
-     * 
+     *
      * @throws CJException
      *             if the timezone the server is configured to use can't be
      *             mapped to a Java timezone.
      */
+    @Override
     public void configureTimeZone() {
         String connectionTimeZone = getPropertySet().getStringProperty(PropertyKey.connectionTimeZone).getValue();
 
@@ -2307,4 +2308,5 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
         this.serverSession.getCharsetSettings().configurePostHandshake(false);
     }
+
 }

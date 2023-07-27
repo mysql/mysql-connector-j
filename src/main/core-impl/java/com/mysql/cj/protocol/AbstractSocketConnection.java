@@ -54,18 +54,22 @@ public abstract class AbstractSocketConnection implements SocketConnection {
     protected ExceptionInterceptor exceptionInterceptor;
     protected PropertySet propertySet;
 
+    @Override
     public String getHost() {
         return this.host;
     }
 
+    @Override
     public int getPort() {
         return this.port;
     }
 
+    @Override
     public Socket getMysqlSocket() {
         return this.mysqlSocket;
     }
 
+    @Override
     public FullReadInputStream getMysqlInput() throws IOException {
         if (this.mysqlInput != null) {
             return this.mysqlInput;
@@ -73,10 +77,12 @@ public abstract class AbstractSocketConnection implements SocketConnection {
         throw new IOException(Messages.getString("SocketConnection.1"));
     }
 
+    @Override
     public void setMysqlInput(FullReadInputStream mysqlInput) {
         this.mysqlInput = mysqlInput;
     }
 
+    @Override
     public BufferedOutputStream getMysqlOutput() throws IOException {
         if (this.mysqlOutput != null) {
             return this.mysqlOutput;
@@ -84,14 +90,17 @@ public abstract class AbstractSocketConnection implements SocketConnection {
         throw new IOException(Messages.getString("SocketConnection.1"));
     }
 
+    @Override
     public boolean isSSLEstablished() {
         return ExportControlled.enabled() && ExportControlled.isSSLEstablished(this.getMysqlSocket());
     }
 
+    @Override
     public SocketFactory getSocketFactory() {
         return this.socketFactory;
     }
 
+    @Override
     public void setSocketFactory(SocketFactory socketFactory) {
         this.socketFactory = socketFactory;
     }
@@ -99,6 +108,7 @@ public abstract class AbstractSocketConnection implements SocketConnection {
     /**
      * Forcibly closes the underlying socket to MySQL.
      */
+    @Override
     public void forceClose() {
         try {
             getNetworkResources().forceClose();
@@ -111,14 +121,17 @@ public abstract class AbstractSocketConnection implements SocketConnection {
 
     // We do this to break the chain between MysqlIO and Connection, so that we can have PhantomReferences on connections that let the driver clean up the
     // socket connection without having to use finalize() somewhere (which although more straightforward, is horribly inefficient).
+    @Override
     public NetworkResources getNetworkResources() {
         return new NetworkResources(this.mysqlSocket, this.mysqlInput, this.mysqlOutput);
     }
 
+    @Override
     public ExceptionInterceptor getExceptionInterceptor() {
         return this.exceptionInterceptor;
     }
 
+    @Override
     public PropertySet getPropertySet() {
         return this.propertySet;
     }
@@ -144,4 +157,5 @@ public abstract class AbstractSocketConnection implements SocketConnection {
             throw e1;
         }
     }
+
 }

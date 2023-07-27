@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -62,6 +62,7 @@ import com.mysql.cj.protocol.x.XProtocolError;
 import com.mysql.cj.util.StringUtils;
 
 public class ClientImpl implements Client, ProtocolEventListener {
+
     boolean isClosed = false;
 
     private ConnectionUrl connUrl = null;
@@ -99,7 +100,7 @@ public class ClientImpl implements Client, ProtocolEventListener {
             if (!DbDoc.class.isAssignableFrom(pooling.getClass())) {
                 throw new XDevAPIError(String.format("Client option 'pooling' does not support value '%s'.", pooling.toFormattedString()));
             }
-            DbDoc poolingDoc = ((DbDoc) pooling);
+            DbDoc poolingDoc = (DbDoc) pooling;
             JsonValue jsonVal;
 
             jsonVal = poolingDoc.remove("enabled");
@@ -284,7 +285,7 @@ public class ClientImpl implements Client, ProtocolEventListener {
         while (prot == null && (this.queueTimeout == 0 || System.currentTimeMillis() < start + this.queueTimeout)) { // TODO how to avoid endless loop?
             synchronized (this.idleProtocols) {
                 if (this.idleProtocols.peek() != null) {
-                    // 1. If there are idle Protocols then return one of them. 
+                    // 1. If there are idle Protocols then return one of them.
                     PooledXProtocol tryProt = this.idleProtocols.poll();
                     if (tryProt.isOpen()) { // ignore closed Session, try next idle Session
                         if (tryProt.isIdleTimeoutReached()) {
@@ -388,13 +389,13 @@ public class ClientImpl implements Client, ProtocolEventListener {
             if (this.poolingEnabled) {
                 if (!this.isClosed) {
                     this.isClosed = true;
-                    this.idleProtocols.forEach(s -> s.realClose());
+                    this.idleProtocols.forEach(PooledXProtocol::realClose);
                     this.idleProtocols.clear();
-                    this.activeProtocols.stream().map(WeakReference::get).filter(Objects::nonNull).forEach(s -> s.realClose());
+                    this.activeProtocols.stream().map(WeakReference::get).filter(Objects::nonNull).forEach(PooledXProtocol::realClose);
                     this.activeProtocols.clear();
                 }
             } else {
-                this.nonPooledSessions.stream().map(WeakReference::get).filter(Objects::nonNull).filter(Session::isOpen).forEach(s -> s.close());
+                this.nonPooledSessions.stream().map(WeakReference::get).filter(Objects::nonNull).filter(Session::isOpen).forEach(Session::close);
             }
         }
     }
@@ -423,6 +424,7 @@ public class ClientImpl implements Client, ProtocolEventListener {
     }
 
     public class PooledXProtocol extends XProtocol {
+
         long idleSince = -1;
         HostInfo hostInfo = null;
 
@@ -457,6 +459,7 @@ public class ClientImpl implements Client, ProtocolEventListener {
                 // TODO is it really no-op?
             }
         }
+
     }
 
     @Override
@@ -500,4 +503,5 @@ public class ClientImpl implements Client, ProtocolEventListener {
         this.activeProtocols.remove(wprot);
         prot.realClose();
     }
+
 }

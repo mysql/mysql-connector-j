@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2022, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -153,7 +153,7 @@ public class InputStreamValueEncoder extends AbstractValueEncoder {
                 packet.writeInteger(IntegerDataType.INT1, (byte) '0');
                 lastwritten = i + 1;
             } else {
-                if ((b == '\\') || (b == '\'')) {
+                if (b == '\\' || b == '\'') {
                     // write stuff not yet written
                     if (i > lastwritten) {
                         packet.writeBytes(StringLengthDataType.STRING_FIXED, buf, lastwritten, i - lastwritten);

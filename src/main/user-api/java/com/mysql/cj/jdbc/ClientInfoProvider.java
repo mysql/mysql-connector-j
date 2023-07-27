@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2007, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,14 +35,15 @@ import java.util.Properties;
 
 /**
  * Classes that implement this interface and provide a no-args constructor can be used by the driver to store and retrieve client information and/or labels.
- * 
+ *
  * The driver will create an instance for each Connection instance, and call initialize() once and only once. When the connection is closed, destroy() will be
  * called, and the provider is expected to clean up any resources at this time.
  */
 public interface ClientInfoProvider {
+
     /**
      * Called once by the driver when it needs to configure the provider.
-     * 
+     *
      * @param conn
      *            the connection that the provider belongs too.
      * @param configurationProps
@@ -56,10 +57,10 @@ public interface ClientInfoProvider {
     /**
      * Called once by the driver when the connection this provider instance
      * belongs to is being closed.
-     * 
+     *
      * Implementations are expected to clean up and resources at this point
      * in time.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs.
      */
@@ -69,12 +70,12 @@ public interface ClientInfoProvider {
      * Returns the client info for the connection that this provider
      * instance belongs to. The connection instance is passed as an argument
      * for convenience's sake.
-     * 
+     *
      * Providers can use the connection to communicate with the database,
      * but it will be within the scope of any ongoing transactions, so therefore
      * implementations should not attempt to change isolation level, autocommit settings
      * or call rollback() or commit() on the connection.
-     * 
+     *
      * @param conn
      *            connection object
      * @throws SQLException
@@ -88,12 +89,12 @@ public interface ClientInfoProvider {
      * Returns the client info for the connection that this provider
      * instance belongs to. The connection instance is passed as an argument
      * for convenience's sake.
-     * 
+     *
      * Providers can use the connection to communicate with the database,
      * but it will be within the scope of any ongoing transactions, so therefore
      * implementations should not attempt to change isolation level, autocommit settings
      * or call rollback() or commit() on the connection.
-     * 
+     *
      * @param conn
      *            connection object
      * @param name
@@ -109,19 +110,19 @@ public interface ClientInfoProvider {
      * Sets the client info for the connection that this provider
      * instance belongs to. The connection instance is passed as an argument
      * for convenience's sake.
-     * 
+     *
      * Providers can use the connection to communicate with the database,
      * but it will be within the scope of any ongoing transactions, so therefore
      * implementations should not attempt to change isolation level, autocommit settings
      * or call rollback() or commit() on the connection.
-     * 
+     *
      * @param conn
      *            connection object
      * @param properties
      *            Properties object
      * @throws SQLClientInfoException
      *             if an error occurs
-     * 
+     *
      * @see java.sql.Connection#setClientInfo(java.util.Properties)
      */
     void setClientInfo(java.sql.Connection conn, Properties properties) throws SQLClientInfoException;
@@ -130,12 +131,12 @@ public interface ClientInfoProvider {
      * Sets the client info for the connection that this provider
      * instance belongs to. The connection instance is passed as an argument
      * for convenience's sake.
-     * 
+     *
      * Providers can use the connection to communicate with the database,
      * but it will be within the scope of any ongoing transactions, so therefore
      * implementations should not attempt to change isolation level, autocommit settings
      * or call rollback() or commit() on the connection.
-     * 
+     *
      * @param conn
      *            connection object
      * @param name
@@ -144,8 +145,9 @@ public interface ClientInfoProvider {
      *            property value
      * @throws SQLClientInfoException
      *             if an error occurs
-     * 
+     *
      * @see java.sql.Connection#setClientInfo(java.lang.String,java.lang.String)
      */
     void setClientInfo(java.sql.Connection conn, String name, String value) throws SQLClientInfoException;
+
 }

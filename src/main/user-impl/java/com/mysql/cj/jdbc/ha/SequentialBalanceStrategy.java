@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2007, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,10 +39,11 @@ import com.mysql.cj.jdbc.JdbcConnection;
 
 /**
  * A balancing strategy that starts at a random point, and then advances in the list (wrapping around) for each new pickConnection() call.
- * 
+ *
  * The initial point selection, and subsequent point selections are blocklist-aware.
  */
 public class SequentialBalanceStrategy implements BalanceStrategy {
+
     private int currentHostIndex = -1;
 
     public SequentialBalanceStrategy() {
@@ -61,7 +62,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
             if (numHosts == 1) {
                 this.currentHostIndex = 0; // pathological case
             } else if (this.currentHostIndex == -1) {
-                int random = (int) Math.floor((Math.random() * numHosts));
+                int random = (int) Math.floor(Math.random() * numHosts);
 
                 for (int i = random; i < numHosts; i++) {
                     if (!blockList.containsKey(configuredHosts.get(i))) {

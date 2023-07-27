@@ -72,7 +72,7 @@ public class ReaderValueEncoder extends AbstractValueEncoder {
             }
 
             long scaleOrLength = binding.getScaleOrLength();
-            if (useLength && (scaleOrLength != -1)) {
+            if (useLength && scaleOrLength != -1) {
                 c = new char[(int) scaleOrLength];
                 int numCharsRead = Util.readFully(reader, c, (int) scaleOrLength); // blocks until all read
                 bytes = StringUtils.getBytes(new String(c, 0, numCharsRead), clobEncoding);

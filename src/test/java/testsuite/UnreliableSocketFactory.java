@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2008, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -54,12 +54,13 @@ import com.mysql.cj.protocol.StandardSocketFactory;
  * Configure "socketFactory" to use this class in your JDBC URL, and it will operate as normal, unless you map some host aliases to actual IP addresses, and
  * then have the test driver call hangOnConnect/Read/Write() which simulate the given failure condition for the host with the <b>alias</b> argument, and will
  * honor connect or socket timeout properties.
- * 
+ *
  * You can also cause a host to be immediately-downed by calling downHost() with an alias.
- * 
+ *
  * ATTENTION! This class is *NOT* thread safe.
  */
 public class UnreliableSocketFactory extends StandardSocketFactory {
+
     public static final String STATUS_UNKNOWN = "?";
     public static final String STATUS_CONNECTED = "/";
     public static final String STATUS_FAILED = "\\";
@@ -177,9 +178,6 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
         try {
             socket = getNewSocket();
             result = STATUS_CONNECTED;
-        } catch (SocketException e) {
-            result = STATUS_FAILED;
-            throw e;
         } catch (IOException e) {
             result = STATUS_FAILED;
             throw e;
@@ -233,61 +231,51 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
         @Override
         public void bind(SocketAddress bindpoint) throws IOException {
-
             this.underlyingSocket.bind(bindpoint);
         }
 
         @Override
         public synchronized void close() throws IOException {
-
             this.underlyingSocket.close();
         }
 
         @Override
         public SocketChannel getChannel() {
-
             return this.underlyingSocket.getChannel();
         }
 
         @Override
         public InetAddress getInetAddress() {
-
             return this.underlyingSocket.getInetAddress();
         }
 
         @Override
         public InputStream getInputStream() throws IOException {
-
             return new HangingInputStream(this.underlyingSocket.getInputStream(), this.propSet, this.aliasedHostname);
         }
 
         @Override
         public boolean getKeepAlive() throws SocketException {
-
             return this.underlyingSocket.getKeepAlive();
         }
 
         @Override
         public InetAddress getLocalAddress() {
-
             return this.underlyingSocket.getLocalAddress();
         }
 
         @Override
         public int getLocalPort() {
-
             return this.underlyingSocket.getLocalPort();
         }
 
         @Override
         public SocketAddress getLocalSocketAddress() {
-
             return this.underlyingSocket.getLocalSocketAddress();
         }
 
         @Override
         public boolean getOOBInline() throws SocketException {
-
             return this.underlyingSocket.getOOBInline();
         }
 
@@ -298,43 +286,36 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 
         @Override
         public int getPort() {
-
             return this.underlyingSocket.getPort();
         }
 
         @Override
         public synchronized int getReceiveBufferSize() throws SocketException {
-
             return this.underlyingSocket.getReceiveBufferSize();
         }
 
         @Override
         public SocketAddress getRemoteSocketAddress() {
-
             return this.underlyingSocket.getRemoteSocketAddress();
         }
 
         @Override
         public boolean getReuseAddress() throws SocketException {
-
             return this.underlyingSocket.getReuseAddress();
         }
 
         @Override
         public synchronized int getSendBufferSize() throws SocketException {
-
             return this.underlyingSocket.getSendBufferSize();
         }
 
         @Override
         public int getSoLinger() throws SocketException {
-
             return this.underlyingSocket.getSoLinger();
         }
 
         @Override
         public synchronized int getSoTimeout() throws SocketException {
-
             return this.underlyingSocket.getSoTimeout();
         }
 
@@ -437,9 +418,11 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
         public String toString() {
             return this.underlyingSocket.toString();
         }
+
     }
 
     static class HangingInputStream extends InputStream {
+
         final InputStream underlyingInputStream;
         final PropertySet propSet;
         final String aliasedHostname;
@@ -510,6 +493,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
                 throw new SocketTimeoutException();
             }
         }
+
     }
 
     static class HangingOutputStream extends OutputStream {
@@ -560,5 +544,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
                 throw new SocketTimeoutException();
             }
         }
+
     }
+
 }

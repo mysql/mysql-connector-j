@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,6 +39,7 @@ import testsuite.BaseTestCase;
  * Base class for performance test cases. Handles statistics.
  */
 public abstract class BasePerfTest extends BaseTestCase {
+
     /**
      * Confidence interval lookup table, indexed by degrees of freedom at 95%.
      */
@@ -84,7 +85,7 @@ public abstract class BasePerfTest extends BaseTestCase {
 
     /**
      * Returns the meanValue.
-     * 
+     *
      * @return double
      */
     public double getMeanValue() {
@@ -93,14 +94,14 @@ public abstract class BasePerfTest extends BaseTestCase {
 
     /**
      * Sub-classes should override this to perform the operation to be measured.
-     * 
+     *
      * @throws Exception
      */
     protected abstract void doOneIteration() throws Exception;
 
     /**
      * Returns the current confidence level.
-     * 
+     *
      * @return the current confidence level.
      */
     protected double getCurrentConfidence() {
@@ -109,7 +110,7 @@ public abstract class BasePerfTest extends BaseTestCase {
 
     /**
      * Returns the current margin of error.
-     * 
+     *
      * @return the current margin of error.
      */
     protected double getMarginOfError() {
@@ -118,7 +119,7 @@ public abstract class BasePerfTest extends BaseTestCase {
 
     /**
      * Returns the current STDDEV.
-     * 
+     *
      * @return the current STDDEV
      */
     protected double getStandardDeviationP() {
@@ -126,12 +127,12 @@ public abstract class BasePerfTest extends BaseTestCase {
             return 0;
         }
 
-        return Math.sqrt(((this.numIterations * this.squareSumValue) - (this.sumValue * this.sumValue)) / (this.numIterations * this.numIterations));
+        return Math.sqrt((this.numIterations * this.squareSumValue - this.sumValue * this.sumValue) / (this.numIterations * this.numIterations));
     }
 
     /**
      * Adds one test result to the statistics.
-     * 
+     *
      * @param value
      *            a single result representing the value being measured in the test.
      */
@@ -140,20 +141,20 @@ public abstract class BasePerfTest extends BaseTestCase {
         this.testValuesList.add(new Double(value));
 
         this.sumValue += value;
-        this.squareSumValue += (value * value);
+        this.squareSumValue += value * value;
         this.meanValue = this.sumValue / this.numIterations;
-        this.variationValue = (this.squareSumValue / this.numIterations) - (this.meanValue * this.meanValue);
+        this.variationValue = this.squareSumValue / this.numIterations - this.meanValue * this.meanValue;
 
         // Can only have confidence when more than one test has been completed
         if (this.numIterations > 1) {
             this.confidenceValue = this.intervalWidth
-                    - ((2.0 * getConfidenceLookup() * Math.sqrt(this.variationValue / (this.numIterations - 1.0))) / this.meanValue);
+                    - 2.0 * getConfidenceLookup() * Math.sqrt(this.variationValue / (this.numIterations - 1.0)) / this.meanValue;
         }
     }
 
     /**
      * Calls doIteration() the <code>numIterations</code> times, displaying the mean, std, margin of error and confidence level.
-     * 
+     *
      * @param num_iterations
      *            the number of iterations to perform ( < 30)
      * @throws Exception
@@ -167,7 +168,7 @@ public abstract class BasePerfTest extends BaseTestCase {
 
     /**
      * Reports the current results to STDOUT, preceeded by <code>additionalMessage</code> if not null.
-     * 
+     *
      * @param additionalMessage
      *            the additional message to print, or null if no message.
      */
@@ -198,4 +199,5 @@ public abstract class BasePerfTest extends BaseTestCase {
             throw new IllegalArgumentException("Confidence level must be 95 or 99");
         }
     }
+
 }

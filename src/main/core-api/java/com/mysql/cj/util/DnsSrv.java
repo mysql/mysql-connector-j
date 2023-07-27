@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -43,7 +43,9 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
 public class DnsSrv {
+
     public static class SrvRecord implements Comparable<SrvRecord> {
+
         private final int priority;
         private final int weight;
         private final int port;
@@ -94,6 +96,7 @@ public class DnsSrv {
             int priorityDiff = getPriority() - o.getPriority();
             return priorityDiff == 0 ? getWeight() - o.getWeight() : priorityDiff;
         }
+
     }
 
     public static List<SrvRecord> lookupSrvRecords(String serviceName) throws NamingException {
@@ -117,7 +120,7 @@ public class DnsSrv {
 
     /**
      * Sort a list of DNS SRV records according to the sorting rules described in rfc2782.
-     * 
+     *
      * @param srvRecords
      *            the list of {@link SrvRecord}s to sort.
      * @return
@@ -153,4 +156,5 @@ public class DnsSrv {
 
         return srvRecordsSortedRfc2782;
     }
+
 }

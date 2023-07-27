@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,6 +33,7 @@ package com.mysql.cj;
  * A server version.
  */
 public class ServerVersion implements Comparable<ServerVersion> {
+
     private String completeVersion;
     private Integer major;
     private Integer minor;
@@ -64,7 +65,7 @@ public class ServerVersion implements Comparable<ServerVersion> {
     /**
      * A string representation of this version. If this version was parsed from, or provided with, a "complete" string which may contain more than just the
      * version number, this string is returned verbatim. Otherwise, a string representation of the version numbers is given.
-     * 
+     *
      * @return string version representation
      */
     @Override
@@ -99,6 +100,7 @@ public class ServerVersion implements Comparable<ServerVersion> {
         return hash;
     }
 
+    @Override
     public int compareTo(ServerVersion other) {
         int c;
         if ((c = this.major.compareTo(other.getMajor())) != 0) {
@@ -122,7 +124,7 @@ public class ServerVersion implements Comparable<ServerVersion> {
 
     /**
      * Parse the server version into major/minor/subminor.
-     * 
+     *
      * @param versionString
      *            string version representation
      * @return {@link ServerVersion}
@@ -145,7 +147,7 @@ public class ServerVersion implements Comparable<ServerVersion> {
                     int pos = 0;
 
                     while (pos < remaining.length()) {
-                        if ((remaining.charAt(pos) < '0') || (remaining.charAt(pos) > '9')) {
+                        if (remaining.charAt(pos) < '0' || remaining.charAt(pos) > '9') {
                             break;
                         }
 
@@ -163,4 +165,5 @@ public class ServerVersion implements Comparable<ServerVersion> {
         // can't parse the server version
         return new ServerVersion(0, 0, 0);
     }
+
 }

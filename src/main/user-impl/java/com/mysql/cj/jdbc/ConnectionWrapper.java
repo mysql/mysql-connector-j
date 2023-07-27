@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -64,13 +64,14 @@ import com.mysql.cj.protocol.ServerSessionStateController;
 /**
  * This class serves as a wrapper for the connection object. It is returned to the application server which may wrap it again and then return it to the
  * application client in response to dataSource.getConnection().
- * 
+ *
  * All method invocations are forwarded to underlying connection unless the close method was previously called, in which case a SQLException is thrown. The
  * close method performs a 'logical close' on the connection.
- * 
+ *
  * All SQL exceptions thrown by the physical connection are intercepted and sent to connectionEvent listeners before being thrown to client.
  */
 public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
+
     protected JdbcConnection mc = null;
 
     private String invalidHandleStr = "Logical handle no longer valid";
@@ -86,14 +87,14 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     /**
      * Construct a new LogicalHandle and set instance variables
-     * 
+     *
      * @param mysqlPooledConnection
      *            reference to object that instantiated this object
      * @param mysqlConnection
      *            physical connection to db
      * @param forXa
      *            is it for XA connection?
-     * 
+     *
      * @throws SQLException
      *             if an error occurs.
      */
@@ -111,7 +112,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-
         if (autoCommit && isInGlobalTx()) {
             throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
                     MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
@@ -126,7 +126,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     @Override
     public boolean getAutoCommit() throws SQLException {
-
         try {
             return this.mc.getAutoCommit();
         } catch (SQLException sqlException) {
@@ -158,7 +157,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     @Override
     public void setCatalog(String catalog) throws SQLException {
-
         try {
             this.mc.setCatalog(catalog);
         } catch (SQLException sqlException) {
@@ -168,7 +166,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     @Override
     public String getCatalog() throws SQLException {
-
         try {
             return this.mc.getCatalog();
         } catch (SQLException sqlException) {
@@ -180,7 +177,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
 
     @Override
     public boolean isClosed() throws SQLException {
-        return (this.closed || this.mc.isClosed());
+        return this.closed || this.mc.isClosed();
     }
 
     @Override
@@ -330,7 +327,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     /**
      * The physical connection is not actually closed. the physical connection is closed when the application server calls mysqlPooledConnection.close(). this
      * object is de-referenced by the pooled connection each time mysqlPooledConnection.getConnection() is called by app server.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -808,7 +805,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         } catch (SQLException sqlException) {
             checkAndFireConnectionError(sqlException);
         }
-
     }
 
     @Override
@@ -1069,9 +1065,9 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
             return true;
         }
 
-        return (iface.getName().equals(JdbcConnection.class.getName()) || iface.getName().equals(MysqlConnection.class.getName())
+        return iface.getName().equals(JdbcConnection.class.getName()) || iface.getName().equals(MysqlConnection.class.getName())
                 || iface.getName().equals(java.sql.Connection.class.getName()) || iface.getName().equals(Wrapper.class.getName())
-                || iface.getName().equals(AutoCloseable.class.getName()));
+                || iface.getName().equals(AutoCloseable.class.getName());
     }
 
     @Override
@@ -1248,4 +1244,5 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     public ServerSessionStateController getServerSessionStateController() {
         return this.mc.getServerSessionStateController();
     }
+
 }

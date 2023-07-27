@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -44,7 +44,7 @@ public class ResultsetRowsStatic extends AbstractResultsetRows implements Result
 
     /**
      * Creates a new RowDataStatic object.
-     * 
+     *
      * @param rows
      *            list of {@link Row} instances
      * @param columnDefinition
@@ -85,7 +85,7 @@ public class ResultsetRowsStatic extends AbstractResultsetRows implements Result
 
     @Override
     public Row get(int atIndex) {
-        if ((atIndex < 0) || (atIndex >= this.rows.size())) {
+        if (atIndex < 0 || atIndex >= this.rows.size()) {
             return null;
         }
 
@@ -99,7 +99,7 @@ public class ResultsetRowsStatic extends AbstractResultsetRows implements Result
 
     @Override
     public boolean hasNext() {
-        boolean hasMore = (this.currentPositionInFetchedRows + 1) < this.rows.size();
+        boolean hasMore = this.currentPositionInFetchedRows + 1 < this.rows.size();
 
         return hasMore;
     }
@@ -136,7 +136,7 @@ public class ResultsetRowsStatic extends AbstractResultsetRows implements Result
             return false;
         }
 
-        return (this.currentPositionInFetchedRows == (this.rows.size() - 1));
+        return this.currentPositionInFetchedRows == this.rows.size() - 1;
     }
 
     @Override
@@ -183,6 +183,7 @@ public class ResultsetRowsStatic extends AbstractResultsetRows implements Result
 
     @Override
     public boolean wasEmpty() {
-        return (this.rows != null && this.rows.size() == 0);
+        return this.rows != null && this.rows.size() == 0;
     }
+
 }

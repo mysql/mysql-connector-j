@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2012, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -57,6 +57,7 @@ import com.mysql.cj.protocol.a.NativePacketPayload;
 import com.mysql.cj.util.StringUtils;
 
 public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPayload> {
+
     public static String PLUGIN_NAME = "sha256_password";
 
     protected Protocol<NativePacketPayload> protocol = null;
@@ -79,6 +80,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPa
         }
     }
 
+    @Override
     public void destroy() {
         reset();
         this.protocol = null;
@@ -90,18 +92,22 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPa
         this.serverRSAPublicKeyFile = null;
     }
 
+    @Override
     public String getProtocolPluginName() {
         return PLUGIN_NAME;
     }
 
+    @Override
     public boolean requiresConfidentiality() {
         return false;
     }
 
+    @Override
     public boolean isReusable() {
         return true;
     }
 
+    @Override
     public void setAuthenticationParameters(String user, String password) {
         this.password = password;
         if (user == null && this.usernameCallbackHandler != null) {
@@ -110,6 +116,7 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPa
         }
     }
 
+    @Override
     public boolean nextAuthenticationStep(NativePacketPayload fromServer, List<NativePacketPayload> toServer) {
         toServer.clear();
 
@@ -219,4 +226,5 @@ public class Sha256PasswordPlugin implements AuthenticationPlugin<NativePacketPa
 
         return res;
     }
+
 }

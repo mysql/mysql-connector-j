@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,12 +41,14 @@ import java.security.ProviderException;
  * avoid conflicts with future default implementations.
  */
 public final class ScramShaSaslProvider extends Provider {
+
     private static final long serialVersionUID = 866717063477857937L;
 
     private static final String INFO = "MySQL Connector/J SASL provider (implements client mechanisms for " + ScramSha1SaslClient.MECHANISM_NAME + " and "
             + ScramSha256SaslClient.MECHANISM_NAME + ")";
 
     private static final class ProviderService extends Provider.Service {
+
         public ProviderService(Provider provider, String type, String algorithm, String className) {
             super(provider, type, algorithm, className, null, null);
         }
@@ -60,15 +62,13 @@ public final class ScramShaSaslProvider extends Provider {
 
             String algorithm = getAlgorithm();
             if (type.equals("SaslClientFactory")) {
-                if (algorithm.equals(ScramSha1SaslClient.MECHANISM_NAME)) {
-                    return new ScramShaSaslClientFactory();
-                }
-                if (algorithm.equals(ScramSha256SaslClient.MECHANISM_NAME)) {
+                if (algorithm.equals(ScramSha1SaslClient.MECHANISM_NAME) || algorithm.equals(ScramSha256SaslClient.MECHANISM_NAME)) {
                     return new ScramShaSaslClientFactory();
                 }
             }
             throw new ProviderException("No implementation for " + algorithm + " " + type);
         }
+
     }
 
     public ScramShaSaslProvider() {
@@ -82,4 +82,5 @@ public final class ScramShaSaslProvider extends Provider {
             return null;
         });
     }
+
 }

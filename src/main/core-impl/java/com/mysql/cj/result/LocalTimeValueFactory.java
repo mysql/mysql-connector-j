@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -43,6 +43,7 @@ import com.mysql.cj.protocol.InternalTimestamp;
  * A value factory to create {@link LocalTime} instances.
  */
 public class LocalTimeValueFactory extends AbstractDateTimeValueFactory<LocalTime> {
+
     private WarningListener warningListener;
 
     public LocalTimeValueFactory(PropertySet pset) {
@@ -85,7 +86,9 @@ public class LocalTimeValueFactory extends AbstractDateTimeValueFactory<LocalTim
         return createFromTime(new InternalTime(its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos(), its.getScale()));
     }
 
+    @Override
     public String getTargetTypeName() {
         return LocalTime.class.getName();
     }
+
 }

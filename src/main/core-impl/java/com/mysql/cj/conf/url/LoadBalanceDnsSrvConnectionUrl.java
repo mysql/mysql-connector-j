@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -45,12 +45,13 @@ import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
 import com.mysql.cj.util.StringUtils;
 
 public class LoadBalanceDnsSrvConnectionUrl extends ConnectionUrl {
+
     private static final String DEFAULT_HOST = "";
     private static final int DEFAULT_PORT = HostInfo.NO_PORT;
 
     /**
      * Constructs an instance of {@link LoadBalanceDnsSrvConnectionUrl}, performing all the required initializations and validations.
-     * 
+     *
      * @param connStrParser
      *            a {@link ConnectionUrlParser} instance containing the parsed version of the original connection string
      * @param info
@@ -96,9 +97,9 @@ public class LoadBalanceDnsSrvConnectionUrl extends ConnectionUrl {
     }
 
     /**
-     * Injects additional properties into the connection arguments while the connection arguments map 
+     * Injects additional properties into the connection arguments while the connection arguments map
      * is being constructed.
-     * 
+     *
      * @param props
      *            the properties already containing all known connection arguments
      */
@@ -134,10 +135,10 @@ public class LoadBalanceDnsSrvConnectionUrl extends ConnectionUrl {
 
     /**
      * Returns a hosts list built from the result of the DNS SRV lookup for the original host name.
-     * 
+     *
      * @param view
      *            the type of the view to use in the returned list of hosts. This argument is ignored in this implementation.
-     * 
+     *
      * @return
      *         the hosts list from the result of the DNS SRV lookup, filtered for the given view.
      */
@@ -145,4 +146,5 @@ public class LoadBalanceDnsSrvConnectionUrl extends ConnectionUrl {
     public List<HostInfo> getHostsList(HostsListView view) {
         return getHostsListFromDnsSrv(getMainHost());
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,10 +40,10 @@ import javassist.CtClass;
 import javassist.CtMethod;
 
 public class CommonChecks {
+
     private static boolean verbose = false;
 
     public static void main(String[] args) throws Exception {
-
         System.out.println("Applying CommonChecks.");
 
         verbose = "true".equalsIgnoreCase(args[1]);
@@ -176,7 +176,6 @@ public class CommonChecks {
         //clazz = pool.get(MultiHostMySQLConnection.class.getName());
         //addClosedCheck(clazz.getDeclaredMethod("isWrapperFor", new CtClass[] { ctClazz }));
         //clazz.writeFile(args[0]);
-
     }
 
     private static void addClosedCheck(CtMethod m) throws Exception {

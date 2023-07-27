@@ -42,6 +42,7 @@ import com.mysql.cj.util.Util;
  * Factory class for producing inflating and deflating-able {@link InputStream} and {@link OutputStream} instances for a selected compression algorithm.
  */
 public class CompressorStreamsFactory {
+
     private CompressionAlgorithm compressionAlgorithm;
 
     private InputStream compressorInputStreamInstance = null;
@@ -65,10 +66,10 @@ public class CompressorStreamsFactory {
     /**
      * Creates an instance of an {@link InputStream} that wraps around the given {@link InputStream} and knows how to inflate data using the algorithm given in
      * this class' constructor.
-     * 
+     *
      * If the compression algorithm operates in steam mode (continuous) then create and reuse one single instance of the compressor {@link InputStream}, else
      * create a new instance every time.
-     * 
+     *
      * @param in
      *            the {@link InputStream} to use as source of the bytes to inflate.
      * @return
@@ -104,10 +105,10 @@ public class CompressorStreamsFactory {
     /**
      * Creates an instance of an {@link OutputStream} that wraps around the given {@link OutputStream} and knows how to deflate data using the algorithm given
      * in this class' constructor.
-     * 
+     *
      * If the compression algorithm operates in steam mode (continuous) then create and reuse one single instance of the compressor {@link OutputStream}, else
      * create a new instance every time.
-     * 
+     *
      * @param out
      *            the {@link OutputStream} to use as target of the bytes to deflate.
      * @return
@@ -140,4 +141,5 @@ public class CompressorStreamsFactory {
         }
         return compressionOut;
     }
+
 }

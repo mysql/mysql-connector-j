@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -52,6 +52,7 @@ import com.mysql.cj.xdevapi.SqlResult;
 import com.mysql.cj.xdevapi.Table;
 
 public class TableInsertTest extends BaseTableTestCase {
+
     @Test
     public void lastInsertId() {
         try {
@@ -341,4 +342,5 @@ public class TableInsertTest extends BaseTableTestCase {
             sqlUpdate("drop table if exists qatable2");
         }
     }
+
 }

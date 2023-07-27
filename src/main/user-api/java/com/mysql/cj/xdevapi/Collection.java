@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,9 +36,10 @@ import java.util.Map;
  * through add/find/modify/remove statements.
  */
 public interface Collection extends DatabaseObject {
+
     /**
      * Add a document in the form of a Map.
-     * 
+     *
      * @param doc
      *            map of key-value parameters representing the document fields
      * @return {@link AddStatement}
@@ -47,7 +48,7 @@ public interface Collection extends DatabaseObject {
 
     /**
      * Add one or more documents.
-     * 
+     *
      * @param jsonStrings
      *            one or more documents given as JSON strings
      * @return {@link AddStatement}
@@ -59,7 +60,7 @@ public interface Collection extends DatabaseObject {
     // instead of add(DbDoc... documents).
     /**
      * Add a document in the form of a DbDoc.
-     * 
+     *
      * @param document
      *            {@link DbDoc}
      * @return {@link AddStatement}
@@ -68,7 +69,7 @@ public interface Collection extends DatabaseObject {
 
     /**
      * Add a sequence of documents.
-     * 
+     *
      * @param documents
      *            one or more documents given as {@link DbDoc}
      * @return {@link AddStatement}
@@ -77,7 +78,7 @@ public interface Collection extends DatabaseObject {
 
     /**
      * Create a new find statement retrieving all documents in the collection.
-     * 
+     *
      * @return {@link FindStatement}
      */
     FindStatement find();
@@ -93,7 +94,7 @@ public interface Collection extends DatabaseObject {
 
     /**
      * Create a new modify statement affecting documents matching the given search condition.
-     * 
+     *
      * @param searchCondition
      *            condition expression
      * @return {@link ModifyStatement}
@@ -102,7 +103,7 @@ public interface Collection extends DatabaseObject {
 
     /**
      * Create a new removal statement affecting documents matching the given search condition.
-     * 
+     *
      * @param searchCondition
      *            condition expression
      * @return {@link RemoveStatement}
@@ -114,7 +115,7 @@ public interface Collection extends DatabaseObject {
      * <p>
      * Example: collection.createIndex("myIndex",
      * "{\"fields\": [{\"field\": \"$.myGeoJsonField\", \"type\": \"GEOJSON\", \"required\": true, \"options\": 2, \"srid\": 4326}], \"type\":\"SPATIAL\"}");
-     * 
+     *
      * @param indexName
      *            index name
      * @param indexDefinition
@@ -142,7 +143,7 @@ public interface Collection extends DatabaseObject {
      * <p>
      * Example: collection.createIndex("myIndex",
      * "{\"fields\": [{\"field\": \"$.myGeoJsonField\", \"type\": \"GEOJSON\", \"required\": true, \"options\": 2, \"srid\": 4326}], \"type\":\"SPATIAL\"}");
-     * 
+     *
      * @param indexName
      *            index name
      * @param jsonIndexDefinition
@@ -167,7 +168,7 @@ public interface Collection extends DatabaseObject {
 
     /**
      * Create a new statement defining the removal of an index on this collection.
-     * 
+     *
      * @param indexName
      *            index name
      */
@@ -175,21 +176,21 @@ public interface Collection extends DatabaseObject {
 
     /**
      * Query the number of documents in this collection.
-     * 
+     *
      * @return The number of documents in this collection
      */
     long count();
 
     /**
      * Create a new document.
-     * 
+     *
      * @return {@link DbDoc}
      */
     DbDoc newDoc();
 
     /**
      * Takes in a document object that will replace the matching document. If no matches are found, the function returns normally with no changes being made.
-     * 
+     *
      * @param id
      *            the document id of the document to be replaced
      * @param doc
@@ -201,7 +202,7 @@ public interface Collection extends DatabaseObject {
 
     /**
      * Takes in a document object that will replace the matching document. If no matches are found, the function returns normally with no changes being made.
-     * 
+     *
      * @param id
      *            the document id of the document to be replaced
      * @param jsonString
@@ -213,7 +214,7 @@ public interface Collection extends DatabaseObject {
 
     /**
      * Adds the document to the collection. The following algorithm applies:
-     * 
+     *
      * @param id
      *            the document id of the document to be replaced
      * @param doc
@@ -226,7 +227,7 @@ public interface Collection extends DatabaseObject {
 
     /**
      * Adds the document to the collection. The following algorithm applies:
-     * 
+     *
      * @param id
      *            the document id of the document to be replaced
      * @param jsonString
@@ -239,7 +240,7 @@ public interface Collection extends DatabaseObject {
 
     /**
      * Return the document with the given id.
-     * 
+     *
      * @param id
      *            the document id of the document to be retrieved
      * @return
@@ -249,7 +250,7 @@ public interface Collection extends DatabaseObject {
 
     /**
      * Removes the document with the given id.
-     * 
+     *
      * @param id
      *            the document id of the document to be removed
      * @return

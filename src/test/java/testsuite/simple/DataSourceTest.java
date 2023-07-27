@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -71,11 +71,12 @@ import testsuite.BaseTestCase;
 import testsuite.MockJndiContextFactory;
 
 public class DataSourceTest extends BaseTestCase {
+
     private Context ctx;
 
     /**
      * Sets up this test, binding a DataSource into JNDI, using a mock in-memory JNDI provider.
-     * 
+     *
      * @throws Exception
      */
     @BeforeEach
@@ -96,7 +97,7 @@ public class DataSourceTest extends BaseTestCase {
 
     /**
      * Un-binds the DataSource and closes the context
-     * 
+     *
      * @throws Exception
      */
     @AfterEach
@@ -107,7 +108,7 @@ public class DataSourceTest extends BaseTestCase {
 
     /**
      * Tests that we can get a connection from the DataSource bound in JNDI during test setup
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -142,7 +143,7 @@ public class DataSourceTest extends BaseTestCase {
 
     /**
      * Tests whether Connection.changeUser() (and thus pooled connections) restore character set information correctly.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -184,7 +185,7 @@ public class DataSourceTest extends BaseTestCase {
 
     /**
      * Tests whether XADataSources can be bound into JNDI
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -319,4 +320,5 @@ public class DataSourceTest extends BaseTestCase {
         testDataSource.setDatabaseName("goodDB");
         assertEquals("jdbc:mysql://connectorj.mysql.com%3A12345%2FfakeDB%3Ffoo%3D:3306/goodDB", testDataSource.getUrl());
     }
+
 }

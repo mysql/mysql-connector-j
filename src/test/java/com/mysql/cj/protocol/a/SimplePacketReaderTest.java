@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -64,6 +64,7 @@ import com.mysql.cj.protocol.SocketFactory;
  * Tests for simple packet reader.
  */
 public class SimplePacketReaderTest {
+
     // the basic operation: make sure header bytes are interpreted properly
     @Test
     public void basicHeaderRead() throws IOException {
@@ -151,10 +152,12 @@ public class SimplePacketReaderTest {
 
         // any IO errors during read should hang up the connection
         connection = new MockSocketConnection() {
+
             @Override
             public int readFully(byte[] b, int off, int len) throws IOException {
                 throw new IOException("arbitrary failure");
             }
+
         };
         reader = new SimplePacketReader(connection, maxAllowedPacket);
 
@@ -221,6 +224,7 @@ public class SimplePacketReaderTest {
     // TODO any boundary conditions or large packet issues?
 
     public static class FixedBufferSocketConnection extends MockSocketConnection {
+
         FullReadInputStream is;
 
         public FixedBufferSocketConnection(byte[] buffer) {
@@ -231,11 +235,14 @@ public class SimplePacketReaderTest {
         public FullReadInputStream getMysqlInput() {
             return this.is;
         }
+
     }
 
     public static class MockSocketConnection implements SocketConnection {
+
         public boolean forceClosed = false;
 
+        @Override
         public void connect(String host, int port, PropertySet propertySet, ExceptionInterceptor exceptionInterceptor, Log log, int loginTimeout) {
         }
 
@@ -243,38 +250,46 @@ public class SimplePacketReaderTest {
         public void performTlsHandshake(ServerSession serverSession) throws SSLParamsException, FeatureNotAvailableException, IOException {
         }
 
+        @Override
         public void forceClose() {
             this.forceClosed = true;
         }
 
+        @Override
         public NetworkResources getNetworkResources() {
             return null;
         }
 
+        @Override
         public String getHost() {
             return null;
         }
 
+        @Override
         public int getPort() {
             return 0;
         }
 
+        @Override
         public Socket getMysqlSocket() {
             return null;
         }
 
+        @Override
         public FullReadInputStream getMysqlInput() {
             return new FullReadInputStream(new ByteArrayInputStream(new byte[] {})) {
+
                 @Override
                 public int readFully(byte[] b, int off, int len) throws IOException {
                     return MockSocketConnection.this.readFully(b, off, len);
                 }
+
             };
         }
 
         /**
          * Mock method to override getMysqlInput().readFully().
-         * 
+         *
          * @param b
          * @param off
          * @param len
@@ -285,30 +300,39 @@ public class SimplePacketReaderTest {
             return 0;
         }
 
+        @Override
         public void setMysqlInput(FullReadInputStream mysqlInput) {
         }
 
+        @Override
         public BufferedOutputStream getMysqlOutput() {
             return null;
         }
 
+        @Override
         public boolean isSSLEstablished() {
             return false;
         }
 
+        @Override
         public SocketFactory getSocketFactory() {
             return null;
         }
 
+        @Override
         public void setSocketFactory(SocketFactory socketFactory) {
         }
 
+        @Override
         public ExceptionInterceptor getExceptionInterceptor() {
             return null;
         }
 
+        @Override
         public PropertySet getPropertySet() {
             return null;
         }
+
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,6 +40,7 @@ import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 
 public class JUnitSummary implements TestExecutionListener {
+
     private AtomicInteger numSkippedInTestSet = new AtomicInteger();
     private AtomicInteger numAbortedInTestSet = new AtomicInteger();
     private AtomicInteger numSucceededInTestSet = new AtomicInteger();
@@ -105,4 +106,5 @@ public class JUnitSummary implements TestExecutionListener {
     private void println(String str) {
         this.out.println(str);
     }
+
 }

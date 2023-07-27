@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -61,6 +61,7 @@ import testsuite.BaseTestCase;
  * Tests for multi-thread stress regressions.
  */
 public class StressRegressionTest extends BaseTestCase {
+
     private int numThreadsStarted;
 
     @Test
@@ -111,7 +112,7 @@ public class StressRegressionTest extends BaseTestCase {
         for (int i = 0; i < numThreadsToStart; i++) {
             elapsedTimes.add(new Long(threads[i].elapsedTimeMillis));
 
-            avgElapsedTimeMillis += ((double) threads[i].elapsedTimeMillis / numThreadsToStart);
+            avgElapsedTimeMillis += (double) threads[i].elapsedTimeMillis / numThreadsToStart;
         }
 
         Collections.sort(elapsedTimes);
@@ -179,6 +180,7 @@ public class StressRegressionTest extends BaseTestCase {
     }
 
     public class BusyThread extends Thread {
+
         boolean stop = false;
 
         @Override
@@ -188,9 +190,11 @@ public class StressRegressionTest extends BaseTestCase {
                 doStop = this.stop;
             }
         }
+
     }
 
     class ContentionThread extends Thread {
+
         Connection threadConn;
 
         Statement threadStmt;
@@ -231,9 +235,11 @@ public class StressRegressionTest extends BaseTestCase {
                 }
             }
         }
+
     }
 
     class CreateThread extends Thread {
+
         BusyThread busyThread;
 
         int numConnections = 15;
@@ -279,7 +285,7 @@ public class StressRegressionTest extends BaseTestCase {
                         maxConnTime = ellapsedTime;
                     }
 
-                    averageTime += ((double) ellapsedTime / this.numConnections);
+                    averageTime += (double) ellapsedTime / this.numConnections;
                 }
 
                 if (this.busyThread != null) {
@@ -295,20 +301,21 @@ public class StressRegressionTest extends BaseTestCase {
                 throw new RuntimeException(ex);
             }
         }
+
     }
 
     /**
      * Tests fix for BUG#67760 - Deadlock when concurrently executing prepared statements with Timestamp objects
-     * 
+     *
      * Concurrent execution of Timestamp, Date and Time related setters and getters from a PreparedStatement and ResultSet object obtained from a same shared
      * Connection may result in a deadlock.
-     * 
+     *
      * This test exploits a non-deterministic situation that can end in a deadlock. It executes two concurrent jobs for 10 seconds while stressing the referred
      * methods. The deadlock was observed before 3 seconds have elapsed, all times, in development environment.
-     * 
+     *
      * WARNING! If this test fails there is no guarantee that the JVM will remain stable and won't affect any other tests. It is imperative that this test
      * passes to ensure other tests results.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -324,30 +331,28 @@ public class StressRegressionTest extends BaseTestCase {
         /*
          * Thread to execute set[Timestamp|Date|Time]() methods in an instance of a PreparedStatement constructed from a shared Connection.
          */
-        Thread job1 = new Thread(new Runnable() {
-            public void run() {
-                try {
-                    System.out.println("Starting job 1 (" + Thread.currentThread().getName() + ") - PreparedStatement.set[Timestamp|Date|Time]()...");
-                    PreparedStatement testPstmt = testConn.prepareStatement("SELECT ?, ?, ?");
+        Thread job1 = new Thread(() -> {
+            try {
+                System.out.println("Starting job 1 (" + Thread.currentThread().getName() + ") - PreparedStatement.set[Timestamp|Date|Time]()...");
+                PreparedStatement testPstmt = testConn.prepareStatement("SELECT ?, ?, ?");
 
-                    Timestamp ts = new Timestamp(System.currentTimeMillis());
-                    java.sql.Date dt = new java.sql.Date(System.currentTimeMillis());
-                    Time tm = new Time(System.currentTimeMillis());
+                Timestamp ts = new Timestamp(System.currentTimeMillis());
+                java.sql.Date dt = new java.sql.Date(System.currentTimeMillis());
+                Time tm = new Time(System.currentTimeMillis());
 
-                    while (SharedInfoForTestBug67760.running) {
-                        SharedInfoForTestBug67760.job1Iterations++;
+                while (SharedInfoForTestBug67760.running) {
+                    SharedInfoForTestBug67760.job1Iterations++;
 
-                        testPstmt.setTimestamp(1, ts);
-                        testPstmt.setDate(2, dt);
-                        testPstmt.setTime(3, tm);
-                        testPstmt.execute();
-                    }
-                    System.out.println(
-                            "Finishing job 1 (" + Thread.currentThread().getName() + ") after " + SharedInfoForTestBug67760.job1Iterations + " iterations...");
-                    testPstmt.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    testPstmt.setTimestamp(1, ts);
+                    testPstmt.setDate(2, dt);
+                    testPstmt.setTime(3, tm);
+                    testPstmt.execute();
                 }
+                System.out.println(
+                        "Finishing job 1 (" + Thread.currentThread().getName() + ") after " + SharedInfoForTestBug67760.job1Iterations + " iterations...");
+                testPstmt.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
 
@@ -355,28 +360,26 @@ public class StressRegressionTest extends BaseTestCase {
          * Thread to execute get[Timestamp|Date|Time]() methods in an instance of a ResultSet obtained from a PreparedStatement constructed from a shared
          * Connection.
          */
-        Thread job2 = new Thread(new Runnable() {
-            public void run() {
-                try {
-                    System.out.println("Starting job 2 (" + Thread.currentThread().getName() + ") - ResultSet.get[Timestamp|Date|Time]()...");
-                    PreparedStatement testPstmt = testConn.prepareStatement("SELECT NOW(), CAST(NOW() AS DATE), CAST(NOW() AS TIME)");
+        Thread job2 = new Thread(() -> {
+            try {
+                System.out.println("Starting job 2 (" + Thread.currentThread().getName() + ") - ResultSet.get[Timestamp|Date|Time]()...");
+                PreparedStatement testPstmt = testConn.prepareStatement("SELECT NOW(), CAST(NOW() AS DATE), CAST(NOW() AS TIME)");
 
-                    while (SharedInfoForTestBug67760.running) {
-                        SharedInfoForTestBug67760.job2Iterations++;
+                while (SharedInfoForTestBug67760.running) {
+                    SharedInfoForTestBug67760.job2Iterations++;
 
-                        ResultSet testRs = testPstmt.executeQuery();
-                        testRs.next();
-                        testRs.getTimestamp(1);
-                        testRs.getDate(2);
-                        testRs.getTime(3);
-                        testRs.close();
-                    }
-                    System.out.println(
-                            "Finishing job 2 (" + Thread.currentThread().getName() + ") after " + SharedInfoForTestBug67760.job2Iterations + " iterations...");
-                    testPstmt.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    ResultSet testRs = testPstmt.executeQuery();
+                    testRs.next();
+                    testRs.getTimestamp(1);
+                    testRs.getDate(2);
+                    testRs.getTime(3);
+                    testRs.close();
                 }
+                System.out.println(
+                        "Finishing job 2 (" + Thread.currentThread().getName() + ") after " + SharedInfoForTestBug67760.job2Iterations + " iterations...");
+                testPstmt.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
 
@@ -390,7 +393,7 @@ public class StressRegressionTest extends BaseTestCase {
         final int delta0IterationsCountdownSize = 20;
         int delta0IterationsCountdown = delta0IterationsCountdownSize;
 
-        System.out.println("Start concurrent jobs and let them run for aproximatly " + (recheckWaitTimeUnit * recheckWaitTimeCountdown / 1000) + " seconds...");
+        System.out.println("Start concurrent jobs and let them run for aproximatly " + recheckWaitTimeUnit * recheckWaitTimeCountdown / 1000 + " seconds...");
         final long startTime = System.currentTimeMillis();
         long elapsedTime = 0;
         job1.start();
@@ -446,12 +449,13 @@ public class StressRegressionTest extends BaseTestCase {
         System.out.println("The test ended gracefully after " + elapsedTime + " milliseconds.");
 
         assertTrue(elapsedTime >= recheckWaitTimeUnit * recheckWaitTimeCountdown,
-                "Test expected to run at least for " + (recheckWaitTimeUnit * recheckWaitTimeCountdown) + " milliseconds.");
+                "Test expected to run at least for " + recheckWaitTimeUnit * recheckWaitTimeCountdown + " milliseconds.");
 
         testConn.close();
     }
 
     private static final class SharedInfoForTestBug67760 {
+
         static volatile boolean running = true;
 
         static volatile int job1Iterations = 0;
@@ -466,5 +470,7 @@ public class StressRegressionTest extends BaseTestCase {
             prevJob2Iterations = job2Iterations;
             return iterationsChanged;
         }
+
     }
+
 }

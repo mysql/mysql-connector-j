@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,6 +35,7 @@ import com.mysql.cj.MysqlType;
  * Utilities to manipulate MySQL protocol-specific formats.
  */
 public class NativeUtils {
+
     private NativeUtils() {
     }
 
@@ -62,10 +63,10 @@ public class NativeUtils {
 
     /**
      * Get the length of a binary-encoded value of the given type.
-     * 
+     *
      * @param type
      *            type
-     * 
+     *
      * @return the length (&gt;0), 0 for a length-prefixed type, or -1 for unknown
      */
     public static int getBinaryEncodedLength(int type) {

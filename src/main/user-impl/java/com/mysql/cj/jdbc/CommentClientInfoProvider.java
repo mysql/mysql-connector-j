@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,11 +36,12 @@ import java.util.Properties;
 
 /**
  * An implementation of ClientInfoProvider that exposes the client info as a comment prepended to all statements issued by the driver.
- * 
+ *
  * Client information is <i>never</i> read from the server with this implementation, it is always cached locally.
  */
 
 public class CommentClientInfoProvider implements ClientInfoProvider {
+
     private Properties clientInfo;
 
     @Override
@@ -103,4 +104,5 @@ public class CommentClientInfoProvider implements ClientInfoProvider {
 
         ((com.mysql.cj.jdbc.JdbcConnection) conn).setStatementComment(commentBuf.toString());
     }
+
 }

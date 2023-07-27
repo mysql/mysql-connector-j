@@ -123,6 +123,7 @@ public abstract class CoreSession implements Session {
         return this.log;
     }
 
+    @Override
     public HostInfo getHostInfo() {
         return this.hostInfo;
     }
@@ -164,6 +165,7 @@ public abstract class CoreSession implements Session {
         }
     }
 
+    @Override
     public boolean isSetNeededForAutoCommitMode(boolean autoCommitFlag) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
@@ -216,4 +218,5 @@ public abstract class CoreSession implements Session {
     public String getQueryTimingUnits() {
         return this.protocol.getQueryTimingUnits();
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,7 +41,9 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
 
 public class JsonParser {
+
     enum Whitespace {
+
         TAB('\u0009'), LF('\n'), CR('\r'), SPACE('\u0020');
 
         public final char CHAR;
@@ -49,9 +51,11 @@ public class JsonParser {
         private Whitespace(char character) {
             this.CHAR = character;
         }
-    };
+
+    }
 
     enum StructuralToken {
+
         /**
          * [ U+005B left square bracket
          */
@@ -83,9 +87,10 @@ public class JsonParser {
             this.CHAR = character;
         }
 
-    };
+    }
 
     enum EscapeChar {
+
         /**
          * \\" represents the quotation mark character (U+0022)
          */
@@ -128,7 +133,8 @@ public class JsonParser {
             this.ESCAPED = escaped;
             this.NEEDS_ESCAPING = needsEscaping;
         }
-    };
+
+    }
 
     static Set<Character> whitespaceChars = new HashSet<>();
     static HashMap<Character, Character> escapeChars = new HashMap<>();
@@ -148,7 +154,7 @@ public class JsonParser {
 
     /**
      * Create {@link DbDoc} object from JSON string.
-     * 
+     *
      * @param jsonString
      *            JSON string representing a document
      * @return New {@link DbDoc} object initialized by parsed JSON string.
@@ -163,7 +169,7 @@ public class JsonParser {
 
     /**
      * Create {@link DbDoc} object from JSON string provided by reader.
-     * 
+     *
      * @param reader
      *            JSON string reader.
      * @return
@@ -172,7 +178,6 @@ public class JsonParser {
      *             if can't read
      */
     public static DbDoc parseDoc(StringReader reader) throws IOException {
-
         DbDoc doc = new DbDocImpl();
         JsonValue val;
 
@@ -203,10 +208,8 @@ public class JsonParser {
             } else if (ch == StructuralToken.RCRBRACKET.CHAR) {
                 rightBrackets++;
                 break;
-            } else {
-                if (!whitespaceChars.contains(ch)) {
-                    throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("JsonParser.1", new Character[] { ch }));
-                }
+            } else if (!whitespaceChars.contains(ch)) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("JsonParser.1", new Character[] { ch }));
             }
         }
 
@@ -222,7 +225,7 @@ public class JsonParser {
 
     /**
      * Create {@link JsonArray} object from JSON string provided by reader.
-     * 
+     *
      * @param reader
      *            JSON string reader.
      * @return
@@ -231,7 +234,6 @@ public class JsonParser {
      *             if can't read
      */
     public static JsonArray parseArray(StringReader reader) throws IOException {
-
         JsonArray arr = new JsonArray();
         JsonValue val;
         int openings = 0;
@@ -317,7 +319,7 @@ public class JsonParser {
                 reader.reset();
                 return parseDoc(reader);
 
-            } else if (ch == '\u002D' || (ch >= '\u0030' && ch <= '\u0039')) { // {-,0-9}
+            } else if (ch == '\u002D' || ch >= '\u0030' && ch <= '\u0039') { // {-,0-9}
                 // Number detected
                 reader.reset();
                 return parseNumber(reader);
@@ -362,7 +364,7 @@ public class JsonParser {
 
     /**
      * Create {@link JsonString} object from JSON string provided by reader.
-     * 
+     *
      * @param reader
      *            JSON string reader.
      * @return
@@ -434,7 +436,7 @@ public class JsonParser {
 
     /**
      * Create {@link JsonNumber} object from JSON string provided by reader.
-     * 
+     *
      * @param reader
      *            JSON string reader.
      * @return
@@ -443,7 +445,6 @@ public class JsonParser {
      *             if can't read
      */
     static JsonNumber parseNumber(StringReader reader) throws IOException {
-
         StringBuilder sb = null;
         char lastChar = ' ';
         boolean hasFractionalPart = false;
@@ -538,7 +539,7 @@ public class JsonParser {
 
     /**
      * Create {@link JsonLiteral} object from JSON string provided by reader.
-     * 
+     *
      * @param reader
      *            JSON string reader.
      * @return
@@ -605,4 +606,5 @@ public class JsonParser {
 
         throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("JsonParser.12", new String[] { sb.toString() }));
     }
+
 }

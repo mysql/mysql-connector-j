@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -60,6 +60,7 @@ import testsuite.x.internal.InternalXBaseTestCase;
  * Utilities for Dev API tests.
  */
 public class DevApiBaseTestCase extends InternalXBaseTestCase {
+
     /**
      * Session for use in tests.
      */
@@ -223,7 +224,7 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
         SqlResult res = sess.sql("SELECT @@mysqlx_ssl_ca, @@ssl_ca").execute();
         if (res.hasNext()) {
             Row r = res.next();
-            return (StringUtils.isNullOrEmpty(r.getString(1)) && r.getString(2).contains("ssl-test-certs") || r.getString(1).contains("ssl-test-certs"));
+            return StringUtils.isNullOrEmpty(r.getString(1)) && r.getString(2).contains("ssl-test-certs") || r.getString(1).contains("ssl-test-certs");
         }
         return false;
     }
@@ -307,4 +308,5 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
         }
         return recCnt;
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2007, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,11 +38,13 @@ import com.mysql.cj.protocol.Resultset;
  * A profile event handler that just logs to the standard logging mechanism of the driver.
  */
 public class LoggingProfilerEventHandler implements ProfilerEventHandler {
+
     private Log logger;
 
     public LoggingProfilerEventHandler() {
     }
 
+    @Override
     public void consumeEvent(ProfilerEvent evt) {
         switch (evt.getEventType()) {
             case ProfilerEvent.TYPE_USAGE:
@@ -55,10 +57,12 @@ public class LoggingProfilerEventHandler implements ProfilerEventHandler {
         }
     }
 
+    @Override
     public void destroy() {
         this.logger = null;
     }
 
+    @Override
     public void init(Log log) {
         this.logger = log;
     }
@@ -66,7 +70,6 @@ public class LoggingProfilerEventHandler implements ProfilerEventHandler {
     @Override
     public void processEvent(byte eventType, Session session, Query query, Resultset resultSet, long eventDuration, Throwable eventCreationPoint,
             String message) {
-
         consumeEvent(new ProfilerEventImpl(eventType, //
                 session == null ? "" : session.getHostInfo().getHost(), //
                 session == null ? "" : session.getHostInfo().getDatabase(), //
@@ -76,6 +79,6 @@ public class LoggingProfilerEventHandler implements ProfilerEventHandler {
                 eventDuration, //
                 session == null ? Constants.MILLIS_I18N : session.getQueryTimingUnits(), //
                 eventCreationPoint, message));
-
     }
+
 }

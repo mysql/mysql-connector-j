@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,34 +37,43 @@ import com.mysql.cj.CacheAdapter;
 import com.mysql.cj.CacheAdapterFactory;
 
 public class PerVmServerConfigCacheFactory implements CacheAdapterFactory<String, Map<String, String>> {
+
     static final ConcurrentHashMap<String, Map<String, String>> serverConfigByUrl = new ConcurrentHashMap<>();
 
     private static final CacheAdapter<String, Map<String, String>> serverConfigCache = new CacheAdapter<String, Map<String, String>>() {
 
+        @Override
         public Map<String, String> get(String key) {
             return serverConfigByUrl.get(key);
         }
 
+        @Override
         public void put(String key, Map<String, String> value) {
             serverConfigByUrl.putIfAbsent(key, value);
         }
 
+        @Override
         public void invalidate(String key) {
             serverConfigByUrl.remove(key);
         }
 
+        @Override
         public void invalidateAll(Set<String> keys) {
             for (String key : keys) {
                 serverConfigByUrl.remove(key);
             }
         }
 
+        @Override
         public void invalidateAll() {
             serverConfigByUrl.clear();
         }
+
     };
 
+    @Override
     public CacheAdapter<String, Map<String, String>> getInstance(Object syncMutex, String url, int cacheMaxSize, int maxKeySize) {
         return serverConfigCache;
     }
+
 }

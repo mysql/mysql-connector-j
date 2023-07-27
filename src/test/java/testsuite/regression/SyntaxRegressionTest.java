@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -72,22 +72,23 @@ import testsuite.BaseTestCase;
  * Regression tests for syntax
  */
 public class SyntaxRegressionTest extends BaseTestCase {
+
     /**
      * ALTER TABLE syntax changed in 5.6GA
-     * 
+     *
      * ALTER TABLE ... , algorithm, concurrency
-     * 
+     *
      * algorithm:
      * | ALGORITHM [=] DEFAULT
      * | ALGORITHM [=] INPLACE
      * | ALGORITHM [=] COPY
-     * 
+     *
      * concurrency:
      * | LOCK [=] DEFAULT
      * | LOCK [=] NONE
      * | LOCK [=] SHARED
      * | LOCK [=] EXCLUSIVE
-     * 
+     *
      * @throws SQLException
      */
     @Test
@@ -141,15 +142,15 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * CREATE TABLE syntax changed in 5.6GA
-     * 
+     *
      * InnoDB: Allow the location of file-per-table tablespaces to be chosen
      * CREATE TABLE ... DATA DIRECTORY = 'absolute/path/to/directory/'
-     * 
+     *
      * Notes:
      * - DATA DIRECTORY option can't be used with temporary tables.
      * - DATA DIRECTORY and INDEX DIRECTORY can't be used together for InnoDB.
      * - Using these options result in an 'option ignored' warning for servers below MySQL 5.7.7. This syntax isn't allowed for MySQL 5.7.7 and higher.
-     * 
+     *
      * @throws SQLException
      */
     @Test
@@ -220,13 +221,13 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * Test case for transportable tablespaces syntax support:
-     * 
+     *
      * FLUSH TABLES ... FOR EXPORT
      * ALTER TABLE ... DISCARD TABLESPACE
      * ALTER TABLE ... IMPORT TABLESPACE
-     * 
+     *
      * Requires a MySQL server running locally.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -350,7 +351,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * Test case for ALTER [IGNORE] TABLE t1 EXCHANGE PARTITION p1 WITH TABLE t2 syntax
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -438,7 +439,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * Test for explicit partition selection syntax
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -693,9 +694,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * WL#5787 - IPv6-capable INET_ATON and INET_NTOA functions
-     * 
+     *
      * IPv6 functions added in 5.6GA: INET6_ATON(ip) and INET6_NTOA(ip).
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -753,12 +754,12 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * WL#5538 - InnoDB Full-Text Search Support
-     * 
+     *
      * CREATE TABLE syntax changed in 5.6GA
-     * 
+     *
      * InnoDB engine accepts FULLTEXT indexes.
      * CREATE TABLE ... FULLTEXT(...) ... ENGINE=InnoDB
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -791,11 +792,11 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * WL#6555 - Online rename index
-     * 
+     *
      * ALTER TABLE syntax changed in 5.7.1
-     * 
+     *
      * Alter table allows to rename indexes. ALTER TABLE ... RENAME INDEX x TO y
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -827,10 +828,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * WL#6406 - Stacked diagnostic areas
-     * 
+     *
      * "STACKED" in "GET [CURRENT | STACKED] DIAGNOSTICS" syntax was added in 5.7.0. Final behavior was implemented in
      * version 5.7.2, by WL#5928 - Most statements should clear the diagnostic area.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -839,11 +840,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
         // test calling GET STACKED DIAGNOSTICS outside an handler
         final Statement locallyScopedStmt = this.stmt;
-        assertThrows(SQLException.class, "GET STACKED DIAGNOSTICS when handler not active", new Callable<Void>() {
-            public Void call() throws Exception {
-                locallyScopedStmt.execute("GET STACKED DIAGNOSTICS @num = NUMBER");
-                return null;
-            }
+        assertThrows(SQLException.class, "GET STACKED DIAGNOSTICS when handler not active", () -> {
+            locallyScopedStmt.execute("GET STACKED DIAGNOSTICS @num = NUMBER");
+            return null;
         });
 
         // test calling GET STACKED DIAGNOSTICS inside an handler
@@ -918,11 +917,11 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * WL#6868 - Support transportable tablespaces for single innodb partition.
-     * 
+     *
      * New syntax introduced in MySQL 5.7.4.
      * ALTER TABLE t DISCARD PARTITION {p[[,p1]..]|ALL} TABLESPACE;
      * ALTER TABLE t IMPORT PARTITION {p[[,p1]..]|ALL} TABLESPACE;
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -949,19 +948,22 @@ public class SyntaxRegressionTest extends BaseTestCase {
         this.rs.close();
 
         assertThrows(SQLException.class, "Tablespace is missing for table .*", new Callable<Void>() {
+
+            @Override
             @SuppressWarnings("synthetic-access")
             public Void call() throws Exception {
                 SyntaxRegressionTest.this.stmt.executeUpdate("ALTER TABLE testDiscardImportPartitions IMPORT PARTITION p1 TABLESPACE");
                 return null;
             }
+
         });
     }
 
     /**
      * WL#7909 - Server side JSON functions
-     * 
+     *
      * Test support for data type JSON.
-     * 
+     *
      * New JSON functions added in MySQL 5.7.8:
      * - JSON_APPEND(), Append data to JSON document (only in 5.7.8)
      * - JSON_ARRAY_APPEND(), Append data to JSON document (added in 5.7.9+)
@@ -985,7 +987,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * - JSON_TYPE(), Type of JSON value
      * - JSON_UNQUOTE(), Unquote JSON value
      * - JSON_VALID(), Whether JSON value is valid
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1077,9 +1079,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * WL#8016 - Parser for optimizer hints.
-     * 
+     *
      * Test syntax for optimizer hints.
-     * 
+     *
      * New optimizer hints feature added in MySQL 5.7.7. Hints are permitted in these contexts:
      * At the beginning of DML statements
      * - SELECT /*+ ... *&#47 ...
@@ -1096,7 +1098,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * In hintable statements prefaced by EXPLAIN. For example:
      * - EXPLAIN SELECT /*+ ... *&#47 ...
      * - EXPLAIN UPDATE ... WHERE x IN (SELECT /*+ ... *&#47 ...)
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1253,11 +1255,11 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * WL#6205 - InnoDB: Implement CREATE TABLESPACE for general use.
-     * 
+     *
      * Tests support for new CREATE TABLESPACE syntax that extends this feature to InnoDB.
-     * 
+     *
      * CREATE TABLESPACE tablespace_name ADD DATAFILE 'file_name' [FILE_BLOCK_SIZE = value] [ENGINE [=] engine_name]
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1328,12 +1330,12 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * WL#6747 - InnoDB: make fill factor settable.
-     * 
+     *
      * Tests support for new syntax for setting indices MERGE_THRESHOLD on CREATE TABLE.
-     * 
+     *
      * index_option:
      * COMMENT 'MERGE_THRESHOLD=n'
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1396,11 +1398,11 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * WL#7696 - InnoDB: Transparent page compression.
-     * 
+     *
      * Tests COMPRESSION clause in CREATE|ALTER TABLE syntax.
-     * 
+     *
      * table_option: (...) | COMPRESSION [=] {'ZLIB'|'LZ4'|'NONE'}
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1440,9 +1442,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
      * WL#8055 - Consistent naming scheme for GIS functions - Deprecation
      * WL#9435 - Axis order in WKB parsing functions
      * (...)
-     * 
+     *
      * Test syntax for all GIS functions.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1528,6 +1530,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 "{\"type\": \"Polygon\", \"coordinates\": [[[0, 3], [8, 3], [4, 9], [0, 3]]]}]}'");
 
         final class GisFunction {
+
             String function;
             int low_version_maj;
             int low_version_min;
@@ -1548,6 +1551,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
                 this.hi_version_sub = hi_version_sub;
                 this.args = Arrays.asList(args);
             }
+
         }
         final List<GisFunction> gisFunctions = new ArrayList<>();
         // Functions That Create Geometry Values from WKT Values
@@ -1809,11 +1813,11 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * WL#8252 - GCS Replication: Plugin [SERVER CHANGES]
-     * 
+     *
      * Test syntax for GCS Replication commands:
      * - START GROUP_REPLICATION
      * - STOP GROUP_REPLICATION
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1822,34 +1826,26 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
         String expectedErrMsg = "The server is not configured properly to be an active member of the group\\. Please see more details on error log\\.";
         final Statement testStmt = this.stmt;
-        assertThrows(SQLException.class, expectedErrMsg, new Callable<Void>() {
-            public Void call() throws Exception {
-                testStmt.execute("START GROUP_REPLICATION");
-                return null;
-            }
+        assertThrows(SQLException.class, expectedErrMsg, () -> {
+            testStmt.execute("START GROUP_REPLICATION");
+            return null;
         });
-        assertThrows(SQLException.class, expectedErrMsg, new Callable<Void>() {
-            public Void call() throws Exception {
-                testStmt.execute("STOP GROUP_REPLICATION");
-                return null;
-            }
+        assertThrows(SQLException.class, expectedErrMsg, () -> {
+            testStmt.execute("STOP GROUP_REPLICATION");
+            return null;
         });
 
         Connection spsConn = getConnectionWithProps("useServerPrepStmts=true");
         for (Connection testConn : new Connection[] { this.conn, spsConn }) {
             final PreparedStatement testPstmt1 = testConn.prepareStatement("START GROUP_REPLICATION");
-            assertThrows(SQLException.class, expectedErrMsg, new Callable<Void>() {
-                public Void call() throws Exception {
-                    testPstmt1.execute();
-                    return null;
-                }
+            assertThrows(SQLException.class, expectedErrMsg, () -> {
+                testPstmt1.execute();
+                return null;
             });
             final PreparedStatement testPstmt2 = testConn.prepareStatement("STOP GROUP_REPLICATION");
-            assertThrows(SQLException.class, expectedErrMsg, new Callable<Void>() {
-                public Void call() throws Exception {
-                    testPstmt2.execute();
-                    return null;
-                }
+            assertThrows(SQLException.class, expectedErrMsg, () -> {
+                testPstmt2.execute();
+                return null;
             });
         }
         spsConn.close();
@@ -1857,12 +1853,12 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * WL#6054 - Temporarily disablement of users
-     * 
+     *
      * Test user account locking syntax:
-     * 
+     *
      * CREATE|ALTER USER (...)
      * - lock_option: { ACCOUNT LOCK | ACCOUNT UNLOCK }
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1880,13 +1876,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
             this.stmt.execute("GRANT SELECT ON *.* TO '" + user + "'@'%'");
 
             if (accLock.equals("ACCOUNT LOCK")) {
-                assertThrows("Test case: " + accLock + ",", SQLException.class, "Access denied for user '" + user + "'@'.*'\\. Account is locked\\.",
-                        new Callable<Void>() {
-                            public Void call() throws Exception {
-                                getConnectionWithProps(props);
-                                return null;
-                            }
-                        });
+                assertThrows("Test case: " + accLock + ",", SQLException.class, "Access denied for user '" + user + "'@'.*'\\. Account is locked\\.", () -> {
+                    getConnectionWithProps(props);
+                    return null;
+                });
                 this.stmt.execute("ALTER USER '" + user + "'@'%' ACCOUNT UNLOCK");
             }
 
@@ -1896,19 +1889,14 @@ public class SyntaxRegressionTest extends BaseTestCase {
             this.stmt.execute("ALTER USER '" + user + "'@'%' ACCOUNT LOCK");
             assertTrue(testConn1.createStatement().executeQuery("SELECT 1").next(), "Test case: " + accLock + ","); // Previous authentication still valid.
 
-            assertThrows("Test case: " + accLock + ",", SQLException.class, "Access denied for user '" + user + "'@'.*'\\. Account is locked\\.",
-                    new Callable<Void>() {
-                        public Void call() throws Exception {
-                            ((JdbcConnection) testConn1).changeUser(user, pwd);
-                            return null;
-                        }
-                    });
+            assertThrows("Test case: " + accLock + ",", SQLException.class, "Access denied for user '" + user + "'@'.*'\\. Account is locked\\.", () -> {
+                ((JdbcConnection) testConn1).changeUser(user, pwd);
+                return null;
+            });
             assertFalse(testConn1.isClosed(), "Test case: " + accLock + ",");
-            assertThrows("Test case: " + accLock + ",", SQLException.class, "(?s)Communications link failure.*", new Callable<Void>() {
-                public Void call() throws Exception {
-                    testConn1.createStatement().executeQuery("SELECT 1");
-                    return null;
-                }
+            assertThrows("Test case: " + accLock + ",", SQLException.class, "(?s)Communications link failure.*", () -> {
+                testConn1.createStatement().executeQuery("SELECT 1");
+                return null;
             });
             assertTrue(testConn1.isClosed(), "Test case: " + accLock + ",");
 
@@ -1923,12 +1911,12 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
     /**
      * WL#7131 - Add timestamp in mysql.user on the last time the password was changed
-     * 
+     *
      * Test user account password expiration syntax:
-     * 
+     *
      * CREATE|ALTER USER (...)
      * - password_option: { PASSWORD EXPIRE | PASSWORD EXPIRE DEFAULT | PASSWORD EXPIRE NEVER | PASSWORD EXPIRE INTERVAL N DAY }
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1949,11 +1937,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
             if (accPwdExp.equals("PASSWORD EXPIRE")) {
                 assertThrows(SQLException.class, "Your password has expired\\. To log in you must change it using a client that supports expired passwords\\.",
-                        new Callable<Void>() {
-                            public Void call() throws Exception {
-                                getConnectionWithProps(props);
-                                return null;
-                            }
+                        () -> {
+                            getConnectionWithProps(props);
+                            return null;
                         });
             } else {
                 Connection testConn = getConnectionWithProps(props);
@@ -1977,11 +1963,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
             if (accPwdExp.equals("PASSWORD EXPIRE")) {
                 assertThrows(SQLException.class, "Your password has expired\\. To log in you must change it using a client that supports expired passwords\\.",
-                        new Callable<Void>() {
-                            public Void call() throws Exception {
-                                ((JdbcConnection) testConn).changeUser(user, pwd);
-                                return null;
-                            }
+                        () -> {
+                            ((JdbcConnection) testConn).changeUser(user, pwd);
+                            return null;
                         });
             } else {
                 ((JdbcConnection) testConn).changeUser(user, pwd);
@@ -1996,11 +1980,11 @@ public class SyntaxRegressionTest extends BaseTestCase {
     /**
      * WL#8548 - InnoDB: Transparent data encryption.
      * WL#8821 - Innodb tablespace encryption key rotation SQL commands.
-     * 
+     *
      * Test new syntax:
      * - CREATE|ALTER TABLE (...) ENCRYPTION [=] {'Y' | 'N'}
      * - ALTER INSTANCE ROTATE INNODB MASTER KEY
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2043,19 +2027,16 @@ public class SyntaxRegressionTest extends BaseTestCase {
             String err = "Can't find master key from keyring.*";
 
             final Statement testStmt = this.conn.createStatement();
-            assertThrows(SQLException.class, err, new Callable<Void>() {
-                public Void call() throws Exception {
-                    testStmt.execute("CREATE TABLE testInnodbTablespaceEncryption (id INT) ENCRYPTION='y'");
-                    testStmt.execute("DROP TABLE testInnodbTablespaceEncryption");
-                    return null;
-                }
+            assertThrows(SQLException.class, err, () -> {
+                testStmt.execute("CREATE TABLE testInnodbTablespaceEncryption (id INT) ENCRYPTION='y'");
+                testStmt.execute("DROP TABLE testInnodbTablespaceEncryption");
+                return null;
             });
-            assertThrows(SQLException.class, err, new Callable<Void>() {
-                public Void call() throws Exception {
-                    testStmt.execute("ALTER INSTANCE ROTATE INNODB MASTER KEY");
-                    return null;
-                }
+            assertThrows(SQLException.class, err, () -> {
+                testStmt.execute("ALTER INSTANCE ROTATE INNODB MASTER KEY");
+                return null;
             });
         }
     }
+
 }

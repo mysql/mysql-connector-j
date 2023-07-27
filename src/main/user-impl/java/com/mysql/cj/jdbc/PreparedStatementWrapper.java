@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -809,7 +809,6 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         } catch (SQLException sqlEx) {
             checkAndFireConnectionError(sqlEx);
         }
-
     }
 
     @Override
@@ -824,7 +823,6 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         } catch (SQLException sqlEx) {
             checkAndFireConnectionError(sqlEx);
         }
-
     }
 
     @Override
@@ -839,7 +837,6 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
         } catch (SQLException sqlEx) {
             checkAndFireConnectionError(sqlEx);
         }
-
     }
 
     @Override
@@ -872,7 +869,6 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-
         boolean isInstance = iface.isInstance(this);
 
         if (isInstance) {
@@ -881,8 +877,8 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
 
         String interfaceClassName = iface.getName();
 
-        return (interfaceClassName.equals("com.mysql.cj.jdbc.Statement") || interfaceClassName.equals("java.sql.Statement")
-                || interfaceClassName.equals("java.sql.Wrapper") || interfaceClassName.equals("java.sql.PreparedStatement")); // TODO check other interfaces
+        return interfaceClassName.equals("com.mysql.cj.jdbc.Statement") || interfaceClassName.equals("java.sql.Statement")
+                || interfaceClassName.equals("java.sql.Wrapper") || interfaceClassName.equals("java.sql.PreparedStatement"); // TODO check other interfaces
     }
 
     @Override
@@ -976,4 +972,5 @@ public class PreparedStatementWrapper extends StatementWrapper implements Prepar
             checkAndFireConnectionError(sqlEx);
         }
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,7 +37,7 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 
 /**
  * This interface provides a facility for sending messages to server. The destination, transmission method, etc are determined by the implementation.
- * 
+ *
  * @param <M>
  *            Message type
  */
@@ -45,7 +45,7 @@ public interface MessageSender<M extends Message> {
 
     /**
      * Synchronously send the message to server.
-     * 
+     *
      * @param message
      *            byte array containing a message
      * @param messageLen
@@ -61,7 +61,7 @@ public interface MessageSender<M extends Message> {
 
     /**
      * Synchronously send the message to server.
-     * 
+     *
      * @param message
      *            {@link Message} instance
      */
@@ -86,7 +86,7 @@ public interface MessageSender<M extends Message> {
 
     /**
      * Set max allowed packet size.
-     * 
+     *
      * @param maxAllowedPacket
      *            max allowed packet size
      */
@@ -96,7 +96,7 @@ public interface MessageSender<M extends Message> {
 
     /**
      * Return a PacketSender instance free of decorators.
-     * 
+     *
      * @return
      *         {@link MessageSender} instance
      */
@@ -107,11 +107,12 @@ public interface MessageSender<M extends Message> {
     /**
      * Return the previous PacketSender instance from the decorators chain or the current PacketSender
      * if it is the first entry in a chain.
-     * 
+     *
      * @return
      *         {@link MessageSender} instance
      */
     default MessageSender<M> undecorate() {
         return this;
     }
+
 }

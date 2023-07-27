@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -58,7 +58,7 @@ public class ExprParserTest {
 
     /**
      * Check that a string doesn't parse.
-     * 
+     *
      * @param s
      */
     private void checkBadParse(String s) {
@@ -108,7 +108,7 @@ public class ExprParserTest {
 
     /**
      * Check that a string parses and is reconstituted as a string that we expect. Further we parse the canonical version to make sure it doesn't change.
-     * 
+     *
      * @param input
      * @param expected
      */
@@ -601,4 +601,5 @@ public class ExprParserTest {
         assertTrue(proj.get(0).hasAlias());
         assertEquals("overlaps", proj.get(0).getAlias());
     }
+
 }

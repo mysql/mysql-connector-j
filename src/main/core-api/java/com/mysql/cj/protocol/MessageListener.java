@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,7 +36,7 @@ import com.mysql.cj.exceptions.ExceptionFactory;
  * Sink for messages that are read asynchonously from the socket.
  *
  * Return whether the listener is done receiving messages.
- * 
+ *
  * @param <M>
  *            Message type
  */
@@ -44,7 +44,7 @@ public interface MessageListener<M extends Message> {
 
     /**
      * Process protocol message.
-     * 
+     *
      * @param message
      *            {@link Message} instance
      * @return true - if this listener is done with processing the messages sequence and may be discarded;
@@ -56,9 +56,10 @@ public interface MessageListener<M extends Message> {
 
     /**
      * Exceptionally complete underlying Future.
-     * 
+     *
      * @param ex
      *            exception to pass to underlying Future.
      */
     void error(Throwable ex);
+
 }

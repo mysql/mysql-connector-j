@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,6 +30,7 @@
 package com.mysql.cj.log;
 
 public interface ProfilerEvent {
+
     /**
      * Profiler event for usage advisor
      */
@@ -72,84 +73,84 @@ public interface ProfilerEvent {
 
     /**
      * Returns the event type
-     * 
+     *
      * @return the event type
      */
     byte getEventType();
 
     /**
      * Returns the host name the event occurred on.
-     * 
+     *
      * @return host name
      */
     String getHostName();
 
     /**
      * Returns the database the event occurred on.
-     * 
+     *
      * @return the database in use
      */
     String getDatabase();
 
     /**
      * Returns the id of the associated connection (-1 for none).
-     * 
+     *
      * @return the connection in use
      */
     long getConnectionId();
 
     /**
      * Returns the id of the associated statement (-1 for none).
-     * 
+     *
      * @return the statement in use
      */
     int getStatementId();
 
     /**
      * Returns the id of the associated result set (-1 for none).
-     * 
+     *
      * @return the result set in use
      */
     int getResultSetId();
 
     /**
      * Returns the time (in System.currentTimeMillis() form) when this event was created.
-     * 
+     *
      * @return the time this event was created
      */
     long getEventCreationTime();
 
     /**
      * Returns the duration of the event in milliseconds
-     * 
+     *
      * @return the duration of the event in milliseconds
      */
     long getEventDuration();
 
     /**
      * Returns the units for getEventDuration()
-     * 
+     *
      * @return name of duration units
      */
     String getDurationUnits();
 
     /**
      * Returns the description of where the event was created.
-     * 
+     *
      * @return a description of where this event was created.
      */
     String getEventCreationPointAsString();
 
     /**
      * Returns the optional message for this event
-     * 
+     *
      * @return the message stored in this event
      */
     String getMessage();
 
     /**
      * Creates a binary representation of this event.
-     * 
+     *
      * @return a binary representation of this event
      */
     byte[] pack();

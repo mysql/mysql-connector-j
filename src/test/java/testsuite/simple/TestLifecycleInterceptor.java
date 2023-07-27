@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,46 +38,58 @@ import com.mysql.cj.jdbc.interceptors.ConnectionLifecycleInterceptor;
 import com.mysql.cj.log.Log;
 
 public class TestLifecycleInterceptor implements ConnectionLifecycleInterceptor {
+
     static int transactionsBegun = 0;
     static int transactionsCompleted = 0;
 
+    @Override
     public void close() throws SQLException {
     }
 
+    @Override
     public boolean commit() throws SQLException {
         return true;
     }
 
+    @Override
     public boolean rollback() throws SQLException {
         return true;
     }
 
+    @Override
     public boolean rollback(Savepoint s) throws SQLException {
         return true;
     }
 
+    @Override
     public boolean setAutoCommit(boolean flag) throws SQLException {
         return true;
     }
 
+    @Override
     public boolean setDatabase(String db) throws SQLException {
         return true;
     }
 
+    @Override
     public boolean transactionBegun() {
         transactionsBegun++;
         return true;
     }
 
+    @Override
     public boolean transactionCompleted() {
         transactionsCompleted++;
         return true;
     }
 
+    @Override
     public void destroy() {
     }
 
+    @Override
     public ConnectionLifecycleInterceptor init(MysqlConnection conn, Properties props, Log log) {
         return this;
     }
+
 }

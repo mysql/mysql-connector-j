@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2004, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -45,4 +45,5 @@ public class OperationNotSupportedException extends SQLException {
     public OperationNotSupportedException(String message) {
         super(message, MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT);
     }
+
 }

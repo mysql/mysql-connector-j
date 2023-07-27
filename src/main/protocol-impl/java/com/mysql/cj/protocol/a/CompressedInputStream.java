@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -43,6 +43,7 @@ import com.mysql.cj.util.StringUtils;
  * Used to de-compress packets from the MySQL server when protocol-level compression is turned on.
  */
 public class CompressedInputStream extends InputStream {
+
     /** The packet data after it has been un-compressed */
     private byte[] buffer;
 
@@ -69,7 +70,7 @@ public class CompressedInputStream extends InputStream {
     /**
      * Creates a new CompressedInputStream that reads the given stream from the
      * server.
-     * 
+     *
      * @param streamFromServer
      *            original server InputStream
      * @param traceProtocol
@@ -106,7 +107,7 @@ public class CompressedInputStream extends InputStream {
     /**
      * Retrieves and un-compressed (if necessary) the next packet from the
      * server.
-     * 
+     *
      * @throws IOException
      *             if an I/O error occurs
      */
@@ -119,11 +120,10 @@ public class CompressedInputStream extends InputStream {
             throw new IOException("Unexpected end of input stream");
         }
 
-        int compressedPacketLength = ((this.packetHeaderBuffer[0] & 0xff)) + (((this.packetHeaderBuffer[1] & 0xff)) << 8)
-                + (((this.packetHeaderBuffer[2] & 0xff)) << 16);
+        int compressedPacketLength = (this.packetHeaderBuffer[0] & 0xff) + ((this.packetHeaderBuffer[1] & 0xff) << 8)
+                + ((this.packetHeaderBuffer[2] & 0xff) << 16);
 
-        int uncompressedLength = ((this.packetHeaderBuffer[4] & 0xff)) + (((this.packetHeaderBuffer[5] & 0xff)) << 8)
-                + (((this.packetHeaderBuffer[6] & 0xff)) << 16);
+        int uncompressedLength = (this.packetHeaderBuffer[4] & 0xff) + ((this.packetHeaderBuffer[5] & 0xff) << 8) + ((this.packetHeaderBuffer[6] & 0xff) << 16);
 
         boolean doTrace = this.traceProtocol.getValue();
 
@@ -153,7 +153,7 @@ public class CompressedInputStream extends InputStream {
                 this.log.logTrace("Packet didn't meet compression threshold, not uncompressing...");
             }
 
-            //	
+            //
             // Read data, note this this code is reached when using compressed packets that have not been compressed, as well
             //
             uncompressedLength = compressedPacketLength;
@@ -173,7 +173,7 @@ public class CompressedInputStream extends InputStream {
             }
         }
 
-        if ((this.buffer != null) && (this.pos < this.buffer.length)) {
+        if (this.buffer != null && this.pos < this.buffer.length) {
             if (doTrace) {
                 this.log.logTrace("Combining remaining packet with new: ");
             }
@@ -196,15 +196,15 @@ public class CompressedInputStream extends InputStream {
     /**
      * Determines if another packet needs to be read from the server to be able
      * to read numBytes from the stream.
-     * 
+     *
      * @param numBytes
      *            the number of bytes to be read
-     * 
+     *
      * @throws IOException
      *             if an I/O error occors.
      */
     private void getNextPacketIfRequired(int numBytes) throws IOException {
-        if ((this.buffer == null) || ((this.pos + numBytes) > this.buffer.length)) {
+        if (this.buffer == null || this.pos + numBytes > this.buffer.length) {
             getNextPacketFromServer();
         }
     }
@@ -229,7 +229,7 @@ public class CompressedInputStream extends InputStream {
     public int read(byte[] b, int off, int len) throws IOException {
         if (b == null) {
             throw new NullPointerException();
-        } else if ((off < 0) || (off > b.length) || (len < 0) || ((off + len) > b.length) || ((off + len) < 0)) {
+        } else if (off < 0 || off > b.length || len < 0 || off + len > b.length || off + len < 0) {
             throw new IndexOutOfBoundsException();
         }
 
@@ -288,4 +288,5 @@ public class CompressedInputStream extends InputStream {
 
         return count;
     }
+
 }

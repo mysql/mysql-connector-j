@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -77,6 +77,7 @@ public abstract class AbstractResultsetRows implements ResultsetRows {
         this.metadata = columnDefinition;
     }
 
+    @Override
     public ColumnDefinition getMetadata() {
         return this.metadata;
     }

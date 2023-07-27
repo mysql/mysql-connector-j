@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2007, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,22 +39,23 @@ import com.mysql.cj.jdbc.JdbcConnection;
 /**
  * Implement this interface to provide a new load balancing strategy for URLs of the form "jdbc:mysql:loadbalance://..", and provide the implementation class
  * name as the configuration parameter "loadBalanceStrategy".
- * 
+ *
  * The driver will not pass in a Connection instance when calling init(), but it will pass in the Properties, otherwise it acts like a normal Extension.
- * 
+ *
  * One instance of a strategy *per* JDBC connection instance will be created. If you need singleton-like behavior, you're on your own to provide it.
  */
 public interface BalanceStrategy {
+
     /**
      * Called by the driver to pick a new connection to route requests over.
      * See LoadBalancedConnectionProxy.createConnectionForHost(String)
-     * 
+     *
      * @param proxy
      *            the InvocationHandler that deals with actual method calls to
      *            the JDBC connection, and serves as a factory for new
      *            connections for this strategy via the
      *            createConnectionForHost() method.
-     * 
+     *
      *            This proxy takes care of maintaining the response time list, map of
      *            host/ports to live connections, and taking connections out of the live
      *            connections map if they receive a network-related error while they are in
@@ -78,4 +79,5 @@ public interface BalanceStrategy {
      */
     abstract JdbcConnection pickConnection(InvocationHandler proxy, List<String> configuredHosts, Map<String, JdbcConnection> liveConnections,
             long[] responseTimes, int numRetries) throws SQLException;
+
 }

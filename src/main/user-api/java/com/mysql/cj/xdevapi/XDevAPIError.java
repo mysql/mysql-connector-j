@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,11 +35,12 @@ import com.mysql.cj.exceptions.CJException;
  * An Error returned from X DevAPI.
  */
 public class XDevAPIError extends CJException {
+
     private static final long serialVersionUID = 9102723045325569686L;
 
     /**
      * Create new {@link XDevAPIError} instance.
-     * 
+     *
      * @param message
      *            error message
      */
@@ -49,7 +50,7 @@ public class XDevAPIError extends CJException {
 
     /**
      * Create new {@link XDevAPIError} instance.
-     * 
+     *
      * @param message
      *            error message
      * @param t

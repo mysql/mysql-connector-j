@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,6 +40,7 @@ import com.mysql.cj.util.SaslPrep.StringType;
 import testsuite.BaseTestCase;
 
 public class SaslPrepTest extends BaseTestCase {
+
     private static String PROHIBITED_MSG1 = "Prohibited character at position 0\\.";
     private static String PROHIBITED_MSG2 = "Prohibited character at position 4\\.";
     private static String PROHIBITED_MSG3 = "Prohibited character at position 8\\.";
@@ -260,4 +261,5 @@ public class SaslPrepTest extends BaseTestCase {
         assertThrows(WrongArgumentException.class, UNASSIGNED_MSG2, () -> SaslPrep.prepare("my,0\u0890TEXT", StringType.STORED));
         assertThrows(WrongArgumentException.class, UNASSIGNED_MSG3, () -> SaslPrep.prepare("my,0TEXT\u089F", StringType.STORED));
     }
+
 }

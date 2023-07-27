@@ -118,6 +118,7 @@ import com.mysql.cj.xdevapi.PreparableStatement.PreparableStatementFinalizer;
  * Low-level interface to communications with X Plugin.
  */
 public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XMessage> {
+
     private static int RETRY_PREPARE_STATEMENT_COUNTDOWN = 100;
 
     private MessageReader<XMessageHeader, XMessage> reader;
@@ -192,13 +193,14 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         this.messageToProtocolEntityFactory.put(com.mysql.cj.x.protobuf.Mysqlx.Ok.class, new OkFactory());
     }
 
+    @Override
     public ServerSession getServerSession() {
         return this.serverSession;
     }
 
     /**
      * Set client capabilities of current session. Must be done before authentication ({@link #changeUser(String, String, String)}).
-     * 
+     *
      * @param keyValuePair
      *            capabilities name/value map
      */
@@ -208,8 +210,8 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         readQueryResult(new OkBuilder());
     }
 
+    @Override
     public void negotiateSSLConnection() {
-
         if (!ExportControlled.enabled()) {
             throw new CJConnectionFeatureNotAvailableException();
         }
@@ -237,7 +239,6 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         } catch (IOException e) {
             throw new XProtocolError(e.getMessage(), e);
         }
-
     }
 
     /**
@@ -290,6 +291,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         this.compressionEnabled = true;
     }
 
+    @Override
     public void beforeHandshake() {
         this.serverSession = new XServerSession();
 
@@ -437,7 +439,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     /**
      * Parses and validates the value given for the connection option 'xdevapi.compression-extensions'. With the information obtained, creates a map of
      * supported compression algorithms.
-     * 
+     *
      * @param compressionExtensions
      *            the value of the option 'xdevapi.compression-algorithm' containing a comma separated list of triplets with the format
      *            "algorithm-name:inflater-InputStream-class-name:deflater-OutputStream-class-name".
@@ -478,6 +480,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         this.authProvider.connect(user, password, database);
     }
 
+    @Override
     public void changeUser(String user, String password, String database) {
         this.currUser = user;
         this.currPassword = password;
@@ -486,6 +489,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         this.authProvider.changeUser(user, password, database);
     }
 
+    @Override
     public void afterHandshake() {
         // setup all required server session states
 
@@ -578,6 +582,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         }
     }
 
+    @Override
     public <T extends QueryResult> T readQueryResult(ResultBuilder<T> resultBuilder) {
         try {
             List<Notice> notices;
@@ -611,7 +616,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     /**
      * Used only in tests
-     * 
+     *
      * @return true if there are result rows
      */
     public boolean hasResults() {
@@ -639,6 +644,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         }
     }
 
+    @Override
     public ColumnDefinition readMetadata() {
         return readMetadata(null);
     }
@@ -714,7 +720,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     /**
      * Checks if the MySQL server currently connected supports prepared statements.
-     * 
+     *
      * @return
      *         {@code true} if the MySQL server currently connected supports prepared statements.
      */
@@ -724,7 +730,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     /**
      * Checks if enough statements have been executed in this MySQL server so that another prepare statement attempt should be done.
-     * 
+     *
      * @return
      *         {@code true} if enough executions have been done since last time a prepared statement failed to prepare
      */
@@ -739,10 +745,10 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     /**
      * Returns an id to be used as a client-managed prepared statement id. The method {@link #freePreparedStatementId(int)} must be called when the prepared
      * statement is deallocated so that the same id can be re-used.
-     * 
+     *
      * @param preparableStatement
      *            {@link PreparableStatement}
-     * 
+     *
      * @return a new identifier to be used as prepared statement id
      */
     public int getNewPreparedStatementId(PreparableStatement<?> preparableStatement) {
@@ -758,7 +764,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     /**
      * Frees a prepared statement id so that it can be reused. Note that freeing an id from an active prepared statement will result in a statement prepare
      * conflict next time one gets prepared with the same released id.
-     * 
+     *
      * @param preparedStatementId
      *            the prepared statement id to release
      */
@@ -772,7 +778,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     /**
      * Informs this protocol instance that preparing a statement on the connected server failed.
-     * 
+     *
      * @param preparedStatementId
      *            the id of the prepared statement that failed to prepare
      * @param e
@@ -856,6 +862,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         return this.managedResource != null;
     }
 
+    @Override
     public void close() throws IOException {
         try {
             send(this.messageBuilder.buildClose(), 0);
@@ -906,9 +913,10 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
      * Get the capabilities from the server.
      * <p>
      * <b>NOTE:</b> This must be called before authentication.
-     * 
+     *
      * @return capabilities mapped by name
      */
+    @Override
     public ServerCapabilities readServerCapabilities() {
         try {
             this.sender.send(((XMessageBuilder) this.messageBuilder).buildCapabilitiesGet());
@@ -971,11 +979,13 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
+    @Override
     public void changeDatabase(String database) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
         // TODO: Figure out how this is relevant for X Protocol client Session
     }
 
+    @Override
     public boolean versionMeetsMinimum(int major, int minor, int subminor) {
         //TODO: expose this via ServerVersion so calls look like x.getServerVersion().meetsMinimum(major, minor, subminor)
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
@@ -1031,4 +1041,5 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     public Supplier<ValueEncoder> getValueEncoderSupplier(Object obj) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
+
 }

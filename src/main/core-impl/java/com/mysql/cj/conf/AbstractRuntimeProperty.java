@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -108,6 +108,7 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
         invokeListeners();
     }
 
+    @Override
     public boolean isExplicitlySet() {
         return this.wasExplicitlySet;
     }
@@ -174,7 +175,7 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
     /**
      * Set the value of a property from a string value.
      * It involves the {@link PropertyDefinition#parseObject(String, ExceptionInterceptor)} to validate and parse the string.
-     * 
+     *
      * @param value
      *            value
      * @param exceptionInterceptor
@@ -186,7 +187,7 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
 
     /**
      * Internal method for setting property value; ignoring the RUNTIME_NOT_MODIFIABLE flag.
-     * 
+     *
      * @param value
      *            value
      * @param valueAsString
@@ -204,7 +205,7 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
 
     /**
      * For range-based property, checks that value fit into range given by PropertyDefinition.
-     * 
+     *
      * @param val
      *            value
      * @param valueAsString
@@ -231,4 +232,5 @@ public abstract class AbstractRuntimeProperty<T> implements RuntimeProperty<T>, 
                     Messages.getString("ConnectionProperties.dynamicChangeIsNotAllowed", new Object[] { "'" + getPropertyDefinition().getName() + "'" }));
         }
     }
+
 }

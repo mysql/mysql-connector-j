@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,11 +34,12 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class SequentialIdLease {
+
     private Set<Integer> sequentialIdsLease = new TreeSet<>();
 
     /**
      * Finds and allocates the first available sequential id.
-     * 
+     *
      * @return the next free sequential id.
      */
     public int allocateSequentialId() {
@@ -52,11 +53,12 @@ public class SequentialIdLease {
 
     /**
      * Frees the given sequential id so that it can be reused.
-     * 
+     *
      * @param sequentialId
      *            the sequential id to release
      */
     public void releaseSequentialId(int sequentialId) {
         this.sequentialIdsLease.remove(sequentialId);
     }
+
 }

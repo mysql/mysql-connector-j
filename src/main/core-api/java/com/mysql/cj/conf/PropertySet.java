@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -70,7 +70,7 @@ public interface PropertySet {
     /**
      * Initializes the property set with driver properties that come from URL or passed to
      * the driver manager.
-     * 
+     *
      * @param props
      *            properties
      */
@@ -84,4 +84,5 @@ public interface PropertySet {
      * Reset all properties to their initial values.
      */
     void reset();
+
 }

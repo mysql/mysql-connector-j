@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,11 +34,12 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Base class that propagates any error to the given future allowing only implementation of the success callback.
- * 
+ *
  * @param <T>
  *            result type
  */
 public class ErrorToFutureCompletionHandler<T> implements CompletionHandler<T, Void> {
+
     private CompletableFuture<?> future;
     private Runnable successCallback;
 
@@ -47,11 +48,14 @@ public class ErrorToFutureCompletionHandler<T> implements CompletionHandler<T, V
         this.successCallback = successCallback;
     }
 
+    @Override
     public void completed(T result, Void attachment) {
         this.successCallback.run();
     }
 
+    @Override
     public void failed(Throwable ex, Void attachment) {
         this.future.completeExceptionally(ex);
     }
+
 }

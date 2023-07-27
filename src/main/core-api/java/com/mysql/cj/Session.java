@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -52,7 +52,7 @@ import com.mysql.cj.result.Row;
  * {@link Session} exposes logical level which user API uses internally to call {@link Protocol} methods.
  * It's a higher-level abstraction than MySQL server session ({@link ServerSession}). {@link Protocol} and {@link ServerSession} methods
  * should never be used directly from user API.
- * 
+ *
  */
 public interface Session {
 
@@ -62,14 +62,14 @@ public interface Session {
 
     /**
      * Re-authenticates as the given user and password
-     * 
+     *
      * @param userName
      *            DB user name
      * @param password
      *            DB user password
      * @param database
      *            database name
-     * 
+     *
      */
     void changeUser(String userName, String password, String database);
 
@@ -79,7 +79,7 @@ public interface Session {
 
     /**
      * Log-off of the MySQL server and close the socket.
-     * 
+     *
      */
     void quit();
 
@@ -91,7 +91,7 @@ public interface Session {
     /**
      * Does the version of the MySQL server we are connected to meet the given
      * minimums?
-     * 
+     *
      * @param major
      *            major version number
      * @param minor
@@ -108,14 +108,14 @@ public interface Session {
 
     /**
      * Returns the log mechanism that should be used to log information from/for this Session.
-     * 
+     *
      * @return the Log instance to use for logging messages.
      */
     Log getLog();
 
     /**
      * Returns the current ProfilerEventHandler or initializes a new one if none exists.
-     * 
+     *
      * @return the {@link ProfilerEventHandler} object.
      */
     ProfilerEventHandler getProfilerEventHandler();
@@ -134,7 +134,7 @@ public interface Session {
 
     /**
      * Add listener for this session status changes.
-     * 
+     *
      * @param l
      *            {@link SessionEventListener} instance.
      */
@@ -142,18 +142,20 @@ public interface Session {
 
     /**
      * Remove session listener.
-     * 
+     *
      * @param l
      *            {@link SessionEventListener} instance.
      */
     void removeListener(SessionEventListener l);
 
     public static interface SessionEventListener {
+
         void handleNormalClose();
 
         void handleReconnect();
 
         void handleCleanup(Throwable whyCleanedUp);
+
     }
 
     boolean isClosed();
@@ -164,7 +166,7 @@ public interface Session {
 
     /**
      * Synchronously query database with applying rows filtering and mapping.
-     * 
+     *
      * @param message
      *            query message
      * @param rowFilter
@@ -187,7 +189,7 @@ public interface Session {
 
     /**
      * Synchronously query database.
-     * 
+     *
      * @param message
      *            query message
      * @param resultBuilder
@@ -204,7 +206,7 @@ public interface Session {
 
     /**
      * Asynchronously query database.
-     * 
+     *
      * @param message
      *            query message
      * @param resultBuilder

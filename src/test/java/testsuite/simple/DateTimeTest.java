@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -58,7 +58,6 @@ import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.Properties;
 import java.util.TimeZone;
-import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
@@ -74,7 +73,7 @@ public class DateTimeTest extends BaseTestCase {
 
     enum UseMethod {
         setObject, setDate, setTime, setTimestamp, getTimestamp, getObject
-    };
+    }
 
     private static String tYear = "testSetObjectYear";
     private static String tDate = "testSetObjectDate";
@@ -148,7 +147,6 @@ public class DateTimeTest extends BaseTestCase {
     }
 
     private void initConnections(TimeZone senderTz, String connectionTZ) throws Exception {
-
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
@@ -214,7 +212,6 @@ public class DateTimeTest extends BaseTestCase {
 
     @Test
     public void testSqlDateSetters() throws Exception {
-
         boolean withFract = versionMeetsMinimum(5, 6, 4); // fractional seconds are not supported in previous versions
 
         createTable(tYear, "(id INT, d YEAR)");
@@ -226,7 +223,7 @@ public class DateTimeTest extends BaseTestCase {
 
         id = 0;
 
-        Calendar cal_02 = GregorianCalendar.getInstance(tz_plus_02_00);
+        Calendar cal_02 = Calendar.getInstance(tz_plus_02_00);
 
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
@@ -266,7 +263,7 @@ public class DateTimeTest extends BaseTestCase {
                                         props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "" + sendFractionalSeconds);
 
                                         TimeZone connTz = connectionTZ == null || "LOCAL".equals(connectionTZ) ? senderTz
-                                                : ("SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ));
+                                                : "SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ);
                                         TimeZone sessionTz = forceConnectionTimeZoneToSession ? connTz : serverTz;
 
                                         ZonedDateTime zdt_20200101_at_senderTz = ld_20200101.atStartOfDay().atZone(senderTz.toZoneId());
@@ -462,7 +459,7 @@ public class DateTimeTest extends BaseTestCase {
 
         id = 0;
 
-        Calendar cal_02 = GregorianCalendar.getInstance(tz_plus_02_00);
+        Calendar cal_02 = Calendar.getInstance(tz_plus_02_00);
 
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
@@ -502,7 +499,7 @@ public class DateTimeTest extends BaseTestCase {
                                         props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "" + sendFractionalSeconds);
 
                                         TimeZone connTz = connectionTZ == null || "LOCAL".equals(connectionTZ) ? senderTz
-                                                : ("SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ));
+                                                : "SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ);
                                         TimeZone sessionTz = forceConnectionTimeZoneToSession ? connTz : serverTz;
 
                                         ZonedDateTime zdt_19700101_120000_123_at_senderTz = (withFract ? ldt_19700101_120000_123456
@@ -684,8 +681,7 @@ public class DateTimeTest extends BaseTestCase {
                                                 .withZoneSameInstant(tz_UTC.toZoneId());
 
                                         DateTimeFormatter df = sendFractionalSeconds && sendTimeFract
-                                                ? (withFract ? TimeUtil.DATETIME_FORMATTER_WITH_MILLIS_NO_OFFSET
-                                                        : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET)
+                                                ? withFract ? TimeUtil.DATETIME_FORMATTER_WITH_MILLIS_NO_OFFSET : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET
                                                 : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET;
 
                                         String exp1970Timestamp = ldt_exp1970Timestamp.format(df);
@@ -797,7 +793,7 @@ public class DateTimeTest extends BaseTestCase {
             serverTz = ((MysqlConnection) testConn).getSession().getServerSession().getSessionTimeZone();
         }
 
-        Calendar cal_02 = GregorianCalendar.getInstance(tz_plus_02_00);
+        Calendar cal_02 = Calendar.getInstance(tz_plus_02_00);
 
         for (TimeZone senderTz : this.senderTimeZones) {
             try {
@@ -826,15 +822,15 @@ public class DateTimeTest extends BaseTestCase {
                                         props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "" + sendFractionalSeconds);
 
                                         TimeZone connTz = connectionTZ == null || "LOCAL".equals(connectionTZ) ? senderTz
-                                                : ("SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ));
+                                                : "SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ);
 
                                         TimeZone sessionTz = forceConnectionTimeZoneToSession ? connTz : serverTz;
 
                                         DateTimeFormatter dateTimeFmt = sendFractionalSeconds
-                                                ? (withFract ? DATETIME_FORMATTER_WITH_MICROS_NO_OFFCET : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET)
+                                                ? withFract ? DATETIME_FORMATTER_WITH_MICROS_NO_OFFCET : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET
                                                 : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET;
                                         DateTimeFormatter timeFmtsendFractionalSeconds = sendFractionalSeconds
-                                                ? (withFract ? TIME_FORMATTER_WITH_MICROS_NO_OFFCET : TimeUtil.TIME_FORMATTER_NO_FRACT_NO_OFFSET)
+                                                ? withFract ? TIME_FORMATTER_WITH_MICROS_NO_OFFCET : TimeUtil.TIME_FORMATTER_NO_FRACT_NO_OFFSET
                                                 : TimeUtil.TIME_FORMATTER_NO_FRACT_NO_OFFSET;
 
                                         ZonedDateTime zdt_20200101_120000_123456_at_senderTz = (withFract ? ldt_20200101_120000_123456
@@ -1119,15 +1115,14 @@ public class DateTimeTest extends BaseTestCase {
                                         props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "" + sendFractionalSeconds);
 
                                         TimeZone connTz = connectionTZ == null || "LOCAL".equals(connectionTZ) ? senderTz
-                                                : ("SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ));
+                                                : "SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ);
                                         TimeZone sessionTz = forceConnectionTimeZoneToSession ? connTz : serverTz;
 
                                         DateTimeFormatter dateTimeFmt = sendFractionalSeconds
-                                                ? (withFract ? TimeUtil.DATETIME_FORMATTER_WITH_MILLIS_NO_OFFSET
-                                                        : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET)
+                                                ? withFract ? TimeUtil.DATETIME_FORMATTER_WITH_MILLIS_NO_OFFSET : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET
                                                 : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET;
                                         DateTimeFormatter timeFmt = sendFractionalSeconds
-                                                ? (withFract ? TIME_FORMATTER_WITH_MILLIS_NO_OFFCET : TimeUtil.TIME_FORMATTER_NO_FRACT_NO_OFFSET)
+                                                ? withFract ? TIME_FORMATTER_WITH_MILLIS_NO_OFFCET : TimeUtil.TIME_FORMATTER_NO_FRACT_NO_OFFSET
                                                 : TimeUtil.TIME_FORMATTER_NO_FRACT_NO_OFFSET;
 
                                         ZonedDateTime zdt_20200101_120000_123456_at_senderTz = zdt_20200101_120000_123456_02_00
@@ -1387,7 +1382,7 @@ public class DateTimeTest extends BaseTestCase {
                                         props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "" + sendFractionalSeconds);
 
                                         TimeZone connTz = connectionTZ == null || "LOCAL".equals(connectionTZ) ? senderTz
-                                                : ("SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ));
+                                                : "SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ);
                                         TimeZone sessionTz = forceConnectionTimeZoneToSession ? connTz : serverTz;
 
                                         DateTimeFormatter dateTimeFmt = sendFractionalSeconds && withFract ? TimeUtil.DATETIME_FORMATTER_WITH_MILLIS_NO_OFFSET
@@ -1646,7 +1641,7 @@ public class DateTimeTest extends BaseTestCase {
                                         props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "" + sendFractionalSeconds);
 
                                         TimeZone connTz = connectionTZ == null || "LOCAL".equals(connectionTZ) ? senderTz
-                                                : ("SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ));
+                                                : "SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ);
                                         TimeZone sessionTz = forceConnectionTimeZoneToSession ? connTz : serverTz;
 
                                         ZonedDateTime zdt_20200101_no_time_on_wire = ld_20200101.atStartOfDay(sessionTz.toZoneId());
@@ -1834,7 +1829,7 @@ public class DateTimeTest extends BaseTestCase {
                                         props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "" + sendFractionalSeconds);
 
                                         TimeZone connTz = connectionTZ == null || "LOCAL".equals(connectionTZ) ? senderTz
-                                                : ("SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ));
+                                                : "SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ);
                                         TimeZone sessionTz = forceConnectionTimeZoneToSession ? connTz : serverTz;
 
                                         DateTimeFormatter dateTimeFmt = withFract ? DATETIME_FORMATTER_WITH_MICROS_NO_OFFCET
@@ -2052,7 +2047,7 @@ public class DateTimeTest extends BaseTestCase {
                                         props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "" + sendFractionalSeconds);
 
                                         TimeZone connTz = connectionTZ == null || "LOCAL".equals(connectionTZ) ? senderTz
-                                                : ("SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ));
+                                                : "SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ);
                                         TimeZone sessionTz = forceConnectionTimeZoneToSession ? connTz : serverTz;
 
                                         DateTimeFormatter dateTimeFmt = withFract && sendFractionalSeconds ? DATETIME_FORMATTER_WITH_MICROS_NO_OFFCET
@@ -2307,7 +2302,7 @@ public class DateTimeTest extends BaseTestCase {
                                         props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "" + sendFractionalSeconds);
 
                                         TimeZone connTz = connectionTZ == null || "LOCAL".equals(connectionTZ) ? senderTz
-                                                : ("SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ));
+                                                : "SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ);
                                         TimeZone sessionTz = forceConnectionTimeZoneToSession ? connTz : serverTz;
 
                                         DateTimeFormatter dateTimeFmt = withFract && sendFractionalSeconds ? DATETIME_FORMATTER_WITH_MICROS_NO_OFFCET
@@ -2537,7 +2532,7 @@ public class DateTimeTest extends BaseTestCase {
                                         props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "" + sendFractionalSeconds);
 
                                         TimeZone connTz = connectionTZ == null || "LOCAL".equals(connectionTZ) ? senderTz
-                                                : ("SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ));
+                                                : "SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ);
                                         TimeZone sessionTz = forceConnectionTimeZoneToSession ? connTz : serverTz;
 
                                         DateTimeFormatter dateTimeFmt = withFract && sendFractionalSeconds ? DATETIME_FORMATTER_WITH_MICROS_NO_OFFCET
@@ -2913,7 +2908,7 @@ public class DateTimeTest extends BaseTestCase {
                                         props.setProperty(PropertyKey.sendFractionalSeconds.getKeyName(), "" + sendFractionalSeconds);
 
                                         TimeZone connTz = connectionTZ == null || "LOCAL".equals(connectionTZ) ? senderTz
-                                                : ("SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ));
+                                                : "SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ);
                                         TimeZone sessionTz = forceConnectionTimeZoneToSession ? connTz : serverTz;
 
                                         DateTimeFormatter dateTimeFmt = withFract && sendFractionalSeconds ? DATETIME_FORMATTER_WITH_MICROS_NO_OFFCET
@@ -3336,31 +3331,25 @@ public class DateTimeTest extends BaseTestCase {
     }
 
     void assertThrows(Properties props, String tableName, Object parameter, SQLType targetSqlType, TimeZone senderTz, String err) throws Exception {
-        assertThrows(SQLException.class, err, new Callable<Void>() {
-            public Void call() throws Exception {
-                setObjectFromTz(props, tableName, parameter, targetSqlType, senderTz);
-                return null;
-            }
+        assertThrows(SQLException.class, err, () -> {
+            setObjectFromTz(props, tableName, parameter, targetSqlType, senderTz);
+            return null;
         });
     }
 
     void assertThrows(Properties props, String tableName, Object parameter, SQLType targetSqlType, TimeZone senderTz, String expectedValue,
             String expectedUnixTimestamp, UseMethod useMethod, String err) throws Exception {
-        assertThrows(SQLException.class, err, new Callable<Void>() {
-            public Void call() throws Exception {
-                setObjectFromTz(props, tableName, parameter, targetSqlType, senderTz, expectedValue, expectedUnixTimestamp, useMethod, null);
-                return null;
-            }
+        assertThrows(SQLException.class, err, () -> {
+            setObjectFromTz(props, tableName, parameter, targetSqlType, senderTz, expectedValue, expectedUnixTimestamp, useMethod, null);
+            return null;
         });
     }
 
     void assertThrows(Properties props, String tableName, Object parameter, SQLType targetSqlType, TimeZone senderTz, String expectedValue,
             String expectedUnixTimestamp, UseMethod useMethod, Calendar calendar, String err) throws Exception {
-        assertThrows(SQLException.class, err, new Callable<Void>() {
-            public Void call() throws Exception {
-                setObjectFromTz(props, tableName, parameter, targetSqlType, senderTz, expectedValue, expectedUnixTimestamp, useMethod, calendar);
-                return null;
-            }
+        assertThrows(SQLException.class, err, () -> {
+            setObjectFromTz(props, tableName, parameter, targetSqlType, senderTz, expectedValue, expectedUnixTimestamp, useMethod, calendar);
+            return null;
         });
     }
 
@@ -3454,7 +3443,7 @@ public class DateTimeTest extends BaseTestCase {
         createTable(tDate, "(d DATE)");
         this.stmt.executeUpdate("INSERT INTO " + tDate + " VALUES ('2020-01-01'), ('2019-12-31')");
 
-        Calendar cal_05 = GregorianCalendar.getInstance(tz_plus_05_00);
+        Calendar cal_05 = Calendar.getInstance(tz_plus_05_00);
 
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
@@ -3496,20 +3485,20 @@ public class DateTimeTest extends BaseTestCase {
                                         Instant exp_instant_tz = ldt_20200101_0000.atZone(currZoneId).toInstant();
                                         Instant exp_instant_05 = ldt_20200101_0000.atOffset(ZoneOffset.ofHours(5)).toInstant();
 
-                                        Calendar exp_cal = GregorianCalendar.getInstance(tz);
+                                        Calendar exp_cal = Calendar.getInstance(tz);
                                         exp_cal.set(2020, 0, 1, 0, 0, 0);
                                         exp_cal.set(Calendar.MILLISECOND, 0);
                                         exp_cal.setLenient(false);
 
-                                        assertEquals(java.sql.Date.from(exp_instant_tz), this.rs.getDate(1));
-                                        assertEquals(java.sql.Date.from(exp_instant_05), this.rs.getDate(1, cal_05));
+                                        assertEquals(java.util.Date.from(exp_instant_tz), this.rs.getDate(1));
+                                        assertEquals(java.util.Date.from(exp_instant_05), this.rs.getDate(1, cal_05));
                                         assertEquals(java.sql.Time.valueOf(lt_000000), this.rs.getTime(1));
-                                        assertEquals(java.sql.Time.from(lt_000000.atOffset(ZoneOffset.ofHours(5)).atDate(ld_19700101).toInstant()),
+                                        assertEquals(java.util.Date.from(lt_000000.atOffset(ZoneOffset.ofHours(5)).atDate(ld_19700101).toInstant()),
                                                 this.rs.getTime(1, cal_05));
                                         assertEquals(java.sql.Timestamp.from(exp_instant_tz), this.rs.getTimestamp(1));
                                         assertEquals(java.sql.Timestamp.from(exp_instant_05), this.rs.getTimestamp(1, cal_05));
-                                        assertEquals(java.sql.Date.from(exp_instant_tz), this.rs.getObject(1));
-                                        assertEquals(java.sql.Date.from(exp_instant_tz), this.rs.getObject(1, java.sql.Date.class));
+                                        assertEquals(java.util.Date.from(exp_instant_tz), this.rs.getObject(1));
+                                        assertEquals(java.util.Date.from(exp_instant_tz), this.rs.getObject(1, java.sql.Date.class));
                                         assertEquals(java.sql.Time.valueOf(lt_000000), this.rs.getObject(1, java.sql.Time.class));
                                         assertEquals(java.sql.Timestamp.from(exp_instant_tz), this.rs.getObject(1, java.sql.Timestamp.class));
                                         assertEquals(java.util.Date.from(exp_instant_tz), this.rs.getObject(1, java.util.Date.class));
@@ -3533,20 +3522,20 @@ public class DateTimeTest extends BaseTestCase {
                                         exp_instant_tz = ldt_20191231_0000.atZone(currZoneId).toInstant();
                                         exp_instant_05 = ldt_20191231_0000.atOffset(ZoneOffset.ofHours(5)).toInstant();
 
-                                        exp_cal = GregorianCalendar.getInstance(tz);
+                                        exp_cal = Calendar.getInstance(tz);
                                         exp_cal.set(2019, 11, 31, 0, 0, 0);
                                         exp_cal.set(Calendar.MILLISECOND, 0);
                                         exp_cal.setLenient(false);
 
-                                        assertEquals(java.sql.Date.from(exp_instant_tz), this.rs.getDate(1));
-                                        assertEquals(java.sql.Date.from(exp_instant_05), this.rs.getDate(1, cal_05));
+                                        assertEquals(java.util.Date.from(exp_instant_tz), this.rs.getDate(1));
+                                        assertEquals(java.util.Date.from(exp_instant_05), this.rs.getDate(1, cal_05));
                                         assertEquals(java.sql.Time.valueOf(lt_000000), this.rs.getTime(1));
-                                        assertEquals(java.sql.Time.from(lt_000000.atOffset(ZoneOffset.ofHours(5)).atDate(ld_19700101).toInstant()),
+                                        assertEquals(java.util.Date.from(lt_000000.atOffset(ZoneOffset.ofHours(5)).atDate(ld_19700101).toInstant()),
                                                 this.rs.getTime(1, cal_05));
                                         assertEquals(java.sql.Timestamp.from(exp_instant_tz), this.rs.getTimestamp(1));
                                         assertEquals(java.sql.Timestamp.from(exp_instant_05), this.rs.getTimestamp(1, cal_05));
-                                        assertEquals(java.sql.Date.from(exp_instant_tz), this.rs.getObject(1));
-                                        assertEquals(java.sql.Date.from(exp_instant_tz), this.rs.getObject(1, java.sql.Date.class));
+                                        assertEquals(java.util.Date.from(exp_instant_tz), this.rs.getObject(1));
+                                        assertEquals(java.util.Date.from(exp_instant_tz), this.rs.getObject(1, java.sql.Date.class));
                                         assertEquals(java.sql.Time.valueOf(lt_000000), this.rs.getObject(1, java.sql.Time.class));
                                         assertEquals(java.sql.Timestamp.from(exp_instant_tz), this.rs.getObject(1, java.sql.Timestamp.class));
                                         assertEquals(java.util.Date.from(exp_instant_tz), this.rs.getObject(1, java.util.Date.class));
@@ -3585,7 +3574,7 @@ public class DateTimeTest extends BaseTestCase {
         this.stmt.executeUpdate("INSERT INTO " + tTime + " VALUES ('" + dur1 + "')");
         this.stmt.executeUpdate("INSERT INTO " + tTime + " VALUES ('" + dur2 + "')");
 
-        Calendar cal_05 = GregorianCalendar.getInstance(tz_plus_05_00);
+        Calendar cal_05 = Calendar.getInstance(tz_plus_05_00);
 
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
@@ -3630,7 +3619,7 @@ public class DateTimeTest extends BaseTestCase {
                                         Instant exp_instant_tz = exp_ldt.atZone(currZoneId).toInstant();
                                         Instant exp_instant_05 = exp_ldt.atOffset(ZoneOffset.ofHours(5)).toInstant();
 
-                                        Calendar exp_cal = GregorianCalendar.getInstance(tz);
+                                        Calendar exp_cal = Calendar.getInstance(tz);
                                         exp_cal.clear();
                                         exp_cal.set(Calendar.HOUR_OF_DAY, 12);
                                         exp_cal.set(Calendar.MILLISECOND, withFract ? 123 : 0);
@@ -3638,13 +3627,13 @@ public class DateTimeTest extends BaseTestCase {
 
                                         assertEquals(java.sql.Date.valueOf(ld_19700101), this.rs.getDate(1));
                                         assertEquals(java.sql.Date.valueOf(ld_19700101), this.rs.getDate(1, cal_05));
-                                        assertEquals(java.sql.Time.from(exp_instant_tz), this.rs.getTime(1));
-                                        assertEquals(java.sql.Time.from(exp_instant_05), this.rs.getTime(1, cal_05));
+                                        assertEquals(java.util.Date.from(exp_instant_tz), this.rs.getTime(1));
+                                        assertEquals(java.util.Date.from(exp_instant_05), this.rs.getTime(1, cal_05));
                                         assertEquals(java.sql.Timestamp.from(exp_instant_tz), this.rs.getTimestamp(1));
                                         assertEquals(java.sql.Timestamp.from(exp_instant_05), this.rs.getTimestamp(1, cal_05));
-                                        assertEquals(java.sql.Time.from(exp_instant_tz), this.rs.getObject(1));
+                                        assertEquals(java.util.Date.from(exp_instant_tz), this.rs.getObject(1));
                                         assertEquals(java.sql.Date.valueOf(ld_19700101), this.rs.getObject(1, java.sql.Date.class));
-                                        assertEquals(java.sql.Time.from(exp_instant_tz), this.rs.getObject(1, java.sql.Time.class));
+                                        assertEquals(java.util.Date.from(exp_instant_tz), this.rs.getObject(1, java.sql.Time.class));
                                         assertEquals(java.sql.Timestamp.from(exp_instant_tz), this.rs.getObject(1, java.sql.Timestamp.class));
                                         assertEquals(java.util.Date.from(exp_instant_tz), this.rs.getObject(1, java.util.Date.class));
                                         assertEquals(exp_cal, this.rs.getObject(1, java.util.Calendar.class));
@@ -3807,7 +3796,7 @@ public class DateTimeTest extends BaseTestCase {
 
         DateTimeFormatter dateTimeFmt = withFract ? DATETIME_FORMATTER_WITH_MICROS_NO_OFFCET : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET;
 
-        Calendar cal_05 = GregorianCalendar.getInstance(tz_plus_05_00);
+        Calendar cal_05 = Calendar.getInstance(tz_plus_05_00);
 
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
@@ -3857,7 +3846,7 @@ public class DateTimeTest extends BaseTestCase {
                                         assertTrue(this.rs.next());
 
                                         TimeZone connTz = connectionTZ == null || "LOCAL".equals(connectionTZ) ? clientTz
-                                                : ("SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ));
+                                                : "SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ);
 
                                         TimeZone sessionTz = forceConnectionTimeZoneToSession ? connTz : serverTz;
 
@@ -3880,21 +3869,21 @@ public class DateTimeTest extends BaseTestCase {
 
                                         ZonedDateTime exp_odt = exp_on_wire.withZoneSameLocal(preserveInstants ? connTz.toZoneId() : currZoneId);
 
-                                        Calendar exp_cal = GregorianCalendar.getInstance(preserveInstants ? connTz : clientTz);
+                                        Calendar exp_cal = Calendar.getInstance(preserveInstants ? connTz : clientTz);
                                         exp_cal.set(exp_on_wire.getYear(), exp_on_wire.getMonthValue() - 1, exp_on_wire.getDayOfMonth(), exp_on_wire.getHour(),
                                                 exp_on_wire.getMinute(), exp_on_wire.getSecond());
                                         exp_cal.set(Calendar.MILLISECOND, exp_on_wire.getNano() / 1000000);
                                         exp_cal.setLenient(false);
 
-                                        assertEquals(java.sql.Date.from(exp_date.toInstant()), this.rs.getDate(1));
-                                        assertEquals(java.sql.Date.from(exp_date_with_cal), this.rs.getDate(1, cal_05));
-                                        assertEquals(java.sql.Time.from(exp_time.toInstant()), this.rs.getTime(1));
-                                        assertEquals(java.sql.Time.from(exp_time_with_cal), this.rs.getTime(1, cal_05));
+                                        assertEquals(java.util.Date.from(exp_date.toInstant()), this.rs.getDate(1));
+                                        assertEquals(java.util.Date.from(exp_date_with_cal), this.rs.getDate(1, cal_05));
+                                        assertEquals(java.util.Date.from(exp_time.toInstant()), this.rs.getTime(1));
+                                        assertEquals(java.util.Date.from(exp_time_with_cal), this.rs.getTime(1, cal_05));
                                         assertEquals(java.sql.Timestamp.from(exp_timestamp.toInstant()), this.rs.getTimestamp(1));
                                         assertEquals(java.sql.Timestamp.from(exp_timestamp_with_cal), this.rs.getTimestamp(1, cal_05));
                                         assertEquals(java.sql.Timestamp.from(exp_timestamp.toInstant()), this.rs.getObject(1));
-                                        assertEquals(java.sql.Date.from(exp_date.toInstant()), this.rs.getObject(1, java.sql.Date.class));
-                                        assertEquals(java.sql.Time.from(exp_time.toInstant()), this.rs.getObject(1, java.sql.Time.class));
+                                        assertEquals(java.util.Date.from(exp_date.toInstant()), this.rs.getObject(1, java.sql.Date.class));
+                                        assertEquals(java.util.Date.from(exp_time.toInstant()), this.rs.getObject(1, java.sql.Time.class));
                                         assertEquals(java.sql.Timestamp.from(exp_timestamp.toInstant()), this.rs.getObject(1, java.sql.Timestamp.class));
                                         assertEquals(java.util.Date.from(exp_timestamp.toInstant()), this.rs.getObject(1, java.util.Date.class));
                                         assertEquals(exp_cal, this.rs.getObject(1, java.util.Calendar.class));
@@ -3932,7 +3921,7 @@ public class DateTimeTest extends BaseTestCase {
         DateTimeFormatter dateTimeFmt = withFract ? DATETIME_FORMATTER_WITH_MICROS_NO_OFFCET : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET;
         OffsetDateTime orig_UTC = OffsetDateTime.of(2020, 1, 1, 2, 0, 0, withFract ? 123456000 : 0, ZoneOffset.UTC);
 
-        Calendar cal_05 = GregorianCalendar.getInstance(tz_plus_05_00);
+        Calendar cal_05 = Calendar.getInstance(tz_plus_05_00);
 
         createTable(tDatetime, withFract ? "(d DATETIME(6))" : "(d DATETIME)");
         this.stmt.executeUpdate("INSERT INTO " + tDatetime + " VALUES ('" + ldt_20200101_020000_123456.toString() + "')");
@@ -3992,28 +3981,28 @@ public class DateTimeTest extends BaseTestCase {
                                         Instant exp_timestamp_instant_05 = ldt_20200101_020000_123456.atOffset(ZoneOffset.ofHours(5)).toInstant();
 
                                         TimeZone connTz = connectionTZ == null || "LOCAL".equals(connectionTZ) ? clientTz
-                                                : ("SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ));
+                                                : "SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ);
                                         TimeZone sessionTz = forceConnectionTimeZoneToSession ? connTz : serverTz;
                                         ZonedDateTime exp_on_wire = orig_UTC.atZoneSimilarLocal(ZoneId.of(sessionTz.getID()));
                                         Instant exp_timestamp_instant = (preserveInstants
                                                 ? exp_on_wire.withZoneSameLocal(connTz.toZoneId()).withZoneSameInstant(currZoneId)
                                                 : exp_on_wire.withZoneSameLocal(currZoneId)).toInstant();
 
-                                        Calendar exp_cal = GregorianCalendar.getInstance(preserveInstants ? connTz : clientTz);
+                                        Calendar exp_cal = Calendar.getInstance(preserveInstants ? connTz : clientTz);
                                         exp_cal.set(exp_on_wire.getYear(), exp_on_wire.getMonthValue() - 1, exp_on_wire.getDayOfMonth(), exp_on_wire.getHour(),
                                                 exp_on_wire.getMinute(), exp_on_wire.getSecond());
                                         exp_cal.set(Calendar.MILLISECOND, exp_on_wire.getNano() / 1000000);
                                         exp_cal.setLenient(false);
 
-                                        assertEquals(java.sql.Date.from(exp_date_instant_tz), this.rs.getDate(1));
-                                        assertEquals(java.sql.Date.from(exp_date_instant_05), this.rs.getDate(1, cal_05));
-                                        assertEquals(java.sql.Time.from(exp_time_instant_tz), this.rs.getTime(1));
-                                        assertEquals(java.sql.Time.from(exp_time_instant_05), this.rs.getTime(1, cal_05));
+                                        assertEquals(java.util.Date.from(exp_date_instant_tz), this.rs.getDate(1));
+                                        assertEquals(java.util.Date.from(exp_date_instant_05), this.rs.getDate(1, cal_05));
+                                        assertEquals(java.util.Date.from(exp_time_instant_tz), this.rs.getTime(1));
+                                        assertEquals(java.util.Date.from(exp_time_instant_05), this.rs.getTime(1, cal_05));
                                         assertEquals(java.sql.Timestamp.from(exp_timestamp_instant), this.rs.getTimestamp(1));
                                         assertEquals(java.sql.Timestamp.from(exp_timestamp_instant_05), this.rs.getTimestamp(1, cal_05));
                                         assertEquals(ldt_20200101_020000_123456, this.rs.getObject(1));
-                                        assertEquals(java.sql.Date.from(exp_date_instant_tz), this.rs.getObject(1, java.sql.Date.class));
-                                        assertEquals(java.sql.Time.from(exp_time_instant_tz), this.rs.getObject(1, java.sql.Time.class));
+                                        assertEquals(java.util.Date.from(exp_date_instant_tz), this.rs.getObject(1, java.sql.Date.class));
+                                        assertEquals(java.util.Date.from(exp_time_instant_tz), this.rs.getObject(1, java.sql.Time.class));
                                         assertEquals(java.sql.Timestamp.from(exp_timestamp_instant), this.rs.getObject(1, java.sql.Timestamp.class));
                                         assertEquals(java.util.Date.from(exp_timestamp_instant), this.rs.getObject(1, java.util.Date.class));
                                         assertEquals(exp_cal, this.rs.getObject(1, java.util.Calendar.class));
@@ -4052,7 +4041,7 @@ public class DateTimeTest extends BaseTestCase {
         createTable(tYear, "(d YEAR, s VARCHAR(30))");
         this.stmt.executeUpdate("INSERT INTO " + tYear + " VALUES ('" + s_2020 + "', '" + s_2020 + "')");
 
-        Calendar cal_05 = GregorianCalendar.getInstance(tz_plus_05_00);
+        Calendar cal_05 = Calendar.getInstance(tz_plus_05_00);
 
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
@@ -4096,21 +4085,21 @@ public class DateTimeTest extends BaseTestCase {
                                             Instant exp_instant_tz = ldt_20200101_0000.atZone(currZoneId).toInstant();
                                             Instant exp_instant_05 = ldt_20200101_0000.atOffset(ZoneOffset.ofHours(5)).toInstant();
 
-                                            Calendar exp_cal = GregorianCalendar.getInstance(tz);
+                                            Calendar exp_cal = Calendar.getInstance(tz);
                                             exp_cal.set(2020, 0, 1, 0, 0, 0);
                                             exp_cal.set(Calendar.MILLISECOND, 0);
                                             exp_cal.setLenient(false);
 
                                             if (yearIsDateType) {
-                                                assertEquals(java.sql.Date.from(exp_instant_tz), rs1.getDate(1));
-                                                assertEquals(java.sql.Date.from(exp_instant_05), rs1.getDate(1, cal_05));
+                                                assertEquals(java.util.Date.from(exp_instant_tz), rs1.getDate(1));
+                                                assertEquals(java.util.Date.from(exp_instant_05), rs1.getDate(1, cal_05));
                                                 assertEquals(java.sql.Time.valueOf(lt_000000), rs1.getTime(1));
-                                                assertEquals(java.sql.Time.from(lt_000000.atOffset(ZoneOffset.ofHours(5)).atDate(ld_19700101).toInstant()),
+                                                assertEquals(java.util.Date.from(lt_000000.atOffset(ZoneOffset.ofHours(5)).atDate(ld_19700101).toInstant()),
                                                         rs1.getTime(1, cal_05));
                                                 assertEquals(java.sql.Timestamp.from(exp_instant_tz), rs1.getTimestamp(1));
                                                 assertEquals(java.sql.Timestamp.from(exp_instant_05), rs1.getTimestamp(1, cal_05));
-                                                assertEquals(java.sql.Date.from(exp_instant_tz), rs1.getObject(1));
-                                                assertEquals(java.sql.Date.from(exp_instant_tz), rs1.getObject(1, java.sql.Date.class));
+                                                assertEquals(java.util.Date.from(exp_instant_tz), rs1.getObject(1));
+                                                assertEquals(java.util.Date.from(exp_instant_tz), rs1.getObject(1, java.sql.Date.class));
                                                 assertEquals(java.sql.Time.valueOf(lt_000000), rs1.getObject(1, java.sql.Time.class));
                                                 assertEquals(java.sql.Timestamp.from(exp_instant_tz), rs1.getObject(1, java.sql.Timestamp.class));
                                                 assertEquals(java.util.Date.from(exp_instant_tz), rs1.getObject(1, java.util.Date.class));
@@ -4130,130 +4119,94 @@ public class DateTimeTest extends BaseTestCase {
                                                         });
                                             } else {
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", java.sql.Date.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getDate(1);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", java.sql.Date.class.getName() }), () -> {
+                                                            rs1.getDate(1);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", java.sql.Date.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getDate(1, cal_05);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", java.sql.Date.class.getName() }), () -> {
+                                                            rs1.getDate(1, cal_05);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", java.sql.Time.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getTime(1);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", java.sql.Time.class.getName() }), () -> {
+                                                            rs1.getTime(1);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", java.sql.Time.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getTime(1, cal_05);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", java.sql.Time.class.getName() }), () -> {
+                                                            rs1.getTime(1, cal_05);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", java.sql.Timestamp.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getTimestamp(1);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", java.sql.Timestamp.class.getName() }), () -> {
+                                                            rs1.getTimestamp(1);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", java.sql.Timestamp.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getTimestamp(1, cal_05);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", java.sql.Timestamp.class.getName() }), () -> {
+                                                            rs1.getTimestamp(1, cal_05);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", java.sql.Date.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getObject(1, java.sql.Date.class);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", java.sql.Date.class.getName() }), () -> {
+                                                            rs1.getObject(1, java.sql.Date.class);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", java.sql.Time.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getObject(1, java.sql.Time.class);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", java.sql.Time.class.getName() }), () -> {
+                                                            rs1.getObject(1, java.sql.Time.class);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", java.sql.Timestamp.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getObject(1, java.sql.Timestamp.class);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", java.sql.Timestamp.class.getName() }), () -> {
+                                                            rs1.getObject(1, java.sql.Timestamp.class);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", java.sql.Timestamp.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getObject(1, java.util.Date.class);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", java.sql.Timestamp.class.getName() }), () -> {
+                                                            rs1.getObject(1, java.util.Date.class);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", Calendar.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getObject(1, java.util.Calendar.class);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", Calendar.class.getName() }), () -> {
+                                                            rs1.getObject(1, java.util.Calendar.class);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", LocalDate.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getObject(1, LocalDate.class);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", LocalDate.class.getName() }), () -> {
+                                                            rs1.getObject(1, LocalDate.class);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", LocalTime.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getObject(1, LocalTime.class);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", LocalTime.class.getName() }), () -> {
+                                                            rs1.getObject(1, LocalTime.class);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", LocalDateTime.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getObject(1, LocalDateTime.class);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", LocalDateTime.class.getName() }), () -> {
+                                                            rs1.getObject(1, LocalDateTime.class);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", OffsetTime.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getObject(1, OffsetTime.class);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", OffsetTime.class.getName() }), () -> {
+                                                            rs1.getObject(1, OffsetTime.class);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", OffsetDateTime.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getObject(1, OffsetDateTime.class);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", OffsetDateTime.class.getName() }), () -> {
+                                                            rs1.getObject(1, OffsetDateTime.class);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", ZonedDateTime.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getObject(1, ZonedDateTime.class);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", ZonedDateTime.class.getName() }), () -> {
+                                                            rs1.getObject(1, ZonedDateTime.class);
+                                                            return null;
                                                         });
                                                 assertThrows(SQLException.class, Messages.getString("ResultSet.UnsupportedConversion",
-                                                        new Object[] { "LONG", Duration.class.getName() }), new Callable<Void>() {
-                                                            public Void call() throws Exception {
-                                                                rs1.getObject(1, Duration.class);
-                                                                return null;
-                                                            }
+                                                        new Object[] { "LONG", Duration.class.getName() }), () -> {
+                                                            rs1.getObject(1, Duration.class);
+                                                            return null;
                                                         });
                                                 assertEquals(s_2020, rs1.getString(1));
                                                 assertEquals(Short.valueOf((short) 2020), rs1.getObject(1));
@@ -4263,127 +4216,92 @@ public class DateTimeTest extends BaseTestCase {
                                             assertEquals(s_2020, rs1.getString(2));
 
                                             assertThrows(SQLException.class, Messages.getString("ResultSet.UnableToConvertString",
-                                                    new Object[] { s_2020, java.sql.Date.class.getName() }), new Callable<Void>() {
-
-                                                        public Void call() throws Exception {
-                                                            rs1.getDate(2);
-                                                            return null;
-                                                        }
+                                                    new Object[] { s_2020, java.sql.Date.class.getName() }), () -> {
+                                                        rs1.getDate(2);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class, Messages.getString("ResultSet.UnableToConvertString",
-                                                    new Object[] { s_2020, java.sql.Date.class.getName() }), new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getDate(2, cal_05);
-                                                            return null;
-                                                        }
+                                                    new Object[] { s_2020, java.sql.Date.class.getName() }), () -> {
+                                                        rs1.getDate(2, cal_05);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class, Messages.getString("ResultSet.UnableToConvertString",
-                                                    new Object[] { s_2020, java.sql.Time.class.getName() }), new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getTime(2);
-                                                            return null;
-                                                        }
+                                                    new Object[] { s_2020, java.sql.Time.class.getName() }), () -> {
+                                                        rs1.getTime(2);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class, Messages.getString("ResultSet.UnableToConvertString",
-                                                    new Object[] { s_2020, java.sql.Time.class.getName() }), new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getTime(2, cal_05);
-                                                            return null;
-                                                        }
+                                                    new Object[] { s_2020, java.sql.Time.class.getName() }), () -> {
+                                                        rs1.getTime(2, cal_05);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class, Messages.getString("ResultSet.UnableToConvertString",
-                                                    new Object[] { s_2020, java.sql.Timestamp.class.getName() }), new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getTimestamp(2, cal_05);
-                                                            return null;
-                                                        }
+                                                    new Object[] { s_2020, java.sql.Timestamp.class.getName() }), () -> {
+                                                        rs1.getTimestamp(2, cal_05);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class, Messages.getString("ResultSet.UnableToConvertString",
-                                                    new Object[] { s_2020, java.sql.Timestamp.class.getName() }), new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getTimestamp(2, cal_05);
-                                                            return null;
-                                                        }
+                                                    new Object[] { s_2020, java.sql.Timestamp.class.getName() }), () -> {
+                                                        rs1.getTimestamp(2, cal_05);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class, Messages.getString("ResultSet.UnableToConvertString",
-                                                    new Object[] { s_2020, java.sql.Date.class.getName() }), new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getObject(2, java.sql.Date.class);
-                                                            return null;
-                                                        }
+                                                    new Object[] { s_2020, java.sql.Date.class.getName() }), () -> {
+                                                        rs1.getObject(2, java.sql.Date.class);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class, Messages.getString("ResultSet.UnableToConvertString",
-                                                    new Object[] { s_2020, java.sql.Time.class.getName() }), new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getObject(2, java.sql.Time.class);
-                                                            return null;
-                                                        }
+                                                    new Object[] { s_2020, java.sql.Time.class.getName() }), () -> {
+                                                        rs1.getObject(2, java.sql.Time.class);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class, Messages.getString("ResultSet.UnableToConvertString",
-                                                    new Object[] { s_2020, java.sql.Timestamp.class.getName() }), new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getObject(2, java.sql.Timestamp.class);
-                                                            return null;
-                                                        }
+                                                    new Object[] { s_2020, java.sql.Timestamp.class.getName() }), () -> {
+                                                        rs1.getObject(2, java.sql.Timestamp.class);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class, Messages.getString("ResultSet.UnableToConvertString",
-                                                    new Object[] { s_2020, java.sql.Timestamp.class.getName() }), new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getObject(2, java.util.Date.class);
-                                                            return null;
-                                                        }
+                                                    new Object[] { s_2020, java.sql.Timestamp.class.getName() }), () -> {
+                                                        rs1.getObject(2, java.util.Date.class);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class, Messages.getString("ResultSet.UnableToConvertString",
-                                                    new Object[] { s_2020, java.util.Calendar.class.getName() }), new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getObject(2, java.util.Calendar.class);
-                                                            return null;
-                                                        }
+                                                    new Object[] { s_2020, java.util.Calendar.class.getName() }), () -> {
+                                                        rs1.getObject(2, java.util.Calendar.class);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class,
                                                     Messages.getString("ResultSet.UnableToConvertString", new Object[] { s_2020, LocalDate.class.getName() }),
-                                                    new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getObject(2, LocalDate.class);
-                                                            return null;
-                                                        }
+                                                    () -> {
+                                                        rs1.getObject(2, LocalDate.class);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class,
                                                     Messages.getString("ResultSet.UnableToConvertString", new Object[] { s_2020, LocalTime.class.getName() }),
-                                                    new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getObject(2, LocalTime.class);
-                                                            return null;
-                                                        }
+                                                    () -> {
+                                                        rs1.getObject(2, LocalTime.class);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class, Messages.getString("ResultSet.UnableToConvertString",
-                                                    new Object[] { s_2020, LocalDateTime.class.getName() }), new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getObject(2, LocalDateTime.class);
-                                                            return null;
-                                                        }
+                                                    new Object[] { s_2020, LocalDateTime.class.getName() }), () -> {
+                                                        rs1.getObject(2, LocalDateTime.class);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class,
                                                     Messages.getString("ResultSet.UnableToConvertString", new Object[] { s_2020, OffsetTime.class.getName() }),
-                                                    new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getObject(2, OffsetTime.class);
-                                                            return null;
-                                                        }
+                                                    () -> {
+                                                        rs1.getObject(2, OffsetTime.class);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class, Messages.getString("ResultSet.UnableToConvertString",
-                                                    new Object[] { s_2020, OffsetDateTime.class.getName() }), new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getObject(2, OffsetDateTime.class);
-                                                            return null;
-                                                        }
+                                                    new Object[] { s_2020, OffsetDateTime.class.getName() }), () -> {
+                                                        rs1.getObject(2, OffsetDateTime.class);
+                                                        return null;
                                                     });
                                             assertThrows(SQLException.class, Messages.getString("ResultSet.UnableToConvertString",
-                                                    new Object[] { s_2020, ZonedDateTime.class.getName() }), new Callable<Void>() {
-                                                        public Void call() throws Exception {
-                                                            rs1.getObject(2, ZonedDateTime.class);
-                                                            return null;
-                                                        }
+                                                    new Object[] { s_2020, ZonedDateTime.class.getName() }), () -> {
+                                                        rs1.getObject(2, ZonedDateTime.class);
+                                                        return null;
                                                     });
 
                                             testConn.close();
@@ -4422,7 +4340,7 @@ public class DateTimeTest extends BaseTestCase {
             serverTz = ((MysqlConnection) testConn).getSession().getServerSession().getSessionTimeZone();
         }
 
-        Calendar cal_02 = GregorianCalendar.getInstance(tz_plus_02_00);
+        Calendar cal_02 = Calendar.getInstance(tz_plus_02_00);
 
         for (TimeZone senderTz : this.senderTimeZones) {
             try {
@@ -4470,7 +4388,7 @@ public class DateTimeTest extends BaseTestCase {
                                                 : expUdNoFract;
 
                                         TimeZone connTz = connectionTZ == null || "LOCAL".equals(connectionTZ) ? senderTz
-                                                : ("SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ));
+                                                : "SERVER".equals(connectionTZ) ? serverTz : TimeZone.getTimeZone(connectionTZ);
                                         ZonedDateTime expZdtNoFract = zdt_20200101_120000_123456_at_senderTz.withNano(0)
                                                 .withZoneSameInstant(preserveInstants ? connTz.toZoneId() : senderTz.toZoneId());
                                         ZonedDateTime expZdt = sendFractionalSeconds
@@ -4698,4 +4616,5 @@ public class DateTimeTest extends BaseTestCase {
             TimeZone.setDefault(origTz);
         }
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,6 +47,7 @@ import testsuite.BaseTestCase;
  * Microperformance benchmarks to track increase/decrease in performance of core methods in the driver over time.
  */
 public class MicroPerformanceRegressionTest extends BaseTestCase {
+
     private static double[] scaleFactorSamples = new double[5];
     private static double scaleFactor = 0.0;
 
@@ -139,7 +140,6 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
     }
 
     private synchronized void checkTime(String testType, double avgExecTimeMs) throws Exception {
-
         double adjustForVendor = 1.0D;
 
         if (isRunningOnJRockit()) {
@@ -162,7 +162,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
     /**
      * Tests result set accessors performance.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -409,7 +409,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
                 pStmt.setInt(1, i);
                 pStmt.executeUpdate();
 
-                if ((i % 10000) == 0) {
+                if (i % 10000 == 0) {
                     logDebug(i + " rows loaded so far");
                 }
             }
@@ -461,4 +461,5 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
             checkTime("total time all queries", seconds);
         }
     }
+
 }

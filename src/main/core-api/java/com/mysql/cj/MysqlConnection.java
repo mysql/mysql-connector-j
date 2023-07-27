@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,7 +41,7 @@ public interface MysqlConnection {
 
     /**
      * Creates an IO channel to the server.
-     * 
+     *
      * @param isForReconnect
      *            is this request for a re-connect
      */
@@ -51,7 +51,7 @@ public interface MysqlConnection {
 
     /**
      * Returns the parsed and passed in properties for this connection.
-     * 
+     *
      * @return {@link Properties}
      */
     Properties getProperties();
@@ -72,11 +72,12 @@ public interface MysqlConnection {
 
     /**
      * Destroys this connection and any underlying resources.
-     * 
+     *
      * @param whyCleanedUp
      *            exception caused the connection clean up
      */
     void cleanup(Throwable whyCleanedUp);
 
     ServerSessionStateController getServerSessionStateController();
+
 }

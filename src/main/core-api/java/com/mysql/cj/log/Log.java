@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,54 +33,55 @@ package com.mysql.cj.log;
  * Unified interface to logging facilities on different platforms
  */
 public interface Log {
+
     /** Logger instance name */
     static final String LOGGER_INSTANCE_NAME = "MySQL";
 
     /**
      * Is the 'debug' log level enabled?
-     * 
+     *
      * @return true if so.
      */
     boolean isDebugEnabled();
 
     /**
      * Is the 'error' log level enabled?
-     * 
+     *
      * @return true if so.
      */
     boolean isErrorEnabled();
 
     /**
      * Is the 'fatal' log level enabled?
-     * 
+     *
      * @return true if so.
      */
     boolean isFatalEnabled();
 
     /**
      * Is the 'info' log level enabled?
-     * 
+     *
      * @return true if so.
      */
     boolean isInfoEnabled();
 
     /**
      * Is the 'trace' log level enabled?
-     * 
+     *
      * @return true if so.
      */
     boolean isTraceEnabled();
 
     /**
      * Is the 'warn' log level enabled?
-     * 
+     *
      * @return true if so.
      */
     boolean isWarnEnabled();
 
     /**
      * Logs the given message instance using the 'debug' level
-     * 
+     *
      * @param msg
      *            the message to log
      */
@@ -88,7 +89,7 @@ public interface Log {
 
     /**
      * Logs the given message and Throwable at the 'debug' level.
-     * 
+     *
      * @param msg
      *            the message to log
      * @param thrown
@@ -98,7 +99,7 @@ public interface Log {
 
     /**
      * Logs the given message instance using the 'error' level
-     * 
+     *
      * @param msg
      *            the message to log
      */
@@ -106,7 +107,7 @@ public interface Log {
 
     /**
      * Logs the given message and Throwable at the 'error' level.
-     * 
+     *
      * @param msg
      *            the message to log
      * @param thrown
@@ -116,7 +117,7 @@ public interface Log {
 
     /**
      * Logs the given message instance using the 'fatal' level
-     * 
+     *
      * @param msg
      *            the message to log
      */
@@ -124,7 +125,7 @@ public interface Log {
 
     /**
      * Logs the given message and Throwable at the 'fatal' level.
-     * 
+     *
      * @param msg
      *            the message to log
      * @param thrown
@@ -134,7 +135,7 @@ public interface Log {
 
     /**
      * Logs the given message instance using the 'info' level
-     * 
+     *
      * @param msg
      *            the message to log
      */
@@ -142,7 +143,7 @@ public interface Log {
 
     /**
      * Logs the given message and Throwable at the 'info' level.
-     * 
+     *
      * @param msg
      *            the message to log
      * @param thrown
@@ -152,7 +153,7 @@ public interface Log {
 
     /**
      * Logs the given message instance using the 'trace' level
-     * 
+     *
      * @param msg
      *            the message to log
      */
@@ -160,7 +161,7 @@ public interface Log {
 
     /**
      * Logs the given message and Throwable at the 'trace' level.
-     * 
+     *
      * @param msg
      *            the message to log
      * @param thrown
@@ -170,7 +171,7 @@ public interface Log {
 
     /**
      * Logs the given message instance using the 'warn' level
-     * 
+     *
      * @param msg
      *            the message to log
      */
@@ -178,11 +179,12 @@ public interface Log {
 
     /**
      * Logs the given message and Throwable at the 'warn' level.
-     * 
+     *
      * @param msg
      *            the message to log
      * @param thrown
      *            the throwable to log (may be null)
      */
     void logWarn(Object msg, Throwable thrown);
+
 }

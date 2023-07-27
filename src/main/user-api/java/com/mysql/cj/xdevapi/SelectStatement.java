@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,9 +33,10 @@ package com.mysql.cj.xdevapi;
  * A statement representing a SELECT query.
  */
 public interface SelectStatement extends Statement<SelectStatement, RowResult> {
+
     /**
      * Add/replace the search condition for this query.
-     * 
+     *
      * @param searchCondition
      *            search condition expression
      * @return {@link SelectStatement}
@@ -44,7 +45,7 @@ public interface SelectStatement extends Statement<SelectStatement, RowResult> {
 
     /**
      * Add/replace the aggregation fields for this query.
-     * 
+     *
      * @param groupBy
      *            groupBy expression
      * @return {@link SelectStatement}
@@ -53,7 +54,7 @@ public interface SelectStatement extends Statement<SelectStatement, RowResult> {
 
     /**
      * Add/replace the aggregate criteria for this query.
-     * 
+     *
      * @param having
      *            having expression
      * @return {@link SelectStatement}
@@ -62,7 +63,7 @@ public interface SelectStatement extends Statement<SelectStatement, RowResult> {
 
     /**
      * Add/replace the order specification for this query.
-     * 
+     *
      * @param sortFields
      *            sort expression
      * @return {@link SelectStatement}
@@ -71,7 +72,7 @@ public interface SelectStatement extends Statement<SelectStatement, RowResult> {
 
     /**
      * Add/replace the row limit for this query.
-     * 
+     *
      * @param numberOfRows
      *            limit
      * @return {@link SelectStatement}
@@ -80,7 +81,7 @@ public interface SelectStatement extends Statement<SelectStatement, RowResult> {
 
     /**
      * Add/replace the row offset for this query.
-     * 
+     *
      * @param limitOffset
      *            limit offset
      * @return {@link SelectStatement}
@@ -89,14 +90,14 @@ public interface SelectStatement extends Statement<SelectStatement, RowResult> {
 
     /**
      * Locks matching rows against updates.
-     * 
+     *
      * @return {@link SelectStatement}
      */
     SelectStatement lockShared();
 
     /**
      * Locks matching rows against updates using the provided lock contention option.
-     * 
+     *
      * @param lockContention
      *            The {@link com.mysql.cj.xdevapi.Statement.LockContention} value to set.
      * @return {@link SelectStatement}
@@ -105,14 +106,14 @@ public interface SelectStatement extends Statement<SelectStatement, RowResult> {
 
     /**
      * Locks matching rows exclusively so no other transactions can read or write to them.
-     * 
+     *
      * @return {@link SelectStatement}
      */
     SelectStatement lockExclusive();
 
     /**
      * Locks matching rows exclusively so no other transactions can read or write to them, using the provided lock contention option.
-     * 
+     *
      * @param lockContention
      *            The {@link com.mysql.cj.xdevapi.Statement.LockContention} value to set.
      * @return {@link SelectStatement}
@@ -121,8 +122,9 @@ public interface SelectStatement extends Statement<SelectStatement, RowResult> {
 
     /**
      * Return {@link FilterParams} defined for this statement.
-     * 
+     *
      * @return {@link FilterParams}
      */
     FilterParams getFilterParams();
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,12 +39,14 @@ import com.mysql.cj.protocol.MessageSender;
  * split into multiple chunks.
  */
 public class SimplePacketSender implements MessageSender<NativePacketPayload> {
+
     private BufferedOutputStream outputStream;
 
     public SimplePacketSender(BufferedOutputStream outputStream) {
         this.outputStream = outputStream;
     }
 
+    @Override
     public void send(byte[] packet, int packetLen, byte packetSequence) throws IOException {
         PacketSplitter packetSplitter = new PacketSplitter(packetLen);
         while (packetSplitter.nextPacket()) {
@@ -64,4 +66,5 @@ public class SimplePacketSender implements MessageSender<NativePacketPayload> {
     public MessageSender<NativePacketPayload> undecorate() {
         return this;
     }
+
 }

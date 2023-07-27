@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,7 +41,6 @@ import java.io.StringReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -72,6 +71,7 @@ import com.mysql.cj.xdevapi.XDevAPIError;
  * @todo
  */
 public class CollectionModifyTest extends BaseCollectionTestCase {
+
     @Test
     public void testSet() {
         if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
@@ -186,18 +186,14 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             this.collection.add("{\"x\":4, \"m\":1}").execute();
         }
 
-        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionModifyTest.this.collection.modify(null).set("y", nestedDoc).execute();
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", () -> {
+            CollectionModifyTest.this.collection.modify(null).set("y", nestedDoc).execute();
+            return null;
         });
 
-        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionModifyTest.this.collection.modify(" ").set("y", nestedDoc).execute();
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", () -> {
+            CollectionModifyTest.this.collection.modify(" ").set("y", nestedDoc).execute();
+            return null;
         });
 
         this.collection.modify("y = 1").set("y", nestedDoc).execute();
@@ -252,8 +248,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         while (res.hasNext()) {
             DbDoc jd = res.next();
             if (((JsonNumber) jd.get("x")).getInteger() == 1) {
-                assertEquals((new JsonArray().addValue(new JsonString().setValue("b")).addValue(new JsonNumber().setValue("44"))
-                        .addValue(new JsonNumber().setValue("2"))).toString(), (jd.get("y")).toString());
+                assertEquals(new JsonArray().addValue(new JsonString().setValue("b")).addValue(new JsonNumber().setValue("44"))
+                        .addValue(new JsonNumber().setValue("2")).toString(), jd.get("y").toString());
             } else {
                 assertEquals(xArray.toString(), jd.get("y").toString());
             }
@@ -262,7 +258,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     /**
      * Tests fix for BUG#24471057, UPDATE FAILS WHEN THE NEW VALUE IS OF TYPE DBDOC WHICH HAS ARRAY IN IT.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -480,7 +476,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     /**
      * Tests fix for BUG#27185332, WL#11210:ERROR IS THROWN WHEN NESTED EMPTY DOCUMENTS ARE INSERTED TO COLLECTION.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -552,24 +548,20 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         assertEquals(2, ((JsonNumber) doc.get("a")).getInteger());
 
         // Original behavior changed by Bug#32770013.
-        assertThrows(XDevAPIError.class, "Replacement document has an _id that is different than the matched document\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionModifyTest.this.collection.replaceOne("nonExistingId", "{\"_id\":\"existingId\",\"a\":3}");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Replacement document has an _id that is different than the matched document\\.", () -> {
+            CollectionModifyTest.this.collection.replaceOne("nonExistingId", "{\"_id\":\"existingId\",\"a\":3}");
+            return null;
         });
 
         // Original behavior changed by Bug#32770013.
-        assertThrows(XDevAPIError.class, "Replacement document has an _id that is different than the matched document\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionModifyTest.this.collection.replaceOne("", "{\"_id\":\"existingId\",\"a\":3}");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Replacement document has an _id that is different than the matched document\\.", () -> {
+            CollectionModifyTest.this.collection.replaceOne("", "{\"_id\":\"existingId\",\"a\":3}");
+            return null;
         });
 
         /*
          * FR5.2 The id of the document must remain immutable:
-         * 
+         *
          * Use a collection with some documents
          * Fetch a document
          * Unset _id and modify any other field of the document
@@ -595,31 +587,23 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         assertEquals(1, this.collection.count());
 
         // null document
-        assertThrows(XDevAPIError.class, "Parameter 'doc' must not be null.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionModifyTest.this.collection.replaceOne("id1", (DbDoc) null);
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'doc' must not be null.", () -> {
+            CollectionModifyTest.this.collection.replaceOne("id1", (DbDoc) null);
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Parameter 'jsonString' must not be null.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionModifyTest.this.collection.replaceOne("id2", (String) null);
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'jsonString' must not be null.", () -> {
+            CollectionModifyTest.this.collection.replaceOne("id2", (String) null);
+            return null;
         });
 
         // null id parameter
-        assertThrows(XDevAPIError.class, "Parameter 'id' must not be null.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionModifyTest.this.collection.replaceOne(null, new DbDocImpl().add("a", new JsonNumber().setValue("2")));
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'id' must not be null.", () -> {
+            CollectionModifyTest.this.collection.replaceOne(null, new DbDocImpl().add("a", new JsonNumber().setValue("2")));
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Parameter 'id' must not be null.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionModifyTest.this.collection.replaceOne(null, "{\"_id\": \"id100\", \"a\": 100}");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'id' must not be null.", () -> {
+            CollectionModifyTest.this.collection.replaceOne(null, "{\"_id\": \"id100\", \"a\": 100}");
+            return null;
         });
 
         assertNull(this.collection.getOne(null));
@@ -908,7 +892,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         int i = 0, maxrec = 30, recCnt = 0;
         DbDoc doc = null;
         Result res = null;
-        String s1 = buildString((10), 'X');
+        String s1 = buildString(10, 'X');
         /* add(DbDoc[] docs) */
         DbDoc[] jsonlist = new DbDocImpl[maxrec];
 
@@ -931,18 +915,18 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         }
         this.collection.add(jsonlist).execute();
 
-        assertEquals((maxrec), this.collection.count());
+        assertEquals(maxrec, this.collection.count());
 
         /* fetch all */
         DocResult docs = this.collection.find("CAST($.F2 as SIGNED)> 0").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
         i = 0;
         while (docs.hasNext()) {
             doc = docs.next();
-            assertEquals(String.valueOf(i + 1000), (((JsonString) doc.get("_id")).getString()));
-            assertEquals((long) (10 * (i + 1)), (long) (((JsonNumber) doc.get("f2")).getInteger()));
+            assertEquals(String.valueOf(i + 1000), ((JsonString) doc.get("_id")).getString());
+            assertEquals((long) (10 * (i + 1)), (long) ((JsonNumber) doc.get("f2")).getInteger());
             i++;
         }
-        assertEquals((maxrec), i);
+        assertEquals(maxrec, i);
 
         /* Modify using empty Condition */
         assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.",
@@ -998,7 +982,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         docs = this.collection.find("$.tmp2 Like 'tempForChange%'").fields("$._id as _id, $.tmp2 as tp").execute();
         recCnt = count_data(docs);
         // Total records after Unset(with condition)
-        assertEquals((maxrec / 2), recCnt);
+        assertEquals(maxrec / 2, recCnt);
 
         // Test for Change()
         res = this.collection.modify("true").change("$.tmp2", "Changedata").execute();
@@ -1006,7 +990,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         docs = this.collection.find("$.tmp2 Like 'Changedata'").fields("$._id as _id, $.tmp2 as tp").execute();
         recCnt = count_data(docs);
         // Total records Changed after modify().change(without condition)
-        assertEquals((maxrec / 2), recCnt);
+        assertEquals(maxrec / 2, recCnt);
 
         // Test for set () after unset
         res = this.collection.modify("true").set("$.tmp2", "Changedata1").execute();
@@ -1060,18 +1044,18 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         }
         this.collection.add(jsonlist).execute();
 
-        assertEquals((maxrec), this.collection.count());
+        assertEquals(maxrec, this.collection.count());
 
         /* fetch all */
         DocResult docs = this.collection.find("CAST($.F3 as SIGNED)>= 0").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
         i = 0;
         while (docs.hasNext()) {
             doc = docs.next();
-            assertEquals(String.valueOf(i + 1001), (((JsonString) doc.get("_id")).getString()));
-            assertEquals((long) (10 * (i + 1)), (long) (((JsonNumber) doc.get("f2")).getInteger()));
+            assertEquals(String.valueOf(i + 1001), ((JsonString) doc.get("_id")).getString());
+            assertEquals((long) (10 * (i + 1)), (long) ((JsonNumber) doc.get("f2")).getInteger());
             i++;
         }
-        assertEquals((maxrec), i);
+        assertEquals(maxrec, i);
 
         /* With Sort and limit */
         res = this.collection.modify("$.F3 < 10 and  $.F1 Like 'Field-1%' and CAST($.F3 as SIGNED) > 2").set("$.tmp1", "UpdData").sort("$.F1 asc").limit(5)
@@ -1081,8 +1065,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         i = 2;
         while (docs.hasNext()) {
             doc = docs.next();
-            assertEquals(String.valueOf(i + 1001), (((JsonString) doc.get("_id")).getString()));
-            assertEquals((long) (i + 1), (long) (((JsonNumber) doc.get("f3")).getInteger()));
+            assertEquals(String.valueOf(i + 1001), ((JsonString) doc.get("_id")).getString());
+            assertEquals((long) (i + 1), (long) ((JsonNumber) doc.get("f3")).getInteger());
             i++;
         }
 
@@ -1138,7 +1122,6 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         res = this.collection.modify("false").unset("$.tmp1").set("$.tmp2", 9897).change("$.F1", "Rajesh").sort("$.F1 asc").limit(5).execute();
         assertEquals(0, res.getAffectedItemsCount());
-
     }
 
     @Test
@@ -1160,12 +1143,12 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             newDoc2.add("F3", new JsonNumber().setValue(String.valueOf(l1 - i)));
             newDoc2.add("F4", new JsonNumber().setValue(String.valueOf(l2 + i)));
             newDoc2.add("F5", new JsonNumber().setValue(String.valueOf(l3 + i)));
-            newDoc2.add("F6", new JsonString().setValue((2000 + i) + "-02-" + (i * 2 + 10)));
+            newDoc2.add("F6", new JsonString().setValue(2000 + i + "-02-" + (i * 2 + 10)));
             jsonlist[i] = newDoc2;
             newDoc2 = null;
         }
         this.collection.add(jsonlist).execute();
-        assertEquals((maxrec), this.collection.count());
+        assertEquals(maxrec, this.collection.count());
 
         /* find */
         DocResult docs = this.collection.find("CAST($.F3 as SIGNED)=2147483649").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3+0 as f3").execute();
@@ -1199,12 +1182,12 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             newDoc2.add("F3", new JsonNumber().setValue(String.valueOf(l1 - i)));
             newDoc2.add("F4", new JsonNumber().setValue(String.valueOf(l2 + i)));
             newDoc2.add("F5", new JsonNumber().setValue(String.valueOf(l3 + i)));
-            newDoc2.add("F6", new JsonString().setValue((2000 + i) + "-02-" + (i * 2 + 10)));
+            newDoc2.add("F6", new JsonString().setValue(2000 + i + "-02-" + (i * 2 + 10)));
             jsonlist[i] = newDoc2;
             newDoc2 = null;
         }
         this.collection.add(jsonlist).execute();
-        assertEquals((maxrec), this.collection.count());
+        assertEquals(maxrec, this.collection.count());
 
         /* find without Condition */
         DocResult docs = this.collection.find("CAST($.F5 as SIGNED)=2147483649").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3+0 as f3").execute();
@@ -1217,8 +1200,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         docs = this.collection.find("$.F1 = 'UpdData1'").fields("$._id as _id, $.F2 as f2").execute();
         doc = docs.next();
-        assertEquals(new BigDecimal(String.valueOf(d1)), (((JsonNumber) doc.get("f2")).getBigDecimal()));
-        assertEquals(String.valueOf(1000), (((JsonString) doc.get("_id")).getString()));
+        assertEquals(new BigDecimal(String.valueOf(d1)), ((JsonNumber) doc.get("f2")).getBigDecimal());
+        assertEquals(String.valueOf(1000), ((JsonString) doc.get("_id")).getString());
 
         /* condition on Big Int */
         res = this.collection.modify("CAST($.F3 as SIGNED) =" + l1).set("$.F1", "UpdData2").sort("CAST($.F3 as SIGNED)").execute();
@@ -1226,8 +1209,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         docs = this.collection.find("$.F1 = 'UpdData2'").fields("$._id as _id, $.F3 as f3").execute();
         doc = docs.next();
-        assertEquals(new BigDecimal(String.valueOf(l1)), (((JsonNumber) doc.get("f3")).getBigDecimal()));
-        assertEquals(String.valueOf(1000), (((JsonString) doc.get("_id")).getString()));
+        assertEquals(new BigDecimal(String.valueOf(l1)), ((JsonNumber) doc.get("f3")).getBigDecimal());
+        assertEquals(String.valueOf(1000), ((JsonString) doc.get("_id")).getString());
 
         /* condition on Big Int */
         res = this.collection.modify("CAST($.F5 as SIGNED) >= " + l3 + " and  CAST($.F5 as SIGNED) < " + l1 + " and CAST($.F5 as SIGNED) > " + l2)
@@ -1239,8 +1222,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         i = 0;
         while (docs.hasNext()) {
             doc = docs.next();
-            assertEquals(String.valueOf(i + 1000), (((JsonString) doc.get("_id")).getString()));
-            assertEquals(new BigDecimal(String.valueOf(i + l3)), (((JsonNumber) doc.get("f5")).getBigDecimal()));
+            assertEquals(String.valueOf(i + 1000), ((JsonString) doc.get("_id")).getString());
+            assertEquals(new BigDecimal(String.valueOf(i + l3)), ((JsonNumber) doc.get("f5")).getBigDecimal());
             i++;
         }
         assertEquals(maxrec, i);
@@ -1251,8 +1234,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         docs = this.collection.find("$.F1 = 'UpdData3'").fields("$._id as _id, $.F5 as f5").execute();
         doc = docs.next();
-        assertEquals(new BigDecimal(String.valueOf(3 + l3)), (((JsonNumber) doc.get("f5")).getBigDecimal()));
-        assertEquals(String.valueOf(1000 + 3), (((JsonString) doc.get("_id")).getString()));
+        assertEquals(new BigDecimal(String.valueOf(3 + l3)), ((JsonNumber) doc.get("f5")).getBigDecimal());
+        assertEquals(String.valueOf(1000 + 3), ((JsonString) doc.get("_id")).getString());
 
         /* condition on Double */
         res = this.collection.modify("CAST($.F5 as SIGNED) - 3 =" + l3).set("$.F1", "UpdData4").sort("CAST($.F5 as SIGNED)").execute();
@@ -1260,8 +1243,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         docs = this.collection.find("$.F1 = 'UpdData4'").fields("$._id as _id, $.F5 as f5").execute();
         doc = docs.next();
-        assertEquals(new BigDecimal(String.valueOf(3 + l3)), (((JsonNumber) doc.get("f5")).getBigDecimal()));
-        assertEquals(String.valueOf(1000 + 3), (((JsonString) doc.get("_id")).getString()));
+        assertEquals(new BigDecimal(String.valueOf(3 + l3)), ((JsonNumber) doc.get("f5")).getBigDecimal());
+        assertEquals(String.valueOf(1000 + 3), ((JsonString) doc.get("_id")).getString());
 
         /* condition on date */
         res = this.collection.modify("$.F6 + interval 6 day = '2007-03-02' ").set("$.F1", "UpdData5").sort("$.F6").execute();
@@ -1269,8 +1252,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         docs = this.collection.find("$.F1 = 'UpdData5'").fields("$._id as _id, $.F6 as f6").execute();
         doc = docs.next();
-        assertEquals("2007-02-24", (((JsonString) doc.get("f6")).getString()));
-        assertEquals(String.valueOf(1000 + 7), (((JsonString) doc.get("_id")).getString()));
+        assertEquals("2007-02-24", ((JsonString) doc.get("f6")).getString());
+        assertEquals(String.valueOf(1000 + 7), ((JsonString) doc.get("_id")).getString());
         assertFalse(docs.hasNext());
     }
 
@@ -1294,12 +1277,12 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             newDoc2.add("F3", new JsonNumber().setValue(String.valueOf(l1 - i)));
             newDoc2.add("F4", new JsonNumber().setValue(String.valueOf(l2 + i)));
             newDoc2.add("F5", new JsonNumber().setValue(String.valueOf(l3 + i)));
-            newDoc2.add("F6", new JsonString().setValue((2000 + i) + "-02-" + (i * 2 + 10)));
+            newDoc2.add("F6", new JsonString().setValue(2000 + i + "-02-" + (i * 2 + 10)));
             jsonlist[i] = newDoc2;
             newDoc2 = null;
         }
         this.collection.add(jsonlist).execute();
-        assertEquals((maxrec), this.collection.count());
+        assertEquals(maxrec, this.collection.count());
 
         /* condition on Double */
         res = this.collection.modify("CAST($.F2 as DECIMAL(10,4)) =" + d1).set("$.F1", expr("concat('data',$.F1,'UpdData1')"))
@@ -1308,8 +1291,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         docs = this.collection.find("$.F1 like 'data%UpdData1'").fields("$._id as _id, $.F2 as f2").execute();
         doc = docs.next();
-        assertEquals(new BigDecimal(String.valueOf(d1)), (((JsonNumber) doc.get("f2")).getBigDecimal()));
-        assertEquals(String.valueOf(1000), (((JsonString) doc.get("_id")).getString()));
+        assertEquals(new BigDecimal(String.valueOf(d1)), ((JsonNumber) doc.get("f2")).getBigDecimal());
+        assertEquals(String.valueOf(1000), ((JsonString) doc.get("_id")).getString());
 
         res = this.collection.modify("CAST($.F2 as DECIMAL(10,4)) =" + d1).set("$.F6", expr("$.F6 + interval 6 day")).sort("CAST($.F2 as DECIMAL(10,4))")
                 .execute();
@@ -1317,8 +1300,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         docs = this.collection.find("$.F6 + interval 6 day = '2000-02-22'").fields("$._id as _id, $.F6 as f6").execute();
         doc = docs.next();
-        assertEquals("2000-02-16", (((JsonString) doc.get("f6")).getString()));
-        assertEquals(String.valueOf(1000), (((JsonString) doc.get("_id")).getString()));
+        assertEquals("2000-02-16", ((JsonString) doc.get("f6")).getString());
+        assertEquals(String.valueOf(1000), ((JsonString) doc.get("_id")).getString());
 
         res = this.collection.modify("$.F6= '2004-02-18'").set("$.F6", expr("$.F6 + interval 11 day")).set("$.F1", "NewData")
                 .sort("CAST($.F2 as DECIMAL(10,4))").execute();
@@ -1326,8 +1309,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         docs = this.collection.find("$.F1 = 'NewData'").fields("$._id as _id, $.F6 as f6").execute();
         doc = docs.next();
-        assertEquals("2004-02-29", (((JsonString) doc.get("f6")).getString()));
-        assertEquals(String.valueOf(1004), (((JsonString) doc.get("_id")).getString()));
+        assertEquals("2004-02-29", ((JsonString) doc.get("f6")).getString());
+        assertEquals(String.valueOf(1004), ((JsonString) doc.get("_id")).getString());
 
         /* condition on Big Int */
         res = this.collection.modify("CAST($.F3 as SIGNED) =" + l1).set("$.F3", expr("CAST($.F3 as SIGNED)  -1")).sort("CAST($.F3 as SIGNED)").execute();
@@ -1338,12 +1321,12 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         docs = this.collection.find("CAST($.F3 as SIGNED)=" + l1).fields("$._id as _id, $.F3 as f3").orderBy("$._id asc").execute();
         doc = docs.next();
-        assertEquals(new BigDecimal(String.valueOf(l1)), (((JsonNumber) doc.get("f3")).getBigDecimal()));
-        assertEquals(String.valueOf(1000), (((JsonString) doc.get("_id")).getString()));
+        assertEquals(new BigDecimal(String.valueOf(l1)), ((JsonNumber) doc.get("f3")).getBigDecimal());
+        assertEquals(String.valueOf(1000), ((JsonString) doc.get("_id")).getString());
 
         doc = docs.next();
-        assertEquals(new BigDecimal(String.valueOf(l1)), (((JsonNumber) doc.get("f3")).getBigDecimal()));
-        assertEquals(String.valueOf(1001), (((JsonString) doc.get("_id")).getString()));
+        assertEquals(new BigDecimal(String.valueOf(l1)), ((JsonNumber) doc.get("f3")).getBigDecimal());
+        assertEquals(String.valueOf(1001), ((JsonString) doc.get("_id")).getString());
         assertFalse(docs.hasNext());
 
         /* condition on Big Int.Compex Expression */
@@ -1366,7 +1349,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         DbDoc doc = null;
         DocResult docs = null;
         Result res = null;
-        String s1 = buildString((lStr), 'X');
+        String s1 = buildString(lStr, 'X');
         long l3 = 2147483647;
         double d1 = 1000.1234;
 
@@ -1376,18 +1359,18 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             newDoc2.add("F1", new JsonNumber().setValue(String.valueOf(i + 1)));
 
             JsonArray jarray = new JsonArray();
-            for (j = 0; j < (arraySize); j++) {
-                jarray.addValue(new JsonNumber().setValue(String.valueOf((l3 + j + i))));
+            for (j = 0; j < arraySize; j++) {
+                jarray.addValue(new JsonNumber().setValue(String.valueOf(l3 + j + i)));
             }
             newDoc2.add("ARR1", jarray);
 
             JsonArray karray = new JsonArray();
-            for (j = 0; j < (arraySize); j++) {
-                karray.addValue(new JsonNumber().setValue(String.valueOf((d1 + j + i))));
+            for (j = 0; j < arraySize; j++) {
+                karray.addValue(new JsonNumber().setValue(String.valueOf(d1 + j + i)));
             }
             newDoc2.add("ARR2", karray);
             JsonArray larray = new JsonArray();
-            for (j = 0; j < (arraySize); j++) {
+            for (j = 0; j < arraySize; j++) {
                 larray.addValue(new JsonString().setValue("St_" + i + "_" + j));
             }
             newDoc2.add("ARR3", larray);
@@ -1395,7 +1378,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             newDoc2 = null;
             jarray = null;
         }
-        assertEquals((maxrec), this.collection.count());
+        assertEquals(maxrec, this.collection.count());
 
         //Update Array data using expr
         res = this.collection.modify("$.F1 = 1").change("$.ARR1[1]", expr("$.ARR1[1] / $.ARR1[1]")).sort("$._id").execute();
@@ -1403,7 +1386,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
         docs = this.collection.find("CAST($.ARR1[1] as SIGNED) = 1").orderBy("$._id").execute();
         doc = docs.next();
-        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals((long) 1, (long) ((JsonNumber) doc.get("F1")).getInteger());
         assertFalse(docs.hasNext());
 
         /* Unset Array element */
@@ -1413,8 +1396,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR1");
         assertEquals(arraySize - 1, yArray.size());
-        assertEquals(new BigDecimal("2147483647"), (((JsonNumber) yArray.get(0)).getBigDecimal()));
-        assertEquals(new BigDecimal("2147483649"), (((JsonNumber) yArray.get(1)).getBigDecimal()));
+        assertEquals(new BigDecimal("2147483647"), ((JsonNumber) yArray.get(0)).getBigDecimal());
+        assertEquals(new BigDecimal("2147483649"), ((JsonNumber) yArray.get(1)).getBigDecimal());
         assertFalse(docs.hasNext());
 
         /* set Array element */
@@ -1424,8 +1407,8 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR1");
         assertEquals(arraySize - 1, yArray.size());
-        assertEquals(new BigDecimal("2147483647"), (((JsonNumber) yArray.get(0)).getBigDecimal()));
-        assertEquals(new BigDecimal("90"), (((JsonNumber) yArray.get(1)).getBigDecimal()));
+        assertEquals(new BigDecimal("2147483647"), ((JsonNumber) yArray.get(0)).getBigDecimal());
+        assertEquals(new BigDecimal("90"), ((JsonNumber) yArray.get(1)).getBigDecimal());
         assertFalse(docs.hasNext());
 
         /* set Array element */
@@ -1435,9 +1418,9 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR1");
         assertEquals(arraySize - 1, yArray.size());
-        assertEquals(new BigDecimal("2147483647"), (((JsonNumber) yArray.get(0)).getBigDecimal()));
-        assertEquals(new BigDecimal("90"), (((JsonNumber) yArray.get(1)).getBigDecimal()));
-        assertEquals(new BigDecimal("91"), (((JsonNumber) yArray.get(2)).getBigDecimal()));
+        assertEquals(new BigDecimal("2147483647"), ((JsonNumber) yArray.get(0)).getBigDecimal());
+        assertEquals(new BigDecimal("90"), ((JsonNumber) yArray.get(1)).getBigDecimal());
+        assertEquals(new BigDecimal("91"), ((JsonNumber) yArray.get(2)).getBigDecimal());
         assertFalse(docs.hasNext());
 
         /* set Array element (String) */
@@ -1445,29 +1428,29 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         assertEquals(1, res.getAffectedItemsCount());
         docs = this.collection.find("length($.ARR3[1]) = " + lStr).orderBy("$._id").execute();
         doc = docs.next();
-        assertEquals((long) 1, (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals((long) 1, (long) ((JsonNumber) doc.get("F1")).getInteger());
         yArray = (JsonArray) doc.get("ARR3");
         assertEquals(arraySize, yArray.size());
-        assertEquals("St_0_0", (((JsonString) yArray.get(0)).getString()));
-        assertEquals("St_0_2", (((JsonString) yArray.get(2)).getString()));
+        assertEquals("St_0_0", ((JsonString) yArray.get(0)).getString());
+        assertEquals("St_0_2", ((JsonString) yArray.get(2)).getString());
         assertFalse(docs.hasNext());
 
         /* set Array element (String) */
         res = this.collection.modify("CAST($.F1 as SIGNED) = 1").set("$.ARR3[1]", expr("concat($.ARR3[1], $.ARR3[1])")).sort("$._id").execute();
         assertEquals(1, res.getAffectedItemsCount());
-        docs = this.collection.find("length($.ARR3[1]) = " + (lStr * 2)).orderBy("$._id").execute();
+        docs = this.collection.find("length($.ARR3[1]) = " + lStr * 2).orderBy("$._id").execute();
         doc = docs.next();
-        assertEquals((long) 1, (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals((long) 1, (long) ((JsonNumber) doc.get("F1")).getInteger());
         yArray = (JsonArray) doc.get("ARR3");
         assertEquals(arraySize, yArray.size());
-        assertEquals("St_0_0", (((JsonString) yArray.get(0)).getString()));
-        assertEquals("St_0_2", (((JsonString) yArray.get(2)).getString()));
+        assertEquals("St_0_0", ((JsonString) yArray.get(0)).getString());
+        assertEquals("St_0_2", ((JsonString) yArray.get(2)).getString());
         assertFalse(docs.hasNext());
 
         /* Change Array elements of all rows (String) */
         res = this.collection.modify("CAST($.F1 as SIGNED) >= 1").set("$.ARR3[1]", expr("concat($.ARR3[1], '" + s1 + "')")).sort("$._id").execute();
         assertEquals(maxrec, res.getAffectedItemsCount());
-        docs = this.collection.find("length($.ARR3[1]) > " + (lStr)).orderBy("$._id").fields(expr("{'cnt':count($._id)}")).execute();
+        docs = this.collection.find("length($.ARR3[1]) > " + lStr).orderBy("$._id").fields(expr("{'cnt':count($._id)}")).execute();
         doc = docs.next();
         assertEquals((long) maxrec, (long) ((JsonNumber) doc.get("cnt")).getInteger());
         assertFalse(docs.hasNext());
@@ -1479,14 +1462,14 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR3");
         assertEquals(arraySize - 1, yArray.size());
-        assertEquals("St_0_0", (((JsonString) yArray.get(0)).getString()));
-        assertEquals("St_0_2", (((JsonString) yArray.get(1)).getString()));
+        assertEquals("St_0_0", ((JsonString) yArray.get(0)).getString());
+        assertEquals("St_0_2", ((JsonString) yArray.get(1)).getString());
         assertFalse(docs.hasNext());
 
         /* Unset Array element(String) */
         res = this.collection.modify("CAST($.F1 as SIGNED) > 1").unset("$.ARR3[1]").sort("$._id").execute();
-        assertEquals((maxrec - 1), res.getAffectedItemsCount());
-        docs = this.collection.find("length($.ARR3[1]) < " + (lStr)).orderBy("$._id").fields(expr("{'cnt':count($._id)}")).execute();
+        assertEquals(maxrec - 1, res.getAffectedItemsCount());
+        docs = this.collection.find("length($.ARR3[1]) < " + lStr).orderBy("$._id").fields(expr("{'cnt':count($._id)}")).execute();
         doc = docs.next();
         assertEquals((long) maxrec, (long) ((JsonNumber) doc.get("cnt")).getInteger());
         assertFalse(docs.hasNext());
@@ -1501,7 +1484,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         DbDoc doc = null;
         DocResult docs = null;
         Result res = null;
-        String s1 = buildString((lStr), '.');
+        String s1 = buildString(lStr, '.');
         long l3 = 2147483647;
         double d1 = 1000.1234;
 
@@ -1511,18 +1494,18 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             newDoc2.add("F1", new JsonNumber().setValue(String.valueOf(i + 1)));
 
             JsonArray jarray = new JsonArray();
-            for (j = 0; j < (arraySize); j++) {
-                jarray.addValue(new JsonNumber().setValue(String.valueOf((l3 + j + i))));
+            for (j = 0; j < arraySize; j++) {
+                jarray.addValue(new JsonNumber().setValue(String.valueOf(l3 + j + i)));
             }
             newDoc2.add("ARR1", jarray);
 
             JsonArray karray = new JsonArray();
-            for (j = 0; j < (arraySize); j++) {
-                karray.addValue(new JsonNumber().setValue(String.valueOf((d1 + j + i))));
+            for (j = 0; j < arraySize; j++) {
+                karray.addValue(new JsonNumber().setValue(String.valueOf(d1 + j + i)));
             }
             newDoc2.add("ARR2", karray);
             JsonArray larray = new JsonArray();
-            for (j = 0; j < (arraySize); j++) {
+            for (j = 0; j < arraySize; j++) {
                 larray.addValue(new JsonString().setValue("St_" + i + "_" + j));
             }
             newDoc2.add("ARR3", larray);
@@ -1530,69 +1513,69 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             newDoc2 = null;
             jarray = null;
         }
-        assertEquals((maxrec), this.collection.count());
+        assertEquals(maxrec, this.collection.count());
 
         // Append 1 number in the array (ARR1) where $.F1 = 1
         res = this.collection.modify("$.F1 = 1").arrayAppend("$.ARR1", -1).sort("$._id").execute();
         assertEquals(1, res.getAffectedItemsCount());
-        docs = this.collection.find("CAST($.ARR1[" + (arraySize) + "] as SIGNED) = -1").orderBy("$._id").execute();
+        docs = this.collection.find("CAST($.ARR1[" + arraySize + "] as SIGNED) = -1").orderBy("$._id").execute();
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR1");
         assertEquals(arraySize + 1, yArray.size());
-        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals((long) 1, (long) ((JsonNumber) doc.get("F1")).getInteger());
         assertFalse(docs.hasNext());
 
         // Append 3 numbers in the array (ARR1) where $.F1 = 1
         res = this.collection.modify("CAST($.F1 as SIGNED) = 1").arrayAppend("$.ARR1", -2).arrayAppend("$.ARR1", -3).arrayAppend("$.ARR1", -4).sort("$._id")
                 .execute();
         assertEquals(1, res.getAffectedItemsCount());
-        docs = this.collection.find("CAST($.ARR1[" + (arraySize) + "] as SIGNED) = -1").orderBy("$._id").execute();
+        docs = this.collection.find("CAST($.ARR1[" + arraySize + "] as SIGNED) = -1").orderBy("$._id").execute();
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR1");
         assertEquals(arraySize + 4, yArray.size());
-        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals((long) 1, (long) ((JsonNumber) doc.get("F1")).getInteger());
         assertFalse(docs.hasNext());
 
         // Append 1 number in the array (ARR2) where $.F1 = 1
         res = this.collection.modify("CAST($.F1 as SIGNED) = 1").arrayAppend("$.ARR2", -4321.4321).sort("$._id").execute();
         assertEquals(1, res.getAffectedItemsCount());
-        docs = this.collection.find("CAST($.ARR2[" + (arraySize) + "] as DECIMAL(10,4)) = -4321.4321").orderBy("$._id").execute();
+        docs = this.collection.find("CAST($.ARR2[" + arraySize + "] as DECIMAL(10,4)) = -4321.4321").orderBy("$._id").execute();
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR2");
         assertEquals(arraySize + 1, yArray.size());
-        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals((long) 1, (long) ((JsonNumber) doc.get("F1")).getInteger());
         assertFalse(docs.hasNext());
 
         // Append 3 number in the array (ARR2) where $.F1 = 1
         res = this.collection.modify("CAST($.F1 as SIGNED) = 1").arrayAppend("$.ARR2", 4321.1234).arrayAppend("$.ARR2", 4321.9847)
                 .arrayAppend("$.ARR2", -4321.9888).sort("$._id").execute();
         assertEquals(1, res.getAffectedItemsCount());
-        docs = this.collection.find("CAST($.ARR2[" + (arraySize) + "] as  DECIMAL(10,4)) =  -4321.4321").orderBy("$._id").execute();
+        docs = this.collection.find("CAST($.ARR2[" + arraySize + "] as  DECIMAL(10,4)) =  -4321.4321").orderBy("$._id").execute();
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR2");
         assertEquals(arraySize + 4, yArray.size());
-        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals((long) 1, (long) ((JsonNumber) doc.get("F1")).getInteger());
         assertFalse(docs.hasNext());
 
         // Append 1 String in the array (ARR3) where $.F1 = 1
         res = this.collection.modify("CAST($.F1 as SIGNED) = 1").arrayAppend("$.ARR3", s1).sort("$._id").execute();
         assertEquals(1, res.getAffectedItemsCount());
-        docs = this.collection.find("$.ARR3[" + (arraySize) + "] = '" + s1 + "'").orderBy("$._id").execute();
+        docs = this.collection.find("$.ARR3[" + arraySize + "] = '" + s1 + "'").orderBy("$._id").execute();
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR3");
         assertEquals(arraySize + 1, yArray.size());
-        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals((long) 1, (long) ((JsonNumber) doc.get("F1")).getInteger());
         assertFalse(docs.hasNext());
 
         // Append 5 Strings in the array (ARR3) where $.F1 = 1
         res = this.collection.modify("CAST($.F1 as SIGNED) = 1").arrayAppend("$.ARR3", s1 + "1").arrayAppend("$.ARR3", s1 + "2").arrayAppend("$.ARR3", s1 + "3")
                 .arrayAppend("$.ARR3", s1 + "4").arrayAppend("$.ARR3", s1 + "5").sort("$._id").execute();
         assertEquals(1, res.getAffectedItemsCount());
-        docs = this.collection.find("$.ARR3[" + (arraySize) + "] = '" + s1 + "'").orderBy("$._id").execute();
+        docs = this.collection.find("$.ARR3[" + arraySize + "] = '" + s1 + "'").orderBy("$._id").execute();
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR3");
         assertEquals(arraySize + 6, yArray.size());
-        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals((long) 1, (long) ((JsonNumber) doc.get("F1")).getInteger());
         assertFalse(docs.hasNext());
     }
 
@@ -1605,7 +1588,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         DbDoc doc = null;
         DocResult docs = null;
         Result res = null;
-        String s1 = buildString((lStr), '.');
+        String s1 = buildString(lStr, '.');
         long l3 = 2147483647;
         double d1 = 1000.1234;
 
@@ -1615,18 +1598,18 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             newDoc2.add("F1", new JsonNumber().setValue(String.valueOf(i + 1)));
 
             JsonArray jarray = new JsonArray();
-            for (j = 0; j < (arraySize); j++) {
-                jarray.addValue(new JsonNumber().setValue(String.valueOf((l3 + j + i))));
+            for (j = 0; j < arraySize; j++) {
+                jarray.addValue(new JsonNumber().setValue(String.valueOf(l3 + j + i)));
             }
             newDoc2.add("ARR1", jarray);
 
             JsonArray karray = new JsonArray();
-            for (j = 0; j < (arraySize); j++) {
-                karray.addValue(new JsonNumber().setValue(String.valueOf((d1 + j + i))));
+            for (j = 0; j < arraySize; j++) {
+                karray.addValue(new JsonNumber().setValue(String.valueOf(d1 + j + i)));
             }
             newDoc2.add("ARR2", karray);
             JsonArray larray = new JsonArray();
-            for (j = 0; j < (arraySize); j++) {
+            for (j = 0; j < arraySize; j++) {
                 larray.addValue(new JsonString().setValue("St_" + i + "_" + j));
             }
             newDoc2.add("ARR3", larray);
@@ -1634,17 +1617,17 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             newDoc2 = null;
             jarray = null;
         }
-        assertEquals((maxrec), this.collection.count());
+        assertEquals(maxrec, this.collection.count());
 
         // Insert to a aposistion > arraySize Shld Work same as Append
         // Insert 1 number in the array (ARR1) after position arraySize where $.F1 = 1
-        res = this.collection.modify("CAST($.F1 as SIGNED) = 1").arrayInsert("$.ARR1[" + (arraySize * 2) + "]", -1).sort("$._id").execute();
+        res = this.collection.modify("CAST($.F1 as SIGNED) = 1").arrayInsert("$.ARR1[" + arraySize * 2 + "]", -1).sort("$._id").execute();
         assertEquals(1, res.getAffectedItemsCount());
-        docs = this.collection.find("CAST($.ARR1[" + (arraySize) + "] as SIGNED) = -1").orderBy("$._id").execute();
+        docs = this.collection.find("CAST($.ARR1[" + arraySize + "] as SIGNED) = -1").orderBy("$._id").execute();
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR1");
         assertEquals(arraySize + 1, yArray.size());
-        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals((long) 1, (long) ((JsonNumber) doc.get("F1")).getInteger());
         assertFalse(docs.hasNext());
 
         // Insert 3 numbers in the array (ARR1) where $.F1 = 2
@@ -1655,10 +1638,10 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR1");
         assertEquals((long) (arraySize + 3), (long) yArray.size());
-        assertEquals((long) (2), (long) (((JsonNumber) doc.get("F1")).getInteger()));
-        assertEquals((long) (-2), (long) (((JsonNumber) yArray.get(0)).getInteger()));
-        assertEquals((long) (-3), (long) (((JsonNumber) yArray.get(1)).getInteger()));
-        assertEquals((long) (-4), (long) (((JsonNumber) yArray.get(2)).getInteger()));
+        assertEquals((long) 2, (long) ((JsonNumber) doc.get("F1")).getInteger());
+        assertEquals((long) -2, (long) ((JsonNumber) yArray.get(0)).getInteger());
+        assertEquals((long) -3, (long) ((JsonNumber) yArray.get(1)).getInteger());
+        assertEquals((long) -4, (long) ((JsonNumber) yArray.get(2)).getInteger());
         assertFalse(docs.hasNext());
 
         // Insert 3 numbers in the array (ARR1) where $.F1 = 3
@@ -1669,10 +1652,10 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR1");
         assertEquals(arraySize + 3, yArray.size());
-        assertEquals((3), (long) (((JsonNumber) doc.get("F1")).getInteger()));
-        assertEquals((long) (-2), (long) (((JsonNumber) yArray.get(0)).getInteger()));
-        assertEquals((long) (-3), (long) (((JsonNumber) yArray.get(2)).getInteger()));
-        assertEquals((long) (-4), (long) (((JsonNumber) yArray.get(4)).getInteger()));
+        assertEquals(3, (long) ((JsonNumber) doc.get("F1")).getInteger());
+        assertEquals((long) -2, (long) ((JsonNumber) yArray.get(0)).getInteger());
+        assertEquals((long) -3, (long) ((JsonNumber) yArray.get(2)).getInteger());
+        assertEquals((long) -4, (long) ((JsonNumber) yArray.get(4)).getInteger());
         assertFalse(docs.hasNext());
 
         // Insert 1 number in the array (ARR2) where $.F1 = 1
@@ -1682,7 +1665,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR2");
         assertEquals((long) (arraySize + 1), (long) yArray.size());
-        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals((long) 1, (long) ((JsonNumber) doc.get("F1")).getInteger());
         assertFalse(docs.hasNext());
 
         // Insert 3 number in the array (ARR2) where $.F1 = 2
@@ -1693,10 +1676,10 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR2");
         assertEquals(arraySize + 3, yArray.size());
-        assertEquals((long) (2), (long) (((JsonNumber) doc.get("F1")).getInteger()));
-        assertEquals(new BigDecimal(String.valueOf("4321.1234")), (((JsonNumber) yArray.get(4)).getBigDecimal()));
-        assertEquals(new BigDecimal(String.valueOf("4321.9847")), (((JsonNumber) yArray.get(0)).getBigDecimal()));
-        assertEquals(new BigDecimal(String.valueOf("-4321.9888")), (((JsonNumber) yArray.get(1)).getBigDecimal()));
+        assertEquals((long) 2, (long) ((JsonNumber) doc.get("F1")).getInteger());
+        assertEquals(new BigDecimal(String.valueOf("4321.1234")), ((JsonNumber) yArray.get(4)).getBigDecimal());
+        assertEquals(new BigDecimal(String.valueOf("4321.9847")), ((JsonNumber) yArray.get(0)).getBigDecimal());
+        assertEquals(new BigDecimal(String.valueOf("-4321.9888")), ((JsonNumber) yArray.get(1)).getBigDecimal());
         assertFalse(docs.hasNext());
 
         // Insert 1 String in the array (ARR3) where $.F1 = 1
@@ -1706,7 +1689,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR3");
         assertEquals(arraySize + 1, yArray.size());
-        assertEquals((long) (1), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals((long) 1, (long) ((JsonNumber) doc.get("F1")).getInteger());
         assertFalse(docs.hasNext());
 
         // Insert 3 Strings in the array (ARR3) where $.F1 = 2
@@ -1717,25 +1700,21 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         doc = docs.next();
         yArray = (JsonArray) doc.get("ARR3");
         assertEquals(arraySize + 3, yArray.size());
-        assertEquals((long) (2), (long) (((JsonNumber) doc.get("F1")).getInteger()));
+        assertEquals((long) 2, (long) ((JsonNumber) doc.get("F1")).getInteger());
         assertFalse(docs.hasNext());
 
         // Insert 3 Strings in the array (ARR3) using an empty condition
-        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionModifyTest.this.collection.modify(" ").arrayInsert("$.ARR3[1]", s1).arrayInsert("$.ARR3[2]", s1).arrayInsert("$.ARR3[0]", "")
-                        .sort("$._id").execute();
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", () -> {
+            CollectionModifyTest.this.collection.modify(" ").arrayInsert("$.ARR3[1]", s1).arrayInsert("$.ARR3[2]", s1).arrayInsert("$.ARR3[0]", "")
+                    .sort("$._id").execute();
+            return null;
         });
 
         // Insert 3 Strings in the array (ARR3) using null condition
-        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionModifyTest.this.collection.modify(null).arrayInsert("$.ARR3[1]", s1).arrayInsert("$.ARR3[2]", s1).arrayInsert("$.ARR3[0]", "")
-                        .sort("$._id").execute();
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'criteria' must not be null or empty.", () -> {
+            CollectionModifyTest.this.collection.modify(null).arrayInsert("$.ARR3[1]", s1).arrayInsert("$.ARR3[2]", s1).arrayInsert("$.ARR3[0]", "")
+                    .sort("$._id").execute();
+            return null;
         });
     }
 
@@ -1765,26 +1744,26 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             newDoc2 = null;
         }
 
-        assertEquals((maxrec), this.collection.count());
+        assertEquals(maxrec, this.collection.count());
 
         asyncDocs = this.collection.find("F3 >= ? and F3 < ?").bind(100, 100006).fields(expr("{'cnt':count($.F1)}")).executeAsync();
         docs = asyncDocs.get();
         doc = docs.next();
-        assertEquals((long) maxrec, (long) (((JsonNumber) doc.get("cnt")).getInteger()));
+        assertEquals((long) maxrec, (long) ((JsonNumber) doc.get("cnt")).getInteger());
 
         /* Simple Update with executeAsync */
         asyncRes2 = this.collection.modify("$.F3 > 100").unset("$.T").sort("$.F3 desc").executeAsync();
         res2 = asyncRes2.get();
-        assertEquals((maxrec - 1), res2.getAffectedItemsCount());
+        assertEquals(maxrec - 1, res2.getAffectedItemsCount());
 
         asyncRes2 = this.collection.modify("$.F3 >= 100").change("$.T", expr("10000+1")).sort("$.F3 desc").executeAsync();
         res2 = asyncRes2.get();
-        assertEquals((1), res2.getAffectedItemsCount());
+        assertEquals(1, res2.getAffectedItemsCount());
 
         asyncDocs = this.collection.find("$.T >= ? ").bind(10000).fields(expr("{'cnt':count($.T)}")).executeAsync();
         docs = asyncDocs.get();
         doc = docs.next();
-        assertEquals((long) (1), (long) (((JsonNumber) doc.get("cnt")).getInteger()));
+        assertEquals((long) 1, (long) ((JsonNumber) doc.get("cnt")).getInteger());
 
         asyncRes2 = this.collection.modify("$.F3 >= 100").unset("$.T").sort("$.F3 desc").executeAsync();
         res2 = asyncRes.get();
@@ -1797,7 +1776,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         asyncDocs = this.collection.find("$.T >= ? ").bind(10000).fields(expr("{'cnt':count($.T)}")).executeAsync();
         docs = asyncDocs.get();
         doc = docs.next();
-        assertEquals((long) maxrec, (long) (((JsonNumber) doc.get("cnt")).getInteger()));
+        assertEquals((long) maxrec, (long) ((JsonNumber) doc.get("cnt")).getInteger());
 
         CompletableFuture<?> futures[] = new CompletableFuture<?>[501];
         //List <Object>futures =  new ArrayList<Object>();
@@ -1822,7 +1801,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         asyncDocs = this.collection.find("$.T = ? ").bind(-1).fields(expr("{'cnt':count($.T)}")).executeAsync();
         docs = asyncDocs.get();
         doc = docs.next();
-        assertEquals((long) maxrec, (long) (((JsonNumber) doc.get("cnt")).getInteger()));
+        assertEquals((long) maxrec, (long) ((JsonNumber) doc.get("cnt")).getInteger());
     }
 
     @SuppressWarnings("unchecked")
@@ -1852,7 +1831,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             newDoc2 = null;
         }
 
-        assertEquals((maxrec), this.collection.count());
+        assertEquals(maxrec, this.collection.count());
 
         List<Object> futures = new ArrayList<>();
         for (i = 0; i < NUMBER_OF_QUERIES; ++i) {
@@ -1868,31 +1847,31 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
         for (i = 0; i < NUMBER_OF_QUERIES; ++i) {
             if (i % 3 == 0) {
                 res2 = ((CompletableFuture<AddResult>) futures.get(i)).get();
-                assertEquals((maxrec) / 2, res2.getAffectedItemsCount());
+                assertEquals(maxrec / 2, res2.getAffectedItemsCount());
             } else if (i % 3 == 1) {
                 int i1 = i;
                 assertThrows(ExecutionException.class, ".*FUNCTION " + this.schema.getName() + ".NON_EXISTING_FUNCTION does not exist.*",
                         () -> ((CompletableFuture<Result>) futures.get(i1)).get());
             } else {
                 res2 = ((CompletableFuture<Result>) futures.get(i)).get();
-                assertEquals((maxrec) / 2, res2.getAffectedItemsCount());
+                assertEquals(maxrec / 2, res2.getAffectedItemsCount());
             }
         }
 
         asyncDocs = this.collection.find("$.T > :X ").bind("X", 1000000).fields(expr("{'cnt':count($.T)}")).executeAsync();
         docs = asyncDocs.get();
         doc = docs.next();
-        assertEquals((long) (maxrec) / 2, (long) (((JsonNumber) doc.get("cnt")).getInteger()));
+        assertEquals((long) maxrec / 2, (long) ((JsonNumber) doc.get("cnt")).getInteger());
 
         asyncDocs = this.collection.find("$.T > :X and $.T < :Y").bind("X", 1000).bind("Y", 1000000).fields(expr("{'cnt':count($.T)}")).executeAsync();
         docs = asyncDocs.get();
         doc = docs.next();
-        assertEquals((long) (maxrec) / 2, (long) (((JsonNumber) doc.get("cnt")).getInteger()));
+        assertEquals((long) maxrec / 2, (long) ((JsonNumber) doc.get("cnt")).getInteger());
     }
 
     /**
      * Tests fix for Bug#107510 (Bug#34259416), Empty string given to set() from Collection.modify() replaces full document.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1981,7 +1960,7 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
 
     /**
      * Tests fix for Bug#33637993, Loss of backslashes in data after modify api is used.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2056,4 +2035,5 @@ public class CollectionModifyTest extends BaseCollectionTestCase {
             assertEquals(5, ((JsonString) v).toFormattedString().indexOf(expectedPart));
         }
     }
+
 }

@@ -44,6 +44,7 @@ import com.mysql.cj.util.Util;
  * Factory class for MysqlDataSource objects
  */
 public class MysqlDataSourceFactory implements ObjectFactory {
+
     /**
      * The class name for a standard MySQL DataSource.
      */
@@ -115,4 +116,5 @@ public class MysqlDataSourceFactory implements ObjectFactory {
         String asString = refAddr != null ? (String) refAddr.getContent() : null;
         return asString;
     }
+
 }

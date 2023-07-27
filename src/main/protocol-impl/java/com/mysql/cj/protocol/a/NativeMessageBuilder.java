@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -49,6 +49,7 @@ import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
 import com.mysql.cj.util.StringUtils;
 
 public class NativeMessageBuilder implements MessageBuilder<NativePacketPayload> {
+
     private boolean supportsQueryAttributes = true;
 
     public NativeMessageBuilder(boolean supportsQueryAttributes) {
@@ -93,6 +94,7 @@ public class NativeMessageBuilder implements MessageBuilder<NativePacketPayload>
         return buildComQuery(sharedPacket, StringUtils.getBytes(query, encoding));
     }
 
+    @Override
     public NativePacketPayload buildComQuery(NativePacketPayload sharedPacket, Session sess, PreparedQuery preparedQuery, QueryBindings bindings,
             String characterEncoding) {
         NativePacketPayload sendPacket = sharedPacket != null ? sharedPacket : new NativePacketPayload(9);
@@ -329,7 +331,7 @@ public class NativeMessageBuilder implements MessageBuilder<NativePacketPayload>
                     if (!parameterBindings[i].isNull()) {
                         parameterBindings[i].writeAsBinary(packet);
                     } else {
-                        nullBitsBuffer[i >>> 3] |= (1 << (i & 7));
+                        nullBitsBuffer[i >>> 3] |= 1 << (i & 7);
                     }
                 }
             }
@@ -357,4 +359,5 @@ public class NativeMessageBuilder implements MessageBuilder<NativePacketPayload>
 
         return packet;
     }
+
 }

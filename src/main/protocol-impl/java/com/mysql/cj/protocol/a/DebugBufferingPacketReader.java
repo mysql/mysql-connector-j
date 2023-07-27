@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -79,16 +79,16 @@ public class DebugBufferingPacketReader implements MessageReader<NativePacketHea
         byte currPacketSeq = hdr.getMessageSequence();
         if (!this.packetSequenceReset) {
 
-            if ((currPacketSeq == -128) && (prevPacketSeq != 127)) {
+            if (currPacketSeq == -128 && prevPacketSeq != 127) {
                 throw new IOException(Messages.getString("PacketReader.9", new Object[] { "-128", currPacketSeq }));
             }
 
-            if ((prevPacketSeq == -1) && (currPacketSeq != 0)) {
+            if (prevPacketSeq == -1 && currPacketSeq != 0) {
                 throw new IOException(Messages.getString("PacketReader.9", new Object[] { "-1", currPacketSeq }));
             }
 
-            if ((currPacketSeq != -128) && (prevPacketSeq != -1) && (currPacketSeq != (prevPacketSeq + 1))) {
-                throw new IOException(Messages.getString("PacketReader.9", new Object[] { (prevPacketSeq + 1), currPacketSeq }));
+            if (currPacketSeq != -128 && prevPacketSeq != -1 && currPacketSeq != prevPacketSeq + 1) {
+                throw new IOException(Messages.getString("PacketReader.9", new Object[] { prevPacketSeq + 1, currPacketSeq }));
             }
 
         } else {
@@ -121,7 +121,7 @@ public class DebugBufferingPacketReader implements MessageReader<NativePacketHea
             packetDump.append("\nNote: Packet of " + packetLength + " bytes truncated to " + MAX_PACKET_DUMP_LENGTH + " bytes.\n");
         }
 
-        if ((this.packetDebugBuffer.size() + 1) > this.packetDebugBufferSize.getValue()) {
+        if (this.packetDebugBuffer.size() + 1 > this.packetDebugBufferSize.getValue()) {
             this.packetDebugBuffer.removeFirst();
         }
 
@@ -151,7 +151,7 @@ public class DebugBufferingPacketReader implements MessageReader<NativePacketHea
             packetDump.append("\nNote: Packet of " + packetLength + " bytes truncated to " + MAX_PACKET_DUMP_LENGTH + " bytes.\n");
         }
 
-        if ((this.packetDebugBuffer.size() + 1) > this.packetDebugBufferSize.getValue()) {
+        if (this.packetDebugBuffer.size() + 1 > this.packetDebugBufferSize.getValue()) {
             this.packetDebugBuffer.removeFirst();
         }
 

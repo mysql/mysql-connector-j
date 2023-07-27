@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,6 +40,7 @@ import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.xdevapi.Collection;
 
 public class BaseCollectionTestCase extends DevApiBaseTestCase {
+
     /** Collection for testing. */
     protected Collection collection;
     protected String collectionName;
@@ -66,4 +67,5 @@ public class BaseCollectionTestCase extends DevApiBaseTestCase {
             destroyTestSession();
         }
     }
+
 }

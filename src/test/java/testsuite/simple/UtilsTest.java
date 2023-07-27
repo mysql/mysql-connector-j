@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,8 +34,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Serializable;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.List;
@@ -54,6 +52,7 @@ import com.mysql.cj.util.Util;
 import testsuite.BaseTestCase;
 
 public class UtilsTest extends BaseTestCase {
+
     /**
      * Tests Util.isJdbcInterface()
      */
@@ -65,11 +64,7 @@ public class UtilsTest extends BaseTestCase {
         assertTrue(Util.isJdbcInterface(JdbcStatement.class));
         assertTrue(Util.isJdbcInterface(ResultSetImpl.class));
         JdbcStatement s = (JdbcStatement) Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class<?>[] { JdbcStatement.class },
-                new InvocationHandler() {
-                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                        return null;
-                    }
-                });
+                (proxy, method, args) -> null);
         assertTrue(Util.isJdbcInterface(s.getClass()));
 
         // Classes not implementing JDBC interfaces.
@@ -131,4 +126,5 @@ public class UtilsTest extends BaseTestCase {
         assertEquals(MultiHostConnectionProxy.class.getPackage().getName(), Util.getPackageName(MultiHostConnectionProxy.class));
         assertEquals(JdbcConnection.class.getPackage().getName(), Util.getPackageName(this.conn.getClass().getInterfaces()[0]));
     }
+
 }

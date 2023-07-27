@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2022, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,6 +36,7 @@ import org.junit.jupiter.api.Test;
 import testsuite.BaseTestCase;
 
 public class StringInspectorTest extends BaseTestCase {
+
     @Test
     public void testIndexOfIgnoreCaseAndMatchesIgnoreCasePositioning() {
         final String markerStart = "\"'`(";
@@ -190,7 +191,7 @@ public class StringInspectorTest extends BaseTestCase {
         assertEquals(i1, si.indexOfIgnoreCase(find1));
         assertEquals(firstChar, si.getChar());
         int e;
-        assertEquals(m2, (e = si.matchesIgnoreCase(find1)));
+        assertEquals(m2, e = si.matchesIgnoreCase(find1));
         assertEquals(i1, si.getPosition());
         assertEquals(firstChar, si.getChar());
         si.setStartPosition(e);
@@ -198,4 +199,5 @@ public class StringInspectorTest extends BaseTestCase {
         assertEquals(i2, si.indexOfIgnoreCase(find2));
         assertEquals(m4, si.matchesIgnoreCase(find2));
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -66,6 +66,7 @@ import com.mysql.cj.util.StringUtils;
  * MySQL 'authentication_kerberos_client' authentication plugin.
  */
 public class AuthenticationKerberosClient implements AuthenticationPlugin<NativePacketPayload> {
+
     public static String PLUGIN_NAME = "authentication_kerberos_client";
 
     private static final String LOGIN_CONFIG_ENTRY = "MySQLConnectorJ";
@@ -216,7 +217,7 @@ public class AuthenticationKerberosClient implements AuthenticationPlugin<Native
                     this.saslClient = Subject.doAs(this.subject, (PrivilegedExceptionAction<SaslClient>) () -> Sasl
                             .createSaslClient(new String[] { AUTHENTICATION_MECHANISM }, null, localPrimary, localInstance, null, null));
                 } catch (PrivilegedActionException e) {
-                    // SaslException is the only checked exception that can be thrown. 
+                    // SaslException is the only checked exception that can be thrown.
                     throw (SaslException) e.getException();
                 }
 
@@ -265,6 +266,7 @@ public class AuthenticationKerberosClient implements AuthenticationPlugin<Native
             final String localUser = this.userPrincipalName;
             final boolean debug = Boolean.getBoolean("sun.security.jgss.debug");
             loginConfig = new Configuration() {
+
                 @Override
                 public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
                     Map<String, String> options = new HashMap<>();
@@ -277,6 +279,7 @@ public class AuthenticationKerberosClient implements AuthenticationPlugin<Native
                     return new AppConfigurationEntry[] { new AppConfigurationEntry("com.sun.security.auth.module.Krb5LoginModule",
                             AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, options) };
                 }
+
             };
         }
 
@@ -291,4 +294,5 @@ public class AuthenticationKerberosClient implements AuthenticationPlugin<Native
             throw ExceptionFactory.createException(Messages.getString("AuthenticationKerberosClientPlugin.FailAuthenticateUser"), e);
         }
     }
+
 }

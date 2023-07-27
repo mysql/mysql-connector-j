@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -48,7 +48,7 @@ public interface RowList extends Iterator<Row> {
 
     /**
      * Optionally iterate backwards on the list.
-     * 
+     *
      * @return {@link Row}
      */
     default Row previous() {
@@ -57,9 +57,9 @@ public interface RowList extends Iterator<Row> {
 
     /**
      * Optionally retrieve Row at index <i>n</i>.
-     * 
+     *
      * Only works on non dynamic row lists.
-     * 
+     *
      * @param n
      *            row number
      * @return {@link Row}
@@ -70,7 +70,7 @@ public interface RowList extends Iterator<Row> {
 
     /**
      * Returns the current position.
-     * 
+     *
      * @return the current row number
      */
     default int getPosition() {
@@ -79,10 +79,11 @@ public interface RowList extends Iterator<Row> {
 
     /**
      * Only works on non dynamic row lists.
-     * 
+     *
      * @return the size of this row list
      */
     default int size() {
         return RESULT_SET_SIZE_UNKNOWN;
     }
+
 }

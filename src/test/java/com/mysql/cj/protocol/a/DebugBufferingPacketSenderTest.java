@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,6 +47,7 @@ import com.mysql.cj.conf.PropertyKey;
  * Tests for {@link DebugBufferingPacketSender}.
  */
 public class DebugBufferingPacketSenderTest extends PacketSenderTestBase {
+
     @Test
     public void packetPushedToDebugBufferTest() throws IOException {
         LinkedList<StringBuilder> debugBuffer = new LinkedList<>();
@@ -64,4 +65,5 @@ public class DebugBufferingPacketSenderTest extends PacketSenderTestBase {
         Pattern p = Pattern.compile("Packet payload:.*00 01 02 03 04 05 06 07", Pattern.DOTALL);
         assertTrue(p.matcher(debugText).find());
     }
+
 }

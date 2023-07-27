@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -44,11 +44,12 @@ import com.mysql.cj.util.Util;
  * Base class for all wrapped instances created by LogicalHandle
  */
 abstract class WrapperBase {
+
     protected MysqlPooledConnection pooledConnection;
 
     /**
      * Fires connection error event if required, before re-throwing exception
-     * 
+     *
      * @param sqlEx
      *            the SQLException that has occurred
      * @throws SQLException
@@ -73,12 +74,14 @@ abstract class WrapperBase {
     }
 
     protected class ConnectionErrorFiringInvocationHandler implements InvocationHandler {
+
         Object invokeOn = null;
 
         public ConnectionErrorFiringInvocationHandler(Object toInvokeOn) {
             this.invokeOn = toInvokeOn;
         }
 
+        @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             if ("equals".equals(method.getName())) {
                 // Let args[0] "unwrap" to its InvocationHandler if it is a proxy.
@@ -108,7 +111,7 @@ abstract class WrapperBase {
          * Recursively checks for interfaces on the given object to determine
          * if it implements a java.sql interface, and if so, proxies the
          * instance so that we can catch and fire SQL errors.
-         * 
+         *
          * @param toProxy
          *            object to be proxied
          * @param clazz
@@ -130,5 +133,7 @@ abstract class WrapperBase {
 
             return toProxy;
         }
+
     }
+
 }

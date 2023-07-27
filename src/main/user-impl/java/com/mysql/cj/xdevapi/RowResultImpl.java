@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -45,11 +45,12 @@ import com.mysql.cj.result.RowList;
  * {@link RowResult} implementation.
  */
 public class RowResultImpl extends AbstractDataResult<Row> implements RowResult {
+
     private ColumnDefinition metadata;
 
     /**
      * Constructor.
-     * 
+     *
      * @param metadata
      *            {@link ColumnDefinition} object to use for new rows.
      * @param defaultTimeZone
@@ -66,15 +67,19 @@ public class RowResultImpl extends AbstractDataResult<Row> implements RowResult 
         this.metadata = metadata;
     }
 
+    @Override
     public int getColumnCount() {
         return this.metadata.getFields().length;
     }
 
+    @Override
     public List<Column> getColumns() {
         return Arrays.stream(this.metadata.getFields()).map(ColumnImpl::new).collect(Collectors.toList());
     }
 
+    @Override
     public List<String> getColumnNames() {
         return Arrays.stream(this.metadata.getFields()).map(Field::getColumnLabel).collect(Collectors.toList());
     }
+
 }

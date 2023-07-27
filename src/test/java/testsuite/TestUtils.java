@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -44,9 +44,10 @@ import java.util.List;
  */
 
 public class TestUtils {
+
     /**
      * Percent-encode all occurrence of the the percent sign (%) in the given string.
-     * 
+     *
      * @param strToEncode
      *            the string to encode
      * @return the encoded string
@@ -57,7 +58,7 @@ public class TestUtils {
 
     /**
      * Get all IPv6 addresses defined in local network adapters.
-     * 
+     *
      * @return a list of {@link Inet6Address}s
      */
     public static List<Inet6Address> getIpv6List() {
@@ -73,14 +74,14 @@ public class TestUtils {
                 }
             }
         } catch (SocketException e) {
-            // Failed to get the network interfaces. Return an empty list. 
+            // Failed to get the network interfaces. Return an empty list.
         }
         return addresses;
     }
 
     /**
      * Get all IPv6 addresses of the given host.
-     * 
+     *
      * @return a list of {@link Inet6Address}s
      */
     public static List<Inet6Address> getIpv6List(String hostname) {
@@ -94,14 +95,14 @@ public class TestUtils {
                 System.out.println(address.getHostAddress());
             }
         } catch (UnknownHostException e) {
-            // Failed to get the network interfaces. Return an empty list. 
+            // Failed to get the network interfaces. Return an empty list.
         }
         return addresses;
     }
 
     /**
      * Checks if there is a server socket listening in the given host and port.
-     * 
+     *
      * @param hostName
      *            the host where to look for the server socket
      * @param port
@@ -118,7 +119,7 @@ public class TestUtils {
 
     /**
      * Checks if there is a server socket listening in the given address and port.
-     * 
+     *
      * @param addr
      *            the address where to look for the server socket
      * @param port

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,7 +38,6 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.Disabled;
@@ -59,6 +58,7 @@ import com.mysql.cj.xdevapi.Result;
 import com.mysql.cj.xdevapi.XDevAPIError;
 
 public class CollectionAddTest extends BaseCollectionTestCase {
+
     @Test
     public void testBasicAddString() {
         String json = "{'firstName':'Frank', 'middleName':'Lloyd', 'lastName':'Wright'}".replaceAll("'", "\"");
@@ -116,7 +116,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
     @Test
     public void testBasicAddDocArray() {
-        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion(("8.0.5")))) {
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             AddResult res1 = this.collection.add(this.collection.newDoc().add("f1", new JsonString().setValue("doc1")),
                     this.collection.newDoc().add("f1", new JsonString().setValue("doc2"))).execute();
             assertTrue(res1.getGeneratedIds().get(0).matches("[a-f0-9]{28}"));
@@ -131,7 +131,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         DocResult docs = this.collection.find("f1 like 'doc%'").execute();
         assertEquals(2, docs.count());
 
-        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion(("8.0.5")))) {
+        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.5"))) {
             AddResult res2 = this.collection.add(new DbDoc[] { this.collection.newDoc().add("f1", new JsonString().setValue("doc3")),
                     this.collection.newDoc().add("f1", new JsonString().setValue("doc4")) }).execute();
             assertTrue(res2.getGeneratedIds().get(0).matches("[a-f0-9]{28}"));
@@ -260,41 +260,29 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         assertTrue(this.collection.find("a = 4").execute().hasNext());
 
         // a new document with _id field that doesn't match id parameter
-        assertThrows(XDevAPIError.class, "Replacement document has an _id that is different than the matched document\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionAddTest.this.collection.addOrReplaceOne("id2",
-                        CollectionAddTest.this.collection.newDoc().add("_id", new JsonString().setValue("id111")));
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Replacement document has an _id that is different than the matched document\\.", () -> {
+            CollectionAddTest.this.collection.addOrReplaceOne("id2", CollectionAddTest.this.collection.newDoc().add("_id", new JsonString().setValue("id111")));
+            return null;
         });
 
         // null document
-        assertThrows(XDevAPIError.class, "Parameter 'doc' must not be null.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionAddTest.this.collection.addOrReplaceOne("id2", (DbDoc) null);
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'doc' must not be null.", () -> {
+            CollectionAddTest.this.collection.addOrReplaceOne("id2", (DbDoc) null);
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Parameter 'jsonString' must not be null.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionAddTest.this.collection.addOrReplaceOne("id2", (String) null);
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'jsonString' must not be null.", () -> {
+            CollectionAddTest.this.collection.addOrReplaceOne("id2", (String) null);
+            return null;
         });
 
         // null id parameter
-        assertThrows(XDevAPIError.class, "Parameter 'id' must not be null.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionAddTest.this.collection.addOrReplaceOne(null,
-                        CollectionAddTest.this.collection.newDoc().add("_id", new JsonString().setValue("id111")));
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'id' must not be null.", () -> {
+            CollectionAddTest.this.collection.addOrReplaceOne(null, CollectionAddTest.this.collection.newDoc().add("_id", new JsonString().setValue("id111")));
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Parameter 'id' must not be null.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionAddTest.this.collection.addOrReplaceOne(null, "{\"_id\": \"id100\", \"a\": 100}");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'id' must not be null.", () -> {
+            CollectionAddTest.this.collection.addOrReplaceOne(null, "{\"_id\": \"id100\", \"a\": 100}");
+            return null;
         });
     }
 
@@ -303,17 +291,15 @@ public class CollectionAddTest extends BaseCollectionTestCase {
      */
     @Test
     public void testBug21914769() {
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character ']'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                CollectionAddTest.this.collection.add("{\"_id\":\"1004\",\"F1\": ] }").execute();
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character ']'.", () -> {
+            CollectionAddTest.this.collection.add("{\"_id\":\"1004\",\"F1\": ] }").execute();
+            return null;
         });
     }
 
     /**
      * Test for Bug#92264 (28594434), JSONPARSER PUTS UNNECESSARY MAXIMUM LIMIT ON JSONNUMBER TO 10 DIGITS.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -377,7 +363,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         json = "{'F1': 'Field-1-Data-9999','F2': 'Field-2-Data-9999','F3': 'Field-3-Data-9999'}".replaceAll("'", "\"");
         this.collection.add(json).add(json.replaceAll("9", "8")).execute();
 
-        assertEquals((maxrec + 4), this.collection.count());
+        assertEquals(maxrec + 4, this.collection.count());
         DocResult docs = this.collection.find("$._id = '1000'").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
         DbDoc doc = null;
         doc = docs.next();
@@ -412,23 +398,23 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         /* find with Condition */
         docs = this.collection.find("$.F1 Like '{{2%}%2%'").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
         doc = docs.next();
-        assertEquals("{{2Open and }}2Close Brace", (((JsonString) doc.get("f1")).getString()));
-        assertEquals("}}2Close and {{2Open Brace", (((JsonString) doc.get("f2")).getString()));
-        assertEquals("$.Dollor dot and $$2Dollor", (((JsonString) doc.get("f3")).getString()));
+        assertEquals("{{2Open and }}2Close Brace", ((JsonString) doc.get("f1")).getString());
+        assertEquals("}}2Close and {{2Open Brace", ((JsonString) doc.get("f2")).getString());
+        assertEquals("$.Dollor dot and $$2Dollor", ((JsonString) doc.get("f3")).getString());
         assertFalse(docs.hasNext());
 
         docs = this.collection.find("$.F1 Like '[%]%'").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
         doc = docs.next();
-        assertEquals("[Square Open ]Square Close", (((JsonString) doc.get("f1")).getString()));
-        assertEquals("]Square Close [Square Open", (((JsonString) doc.get("f2")).getString()));
-        assertEquals("$.,:{[}] ", (((JsonString) doc.get("f3")).getString()));
+        assertEquals("[Square Open ]Square Close", ((JsonString) doc.get("f1")).getString());
+        assertEquals("]Square Close [Square Open", ((JsonString) doc.get("f2")).getString());
+        assertEquals("$.,:{[}] ", ((JsonString) doc.get("f3")).getString());
         assertFalse(docs.hasNext());
 
         docs = this.collection.find("$.F3 Like '$%]%'").fields("$._id as _id, $.F1 as f1, $.F2 as f2, $.F3 as f3").execute();
         doc = docs.next();
-        assertEquals("[Square Open ]Square Close", (((JsonString) doc.get("f1")).getString()));
-        assertEquals("]Square Close [Square Open", (((JsonString) doc.get("f2")).getString()));
-        assertEquals("$.,:{[}] ", (((JsonString) doc.get("f3")).getString()));
+        assertEquals("[Square Open ]Square Close", ((JsonString) doc.get("f1")).getString());
+        assertEquals("]Square Close [Square Open", ((JsonString) doc.get("f2")).getString());
+        assertEquals("$.,:{[}] ", ((JsonString) doc.get("f3")).getString());
         assertFalse(docs.hasNext());
     }
 
@@ -437,7 +423,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         int i = 0, j = 0;
         int maxkey = 10;
         int maxrec = 5;
-        int keylen = (1024);
+        int keylen = 1024;
         String key_sub = buildString(keylen, 'X');
         String data_sub = "Data";
 
@@ -454,7 +440,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
             this.collection.add(newDoc).execute();
             newDoc = null;
         }
-        assertEquals((maxrec), this.collection.count());
+        assertEquals(maxrec, this.collection.count());
 
         /* Fetch all keys */
         query = "$._id as _id";
@@ -470,11 +456,11 @@ public class CollectionAddTest extends BaseCollectionTestCase {
             for (j = 0; j < maxkey; j++) {
                 key = key_sub + j;
                 data = data_sub + j;
-                assertEquals((data), ((JsonString) doc.get(key)).getString());
+                assertEquals(data, ((JsonString) doc.get(key)).getString());
             }
             i++;
         }
-        assertEquals((maxrec), i);
+        assertEquals(maxrec, i);
     }
 
     @Test
@@ -482,8 +468,8 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         int i = 0, j = 0;
         int maxkey = 10;
         int maxrec = 5;
-        int keylen = (10);
-        int datalen = (1 * 5);
+        int keylen = 10;
+        int datalen = 1 * 5;
         String key_sub = buildString(keylen, 'X');
         String data_sub = buildString(datalen, 'X');
 
@@ -500,7 +486,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
             this.collection.add(newDoc).execute();
             newDoc = null;
         }
-        assertEquals((maxrec), this.collection.count());
+        assertEquals(maxrec, this.collection.count());
 
         /* Fetch all keys */
         query = "$._id as _id";
@@ -516,11 +502,11 @@ public class CollectionAddTest extends BaseCollectionTestCase {
             for (j = 0; j < maxkey; j++) {
                 key = key_sub + j;
                 data = data_sub + j;
-                assertEquals((data), ((JsonString) doc.get(key)).getString());
+                assertEquals(data, ((JsonString) doc.get(key)).getString());
             }
             i++;
         }
-        assertEquals((maxrec), i);
+        assertEquals(maxrec, i);
     }
 
     @Test
@@ -529,21 +515,21 @@ public class CollectionAddTest extends BaseCollectionTestCase {
 
         int i = 0;
         int maxrec = 5;
-        int datalen = (1 * 5);
+        int datalen = 1 * 5;
         String longdata = "";
         String json = "";
 
         /* Insert maxrec (key,value) pairs with datalength=datalen */
         AddResult res = null;
         for (i = 0; i < maxrec; i++) {
-            json = "{\"F1\":\"Field-6-Data-" + (i) + "\",\"F2\":\"";
+            json = "{\"F1\":\"Field-6-Data-" + i + "\",\"F2\":\"";
             longdata = buildString(datalen + i, 'X');
             json = json + longdata + "\"}";
             res = this.collection.add(json).add(json.replaceAll("6", "7")).add(json.replaceAll("6", "8")).execute();
             System.out.println("getGeneratedIds: " + res.getGeneratedIds());
 
         }
-        assertEquals((maxrec * 3), this.collection.count());
+        assertEquals(maxrec * 3, this.collection.count());
 
         /* Fetch all keys */
         DocResult docs = this.collection.find("$.F1 like '%-6-%'").orderBy("$.F2 asc").fields("$._id as _id, $.F1 as fld1, $.F2 as fld2").execute();
@@ -552,10 +538,10 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         while (docs.hasNext()) {
             doc = docs.next();
             longdata = buildString(datalen + i, 'X');
-            assertEquals((longdata), ((JsonString) doc.get("fld2")).getString());
+            assertEquals(longdata, ((JsonString) doc.get("fld2")).getString());
             i++;
         }
-        assertEquals((maxrec), i);
+        assertEquals(maxrec, i);
     }
 
     @Test
@@ -579,7 +565,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
             this.collection.add(newDoc).execute();
             newDoc = null;
         }
-        assertEquals((maxrec), this.collection.count());
+        assertEquals(maxrec, this.collection.count());
 
         /* Fetch all keys */
         query = "$._id as _id";
@@ -593,7 +579,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
             docs.next();
             i++;
         }
-        assertEquals((maxrec), i);
+        assertEquals(maxrec, i);
 
         /* fetch maxrec-1 records */
         docs = this.collection.find("$._id < " + (maxrec - 1)).orderBy("$._id").fields("$._id as _id, $." + key_sub + (maxkey - 1) + " as Key1").execute();
@@ -602,7 +588,7 @@ public class CollectionAddTest extends BaseCollectionTestCase {
             docs.next();
             i++;
         }
-        assertEquals((maxrec - 1), i);
+        assertEquals(maxrec - 1, i);
     }
 
     @Test
@@ -622,16 +608,16 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         }
         this.collection.add(jsonlist).execute();
 
-        assertEquals((maxrec), this.collection.count());
+        assertEquals(maxrec, this.collection.count());
         DocResult docs = this.collection.find("$._id >= 0").orderBy("$._id").fields("$._id as _id, $.F1 as f1, $.F2 as f2").execute();
         DbDoc doc = null;
         i = 0;
         while (docs.hasNext()) {
             doc = docs.next();
-            assertEquals((long) i, (long) (((JsonNumber) doc.get("_id")).getInteger()));
+            assertEquals((long) i, (long) ((JsonNumber) doc.get("_id")).getInteger());
             i++;
         }
-        assertEquals((maxrec), i);
+        assertEquals(maxrec, i);
     }
 
     /**/
@@ -651,17 +637,17 @@ public class CollectionAddTest extends BaseCollectionTestCase {
             DbDoc newDoc2 = new DbDocImpl();
             newDoc2.add("_id", new JsonNumber().setValue(String.valueOf(i)));
             newDoc2.add("F1", new JsonString().setValue("Field-1-Data-" + i));
-            for (j = 0; j < (arraySize); j++) {
-                jarray1.addValue(new JsonNumber().setValue(String.valueOf((j))));
+            for (j = 0; j < arraySize; j++) {
+                jarray1.addValue(new JsonNumber().setValue(String.valueOf(j)));
             }
             newDoc2.add("ARR_INT", jarray1);
 
-            for (j = 0; j < (arraySize); j++) {
+            for (j = 0; j < arraySize; j++) {
                 jarray2.addValue(new JsonString().setValue("Data-" + j));
             }
             newDoc2.add("ARR_STR", jarray2);
 
-            for (j = 0; j < (arraySize); j++) {
+            for (j = 0; j < arraySize; j++) {
                 if (j % 3 == 2) {
                     jarray3.addValue(JsonLiteral.FALSE);
                 } else if (j % 3 == 1) {
@@ -672,24 +658,24 @@ public class CollectionAddTest extends BaseCollectionTestCase {
             }
             newDoc2.add("ARR_LIT", jarray3);
 
-            for (j = 0; j < (arraySize); j++) {
+            for (j = 0; j < arraySize; j++) {
                 JsonArray subarray = new JsonArray();
 
                 for (k = 0; k < 5; k++) {
-                    subarray.addValue(new JsonNumber().setValue(String.valueOf((j))));
+                    subarray.addValue(new JsonNumber().setValue(String.valueOf(j)));
                 }
                 jarray4.addValue(subarray);
                 subarray = null;
             }
             newDoc2.add("ARR_ARR", jarray4);
 
-            for (j = 0; j < (arraySize); j++) {
+            for (j = 0; j < arraySize; j++) {
                 if (j % 3 == 2) {
                     jarray5.addValue(JsonLiteral.FALSE);
                 } else if (j % 3 == 1) {
                     jarray5.addValue(new JsonString().setValue("Data-" + j));
                 } else {
-                    jarray5.addValue(new JsonNumber().setValue(String.valueOf((j))));
+                    jarray5.addValue(new JsonNumber().setValue(String.valueOf(j)));
                 }
 
             }
@@ -705,16 +691,16 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         }
         //coll.add(jsonlist).execute();
         jsonlist = null;
-        assertEquals((maxrec), this.collection.count());
+        assertEquals(maxrec, this.collection.count());
         DocResult docs = this.collection.find("$._id >= 0").orderBy("$._id").fields("$._id as _id, $.F1 as f1, $.F2 as f2").execute();
         DbDoc doc = null;
         i = 0;
         while (docs.hasNext()) {
             doc = docs.next();
-            assertEquals((long) i, (long) (((JsonNumber) doc.get("_id")).getInteger()));
+            assertEquals((long) i, (long) ((JsonNumber) doc.get("_id")).getInteger());
             i++;
         }
-        assertEquals((maxrec), i);
+        assertEquals(maxrec, i);
     }
 
     @Test
@@ -822,4 +808,5 @@ public class CollectionAddTest extends BaseCollectionTestCase {
         assertThrows(XProtocolError.class, "ERROR 5116 \\(HY000\\) Document contains a field value that is not unique but required to be",
                 () -> this.collection.add("{\"_id\":\"abcd1234\",\"FLD1\":\"Data1\"}").add("{\"_id\":\"abcd1234\",\"FLD1\":\"Data2\"}").execute());
     }
+
 }

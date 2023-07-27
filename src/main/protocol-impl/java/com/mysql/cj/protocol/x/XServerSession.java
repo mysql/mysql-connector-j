@@ -215,14 +215,17 @@ public class XServerSession implements ServerSession {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
+    @Override
     public TimeZone getSessionTimeZone() {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
+    @Override
     public void setSessionTimeZone(TimeZone sessionTimeZone) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
+    @Override
     public TimeZone getDefaultTimeZone() {
         return this.defaultTimeZone;
     }
@@ -236,6 +239,6 @@ public class XServerSession implements ServerSession {
     @Override
     public void setCharsetSettings(CharsetSettings charsetSettings) {
         // TODO Auto-generated method stub
-
     }
+
 }

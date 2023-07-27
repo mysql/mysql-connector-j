@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -61,7 +61,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#3620 -- Timezone not respected correctly.
-     * 
+     *
      * @throws SQLException
      */
     @Test
@@ -143,18 +143,18 @@ public class DateTimeRegressionTest extends BaseTestCase {
 
             System.out.println("Timestamp specifying no calendar from prepared statement: " + tsValuePstmtNoCal.toString());
 
-            long stmtDeltaTWithCal = (ts.getTime() - tsValueStmtNoCal.getTime());
+            long stmtDeltaTWithCal = ts.getTime() - tsValueStmtNoCal.getTime();
 
             long deltaOrig = Math.abs(stmtDeltaTWithCal - pointInTimeOffset);
 
-            assertTrue((deltaOrig < epsillon), "Difference between original timestamp and timestamp retrieved using java.sql.Statement "
+            assertTrue(deltaOrig < epsillon, "Difference between original timestamp and timestamp retrieved using java.sql.Statement "
                     + "set in database using UTC calendar is not ~= " + epsillon + ", it is actually " + deltaOrig);
 
-            long pStmtDeltaTWithCal = (ts.getTime() - tsValuePstmtNoCal.getTime());
+            long pStmtDeltaTWithCal = ts.getTime() - tsValuePstmtNoCal.getTime();
 
             System.out.println(
                     Math.abs(pStmtDeltaTWithCal - pointInTimeOffset) + " < " + epsillon + (Math.abs(pStmtDeltaTWithCal - pointInTimeOffset) < epsillon));
-            assertTrue((Math.abs(pStmtDeltaTWithCal - pointInTimeOffset) < epsillon),
+            assertTrue(Math.abs(pStmtDeltaTWithCal - pointInTimeOffset) < epsillon,
                     "Difference between original timestamp and timestamp retrieved using java.sql.PreparedStatement "
                             + "set in database using UTC calendar is not ~= " + epsillon + ", it is actually " + pStmtDeltaTWithCal);
 
@@ -168,7 +168,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
     /**
      * Tests fix for Bug#5874, Timezone conversion goes in the wrong direction
      * (when useTimezone=true and server timezone differs from client timezone).
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -239,7 +239,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#15604 (11745460), TIMEZONE DISCARDED STORING JAVA.UTIL.CALENDAR INTO DATETIME.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -279,7 +279,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#20391832, SETOBJECT() FOR TYPES.TIME RESULTS IN EXCEPTION WHEN VALUE HAS FRACTIONAL PART.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -977,7 +977,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#20316640, GETTIMESTAMP() CALL WITH CALANDER VALUE NULL RESULTS IN NULLPOINTEREXCEPTION.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -993,7 +993,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#20818678, GETFLOAT() AND GETDOUBLE() CALL ON YEAR COLUMN RESULTS IN EXCEPTION
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1041,7 +1041,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#21308907, NO WAY TO GET THE FRACTIONAL PART OF A TIME FIELD WHEN USESERVERPREPSTMTS=TRUE.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1086,7 +1086,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#22305930, GETTIMESTAMP() CALL ON CLOSED RESULT SET PRODUCES NPE.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1103,7 +1103,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#101413 (32099505), JAVA.TIME.LOCALDATETIME CANNOT BE CAST TO JAVA.SQL.TIMESTAMP.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1144,7 +1144,7 @@ public class DateTimeRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#104559 (33232419), ResultSet.getObject(i, java.util.Date.class) throws NPE when the value is null.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1162,4 +1162,5 @@ public class DateTimeRegressionTest extends BaseTestCase {
         assertNull(this.rs.getObject("dt", java.util.Date.class));
         assertFalse(this.rs.next());
     }
+
 }

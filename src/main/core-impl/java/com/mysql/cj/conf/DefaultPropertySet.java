@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -182,6 +182,7 @@ public class DefaultPropertySet implements PropertySet, Serializable {
         return getProperty(key);
     }
 
+    @Override
     public void initializeProperties(Properties props) {
         if (props != null) {
             Properties infoCopy = (Properties) props.clone();
@@ -204,7 +205,7 @@ public class DefaultPropertySet implements PropertySet, Serializable {
             }
 
             // Translate legacy SSL properties if sslMode isn't explicitly set. Default sslMode is PREFERRED.
-            RuntimeProperty<SslMode> sslMode = this.<SslMode> getEnumProperty(PropertyKey.sslMode);
+            RuntimeProperty<SslMode> sslMode = this.<SslMode>getEnumProperty(PropertyKey.sslMode);
             if (!sslMode.isExplicitlySet()) {
                 RuntimeProperty<Boolean> useSSL = this.getBooleanProperty(PropertyKey.useSSL);
                 RuntimeProperty<Boolean> verifyServerCertificate = this.getBooleanProperty(PropertyKey.verifyServerCertificate);
@@ -264,8 +265,9 @@ public class DefaultPropertySet implements PropertySet, Serializable {
 
     @Override
     public void reset() {
-        this.PROPERTY_KEY_TO_RUNTIME_PROPERTY.values().forEach(p -> p.resetValue());
-        this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.values().forEach(p -> p.resetValue());
+        this.PROPERTY_KEY_TO_RUNTIME_PROPERTY.values().forEach(RuntimeProperty::resetValue);
+        this.PROPERTY_NAME_TO_RUNTIME_PROPERTY.values().forEach(RuntimeProperty::resetValue);
         postInitialization();
     }
+
 }

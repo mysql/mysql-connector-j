@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,9 +36,10 @@ import java.util.stream.Collectors;
  * {@link FilterParams} implementation for {@link Table} syntax.
  */
 public class TableFilterParams extends AbstractFilterParams {
+
     /**
      * Constructor.
-     * 
+     *
      * @param schemaName
      *            Schema name
      * @param collectionName
@@ -50,7 +51,7 @@ public class TableFilterParams extends AbstractFilterParams {
 
     /**
      * Constructor.
-     * 
+     *
      * @param schemaName
      *            Schema name
      * @param collectionName
@@ -67,4 +68,5 @@ public class TableFilterParams extends AbstractFilterParams {
         this.projection = projection;
         this.fields = new ExprParser(Arrays.stream(projection).collect(Collectors.joining(", ")), true).parseTableSelectProjection();
     }
+
 }

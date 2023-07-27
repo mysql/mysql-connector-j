@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -48,10 +48,10 @@ import javassist.CtNewMethod;
 import javassist.bytecode.DuplicateMemberException;
 
 public class AddMethods {
+
     private static boolean verbose = false;
 
     public static void main(String[] args) throws Exception {
-
         System.out.println("Applying AddMethods.");
 
         verbose = "true".equalsIgnoreCase(args[1]);
@@ -64,7 +64,6 @@ public class AddMethods {
         sysOut("Add properties setters/getters to " + clazz.getName());
         addPropertiesGettersSetters(clazz, PropertyDefinitions.PROPERTY_KEY_TO_PROPERTY_DEFINITION.values());
         clazz.writeFile(args[0]);
-
     }
 
     private static void sysOut(String s) {
@@ -136,4 +135,5 @@ public class AddMethods {
             // ignore
         }
     }
+
 }

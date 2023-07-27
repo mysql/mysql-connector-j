@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 public class LRUCache<K, V> extends LinkedHashMap<K, V> {
+
     private static final long serialVersionUID = 1L;
     protected int maxElements;
 
@@ -43,6 +44,7 @@ public class LRUCache<K, V> extends LinkedHashMap<K, V> {
 
     @Override
     protected boolean removeEldestEntry(Entry<K, V> eldest) {
-        return (size() > this.maxElements);
+        return size() > this.maxElements;
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -131,6 +131,7 @@ public abstract class AbstractQuery implements Query {
         }
     }
 
+    @Override
     public void resetCancelledState() {
         synchronized (this.cancelTimeoutMutex) {
             this.cancelStatus = CancelStatus.NOT_CANCELED;
@@ -153,11 +154,13 @@ public abstract class AbstractQuery implements Query {
         return this.cancelTimeoutMutex;
     }
 
+    @Override
     public void closeQuery() {
         this.queryAttributesBindings = null;
         this.session = null;
     }
 
+    @Override
     public void addBatch(Object batch) {
         if (this.batchedArgs == null) {
             this.batchedArgs = new ArrayList<>();
@@ -165,6 +168,7 @@ public abstract class AbstractQuery implements Query {
         this.batchedArgs.add(batch);
     }
 
+    @Override
     public List<Object> getBatchedArgs() {
         return this.batchedArgs == null ? null : Collections.unmodifiableList(this.batchedArgs);
     }
@@ -191,22 +195,27 @@ public abstract class AbstractQuery implements Query {
         this.fetchSize = fetchSize;
     }
 
+    @Override
     public Resultset.Type getResultType() {
         return this.resultSetType;
     }
 
+    @Override
     public void setResultType(Resultset.Type resultSetType) {
         this.resultSetType = resultSetType;
     }
 
+    @Override
     public int getTimeoutInMillis() {
         return this.timeoutInMillis;
     }
 
+    @Override
     public void setTimeoutInMillis(int timeoutInMillis) {
         this.timeoutInMillis = timeoutInMillis;
     }
 
+    @Override
     public CancelQueryTask startQueryTimer(Query stmtToCancel, int timeout) {
         if (this.session.getPropertySet().getBooleanProperty(PropertyKey.enableQueryTimeouts).getValue() && timeout != 0) {
             CancelQueryTaskImpl timeoutTask = new CancelQueryTaskImpl(stmtToCancel);
@@ -216,6 +225,7 @@ public abstract class AbstractQuery implements Query {
         return null;
     }
 
+    @Override
     public void stopQueryTimer(CancelQueryTask timeoutTask, boolean rethrowCancelReason, boolean checkCancelTimeout) {
         if (timeoutTask != null) {
             timeoutTask.cancel();
@@ -233,26 +243,32 @@ public abstract class AbstractQuery implements Query {
         }
     }
 
+    @Override
     public AtomicBoolean getStatementExecuting() {
         return this.statementExecuting;
     }
 
+    @Override
     public String getCurrentDatabase() {
         return this.currentDb;
     }
 
+    @Override
     public void setCurrentDatabase(String currentDb) {
         this.currentDb = currentDb;
     }
 
+    @Override
     public boolean isClearWarningsCalled() {
         return this.clearWarningsCalled;
     }
 
+    @Override
     public void setClearWarningsCalled(boolean clearWarningsCalled) {
         this.clearWarningsCalled = clearWarningsCalled;
     }
 
+    @Override
     public void statementBegins() {
         this.clearWarningsCalled = false;
         this.statementExecuting.set(true);

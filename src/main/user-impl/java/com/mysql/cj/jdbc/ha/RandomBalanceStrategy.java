@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2007, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -63,7 +63,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
         Map<String, Integer> allowListMap = this.getArrayIndexMap(allowList);
 
         for (int attempts = 0; attempts < numRetries;) {
-            int random = (int) Math.floor((Math.random() * allowList.size()));
+            int random = (int) Math.floor(Math.random() * allowList.size());
             if (allowList.size() == 0) {
                 throw SQLError.createSQLException(Messages.getString("RandomBalanceStrategy.0"), null);
             }
@@ -128,7 +128,6 @@ public class RandomBalanceStrategy implements BalanceStrategy {
             m.put(l.get(i), Integer.valueOf(i));
         }
         return m;
-
     }
 
 }

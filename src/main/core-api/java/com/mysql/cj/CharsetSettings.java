@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -58,21 +58,21 @@ public interface CharsetSettings {
      * handshake.
      * Also, ucs2, utf16, utf16le and utf32 character sets are impermissible here. Connector/J will try to use utf8mb4 instead.
      * </p>
-     * 
+     *
      * @param reset
      *            reset the charsets configuration; needed for changeUser call.
-     * 
+     *
      * @return MySQL collation index to be used during the handshake.
      */
     int configurePreHandshake(boolean reset);
 
     /**
      * Sets up client character set. This must be done before any further communication with the server!
-     * 
+     *
      * The 'collation_connection', 'character_set_client', 'character_set_connection' and 'character_set_results' server variables are set
      * according to the collation index selected by {@link #configurePreHandshake(boolean)} and sent in the Protocol::HandshakeV10 packet.
      * Here Connector/J alters these server variables if needed.
-     * 
+     *
      * @param dontCheckServerMatch
      *            if true then send the SET NAMES query even if server charset already matches the new value; needed for changeUser call.
      */
@@ -111,4 +111,5 @@ public interface CharsetSettings {
     String getMysqlCharsetForJavaEncoding(String javaEncoding, ServerVersion version);
 
     boolean isMultibyteCharset(String javaEncodingName);
+
 }

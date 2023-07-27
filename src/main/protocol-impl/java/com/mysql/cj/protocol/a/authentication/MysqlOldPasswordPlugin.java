@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2012, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -45,6 +45,7 @@ import com.mysql.cj.util.StringUtils;
  * MySQL Native Old-Password Authentication Plugin
  */
 public class MysqlOldPasswordPlugin implements AuthenticationPlugin<NativePacketPayload> {
+
     public static String PLUGIN_NAME = "mysql_old_password";
 
     private Protocol<NativePacketPayload> protocol = null;
@@ -57,6 +58,7 @@ public class MysqlOldPasswordPlugin implements AuthenticationPlugin<NativePacket
         this.usernameCallbackHandler = cbh;
     }
 
+    @Override
     public void destroy() {
         reset();
         this.protocol = null;
@@ -64,18 +66,22 @@ public class MysqlOldPasswordPlugin implements AuthenticationPlugin<NativePacket
         this.password = null;
     }
 
+    @Override
     public String getProtocolPluginName() {
         return PLUGIN_NAME;
     }
 
+    @Override
     public boolean requiresConfidentiality() {
         return false;
     }
 
+    @Override
     public boolean isReusable() {
         return true;
     }
 
+    @Override
     public void setAuthenticationParameters(String user, String password) {
         this.password = password;
         if (user == null && this.usernameCallbackHandler != null) {
@@ -112,7 +118,7 @@ public class MysqlOldPasswordPlugin implements AuthenticationPlugin<NativePacket
         byte b;
         double d;
 
-        if ((password == null) || (password.length() == 0)) {
+        if (password == null || password.length() == 0) {
             return password;
         }
 
@@ -124,14 +130,14 @@ public class MysqlOldPasswordPlugin implements AuthenticationPlugin<NativePacket
         char[] chars = new char[seed.length()];
 
         for (int i = 0; i < seed.length(); i++) {
-            seed1 = ((seed1 * 3) + seed2) % max;
+            seed1 = (seed1 * 3 + seed2) % max;
             seed2 = (seed1 + seed2 + 33) % max;
             d = (double) seed1 / (double) max;
-            b = (byte) java.lang.Math.floor((d * 31) + 64);
+            b = (byte) java.lang.Math.floor(d * 31 + 64);
             chars[i] = (char) b;
         }
 
-        seed1 = ((seed1 * 3) + seed2) % max;
+        seed1 = (seed1 * 3 + seed2) % max;
         seed2 = (seed1 + seed2 + 33) % max;
         d = (double) seed1 / (double) max;
         b = (byte) java.lang.Math.floor(d * 31);
@@ -160,8 +166,8 @@ public class MysqlOldPasswordPlugin implements AuthenticationPlugin<NativePacket
 
         for (byte b : password) {
             tmp = 0xff & b;
-            nr ^= ((((nr & 63) + add) * tmp) + (nr << 8));
-            nr2 += ((nr2 << 8) ^ nr);
+            nr ^= ((nr & 63) + add) * tmp + (nr << 8);
+            nr2 += nr2 << 8 ^ nr;
             add += tmp;
         }
 

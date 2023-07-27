@@ -69,6 +69,7 @@ import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.Util;
 
 public class NativeAuthenticationProvider implements AuthenticationProvider<NativePacketPayload> {
+
     private static final int AUTH_411_OVERHEAD = 33;
     private static final String NONE = "none";
 
@@ -123,7 +124,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
     /**
      * Initialize communications with the MySQL server. Handles logging on, and
      * handling initial connection errors.
-     * 
+     *
      * @param user
      *            user name
      * @param pass
@@ -143,7 +144,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
         SslMode sslMode = this.propertySet.<SslMode>getEnumProperty(PropertyKey.sslMode).getValue();
         int capabilityFlags = capabilities.getCapabilityFlags();
-        if (((capabilityFlags & NativeServerSession.CLIENT_SSL) == 0) && sslMode != SslMode.DISABLED && sslMode != SslMode.PREFERRED) {
+        if ((capabilityFlags & NativeServerSession.CLIENT_SSL) == 0 && sslMode != SslMode.DISABLED && sslMode != SslMode.PREFERRED) {
             // check SSL availability
             throw ExceptionFactory.createException(UnableToConnectException.class, Messages.getString("MysqlIO.15"), getExceptionInterceptor());
         } else if ((capabilityFlags & NativeServerSession.CLIENT_SECURE_CONNECTION) == 0) {
@@ -163,7 +164,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
                 buf.readString(StringLengthDataType.STRING_FIXED, "ASCII", authPluginDataLength - 8) : buf.readString(StringSelfDataType.STRING_TERM, "ASCII"));
         this.seed = fullSeed.toString();
 
-        this.useConnectWithDb = (this.database != null) && (this.database.length() > 0)
+        this.useConnectWithDb = this.database != null && this.database.length() > 0
                 && !this.propertySet.getBooleanProperty(PropertyKey.createDatabaseIfNotExist).getValue();
 
         long clientParam = capabilityFlags & NativeServerSession.CLIENT_LONG_PASSWORD //
@@ -193,10 +194,10 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
                 | capabilityFlags & NativeServerSession.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA //
                 | (this.propertySet.getBooleanProperty(PropertyKey.disconnectOnExpiredPasswords).getValue() ? //
                         0 : capabilityFlags & NativeServerSession.CLIENT_CAN_HANDLE_EXPIRED_PASSWORD) //
-                | (this.propertySet.getBooleanProperty(PropertyKey.trackSessionState).getValue() ? // 
+                | (this.propertySet.getBooleanProperty(PropertyKey.trackSessionState).getValue() ? //
                         capabilityFlags & NativeServerSession.CLIENT_SESSION_TRACK : 0) //
                 | capabilityFlags & NativeServerSession.CLIENT_DEPRECATE_EOF //
-                | capabilityFlags & NativeServerSession.CLIENT_QUERY_ATTRIBUTES // 
+                | capabilityFlags & NativeServerSession.CLIENT_QUERY_ATTRIBUTES //
                 | capabilityFlags & NativeServerSession.CLIENT_MULTI_FACTOR_AUTHENTICATION;
 
         sessState.setClientParam(clientParam);
@@ -217,10 +218,10 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
     /**
      * Fill the authentication plugins map.
-     * 
+     *
      * Starts by filling the map with instances of the built-in authentication plugins. Then creates instances of plugins listed in the "authenticationPlugins"
      * connection property and adds them to the map too.
-     * 
+     *
      * The key for the map entry is got by {@link AuthenticationPlugin#getProtocolPluginName()} thus it is possible to replace built-in plugins with custom
      * implementations. To do it, the custom plugin should return one of the values "mysql_native_password", "mysql_clear_password", "sha256_password",
      * "caching_sha2_password", "mysql_old_password", "authentication_ldap_sasl_client" or "authentication_kerberos_client" from its own getProtocolPluginName()
@@ -309,12 +310,12 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      * Get an authentication plugin instance from the authentication plugins map by pluginName key. If such plugin is found, its method
      * {@link AuthenticationPlugin#isReusable()} is called and if the value returned is <code>false</code> then a new instance of the plugin is returned
      * otherwise the instance that already exists is returned.
-     * 
+     *
      * If plugin is not found method returns null, in such case the subsequent behavior
      * of handshake process depends on type of last packet received from server:
      * if it was Auth Challenge Packet then handshake will proceed with default plugin,
      * if it was Auth Method Switch Request Packet then handshake will be interrupted with exception.
-     * 
+     *
      * @param pluginName
      *            mysql protocol plugin names, for example "mysql_native_password" and "mysql_old_password" for built-in plugins
      * @return null if plugin is not found or authentication plugin instance initialized with current connection properties
@@ -343,7 +344,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
     /**
      * Check if given plugin requires confidentiality, but connection is without SSL
-     * 
+     *
      * @param plugin
      *            {@link AuthenticationPlugin}
      */
@@ -359,9 +360,9 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      * Performs an authentication handshake to authorize connection to a given database as a given MySQL user.
      * This can happen upon initial connection to the server, after receiving Auth Challenge Packet, or
      * at any moment during the connection life-time via a Change User request.
-     * 
+     *
      * This method will use registered authentication plugins as requested by the server.
-     * 
+     *
      * @param challenge
      *            the Auth Challenge Packet received from server if
      *            this method is used during the initial connection.
@@ -497,7 +498,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
                 fromServer = new NativePacketPayload(lastReceived.readBytes(StringSelfDataType.STRING_EOF));
 
             } else if (lastReceived.isAuthNextFactorPacket()) {
-                // authentication not done yet, there's another MFA iteration 
+                // authentication not done yet, there's another MFA iteration
                 mfaNthFactor++;
                 skipPassword = false;
                 pluginName = lastReceived.readString(StringSelfDataType.STRING_TERM, "ASCII");
@@ -517,7 +518,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
                 fromServer = new NativePacketPayload(lastReceived.readBytes(StringSelfDataType.STRING_EOF));
 
             } else {
-                // read raw (from AuthMoreData) packet 
+                // read raw (from AuthMoreData) packet
                 if (!this.protocol.versionMeetsMinimum(5, 5, 16)) {
                     lastReceived.setPosition(lastReceived.getPosition() - 1);
                 }
@@ -553,14 +554,13 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
     }
 
     private Map<String, String> getConnectionAttributesMap(String attStr) {
-
         Map<String, String> attMap = new HashMap<>();
 
         if (attStr != null) {
             String[] pairs = attStr.split(",");
             for (String pair : pairs) {
                 int keyEnd = pair.indexOf(":");
-                if (keyEnd > 0 && (keyEnd + 1) < pair.length()) {
+                if (keyEnd > 0 && keyEnd + 1 < pair.length()) {
                     attMap.put(pair.substring(0, keyEnd), pair.substring(keyEnd + 1));
                 }
             }
@@ -579,7 +579,6 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
     }
 
     private void appendConnectionAttributes(NativePacketPayload buf, String attributes, String enc) {
-
         NativePacketPayload lb = new NativePacketPayload(100);
         Map<String, String> attMap = getConnectionAttributesMap(attributes);
 
@@ -598,7 +597,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
     /**
      * Re-authenticates as the given user and password
-     * 
+     *
      * @param user
      *            user name
      * @param pass
@@ -616,7 +615,6 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
     }
 
     private NativePacketPayload createHandshakeResponsePacket(ServerSession serverSession, String pluginName, NativePacketPayload authData) {
-
         long clientParam = serverSession.getClientParam();
         int collationIndex = serverSession.getCharsetSettings().configurePreHandshake(false);
         String enc = serverSession.getCharsetSettings().getPasswordCharacterEncoding();
@@ -624,7 +622,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         int userLength = this.username == null ? 0 : this.username.length();
         NativePacketPayload last_sent = new NativePacketPayload(AUTH_411_OVERHEAD + 7 //
                 + 48                                                                  // passwordLength
-                + (3 * userLength)                                                    // userLength
+                + 3 * userLength                                                    // userLength
                 + (this.useConnectWithDb ? 3 * this.database.length() : 0)            // databaseLength
         );
         last_sent.writeInteger(IntegerDataType.INT4, clientParam);
@@ -650,7 +648,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(pluginName, enc));
 
         // connection attributes
-        if (((clientParam & NativeServerSession.CLIENT_CONNECT_ATTRS) != 0)) {
+        if ((clientParam & NativeServerSession.CLIENT_CONNECT_ATTRS) != 0) {
             appendConnectionAttributes(last_sent, this.propertySet.getStringProperty(PropertyKey.connectionAttributes).getValue(), enc);
         }
         return last_sent;
@@ -699,4 +697,5 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         }
         return last_sent;
     }
+
 }

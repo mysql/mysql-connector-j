@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -49,10 +49,10 @@ public class MysqlSavepoint implements Savepoint {
 
     /**
      * Creates an unnamed savepoint.
-     * 
+     *
      * @param exceptionInterceptor
      *            exception interceptor
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -62,12 +62,12 @@ public class MysqlSavepoint implements Savepoint {
 
     /**
      * Creates a named savepoint
-     * 
+     *
      * @param name
      *            the name of the savepoint.
      * @param exceptionInterceptor
      *            exception interceptor
-     * 
+     *
      * @throws SQLException
      *             if name == null or is empty.
      */
@@ -90,4 +90,5 @@ public class MysqlSavepoint implements Savepoint {
     public String getSavepointName() throws SQLException {
         return this.savepointName;
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,7 +36,7 @@ import com.mysql.cj.protocol.result.AbstractResultsetRow;
 /**
  * A ResultSetRow implementation that holds one row packet (which is re-used by the driver, and thus saves memory allocations), and tries when possible to avoid
  * allocations to break out the results as individual byte[]s.
- * 
+ *
  * (this isn't possible when doing things like reading floating point values).
  */
 public abstract class AbstractBufferRow extends AbstractResultsetRow {

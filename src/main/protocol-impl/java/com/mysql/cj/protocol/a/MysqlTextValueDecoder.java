@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -53,6 +53,7 @@ import com.mysql.cj.util.StringUtils;
  * Numeric values are returned as ASCII (encoding=63/binary).
  */
 public class MysqlTextValueDecoder implements ValueDecoder {
+
     /** Buffer length of MySQL date string: 'YYYY-MM-DD'. */
     public static final int DATE_BUF_LEN = 10;
     /** Min string length of MySQL time string: 'HH:MM:SS'. */
@@ -73,14 +74,17 @@ public class MysqlTextValueDecoder implements ValueDecoder {
     /** Max string length of a signed long = 9223372036854775807 (19+1 for minus sign) */
     public static final int MAX_SIGNED_LONG_LEN = 20;
 
+    @Override
     public <T> T decodeDate(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         return vf.createFromDate(getDate(bytes, offset, length));
     }
 
+    @Override
     public <T> T decodeTime(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf) {
         return vf.createFromTime(getTime(bytes, offset, length, scale));
     }
 
+    @Override
     public <T> T decodeTimestamp(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf) {
         return vf.createFromTimestamp(getTimestamp(bytes, offset, length, scale));
     }
@@ -90,59 +94,72 @@ public class MysqlTextValueDecoder implements ValueDecoder {
         return vf.createFromDatetime(getTimestamp(bytes, offset, length, scale));
     }
 
+    @Override
     public <T> T decodeUInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         return vf.createFromLong(getInt(bytes, offset, offset + length));
     }
 
+    @Override
     public <T> T decodeInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         return vf.createFromLong(getInt(bytes, offset, offset + length));
     }
 
+    @Override
     public <T> T decodeUInt2(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         return vf.createFromLong(getInt(bytes, offset, offset + length));
     }
 
+    @Override
     public <T> T decodeInt2(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         return vf.createFromLong(getInt(bytes, offset, offset + length));
     }
 
+    @Override
     public <T> T decodeUInt4(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         return vf.createFromLong(getLong(bytes, offset, offset + length));
     }
 
+    @Override
     public <T> T decodeInt4(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         return vf.createFromLong(getInt(bytes, offset, offset + length));
     }
 
+    @Override
     public <T> T decodeUInt8(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         // treat as a signed long if possible to avoid BigInteger overhead
-        if (length <= (MAX_SIGNED_LONG_LEN - 1) && bytes[offset] >= '0' && bytes[offset] <= '8') {
+        if (length <= MAX_SIGNED_LONG_LEN - 1 && bytes[offset] >= '0' && bytes[offset] <= '8') {
             return decodeInt8(bytes, offset, length, vf);
         }
         return vf.createFromBigInteger(getBigInteger(bytes, offset, length));
     }
 
+    @Override
     public <T> T decodeInt8(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         return vf.createFromLong(getLong(bytes, offset, offset + length));
     }
 
+    @Override
     public <T> T decodeFloat(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         return decodeDouble(bytes, offset, length, vf);
     }
 
+    @Override
     public <T> T decodeDouble(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         return vf.createFromDouble(getDouble(bytes, offset, length));
     }
 
+    @Override
     public <T> T decodeDecimal(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         BigDecimal d = new BigDecimal(StringUtils.toAsciiCharArray(bytes, offset, length));
         return vf.createFromBigDecimal(d);
     }
 
+    @Override
     public <T> T decodeByteArray(byte[] bytes, int offset, int length, Field f, ValueFactory<T> vf) {
         return vf.createFromBytes(bytes, offset, length, f);
     }
 
+    @Override
     public <T> T decodeBit(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         return vf.createFromBit(bytes, offset, length);
     }
@@ -218,7 +235,7 @@ public class MysqlTextValueDecoder implements ValueDecoder {
             }
 
             /* Check for overflow. */
-            if ((i > cutoff) || ((i == cutoff) && (c > cutlim))) {
+            if (i > cutoff || i == cutoff && c > cutlim) {
                 overflow = true;
             } else {
                 i *= base;
@@ -237,7 +254,7 @@ public class MysqlTextValueDecoder implements ValueDecoder {
         }
 
         /* Return the result of the appropriate sign. */
-        return (negative ? (-i) : i);
+        return negative ? -i : i;
     }
 
     public static BigInteger getBigInteger(byte[] buf, int offset, int length) throws NumberFormatException {
@@ -292,7 +309,7 @@ public class MysqlTextValueDecoder implements ValueDecoder {
 
         // parse hours field
         for (segmentLen = 0; Character.isDigit((char) bytes[offset + pos + segmentLen]); segmentLen++) {
-            ;
+
         }
         if (segmentLen == 0 || bytes[offset + pos + segmentLen] != ':') {
             throw new DataReadException(
@@ -306,7 +323,7 @@ public class MysqlTextValueDecoder implements ValueDecoder {
 
         // parse minutes field
         for (segmentLen = 0; Character.isDigit((char) bytes[offset + pos + segmentLen]); segmentLen++) {
-            ;
+
         }
         if (segmentLen != 2 || bytes[offset + pos + segmentLen] != ':') {
             throw new DataReadException(
@@ -317,7 +334,7 @@ public class MysqlTextValueDecoder implements ValueDecoder {
 
         // parse seconds field
         for (segmentLen = 0; offset + pos + segmentLen < offset + length && Character.isDigit((char) bytes[offset + pos + segmentLen]); segmentLen++) {
-            ;
+
         }
         if (segmentLen != 2) {
             throw new DataReadException(
@@ -332,7 +349,7 @@ public class MysqlTextValueDecoder implements ValueDecoder {
             pos++; // skip '.' character
 
             for (segmentLen = 0; offset + pos + segmentLen < offset + length && Character.isDigit((char) bytes[offset + pos + segmentLen]); segmentLen++) {
-                ;
+
             }
             if (segmentLen + pos != length) {
                 throw new DataReadException(
@@ -348,7 +365,7 @@ public class MysqlTextValueDecoder implements ValueDecoder {
     }
 
     public static InternalTimestamp getTimestamp(byte[] bytes, int offset, int length, int scale) {
-        if (length < TIMESTAMP_STR_LEN_NO_FRAC || (length > TIMESTAMP_STR_LEN_WITH_MICROS && length != TIMESTAMP_STR_LEN_WITH_NANOS)) {
+        if (length < TIMESTAMP_STR_LEN_NO_FRAC || length > TIMESTAMP_STR_LEN_WITH_MICROS && length != TIMESTAMP_STR_LEN_WITH_NANOS) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "TIMESTAMP" }));
         } else if (length != TIMESTAMP_STR_LEN_NO_FRAC) {
             // need at least two extra bytes for fractional, '.' and a digit
@@ -376,7 +393,7 @@ public class MysqlTextValueDecoder implements ValueDecoder {
         if (length == TIMESTAMP_STR_LEN_WITH_NANOS) {
             nanos = getInt(bytes, offset + 20, offset + length);
         } else {
-            nanos = (length == TIMESTAMP_STR_LEN_NO_FRAC) ? 0 : getInt(bytes, offset + 20, offset + length);
+            nanos = length == TIMESTAMP_STR_LEN_NO_FRAC ? 0 : getInt(bytes, offset + 20, offset + length);
             // scale out nanos appropriately. mysql supports up to 6 digits of fractional seconds, each additional digit increasing the range by a factor of
             // 10. one digit is tenths, two is hundreths, etc
             nanos = nanos * (int) Math.pow(10, 9 - (length - TIMESTAMP_STR_LEN_NO_FRAC - 1));
@@ -384,4 +401,5 @@ public class MysqlTextValueDecoder implements ValueDecoder {
 
         return new InternalTimestamp(year, month, day, hours, minutes, seconds, nanos, scale);
     }
+
 }

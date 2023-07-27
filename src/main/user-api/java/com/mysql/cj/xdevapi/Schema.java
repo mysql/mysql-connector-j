@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,17 +37,16 @@ import java.util.List;
 public interface Schema extends DatabaseObject {
 
     /* Browse functions */
-
     /**
      * Retrieve the set of collections existing in this schema.
-     * 
+     *
      * @return list of {@link Collection} objects
      */
     List<Collection> getCollections();
 
     /**
      * Retrieve the set of collections existing in this schema and matching the given pattern.
-     * 
+     *
      * @param pattern
      *            match pattern
      * @return list of {@link Collection} objects
@@ -56,14 +55,14 @@ public interface Schema extends DatabaseObject {
 
     /**
      * Retrieve the set of tables existing in this schema.
-     * 
+     *
      * @return list of {@link Table} objects
      */
     List<Table> getTables();
 
     /**
      * Retrieve the set of tables existing in this schema and matching the given pattern.
-     * 
+     *
      * @param pattern
      *            match pattern
      * @return list of {@link Table} objects
@@ -74,7 +73,7 @@ public interface Schema extends DatabaseObject {
 
     /**
      * Retrieve a reference to the named collection.
-     * 
+     *
      * @param name
      *            collection name
      * @return {@link Collection}
@@ -83,7 +82,7 @@ public interface Schema extends DatabaseObject {
 
     /**
      * Retrieve a reference to the named collection hinting that an exception should be thrown if the collection is not known to the server.
-     * 
+     *
      * @param name
      *            collection name
      * @param requireExists
@@ -94,7 +93,7 @@ public interface Schema extends DatabaseObject {
 
     /**
      * Retrieve a reference to the named collection using the table API.
-     * 
+     *
      * @param name
      *            collection name
      * @return {@link Table}
@@ -103,7 +102,7 @@ public interface Schema extends DatabaseObject {
 
     /**
      * Retrieve a reference to the named table.
-     * 
+     *
      * @param name
      *            table name
      * @return {@link Table}
@@ -112,7 +111,7 @@ public interface Schema extends DatabaseObject {
 
     /**
      * Retrieve a reference to the named table hinting that an exception should be thrown if the collection is not known to the server.
-     * 
+     *
      * @param tableName
      *            table name
      * @param requireExists
@@ -125,7 +124,7 @@ public interface Schema extends DatabaseObject {
 
     /**
      * Create a new collection.
-     * 
+     *
      * @param name
      *            collection name
      * @return {@link Collection}
@@ -134,7 +133,7 @@ public interface Schema extends DatabaseObject {
 
     /**
      * Create a new collection if it does not already exist on the server.
-     * 
+     *
      * @param name
      *            collection name
      * @param reuseExisting
@@ -145,7 +144,7 @@ public interface Schema extends DatabaseObject {
 
     /**
      * Create a new collection.
-     * 
+     *
      * @param collectionName
      *            collection name
      * @param options
@@ -156,7 +155,7 @@ public interface Schema extends DatabaseObject {
 
     /**
      * Modify the schema validation of a collection.
-     * 
+     *
      * @param collectionName
      *            collection name
      * @param options
@@ -166,7 +165,7 @@ public interface Schema extends DatabaseObject {
 
     /**
      * Drop the collection from this schema.
-     * 
+     *
      * @param collectionName
      *            name of collection to drop
      */
@@ -180,9 +179,9 @@ public interface Schema extends DatabaseObject {
      * <li>reuseExisting flag - similar to IF NOT EXISTS for CREATE TABLE
      * <li>{@link Validation} object
      * </ul>
-     * 
+     *
      * Examples:
-     * 
+     *
      * <pre>
      * schema.createCollection(collName,
      *         new CreateCollectionOptions().setReuseExisting(false)
@@ -190,11 +189,11 @@ public interface Schema extends DatabaseObject {
      *                         .setSchema("{\"id\": \"http://json-schema.org/idx\", \"$schema\": \"http://json-schema.org/draft-06/schema#\","
      *                                 + "\"type\": \"object\", \"properties\": {\"index\": {\"type\": \"number\"}},\"required\": [\"index\"]}")));
      * </pre>
-     * 
+     *
      * <pre>
      * schema.createCollection(collName, new CreateCollectionOptions().setReuseExisting(false).setValidation(new Validation().setLevel(ValidationLevel.OFF)));
      * </pre>
-     * 
+     *
      * <pre>
      * schema.createCollection(collName,
      *         new CreateCollectionOptions().setReuseExisting(true);
@@ -222,6 +221,7 @@ public interface Schema extends DatabaseObject {
         public Validation getValidation() {
             return this.validation;
         }
+
     }
 
     /**
@@ -229,7 +229,7 @@ public interface Schema extends DatabaseObject {
      * <p>
      * Example:
      * </p>
-     * 
+     *
      * <pre>
      * schema.modifyCollection(collName1, new ModifyCollectionOptions().setValidation(new Validation().setLevel(ValidationLevel.OFF)));
      * </pre>
@@ -270,7 +270,7 @@ public interface Schema extends DatabaseObject {
          */
         public static enum ValidationLevel {
             STRICT, OFF
-        };
+        }
 
         private ValidationLevel level = null;
         private String schema = null;
@@ -292,5 +292,7 @@ public interface Schema extends DatabaseObject {
         public String getSchema() {
             return this.schema;
         }
+
     }
+
 }

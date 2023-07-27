@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -50,7 +50,7 @@ public class ErrorMappingsDocGenerator {
 
         //      Integer errorNumber = null;
 
-        // 
+        //
         // First create a list of all 'known' error numbers that are mapped.
         //
         for (Integer errorNumber : MysqlErrorNumbers.mysqlToSql99State.keySet()) {
@@ -76,9 +76,10 @@ public class ErrorMappingsDocGenerator {
             String sql92State = MysqlErrorNumbers.mysqlToSql99(errorNumber.intValue());
 
             System.out.println("   <ErrorMapping mysqlErrorNumber=\"" + errorNumber + "\" mysqlErrorName=\"" + mysqlErrorNumbersToNames.get(errorNumber)
-                    + "\" legacySqlState=\"" + "" + "\" sql92SqlState=\"" + ((sql92State == null) ? "" : sql92State) + "\"/>");
+                    + "\" legacySqlState=\"" + "" + "\" sql92SqlState=\"" + (sql92State == null ? "" : sql92State) + "\"/>");
         }
 
         System.out.println("</ErrorMappings>");
     }
+
 }

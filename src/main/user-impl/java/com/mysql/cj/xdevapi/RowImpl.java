@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -54,6 +54,7 @@ import com.mysql.cj.result.StringValueFactory;
  * {@link com.mysql.cj.xdevapi.Row} implementation.
  */
 public class RowImpl implements com.mysql.cj.xdevapi.Row {
+
     private Row row;
     private ColumnDefinition metadata;
     /**
@@ -64,7 +65,7 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
 
     /**
      * Constructor.
-     * 
+     *
      * @param row
      *            {@link Row} instance provided by c/J core.
      * @param metadata
@@ -98,97 +99,120 @@ public class RowImpl implements com.mysql.cj.xdevapi.Row {
         return idx;
     }
 
+    @Override
     public BigDecimal getBigDecimal(String fieldName) {
         return getBigDecimal(fieldNameToIndex(fieldName));
     }
 
+    @Override
     public BigDecimal getBigDecimal(int pos) {
         return this.row.getValue(pos, new BigDecimalValueFactory(this.pset));
     }
 
+    @Override
     public boolean getBoolean(String fieldName) {
         return getBoolean(fieldNameToIndex(fieldName));
     }
 
+    @Override
     public boolean getBoolean(int pos) {
         Boolean res = this.row.getValue(pos, new BooleanValueFactory(this.pset));
         return res == null ? false : res;
     }
 
+    @Override
     public byte getByte(String fieldName) {
         return getByte(fieldNameToIndex(fieldName));
     }
 
+    @Override
     public byte getByte(int pos) {
         Byte res = this.row.getValue(pos, new ByteValueFactory(this.pset));
         return res == null ? (byte) 0 : res;
     }
 
+    @Override
     public Date getDate(String fieldName) {
         return getDate(fieldNameToIndex(fieldName));
     }
 
+    @Override
     public Date getDate(int pos) {
         return this.row.getValue(pos, new SqlDateValueFactory(this.pset, null, this.defaultTimeZone));
     }
 
+    @Override
     public DbDoc getDbDoc(String fieldName) {
         return getDbDoc(fieldNameToIndex(fieldName));
     }
 
+    @Override
     public DbDoc getDbDoc(int pos) {
         return this.row.getValue(pos, new DbDocValueFactory(this.pset));
     }
 
+    @Override
     public double getDouble(String fieldName) {
         return getDouble(fieldNameToIndex(fieldName));
     }
 
+    @Override
     public double getDouble(int pos) {
         Double res = this.row.getValue(pos, new DoubleValueFactory(this.pset));
         return res == null ? 0.0d : res;
     }
 
+    @Override
     public int getInt(String fieldName) {
         return getInt(fieldNameToIndex(fieldName));
     }
 
+    @Override
     public int getInt(int pos) {
         Integer res = this.row.getValue(pos, new IntegerValueFactory(this.pset));
         return res == null ? 0 : res;
     }
 
+    @Override
     public long getLong(String fieldName) {
         return getLong(fieldNameToIndex(fieldName));
     }
 
+    @Override
     public long getLong(int pos) {
         Long res = this.row.getValue(pos, new LongValueFactory(this.pset));
         return res == null ? 0L : res;
     }
 
+    @Override
     public String getString(String fieldName) {
         return getString(fieldNameToIndex(fieldName));
     }
 
+    @Override
     public String getString(int pos) {
         // TODO: charset
         return this.row.getValue(pos, new StringValueFactory(this.pset));
     }
 
+    @Override
     public Time getTime(String fieldName) {
         return getTime(fieldNameToIndex(fieldName));
     }
 
+    @Override
     public Time getTime(int pos) {
         return this.row.getValue(pos, new SqlTimeValueFactory(this.pset, null, this.defaultTimeZone));
     }
 
+    @Override
     public Timestamp getTimestamp(String fieldName) {
         return getTimestamp(fieldNameToIndex(fieldName));
     }
 
+    @Override
     public Timestamp getTimestamp(int pos) {
         return this.row.getValue(pos, new SqlTimestampValueFactory(this.pset, null, this.defaultTimeZone, this.defaultTimeZone));
     }
+
 }

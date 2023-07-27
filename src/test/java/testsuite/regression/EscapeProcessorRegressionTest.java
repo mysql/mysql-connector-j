@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2005, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,9 +47,10 @@ import testsuite.BaseTestCase;
  * Tests regressions w/ the Escape Processor code.
  */
 public class EscapeProcessorRegressionTest extends BaseTestCase {
+
     /**
      * Tests fix for BUG#11797 - Escape tokenizer doesn't respect stacked single quotes for escapes.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -60,7 +61,7 @@ public class EscapeProcessorRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#11498 - Escape processor didn't honor strings demarcated with double quotes.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -73,7 +74,7 @@ public class EscapeProcessorRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#14909 - escape processor replaces quote character in quoted string with string delimiter.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -83,7 +84,7 @@ public class EscapeProcessorRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#25399 - EscapeProcessor gets confused by multiple backslashes
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -93,7 +94,7 @@ public class EscapeProcessorRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#63526 - Unhandled case of {data...}
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -103,12 +104,11 @@ public class EscapeProcessorRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#60598 - nativeSQL() truncates fractional seconds
-     * 
+     *
      * @throws Exception
      */
     @Test
     public void testBug60598() throws Exception {
-
         TimeZone sessionTz = ((MysqlConnection) this.conn).getSession().getServerSession().getSessionTimeZone();
         ZonedDateTime zdt = LocalDateTime.of(2001, 2, 3, 4, 5, 6, 7000000).atZone(ZoneId.systemDefault()).withZoneSameInstant(sessionTz.toZoneId());
         boolean withFract = versionMeetsMinimum(5, 6, 4);
@@ -122,4 +122,5 @@ public class EscapeProcessorRegressionTest extends BaseTestCase {
         String output = this.conn.nativeSQL(input);
         assertEquals(expected, output);
     }
+
 }

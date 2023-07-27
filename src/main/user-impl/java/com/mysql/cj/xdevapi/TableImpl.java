@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -71,18 +71,22 @@ public class TableImpl implements Table {
         this.name = name;
     }
 
+    @Override
     public Session getSession() {
         return this.schema.getSession();
     }
 
+    @Override
     public Schema getSchema() {
         return this.schema;
     }
 
+    @Override
     public String getName() {
         return this.name;
     }
 
+    @Override
     public DbObjectStatus existsInDatabase() {
         if (this.mysqlxSession.getDataStoreMetadata().tableExists(this.schema.getName(), this.name)) {
             return DbObjectStatus.EXISTS;
@@ -90,14 +94,17 @@ public class TableImpl implements Table {
         return DbObjectStatus.NOT_EXISTS;
     }
 
+    @Override
     public InsertStatement insert() {
         return new InsertStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, new String[] {});
     }
 
+    @Override
     public InsertStatement insert(String... fields) {
         return new InsertStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, fields);
     }
 
+    @Override
     public InsertStatement insert(Map<String, Object> fieldsAndValues) {
         return new InsertStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, fieldsAndValues);
     }
@@ -107,14 +114,17 @@ public class TableImpl implements Table {
         return new SelectStatementImpl(this.mysqlxSession, this.schema.getName(), this.name, projection);
     }
 
+    @Override
     public UpdateStatement update() {
         return new UpdateStatementImpl(this.mysqlxSession, this.schema.getName(), this.name);
     }
 
+    @Override
     public DeleteStatement delete() {
         return new DeleteStatementImpl(this.mysqlxSession, this.schema.getName(), this.name);
     }
 
+    @Override
     public long count() {
         try {
             return this.mysqlxSession.getDataStoreMetadata().getTableRowCount(this.schema.getName(), this.name);
@@ -169,11 +179,12 @@ public class TableImpl implements Table {
 
     /**
      * Set flag indicating if the underlying object is a view.
-     * 
+     *
      * @param isView
      *            true if it is a View
      */
     public void setView(boolean isView) {
         this.isView = isView;
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,13 +41,14 @@ import com.mysql.cj.exceptions.FeatureNotAvailableException;
  * {@link SqlStatement} implementation.
  */
 public class SqlStatementImpl implements SqlStatement {
+
     private MysqlxSession mysqlxSession;
     private String sql;
     private List<Object> args = new ArrayList<>();
 
     /**
      * Constructor.
-     * 
+     *
      * @param mysqlxSession
      *            {@link com.mysql.cj.Session} instance.
      * @param sql
@@ -58,27 +59,33 @@ public class SqlStatementImpl implements SqlStatement {
         this.sql = sql;
     }
 
+    @Override
     public SqlResult execute() {
         return this.mysqlxSession.query(this.mysqlxSession.getMessageBuilder().buildSqlStatement(this.sql, this.args),
                 new StreamingSqlResultBuilder(this.mysqlxSession));
     }
 
+    @Override
     public CompletableFuture<SqlResult> executeAsync() {
         return this.mysqlxSession.queryAsync(this.mysqlxSession.getMessageBuilder().buildSqlStatement(this.sql, this.args),
                 new SqlResultBuilder(this.mysqlxSession));
     }
 
+    @Override
     public SqlStatement clearBindings() {
         this.args.clear();
         return this;
     }
 
+    @Override
     public SqlStatement bind(List<Object> values) {
         this.args.addAll(values);
         return this;
     }
 
+    @Override
     public SqlStatement bind(Map<String, Object> values) {
         throw new FeatureNotAvailableException("Cannot bind named parameters for SQL statements");
     }
+
 }

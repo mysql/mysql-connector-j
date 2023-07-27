@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -49,7 +49,7 @@ import com.mysql.cj.result.ValueFactory;
  * and thus saves memory allocations), and tries when possible to avoid allocations to break out the results as individual byte[]s.
  * Rows from a server-side prepared statement are encoded differently, so we have different ways of finding where each column is, and
  * unpacking them.
- * 
+ *
  * (this isn't possible when doing things like reading floating point values).
  */
 public class BinaryBufferRow extends AbstractBufferRow {
@@ -213,7 +213,7 @@ public class BinaryBufferRow extends AbstractBufferRow {
 
         for (int i = 0; i < len; i++) {
 
-            this.isNull[i] = ((nullBitMask[nullMaskPos] & bit) != 0);
+            this.isNull[i] = (nullBitMask[nullMaskPos] & bit) != 0;
 
             if (((bit <<= 1) & 255) == 0) {
                 bit = 1; /* To next byte */
@@ -246,7 +246,6 @@ public class BinaryBufferRow extends AbstractBufferRow {
 
     @Override
     public void setBytes(int columnIndex, byte[] value) {
-
         byte[] backup = null;
         int backupLength = 0;
 
@@ -288,4 +287,5 @@ public class BinaryBufferRow extends AbstractBufferRow {
             this.rowFromServer.writeBytes(StringLengthDataType.STRING_FIXED, backup);
         }
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,6 +40,7 @@ import com.mysql.cj.protocol.x.XMessageBuilder;
  * {@link RemoveStatement} implementation.
  */
 public class RemoveStatementImpl extends FilterableStatement<RemoveStatement, Result> implements RemoveStatement {
+
     /* package private */ RemoveStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String criteria) {
         super(new DocFilterParams(schema, collection, false));
         this.mysqlxSession = mysqlxSession;
@@ -70,6 +71,7 @@ public class RemoveStatementImpl extends FilterableStatement<RemoveStatement, Re
         return this.mysqlxSession.query(getMessageBuilder().buildPrepareExecute(this.preparedStatementId, this.filterParams), new UpdateResultBuilder<>());
     }
 
+    @Override
     public CompletableFuture<Result> executeAsync() {
         return this.mysqlxSession.queryAsync(((XMessageBuilder) this.mysqlxSession.<XMessage>getMessageBuilder()).buildDelete(this.filterParams),
                 new UpdateResultBuilder<>());
@@ -83,4 +85,5 @@ public class RemoveStatementImpl extends FilterableStatement<RemoveStatement, Re
     public RemoveStatement where(String searchCondition) {
         return super.where(searchCondition);
     }
+
 }

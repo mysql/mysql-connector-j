@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -43,9 +43,10 @@ import com.mysql.cj.util.StringUtils;
  * A {@link ValueFactory} implementation to create {@link DbDoc}s.
  */
 public class DbDocValueFactory extends DefaultValueFactory<DbDoc> {
+
     /**
      * Constructor.
-     * 
+     *
      * @param pset
      *            {@link PropertySet}
      */
@@ -71,7 +72,9 @@ public class DbDocValueFactory extends DefaultValueFactory<DbDoc> {
         return null; // TODO: ? JsonValueLiteral.NULL;
     }
 
+    @Override
     public String getTargetTypeName() {
         return DbDoc.class.getName();
     }
+
 }

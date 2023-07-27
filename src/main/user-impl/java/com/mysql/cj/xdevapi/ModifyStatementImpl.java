@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -44,6 +44,7 @@ import com.mysql.cj.protocol.x.XMessageBuilder;
  * {@link ModifyStatement} implementation.
  */
 public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Result> implements ModifyStatement {
+
     private List<UpdateSpec> updates = new ArrayList<>();
 
     /* package private */ ModifyStatementImpl(MysqlxSession mysqlxSession, String schema, String collection, String criteria) {
@@ -139,4 +140,5 @@ public class ModifyStatementImpl extends FilterableStatement<ModifyStatement, Re
     public ModifyStatement where(String searchCondition) {
         return super.where(searchCondition);
     }
+
 }

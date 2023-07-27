@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,6 +38,7 @@ import com.mysql.cj.protocol.x.XMessage;
  * {@link DeleteStatement} implementation.
  */
 public class DeleteStatementImpl extends FilterableStatement<DeleteStatement, Result> implements DeleteStatement {
+
     /* package private */ DeleteStatementImpl(MysqlxSession mysqlxSession, String schema, String table) {
         super(new TableFilterParams(schema, table, false));
         this.mysqlxSession = mysqlxSession;
@@ -58,7 +59,9 @@ public class DeleteStatementImpl extends FilterableStatement<DeleteStatement, Re
         return this.mysqlxSession.query(getMessageBuilder().buildPrepareExecute(this.preparedStatementId, this.filterParams), new UpdateResultBuilder<>());
     }
 
+    @Override
     public CompletableFuture<Result> executeAsync() {
         return this.mysqlxSession.queryAsync(getMessageBuilder().buildDelete(this.filterParams), new UpdateResultBuilder<>());
     }
+
 }

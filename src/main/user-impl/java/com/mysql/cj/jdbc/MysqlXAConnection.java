@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2005, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -104,7 +104,6 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
 
     @Override
     public boolean isSameRM(XAResource xares) throws XAException {
-
         if (xares instanceof MysqlXAConnection) {
             return this.underlyingConnection.isSameResource(((MysqlXAConnection) xares).underlyingConnection);
         }
@@ -121,26 +120,26 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
         /*
          * The XA RECOVER statement returns information for those XA transactions on the MySQL server that are in the PREPARED state. (See Section 13.4.7.2, "XA
          * Transaction States".) The output includes a row for each such XA transaction on the server, regardless of which client started it.
-         * 
+         *
          * XA RECOVER output rows look like this (for an example xid value consisting of the parts 'abc', 'def', and 7):
-         * 
+         *
          * mysql> XA RECOVER;
          * +----------+--------------+--------------+--------+
          * | formatID | gtrid_length | bqual_length | data |
          * +----------+--------------+--------------+--------+
          * | 7 | 3 | 3 | abcdef |
          * +----------+--------------+--------------+--------+
-         * 
+         *
          * The output columns have the following meanings:
-         * 
+         *
          * formatID is the formatID part of the transaction xid
          * gtrid_length is the length in bytes of the gtrid part of the xid
          * bqual_length is the length in bytes of the bqual part of the xid
          * data is the concatenation of the gtrid and bqual parts of the xid
          */
 
-        boolean startRscan = ((flag & TMSTARTRSCAN) > 0);
-        boolean endRscan = ((flag & TMENDRSCAN) > 0);
+        boolean startRscan = (flag & TMSTARTRSCAN) > 0;
+        boolean endRscan = (flag & TMENDRSCAN) > 0;
 
         if (!startRscan && !endRscan && flag != TMNOFLAGS) {
             throw new MysqlXAException(XAException.XAER_INVAL, Messages.getString("MysqlXAConnection.001"), null);
@@ -176,7 +175,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
                 final byte[] gtrid = new byte[gtridLength];
                 final byte[] bqual = new byte[bqualLength];
 
-                if (gtridAndBqual.length != (gtridLength + bqualLength)) {
+                if (gtridAndBqual.length != gtridLength + bqualLength) {
                     throw new MysqlXAException(XAException.XA_RBPROTO, Messages.getString("MysqlXAConnection.002"), null);
                 }
 
@@ -370,4 +369,5 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
 
         return connToWrap;
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2007, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,6 +41,7 @@ import com.mysql.cj.result.Row;
 import com.mysql.cj.result.ValueFactory;
 
 public abstract class AbstractResultsetRow implements ResultsetRow {
+
     protected ExceptionInterceptor exceptionInterceptor;
 
     protected AbstractResultsetRow(ExceptionInterceptor exceptionInterceptor) {
@@ -59,7 +60,7 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
 
     /**
      * Decode the wire-level result bytes and call the value factory.
-     * 
+     *
      * @param columnIndex
      *            column index
      * @param bytes
@@ -219,7 +220,7 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
     /**
      * Get a value from a byte array. The byte array is interpreted by the {@link com.mysql.cj.protocol.ValueDecoder} which uses the value factory create the
      * return value.
-     * 
+     *
      * @param columnIndex
      *            The (internal) index of the column
      * @param bytes
@@ -241,7 +242,7 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
 
         // value factory may return null for zeroDateTimeBehavior=CONVERT_TO_NULL so check the return value
         T retVal = decodeAndCreateReturnValue(columnIndex, bytes, offset, length, vf);
-        this.wasNull = (retVal == null);
+        this.wasNull = retVal == null;
         return retVal;
     }
 
@@ -252,7 +253,9 @@ public abstract class AbstractResultsetRow implements ResultsetRow {
         return this;
     }
 
+    @Override
     public boolean wasNull() {
         return this.wasNull;
     }
+
 }

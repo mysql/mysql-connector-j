@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -86,7 +86,9 @@ public class LocalDateTimeValueFactory extends AbstractDateTimeValueFactory<Loca
         return LocalDateTime.of(its.getYear(), its.getMonth(), its.getDay(), its.getHours(), its.getMinutes(), its.getSeconds(), its.getNanos());
     }
 
+    @Override
     public String getTargetTypeName() {
         return LocalDateTime.class.getName();
     }
+
 }

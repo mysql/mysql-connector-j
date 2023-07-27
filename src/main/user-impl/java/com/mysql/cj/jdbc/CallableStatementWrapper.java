@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -776,7 +776,6 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
         } catch (SQLException sqlEx) {
             checkAndFireConnectionError(sqlEx);
         }
-
     }
 
     @Override
@@ -1742,7 +1741,6 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-
         boolean isInstance = iface.isInstance(this);
 
         if (isInstance) {
@@ -1751,9 +1749,9 @@ public class CallableStatementWrapper extends PreparedStatementWrapper implement
 
         String interfaceClassName = iface.getName();
 
-        return (interfaceClassName.equals("com.mysql.cj.jdbc.Statement") || interfaceClassName.equals("java.sql.Statement")
+        return interfaceClassName.equals("com.mysql.cj.jdbc.Statement") || interfaceClassName.equals("java.sql.Statement")
                 || interfaceClassName.equals("java.sql.Wrapper") || interfaceClassName.equals("java.sql.PreparedStatement")
-                || interfaceClassName.equals("java.sql.CallableStatement"));
+                || interfaceClassName.equals("java.sql.CallableStatement");
     }
 
     @Override

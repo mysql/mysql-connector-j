@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -51,9 +51,10 @@ import testsuite.BaseTestCase;
  * Tests escape processing
  */
 public class EscapeProcessingTest extends BaseTestCase {
+
     /**
      * Tests the escape processing functionality
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -80,7 +81,7 @@ public class EscapeProcessingTest extends BaseTestCase {
 
     /**
      * JDBC-4.0 spec will allow either SQL_ or not for type in {fn convert ...}
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -91,13 +92,13 @@ public class EscapeProcessingTest extends BaseTestCase {
     /**
      * Tests that the escape tokenizer converts timestamp values
      * wrt. timezones
-     * 
+     *
      * @throws Exception
      */
     @Test
     public void testTimestampConversion() throws Exception {
         TimeZone currentTimeZone = TimeZone.getDefault();
-        String[] availableIds = TimeZone.getAvailableIDs(currentTimeZone.getRawOffset() - (3600 * 1000 * 7));
+        String[] availableIds = TimeZone.getAvailableIDs(currentTimeZone.getRawOffset() - 3600 * 1000 * 7);
         String newTimeZone = null;
 
         if (availableIds.length > 0) {
@@ -135,7 +136,7 @@ public class EscapeProcessingTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#51313 - Escape processing is confused by multiple backslashes.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -167,4 +168,5 @@ public class EscapeProcessingTest extends BaseTestCase {
         assertEquals("{ testing doubled -- } '\'' quotes ", this.rs.getString(2));
         this.rs.close();
     }
+
 }

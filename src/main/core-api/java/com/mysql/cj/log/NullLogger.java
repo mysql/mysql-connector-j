@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,70 +36,88 @@ public class NullLogger implements Log {
 
     /**
      * Creates a new NullLogger with the given name
-     * 
+     *
      * @param instanceName
      *            (ignored)
      */
     public NullLogger(String instanceName) {
     }
 
+    @Override
     public boolean isDebugEnabled() {
         return false;
     }
 
+    @Override
     public boolean isErrorEnabled() {
         return false;
     }
 
+    @Override
     public boolean isFatalEnabled() {
         return false;
     }
 
+    @Override
     public boolean isInfoEnabled() {
         return false;
     }
 
+    @Override
     public boolean isTraceEnabled() {
         return false;
     }
 
+    @Override
     public boolean isWarnEnabled() {
         return false;
     }
 
+    @Override
     public void logDebug(Object msg) {
     }
 
+    @Override
     public void logDebug(Object msg, Throwable thrown) {
     }
 
+    @Override
     public void logError(Object msg) {
     }
 
+    @Override
     public void logError(Object msg, Throwable thrown) {
     }
 
+    @Override
     public void logFatal(Object msg) {
     }
 
+    @Override
     public void logFatal(Object msg, Throwable thrown) {
     }
 
+    @Override
     public void logInfo(Object msg) {
     }
 
+    @Override
     public void logInfo(Object msg, Throwable thrown) {
     }
 
+    @Override
     public void logTrace(Object msg) {
     }
 
+    @Override
     public void logTrace(Object msg, Throwable thrown) {
     }
 
+    @Override
     public void logWarn(Object msg) {
     }
 
+    @Override
     public void logWarn(Object msg, Throwable thrown) {
     }
 

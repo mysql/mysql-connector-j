@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -48,7 +48,7 @@ import com.mysql.cj.result.RowList;
 
 /**
  * Base class for data set results.
- * 
+ *
  * @param <T>
  *            Result entry type
  */
@@ -65,7 +65,7 @@ public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<
 
     /**
      * Constructor.
-     * 
+     *
      * @param rows
      *            {@link RowList} object
      * @param completer
@@ -79,6 +79,7 @@ public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<
         this.rowToData = rowToData;
     }
 
+    @Override
     public T next() {
         if (this.all != null) {
             throw new WrongArgumentException("Cannot iterate after fetchAll()");
@@ -94,7 +95,7 @@ public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<
 
     /**
      * Create a list of all elements in the result forcing internal buffering.
-     * 
+     *
      * @return list of result elements
      */
     public List<T> fetchAll() {
@@ -112,7 +113,7 @@ public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<
 
     /**
      * Return the number of items in this result. Forces internal buffering of the entire result.
-     * 
+     *
      * @return number of elements in result
      */
     public long count() {
@@ -120,13 +121,14 @@ public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<
         return this.count;
     }
 
+    @Override
     public boolean hasNext() {
         return this.rows.hasNext();
     }
 
     /**
      * Get StatementExecuteOk object finalizing the result transfer. Forces internal buffering of the entire result.
-     * 
+     *
      * @return StatementExecuteOk object
      */
     public StatementExecuteOk getStatementExecuteOk() {
@@ -158,4 +160,5 @@ public abstract class AbstractDataResult<T> implements ResultStreamer, Iterator<
     public Iterator<Warning> getWarnings() {
         return getStatementExecuteOk().getWarnings();
     }
+
 }

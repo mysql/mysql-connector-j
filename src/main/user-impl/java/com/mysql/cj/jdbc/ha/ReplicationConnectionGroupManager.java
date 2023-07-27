@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ReplicationConnectionGroupManager {
+
     private static HashMap<String, ReplicationConnectionGroup> GROUP_MAP = new HashMap<>();
 
     private static com.mysql.cj.jdbc.jmx.ReplicationGroupManager mbean = new com.mysql.cj.jdbc.jmx.ReplicationGroupManager();
@@ -89,7 +90,7 @@ public class ReplicationConnectionGroupManager {
 
     /**
      * Use {@link #addReplicaHost(String, String)} instead.
-     * 
+     *
      * @param group
      *            group name
      * @param hostPortPair
@@ -108,7 +109,7 @@ public class ReplicationConnectionGroupManager {
 
     /**
      * Use {@link #removeReplicaHost(String, String)} instead.
-     * 
+     *
      * @param group
      *            group name
      * @param hostPortPair
@@ -130,7 +131,7 @@ public class ReplicationConnectionGroupManager {
 
     /**
      * Use {@link #removeReplicaHost(String, String, boolean)} instead.
-     * 
+     *
      * @param group
      *            group name
      * @param hostPortPair
@@ -154,7 +155,7 @@ public class ReplicationConnectionGroupManager {
 
     /**
      * Use {@link #promoteReplicaToSource(String, String)} instead.
-     * 
+     *
      * @param group
      *            group name
      * @param hostPortPair
@@ -181,7 +182,7 @@ public class ReplicationConnectionGroupManager {
 
     /**
      * Use {@link #getReplicaPromotionCount(String)} instead.
-     * 
+     *
      * @param group
      *            group name
      * @return count
@@ -199,7 +200,7 @@ public class ReplicationConnectionGroupManager {
 
     /**
      * Use {@link #removeSourceHost(String, String)} instead.
-     * 
+     *
      * @param group
      *            group name
      * @param hostPortPair
@@ -221,7 +222,7 @@ public class ReplicationConnectionGroupManager {
 
     /**
      * Use {@link #removeSourceHost(String, String, boolean)} instead.
-     * 
+     *
      * @param group
      *            group name
      * @param hostPortPair
@@ -260,7 +261,7 @@ public class ReplicationConnectionGroupManager {
 
     /**
      * Use {@link #getNumberOfSourcePromotion(String)} instead.
-     * 
+     *
      * @param groupFilter
      *            filter
      * @return count
@@ -282,7 +283,7 @@ public class ReplicationConnectionGroupManager {
 
     /**
      * Use {@link #getConnectionCountWithHostAsReplica(String, String)} instead.
-     * 
+     *
      * @param groupFilter
      *            filter
      * @param hostPortPair
@@ -306,7 +307,7 @@ public class ReplicationConnectionGroupManager {
 
     /**
      * Use {@link #getConnectionCountWithHostAsSource(String, String)} instead.
-     * 
+     *
      * @param groupFilter
      *            filter
      * @param hostPortPair
@@ -330,7 +331,7 @@ public class ReplicationConnectionGroupManager {
 
     /**
      * Use {@link #getReplicaHosts(String)} instead.
-     * 
+     *
      * @param groupFilter
      *            filter
      * @return hosts
@@ -352,7 +353,7 @@ public class ReplicationConnectionGroupManager {
 
     /**
      * Use {@link #getSourceHosts(String)} instead.
-     * 
+     *
      * @param groupFilter
      *            filter
      * @return hosts
@@ -380,4 +381,5 @@ public class ReplicationConnectionGroupManager {
         }
         return connections;
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -88,41 +88,49 @@ public abstract class AbstractProtocol<M extends Message> implements Protocol<M>
 
         this.useNanosForElapsedTime = this.propertySet.getBooleanProperty(PropertyKey.useNanosForElapsedTime).getValue() && TimeUtil.nanoTimeAvailable();
         this.queryTimingUnits = this.useNanosForElapsedTime ? Messages.getString("Nanoseconds") : Messages.getString("Milliseconds");
-
     }
 
+    @Override
     public SocketConnection getSocketConnection() {
         return this.socketConnection;
     }
 
+    @Override
     public AuthenticationProvider<M> getAuthenticationProvider() {
         return this.authProvider;
     }
 
+    @Override
     public ExceptionInterceptor getExceptionInterceptor() {
         return this.exceptionInterceptor;
     }
 
+    @Override
     public PacketSentTimeHolder getPacketSentTimeHolder() {
         return this.packetSentTimeHolder;
     }
 
+    @Override
     public void setPacketSentTimeHolder(PacketSentTimeHolder packetSentTimeHolder) {
         this.packetSentTimeHolder = packetSentTimeHolder;
     }
 
+    @Override
     public PacketReceivedTimeHolder getPacketReceivedTimeHolder() {
         return this.packetReceivedTimeHolder;
     }
 
+    @Override
     public void setPacketReceivedTimeHolder(PacketReceivedTimeHolder packetReceivedTimeHolder) {
         this.packetReceivedTimeHolder = packetReceivedTimeHolder;
     }
 
+    @Override
     public PropertySet getPropertySet() {
         return this.propertySet;
     }
 
+    @Override
     public void setPropertySet(PropertySet propertySet) {
         this.propertySet = propertySet;
     }
@@ -169,4 +177,5 @@ public abstract class AbstractProtocol<M extends Message> implements Protocol<M>
             }
         }
     }
+
 }

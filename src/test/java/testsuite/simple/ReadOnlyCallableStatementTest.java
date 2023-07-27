@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,6 +46,7 @@ import com.mysql.cj.jdbc.JdbcConnection;
 import testsuite.BaseTestCase;
 
 public class ReadOnlyCallableStatementTest extends BaseTestCase {
+
     @Test
     public void testReadOnlyWithProcBodyAccess() throws Exception {
         Connection replConn = null;

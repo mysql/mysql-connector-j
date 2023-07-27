@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2022, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,12 +31,13 @@ package com.mysql.cj.callback;
 
 /**
  * The callback object used by the authentication plugin AuthenticationFidoClient to exchange authenticator data between the driver and the client application.
- * 
+ *
  * Applications must implement a MysqlCallbackHandler to manage the interaction with authenticator devices and provide the data required to proceed with FIDO
  * authentication. Such handler receives an instance of this class, which must then be used to obtain the data to send to the device and to submit the produced
  * authenticator data and signature into the driver.
  */
 public class FidoAuthenticationCallback implements MysqlCallback {
+
     // FIDO inputs.
     private byte[] scramble;
     private String relyingPartyId;
@@ -49,7 +50,7 @@ public class FidoAuthenticationCallback implements MysqlCallback {
     /**
      * Instances of this object are used to exchange FIDO data between the client application and the driver and is responsible for managing all the
      * interactions with the FIDO authenticator devices.
-     * 
+     *
      * @param scramble
      *            the scramble
      * @param relyingPartyId
@@ -65,7 +66,7 @@ public class FidoAuthenticationCallback implements MysqlCallback {
 
     /**
      * Returns the FIDO Client Data Hash (scramble) for the coming authenticator interaction.
-     * 
+     *
      * @return
      *         the scramble
      */
@@ -75,7 +76,7 @@ public class FidoAuthenticationCallback implements MysqlCallback {
 
     /**
      * Returns the FIDO Relying Party ID for the coming authenticator interaction.
-     * 
+     *
      * @return
      *         the relying party id
      */
@@ -85,7 +86,7 @@ public class FidoAuthenticationCallback implements MysqlCallback {
 
     /**
      * Returns the FIDO Credential ID for the coming authenticator interaction.
-     * 
+     *
      * @return
      *         the credential id
      */
@@ -95,7 +96,7 @@ public class FidoAuthenticationCallback implements MysqlCallback {
 
     /**
      * Sets the FIDO Authenticator Data produced by the authenticator interaction.
-     * 
+     *
      * @param authenticatorData
      *            the authenticator data
      */
@@ -105,7 +106,7 @@ public class FidoAuthenticationCallback implements MysqlCallback {
 
     /**
      * Returns the FIDO Authenticator Data produced by the authenticator interaction.
-     * 
+     *
      * @return
      *         the authenticator data
      */
@@ -115,7 +116,7 @@ public class FidoAuthenticationCallback implements MysqlCallback {
 
     /**
      * Sets the FIDO Signature produced by the authenticator interaction.
-     * 
+     *
      * @param signature
      *            the signature
      */
@@ -125,11 +126,12 @@ public class FidoAuthenticationCallback implements MysqlCallback {
 
     /**
      * Returns the FIDO Signature produced by the authenticator interaction
-     * 
+     *
      * @return
      *         the signature
      */
     public byte[] getSignature() {
         return this.signature;
     }
+
 }

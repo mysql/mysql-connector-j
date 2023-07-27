@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,8 +36,9 @@ public interface InsertResult extends Result {
 
     /**
      * Get the auto-increment value if one was generated from a row insert statement.
-     * 
+     *
      * @return auto-increment value
      */
     Long getAutoIncrementValue();
+
 }

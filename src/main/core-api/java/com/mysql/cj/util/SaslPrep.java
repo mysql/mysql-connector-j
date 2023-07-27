@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,10 +37,11 @@ import com.mysql.cj.exceptions.WrongArgumentException;
 
 /**
  * Implementation for SASLprep: Stringprep Profile for User Names and Passwords, as specified in <a href="https://tools.ietf.org/html/rfc4013">RFC 4013</a>.
- * 
+ *
  * @see <a href="https://tools.ietf.org/html/rfc3454">RFC 3454</a>
  */
 public class SaslPrep {
+
     /**
      * The type of string usage regarding the support for unassigned code points as described in <a href="https://tools.ietf.org/html/rfc3454#section-7">RFC
      * 3454, Section 7</a>.
@@ -58,12 +59,12 @@ public class SaslPrep {
 
     /**
      * Prepares the given string by applying the "SASLprep" profile of the "stringprep" algorithm.
-     * 
+     *
      * @param str
      *            the string to prepare.
      * @param sType
      *            the type of preparation with regard to the support for unassigned code points.
-     * 
+     *
      * @return
      *         the prepared version of the given string.
      * @see <a href="https://tools.ietf.org/html/rfc4013">RFC 4013</a>
@@ -133,7 +134,7 @@ public class SaslPrep {
     /**
      * Mapping: non-ASCII space characters [<a href="https://tools.ietf.org/html/rfc3454#section-3.1">StringPrep, C.1.2</a>] that can be mapped to SPACE
      * (U+0020).
-     * 
+     *
      * @param chr
      *            the character to check.
      * @return
@@ -146,7 +147,7 @@ public class SaslPrep {
     /**
      * Mapping: the "commonly mapped to nothing" characters [<a href="https://tools.ietf.org/html/rfc3454#appendix-B.1">StringPrep, B.1</a>] that can be mapped
      * to nothing.
-     * 
+     *
      * @param chr
      *            the character to check.
      * @return
@@ -159,7 +160,7 @@ public class SaslPrep {
 
     /**
      * Normalization: Unicode normalization form KC.
-     * 
+     *
      * @param str
      *            the string to be normalized.
      * @return
@@ -171,7 +172,7 @@ public class SaslPrep {
 
     /**
      * Checks if the given character is one of the prohibited characters under the "SASLprep Profile" rules.
-     * 
+     *
      * @param chr
      *            the character to check.
      * @param cp
@@ -188,7 +189,7 @@ public class SaslPrep {
 
     /**
      * Prohibited Output: ASCII control characters [<a href="https://tools.ietf.org/html/rfc3454#appendix-C.2.1">StringPrep, C.2.1</a>].
-     * 
+     *
      * @param chr
      *            the character to check.
      * @return
@@ -200,7 +201,7 @@ public class SaslPrep {
 
     /**
      * Prohibited Output: non-ASCII control characters [<a href="https://tools.ietf.org/html/rfc3454#appendix-C.2.2">StringPrep, C.2.2</a>].
-     * 
+     *
      * @param cp
      *            the code point of the character to check.
      * @return
@@ -214,7 +215,7 @@ public class SaslPrep {
 
     /**
      * Prohibited Output: private use characters [<a href="https://tools.ietf.org/html/rfc3454#appendix-C.3">StringPrep, C.3</a>].
-     * 
+     *
      * @param cp
      *            the code point of the character to check.
      * @return
@@ -226,7 +227,7 @@ public class SaslPrep {
 
     /**
      * Prohibited Output: non-character code points [<a href="https://tools.ietf.org/html/rfc3454#appendix-C.4">StringPrep, C.4</a>].
-     * 
+     *
      * @param cp
      *            the code point of the character to check.
      * @return
@@ -242,7 +243,7 @@ public class SaslPrep {
 
     /**
      * Prohibited Output: surrogate code points [<a href="https://tools.ietf.org/html/rfc3454#appendix-C.5">StringPrep, C.5</a>].
-     * 
+     *
      * @param chr
      *            the character to check.
      * @return
@@ -254,7 +255,7 @@ public class SaslPrep {
 
     /**
      * Prohibited Output: inappropriate for plain text characters [<a href="https://tools.ietf.org/html/rfc3454#appendix-C.6">StringPrep, C.6</a>].
-     * 
+     *
      * @param chr
      *            the character to check.
      * @return
@@ -267,7 +268,7 @@ public class SaslPrep {
     /**
      * Prohibited Output: inappropriate for canonical representation characters [<a href="https://tools.ietf.org/html/rfc3454#appendix-C.7">StringPrep,
      * C.7</a>].
-     * 
+     *
      * @param chr
      *            the character to check.
      * @return
@@ -279,7 +280,7 @@ public class SaslPrep {
 
     /**
      * Prohibited Output: change display properties or deprecated characters [<a href="https://tools.ietf.org/html/rfc3454#appendix-C.8">StringPrep, C.8</a>].
-     * 
+     *
      * @param chr
      *            the character to check.
      * @return
@@ -292,7 +293,7 @@ public class SaslPrep {
 
     /**
      * Prohibited Output: tagging characters [<a href="https://tools.ietf.org/html/rfc3454#appendix-C.9">StringPrep, C.9</a>].
-     * 
+     *
      * @param cp
      *            the code point of the character to check.
      * @return
@@ -305,7 +306,7 @@ public class SaslPrep {
     /**
      * Bidirectional Characters: RandALCat characters.
      * See also <a href="https://tools.ietf.org/html/rfc3454#section-6">RFC 3454, Section 6</a>
-     * 
+     *
      * @param cp
      *            the code point of the character to check.
      * @return
@@ -319,7 +320,7 @@ public class SaslPrep {
     /**
      * Bidirectional Characters: LCat characters.
      * See also <a href="https://tools.ietf.org/html/rfc3454#section-6">RFC 3454, Section 6</a>
-     * 
+     *
      * @param cp
      *            the code point of the character to check.
      * @return
@@ -333,11 +334,11 @@ public class SaslPrep {
     /**
      * Unassigned Code Points: list of unassigned code points.
      * See also <a href="https://tools.ietf.org/html/rfc3454#section-7">RFC 3454, Section 7</a>.
-     * 
+     *
      * <p>
      * Note that this implementation does not check exactly the unassigned code points as specified in the RFC since it is based on Java's Unicode support,
      * which is updated regularly while the specification is based on a static list of code points. This should have no major impact, though.
-     * 
+     *
      * @param cp
      *            the code point of the character to check.
      * @return
@@ -346,4 +347,5 @@ public class SaslPrep {
     private static boolean isUnassigned(int cp) {
         return !Character.isDefined(cp);
     }
+
 }

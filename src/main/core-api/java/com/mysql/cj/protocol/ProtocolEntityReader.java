@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,7 +37,7 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 public interface ProtocolEntityReader<T extends ProtocolEntity, M extends Message> {
 
     /**
-     * 
+     *
      * @param sf
      *            {@link ProtocolEntityFactory} instance
      * @return {@link ProtocolEntity} instance
@@ -51,7 +51,7 @@ public interface ProtocolEntityReader<T extends ProtocolEntity, M extends Messag
     /**
      * Reads one result set off of the wire, if the result is actually an
      * update count, creates an update-count only result set.
-     * 
+     *
      * @param maxRows
      *            the maximum number of rows to read (-1 means all rows)
      * @param streamResults
@@ -63,9 +63,9 @@ public interface ProtocolEntityReader<T extends ProtocolEntity, M extends Messag
      *            use this metadata instead of the one provided on wire
      * @param protocolEntityFactory
      *            {@link ProtocolEntityFactory} instance
-     * 
+     *
      * @return a result set that either represents the rows, or an update count
-     * 
+     *
      * @throws IOException
      *             if an error occurs while reading the rows
      */

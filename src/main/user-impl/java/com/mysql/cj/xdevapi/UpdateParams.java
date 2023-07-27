@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,11 +39,12 @@ import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
  * Class collecting parameters for {@link Table#update()}.
  */
 public class UpdateParams {
+
     private Map<ColumnIdentifier, Expr> updateOps = new HashMap<>();
 
     /**
      * Fill update parameters from field -&gt; value_expression map.
-     * 
+     *
      * @param updates
      *            field -&gt; value_expression map
      */
@@ -53,7 +54,7 @@ public class UpdateParams {
 
     /**
      * Add update parameter.
-     * 
+     *
      * @param path
      *            field name
      * @param value
@@ -65,10 +66,11 @@ public class UpdateParams {
 
     /**
      * Get update parameters map.
-     * 
+     *
      * @return X Protocol ColumnIdentifier-&gt;Expr map.
      */
     public Object getUpdates() {
         return this.updateOps;
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -103,6 +103,7 @@ import com.mysql.cj.xdevapi.UpdateParams;
 import com.mysql.cj.xdevapi.UpdateSpec;
 
 public class XMessageBuilder implements MessageBuilder<XMessage> {
+
     private static final String XPLUGIN_NAMESPACE = "mysqlx";
 
     public XMessage buildCapabilitiesGet() {
@@ -131,7 +132,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Build an {@link XMessage} for a non-prepared doc insert operation.
-     * 
+     *
      * @param schemaName
      *            the schema name
      * @param collectionName
@@ -154,7 +155,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Initialize a {@link Insert.Builder} for table data model with common data for prepared and non-prepared executions.
-     * 
+     *
      * @param schemaName
      *            the schema name
      * @param tableName
@@ -175,7 +176,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Build an {@link XMessage} for a non-prepared row insert operation.
-     * 
+     *
      * @param schemaName
      *            the schema name
      * @param tableName
@@ -194,7 +195,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Initialize an {@link Update.Builder} for collection data model with common data for prepared and non-prepared executions.
-     * 
+     *
      * @param filterParams
      *            the filter parameters
      * @param updates
@@ -218,7 +219,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Build an {@link XMessage} for a non-prepared doc update operation.
-     * 
+     *
      * @param filterParams
      *            the filter parameters
      * @param updates
@@ -234,7 +235,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Build an {@link XMessage} for a prepared doc update operation.
-     * 
+     *
      * @param preparedStatementId
      *            the prepared statement id
      * @param filterParams
@@ -255,7 +256,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Initialize an {@link Update.Builder} for table data model with common data for prepared and non-prepared executions.
-     * 
+     *
      * @param filterParams
      *            the filter parameters
      * @param updateParams
@@ -274,7 +275,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Build an {@link XMessage} for a non-prepared row update operation.
-     * 
+     *
      * @param filterParams
      *            the filter parameters
      * @param updateParams
@@ -290,7 +291,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Build an {@link XMessage} for a prepared row update operation.
-     * 
+     *
      * @param preparedStatementId
      *            the prepared statement id
      * @param filterParams
@@ -311,7 +312,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Initialize a {@link Find.Builder} for collection data model with common data for prepared and non-prepared executions.
-     * 
+     *
      * @param filterParams
      *            the filter parameters
      * @return
@@ -341,7 +342,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Build an {@link XMessage} for a non-prepared find operation.
-     * 
+     *
      * @param filterParams
      *            the filter parameters
      * @return
@@ -355,7 +356,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Build an {@link XMessage} for a prepared find operation.
-     * 
+     *
      * @param preparedStatementId
      *            the prepared statement id
      * @param filterParams
@@ -374,7 +375,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Initialize a {@link Delete.Builder} with common data for prepared and non-prepared executions.
-     * 
+     *
      * @param filterParams
      *            the filter parameters
      * @return
@@ -387,7 +388,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Build an {@link XMessage} for a non-prepared delete operation.
-     * 
+     *
      * @param filterParams
      *            the filter parameters
      * @return
@@ -401,7 +402,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Build an {@link XMessage} for a prepared delete operation.
-     * 
+     *
      * @param preparedStatementId
      *            the prepared statement id
      * @param filterParams
@@ -420,7 +421,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Initialize a {@link StmtExecute.Builder} with common data for prepared and non-prepared executions.
-     * 
+     *
      * @param statement
      *            the SQL statement
      * @return
@@ -435,24 +436,26 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Build a <i>StmtExecute</i> message for a SQL statement.
-     * 
+     *
      * @param statement
      *            SQL statement string
      * @return {@link XMessage} wrapping {@link StmtExecute}
      */
+    @Override
     public XMessage buildSqlStatement(String statement) {
         return buildSqlStatement(statement, null);
     }
 
     /**
      * Build a <i>StmtExecute</i> message for a SQL statement.
-     * 
+     *
      * @param statement
      *            SQL statement string
      * @param args
      *            list of {@link Object} arguments
      * @return {@link XMessage} wrapping {@link StmtExecute}
      */
+    @Override
     public XMessage buildSqlStatement(String statement, List<Object> args) {
         StmtExecute.Builder builder = commonSqlStatementBuilder(statement);
         if (args != null) {
@@ -463,7 +466,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Build a <i>Prepare</i> message for a SQL statement.
-     * 
+     *
      * @param preparedStatementId
      *            the prepared statement id
      * @param statement
@@ -480,7 +483,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Apply the given filter params to the builder object (represented by the setter methods).
-     * 
+     *
      * Abstract the process of setting the filter params on the operation message builder.
      *
      * @param filterParams
@@ -519,7 +522,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
     /**
      * Apply the given filter params to the builder object (represented by the setter methods) using the variant that takes a <code>LimitExpr</code> and no
      * <code>Args</code>. This variant is suitable for building prepared statements prepare messages.
-     * 
+     *
      * Abstract the process of setting the filter params on the operation message builder.
      *
      * @param filterParams
@@ -552,7 +555,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Build an {@link XMessage} for executing a prepared statement with the given filters.
-     * 
+     *
      * @param preparedStatementId
      *            the prepared statement id
      * @param filterParams
@@ -578,7 +581,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
 
     /**
      * Build an {@link XMessage} for deallocating a prepared statement.
-     * 
+     *
      * @param preparedStatementId
      *            the prepared statement id
      * @return
@@ -692,6 +695,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
                         .build()));
     }
 
+    @Override
     public XMessage buildClose() {
         return new XMessage(Close.getDefaultInstance());
     }
@@ -706,9 +710,9 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
      * | some_view           | VIEW       |
      * | xprotocol_test_test | TABLE      |
      * </pre>
-     * 
+     *
      * .
-     * 
+     *
      * @param schemaName
      *            schema name
      * @param pattern
@@ -763,7 +767,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
      * |---------------------+---------------|
      * | warnings            | 1             |
      * </pre>
-     * 
+     *
      * @return XMessage
      */
     public XMessage buildListNotices() {
@@ -910,19 +914,17 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
     public XMessage buildPlainAuthStart(String user, String password, String database) {
         // SASL requests information from the app through callbacks. We provide the username and password by these callbacks. This implementation works for
         // PLAIN and would also work for CRAM-MD5. Additional standardized methods may require additional callbacks.
-        CallbackHandler callbackHandler = new CallbackHandler() {
-            public void handle(Callback[] callbacks) throws UnsupportedCallbackException {
-                for (Callback c : callbacks) {
-                    if (NameCallback.class.isAssignableFrom(c.getClass())) {
-                        // we get a name callback and provide the username
-                        ((NameCallback) c).setName(user);
-                    } else if (PasswordCallback.class.isAssignableFrom(c.getClass())) {
-                        // we get  password callback and provide the password
-                        ((PasswordCallback) c).setPassword(password == null ? new char[0] : password.toCharArray());
-                    } else {
-                        // otherwise, thrown an exception
-                        throw new UnsupportedCallbackException(c);
-                    }
+        CallbackHandler callbackHandler = callbacks -> {
+            for (Callback c : callbacks) {
+                if (NameCallback.class.isAssignableFrom(c.getClass())) {
+                    // we get a name callback and provide the username
+                    ((NameCallback) c).setName(user);
+                } else if (PasswordCallback.class.isAssignableFrom(c.getClass())) {
+                    // we get  password callback and provide the password
+                    ((PasswordCallback) c).setPassword(password == null ? new char[0] : password.toCharArray());
+                } else {
+                    // otherwise, thrown an exception
+                    throw new UnsupportedCallbackException(c);
                 }
             }
         };
@@ -950,18 +952,16 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
     }
 
     public XMessage buildExternalAuthStart(String database) {
-        CallbackHandler callbackHandler = new CallbackHandler() {
-            public void handle(Callback[] callbacks) throws UnsupportedCallbackException {
-                for (Callback c : callbacks) {
-                    if (NameCallback.class.isAssignableFrom(c.getClass())) {
-                        // TODO ((NameCallback) c).setName(user);
-                        throw new UnsupportedCallbackException(c);
-                    } else if (PasswordCallback.class.isAssignableFrom(c.getClass())) {
-                        // TODO ((PasswordCallback) c).setPassword(password.toCharArray());
-                        throw new UnsupportedCallbackException(c);
-                    } else {
-                        throw new UnsupportedCallbackException(c);
-                    }
+        CallbackHandler callbackHandler = callbacks -> {
+            for (Callback c : callbacks) {
+                if (NameCallback.class.isAssignableFrom(c.getClass())) {
+                    // TODO ((NameCallback) c).setName(user);
+                    throw new UnsupportedCallbackException(c);
+                } else if (PasswordCallback.class.isAssignableFrom(c.getClass())) {
+                    // TODO ((PasswordCallback) c).setPassword(password.toCharArray());
+                    throw new UnsupportedCallbackException(c);
+                } else {
+                    throw new UnsupportedCallbackException(c);
                 }
             }
         };
@@ -1005,4 +1005,5 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
     public XMessage buildComQuery(XMessage sharedPacket, Session sess, PreparedQuery preparedQuery, QueryBindings bindings, String characterEncoding) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
+
 }

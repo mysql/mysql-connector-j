@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,6 +47,7 @@ import com.mysql.cj.xdevapi.Session;
 import testsuite.TestUtils;
 
 public class Ipv6SupportTest extends DevApiBaseTestCase {
+
     List<String> ipv6Addrs;
     String testUser = "testIPv6User";
 
@@ -55,7 +56,7 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
         assumeTrue(this.isSetForXTests, PropertyDefinitions.SYSP_testsuite_url_mysqlx + " must be set to run this test.");
         if (setupTestSession()) {
             List<Inet6Address> ipv6List = isMysqlRunningLocally() ? TestUtils.getIpv6List() : TestUtils.getIpv6List(getTestHost());
-            this.ipv6Addrs = ipv6List.stream().map((e) -> e.getHostAddress()).collect(Collectors.toList());
+            this.ipv6Addrs = ipv6List.stream().map(Inet6Address::getHostAddress).collect(Collectors.toList());
             if (isMysqlRunningLocally()) {
                 this.ipv6Addrs.add("::1"); // IPv6 loopback
             }
@@ -109,4 +110,5 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
             System.err.println(errMsg);
         }
     }
+
 }

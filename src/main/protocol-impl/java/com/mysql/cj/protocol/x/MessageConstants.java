@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -77,6 +77,7 @@ import com.mysql.cj.x.protobuf.MysqlxSql.StmtExecuteOk;
  * Constants related to X Protocol messages.
  */
 public class MessageConstants {
+
     /**
      * Store a mapping of "ServerMessages" class to message parsers. This is used to get the de-serializer after reading the type tag.
      */
@@ -169,7 +170,7 @@ public class MessageConstants {
 
     /**
      * Lookup the "ClientMessages" type tag for a Protocol buffers message class.
-     * 
+     *
      * @param msgClass
      *            message class extending {@link MessageLite}
      * @return type tag for this message class
@@ -191,4 +192,5 @@ public class MessageConstants {
         }
         return messageClass;
     }
+
 }

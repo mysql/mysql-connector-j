@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,7 +46,7 @@ public class UpdateSpec {
 
     /**
      * Constructor.
-     * 
+     *
      * @param updateType
      *            update operation type
      */
@@ -57,7 +57,7 @@ public class UpdateSpec {
 
     /**
      * Constructor.
-     * 
+     *
      * @param updateType
      *            update operation type
      * @param source
@@ -77,7 +77,7 @@ public class UpdateSpec {
 
     /**
      * Get X Protocol update type.
-     * 
+     *
      * @return X Protocol UpdateOperation.UpdateType
      */
     public Object getUpdateType() {
@@ -86,7 +86,7 @@ public class UpdateSpec {
 
     /**
      * Get X Protocol ColumnIdentifier.
-     * 
+     *
      * @return X Protocol MysqlxExpr.ColumnIdentifier
      */
     public Object getSource() {
@@ -95,7 +95,7 @@ public class UpdateSpec {
 
     /**
      * Set value to be set by this update operation.
-     * 
+     *
      * @param value
      *            value expression
      * @return this UpdateSpec
@@ -107,10 +107,11 @@ public class UpdateSpec {
 
     /**
      * Get X Protocol value expression.
-     * 
+     *
      * @return X Protocol MysqlxExpr.Expr
      */
     public Object getValue() {
         return this.value;
     }
+
 }

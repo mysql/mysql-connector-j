@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,11 +39,12 @@ import com.mysql.cj.protocol.x.XProtocolError;
 
 /**
  * Abstract class, common to all X DevAPI statement classes that can be prepared.
- * 
+ *
  * @param <RES_T>
  *            result interface
  */
 public abstract class PreparableStatement<RES_T> {
+
     protected enum PreparedState {
         UNSUPPORTED, // Preparing statements is completely unsupported in the server currently being used.
         UNPREPARED, // Statement is not prepared yet, next execution will run unprepared.
@@ -61,7 +62,7 @@ public abstract class PreparableStatement<RES_T> {
 
     /**
      * Helper method to return an {@link XMessageBuilder} instance from {@link MysqlxSession} in use.
-     * 
+     *
      * @return
      *         the {@link XMessageBuilder} instance from current {@link MysqlxSession}
      */
@@ -93,7 +94,7 @@ public abstract class PreparableStatement<RES_T> {
      * Executes synchronously this statement either directly or using prepared statements if:
      * 1. Prepared statements are supported by the server.
      * 2. The statement is executed repeatedly without changing its structure.
-     * 
+     *
      * @return
      *         the object returned from the low level statement execution
      */
@@ -143,7 +144,7 @@ public abstract class PreparableStatement<RES_T> {
 
     /**
      * Executes the statement directly (non-prepared). Implementation is dependent on the statement type.
-     * 
+     *
      * @return
      *         the object returned from the lower level statement execution
      */
@@ -151,7 +152,7 @@ public abstract class PreparableStatement<RES_T> {
 
     /**
      * Returns the {@link XMessage} needed to prepare this statement. Implementation is dependent on the statement type.
-     * 
+     *
      * @return
      *         the {@link XMessage} that prepares this statement
      */
@@ -159,7 +160,7 @@ public abstract class PreparableStatement<RES_T> {
 
     /**
      * Prepares a statement on the server to be later executed.
-     * 
+     *
      * @return
      *         <code>true</code> if the statement was successfully prepared, <code>false</code> otherwise
      */
@@ -186,7 +187,7 @@ public abstract class PreparableStatement<RES_T> {
 
     /**
      * Executes a previously server-prepared statement. Implementation is dependent on the statement type.
-     * 
+     *
      * @return
      *         the object returned from the lower level statement execution
      */
@@ -212,6 +213,7 @@ public abstract class PreparableStatement<RES_T> {
      * destructed by using a {@link ReferenceQueue}.
      */
     public static class PreparableStatementFinalizer extends PhantomReference<PreparableStatement<?>> {
+
         int prepredStatementId;
 
         public PreparableStatementFinalizer(PreparableStatement<?> referent, ReferenceQueue<? super PreparableStatement<?>> q, int preparedStatementId) {
@@ -222,5 +224,7 @@ public abstract class PreparableStatement<RES_T> {
         public int getPreparedStatementId() {
             return this.prepredStatementId;
         }
+
     }
+
 }

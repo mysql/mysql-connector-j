@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,6 +39,7 @@ import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.util.StringUtils;
 
 public class ServerAffinityStrategy extends RandomBalanceStrategy {
+
     public String[] affinityOrderedServers = null;
 
     public ServerAffinityStrategy(String affinityOrdervers) {
@@ -76,4 +77,5 @@ public class ServerAffinityStrategy extends RandomBalanceStrategy {
         // Failed to connect to all hosts in the affinity list. Delegate to RandomBalanceStrategy.
         return super.pickConnection(proxy, configuredHosts, liveConnections, responseTimes, numRetries);
     }
+
 }

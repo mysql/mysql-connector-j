@@ -56,7 +56,6 @@ public class ExceptionFactory {
 
     @SuppressWarnings("unchecked")
     public static <T extends CJException> T createException(Class<T> clazz, String message) {
-
         T sqlEx;
         try {
             sqlEx = clazz.getConstructor(String.class).newInstance(message);
@@ -71,7 +70,7 @@ public class ExceptionFactory {
     }
 
     /**
-     * 
+     *
      * @param clazz
      *            exception class
      * @param message
@@ -133,7 +132,7 @@ public class ExceptionFactory {
     }
 
     /**
-     * 
+     *
      * @param clazz
      *            exception class
      * @param message
@@ -181,7 +180,7 @@ public class ExceptionFactory {
     /**
      * Creates a communications link failure message to be used in CommunicationsException
      * that (hopefully) has some better information and suggestions based on heuristics.
-     * 
+     *
      * @param propertySet
      *            property set
      * @param serverSession
@@ -232,10 +231,10 @@ public class ExceptionFactory {
             lastPacketSentTimeMs = nowMs;
         }
 
-        long timeSinceLastPacketSentMs = (nowMs - lastPacketSentTimeMs);
+        long timeSinceLastPacketSentMs = nowMs - lastPacketSentTimeMs;
         long timeSinceLastPacketSeconds = timeSinceLastPacketSentMs / 1000;
 
-        long timeSinceLastPacketReceivedMs = (nowMs - lastPacketReceivedTimeMs);
+        long timeSinceLastPacketReceivedMs = nowMs - lastPacketReceivedTimeMs;
 
         int dueToTimeout = DUE_TO_TIMEOUT_FALSE;
 
@@ -307,4 +306,5 @@ public class ExceptionFactory {
 
         return exceptionMessageBuf.toString();
     }
+
 }

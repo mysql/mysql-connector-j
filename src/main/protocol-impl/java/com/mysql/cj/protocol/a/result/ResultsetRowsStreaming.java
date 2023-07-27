@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -55,7 +55,7 @@ import com.mysql.cj.util.Util;
  * input stream only on {@link #next()} call. Consumed rows are not cached thus
  * we only stream result sets when they are forward-only, read-only, and the
  * fetch size has been set to Integer.MIN_VALUE (rows are read one by one).
- * 
+ *
  * @param <T>
  *            ProtocolEntity type
  */
@@ -81,7 +81,7 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
 
     /**
      * Creates a new RowDataDynamic object.
-     * 
+     *
      * @param io
      *            the connection to MySQL that this data is coming from
      * @param columnDefinition
@@ -105,7 +105,6 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
 
     @Override
     public void close() {
-
         Object mutex = this.owner != null && this.owner.getSyncMutex() != null ? this.owner.getSyncMutex() : this;
 
         boolean hadMore = false;
@@ -151,7 +150,7 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
 
     @Override
     public boolean hasNext() {
-        boolean hasNext = (this.nextRow != null);
+        boolean hasNext = this.nextRow != null;
 
         if (!hasNext && !this.streamerClosed) {
             this.protocol.unsetStreamingData(this);
@@ -244,26 +243,32 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
         }
     }
 
+    @Override
     public int getPosition() {
         throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
     }
 
+    @Override
     public void afterLast() {
         throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
     }
 
+    @Override
     public void beforeFirst() {
         throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
     }
 
+    @Override
     public void beforeLast() {
         throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
     }
 
+    @Override
     public void moveRowRelative(int rows) {
         throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
     }
 
+    @Override
     public void setCurrentRow(int rowNumber) {
         throw ExceptionFactory.createException(Messages.getString("ResultSet.ForwardOnly"));
     }

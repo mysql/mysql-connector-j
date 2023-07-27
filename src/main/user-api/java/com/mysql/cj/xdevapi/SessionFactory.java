@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -44,10 +44,10 @@ import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
 
 /**
  * SessionFactory is used for creation of sessions.
- * 
+ *
  * <pre>
  * SessionFactory xFactory = new SessionFactory();
- * 
+ *
  * {@link Session} session1 = xFactory.getSession("<b>mysqlx:</b>//[user1[:pwd1]@]host1[:port1]/db");
  * {@link Session} session2 = xFactory.getSession("<b>mysqlx:</b>//host2[:port2]/db?user=user2&amp;password=pwd2");
  * {@link Session} session3 = xFactory.getSession("<b>mysqlx+srv:</b>//[user1[:pwd1]@]service_name/db");
@@ -55,16 +55,17 @@ import com.mysql.cj.exceptions.InvalidConnectionAttributeException;
  *
  */
 public class SessionFactory {
+
     /**
      * Parses the connection string URL.
-     * 
+     *
      * @param url
      *            the connection string URL.
      * @return a {@link ConnectionUrl} instance containing the URL components.
      */
     protected ConnectionUrl parseUrl(String url) {
         ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(url, null);
-        if (connUrl == null || (connUrl.getType() != ConnectionUrl.Type.XDEVAPI_SESSION && connUrl.getType() != ConnectionUrl.Type.XDEVAPI_DNS_SRV_SESSION)) {
+        if (connUrl == null || connUrl.getType() != ConnectionUrl.Type.XDEVAPI_SESSION && connUrl.getType() != ConnectionUrl.Type.XDEVAPI_DNS_SRV_SESSION) {
             throw ExceptionFactory.createException(InvalidConnectionAttributeException.class, "Initialization via URL failed for \"" + url + "\"");
         }
         return connUrl;
@@ -72,7 +73,7 @@ public class SessionFactory {
 
     /**
      * Creates {@link Session} by given URL.
-     * 
+     *
      * @param connUrl
      *            the session {@link ConnectionUrl}.
      * @return a {@link Session} instance.
@@ -98,7 +99,7 @@ public class SessionFactory {
 
     /**
      * Creates {@link Session} by given URL.
-     * 
+     *
      * @param url
      *            the session URL.
      * @return a {@link Session} instance.
@@ -109,13 +110,12 @@ public class SessionFactory {
 
     /**
      * Creates a {@link Session} using the information contained in the given properties.
-     * 
+     *
      * @param properties
      *            the {@link Properties} instance that contains the session components.
      * @return a {@link Session} instance.
      */
     public Session getSession(Properties properties) {
-
         if (properties.containsKey(PropertyKey.xdevapiDnsSrv.getKeyName()) && (Boolean) PropertyDefinitions.getPropertyDefinition(PropertyKey.xdevapiDnsSrv)
                 .parseObject(properties.getProperty(PropertyKey.xdevapiDnsSrv.getKeyName()), null)) {
 
@@ -126,4 +126,5 @@ public class SessionFactory {
         ConnectionUrl connUrl = ConnectionUrl.getConnectionUrlInstance(ConnectionUrl.Type.XDEVAPI_SESSION.getScheme(), properties);
         return new SessionImpl(connUrl.getMainHost());
     }
+
 }

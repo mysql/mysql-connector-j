@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,6 +39,7 @@ import com.mysql.cj.util.StringUtils;
  * A decorating {@link MessageSender} which traces all sent packets to the provided logger.
  */
 public class TracingPacketSender implements MessageSender<NativePacketPayload> {
+
     private MessageSender<NativePacketPayload> packetSender;
     private String host;
     private long serverThreadId;
@@ -57,7 +58,7 @@ public class TracingPacketSender implements MessageSender<NativePacketPayload> {
 
     /**
      * Log the packet details to the provided logger.
-     * 
+     *
      * @param packet
      *            packet as bytes
      * @param packetLen
@@ -83,6 +84,7 @@ public class TracingPacketSender implements MessageSender<NativePacketPayload> {
         this.log.logTrace(traceMessageBuf.toString());
     }
 
+    @Override
     public void send(byte[] packet, int packetLen, byte packetSequence) throws IOException {
         logPacket(packet, packetLen, packetSequence);
 
@@ -98,4 +100,5 @@ public class TracingPacketSender implements MessageSender<NativePacketPayload> {
     public MessageSender<NativePacketPayload> undecorate() {
         return this.packetSender;
     }
+
 }

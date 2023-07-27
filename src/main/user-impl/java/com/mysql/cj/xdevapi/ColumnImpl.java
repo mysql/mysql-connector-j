@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,11 +34,12 @@ import com.mysql.cj.MysqlType;
 import com.mysql.cj.result.Field;
 
 public class ColumnImpl implements Column {
+
     private Field field;
 
     /**
      * Constructor.
-     * 
+     *
      * @param f
      *            {@link Field} object
      */
@@ -46,26 +47,32 @@ public class ColumnImpl implements Column {
         this.field = f;
     }
 
+    @Override
     public String getSchemaName() {
         return this.field.getDatabaseName();
     }
 
+    @Override
     public String getTableName() {
         return this.field.getOriginalTableName();
     }
 
+    @Override
     public String getTableLabel() {
         return this.field.getTableName();
     }
 
+    @Override
     public String getColumnName() {
         return this.field.getOriginalName();
     }
 
+    @Override
     public String getColumnLabel() {
         return this.field.getName();
     }
 
+    @Override
     public Type getType() {
         switch (this.field.getMysqlType()) {
             case BIT:
@@ -138,47 +145,59 @@ public class ColumnImpl implements Column {
         throw new IllegalArgumentException("Unknown type in metadata: " + this.field.getMysqlType());
     }
 
+    @Override
     public long getLength() {
         return this.field.getLength();
     }
 
+    @Override
     public int getFractionalDigits() {
         return this.field.getDecimals();
     }
 
+    @Override
     public boolean isNumberSigned() {
         return MysqlType.isSigned(this.field.getMysqlType());
     }
 
+    @Override
     public String getCollationName() {
         return CharsetMapping.getStaticCollationNameForCollationIndex(this.field.getCollationIndex()); // TODO use CharsetSettings method
     }
 
+    @Override
     public String getCharacterSetName() {
         return CharsetMapping.getStaticMysqlCharsetNameForCollationIndex(this.field.getCollationIndex()); // TODO use CharsetSettings method
     }
 
+    @Override
     public boolean isPadded() {
-        return this.field.isZeroFill() || (this.field.getMysqlType() == MysqlType.CHAR);
+        return this.field.isZeroFill() || this.field.getMysqlType() == MysqlType.CHAR;
     }
 
+    @Override
     public boolean isNullable() {
         return !this.field.isNotNull();
     }
 
+    @Override
     public boolean isAutoIncrement() {
         return this.field.isAutoIncrement();
     }
 
+    @Override
     public boolean isPrimaryKey() {
         return this.field.isPrimaryKey();
     }
 
+    @Override
     public boolean isUniqueKey() {
         return this.field.isUniqueKey();
     }
 
+    @Override
     public boolean isPartKey() {
         return this.field.isMultipleKey();
     }
+
 }

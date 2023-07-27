@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,10 +37,11 @@ import com.mysql.cj.protocol.MessageSender;
 
 /**
  * A {@link MessageSender} for the compressed protocol.
- * 
+ *
  * TODO: add support for pre-allocated buffer for large packets (if there's a demonstrable perf improvement)
  */
 public class CompressedPacketSender implements MessageSender<NativePacketPayload> {
+
     private BufferedOutputStream outputStream;
     private Deflater deflater = new Deflater();
     /** Buffer to compress data to. Used only across one send() invocation. */
@@ -72,7 +73,7 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
 
     /**
      * Add and compress the header for the raw packet into the compressed packet.
-     * 
+     *
      * @param packetSequence
      *            sequence id
      * @param uncompressedPacketLen
@@ -89,7 +90,7 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
 
     /**
      * Add and compress the payload into the compressed packet.
-     * 
+     *
      * @param payload
      *            payload bytes
      * @param payloadOffset
@@ -114,7 +115,7 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
 
     /**
      * Write the compressed packet header.
-     * 
+     *
      * @param compLen
      *            compressed data length
      * @param seq
@@ -132,7 +133,7 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
 
     /**
      * Write an uncompressed packet header.
-     * 
+     *
      * @param packetLen
      *            packet length
      * @param packetSequence
@@ -147,7 +148,7 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
 
     /**
      * Send a compressed packet.
-     * 
+     *
      * @param uncompressedPayloadLen
      *            uncompressed data length
      * @throws IOException
@@ -167,7 +168,7 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
      * followed by a new header and payload. If the second split packet is also around MAX_PACKET_SIZE in length, then only MAX_PACKET_SIZE - 4 (from the
      * previous packet) - 4 (for the new header) can be sent. This means the payload will be limited by 8 bytes and this will continue to increase by 4 at every
      * iteration.
-     * 
+     *
      * @param packet
      *            data bytes
      * @param packetLen
@@ -177,6 +178,7 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
      * @throws IOException
      *             if i/o exception occurs
      */
+    @Override
     public void send(byte[] packet, int packetLen, byte packetSequence) throws IOException {
         this.compressedSequenceId = packetSequence;
 
@@ -267,4 +269,5 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
     public MessageSender<NativePacketPayload> undecorate() {
         return this;
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,9 +33,10 @@ package com.mysql.cj.xdevapi;
  * A statement representing a set of document modifications.
  */
 public interface ModifyStatement extends Statement<ModifyStatement, Result> {
+
     /**
      * Add/replace the order specification for this statement.
-     * 
+     *
      * @param sortFields
      *            sort expression
      * @return {@link ModifyStatement}
@@ -44,7 +45,7 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
 
     /**
      * Add/replace the document limit for this statement.
-     * 
+     *
      * @param numberOfRows
      *            limit
      * @return {@link ModifyStatement}
@@ -53,7 +54,7 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
 
     /**
      * Add an update to the statement setting the field as the document path to the given value for all documents matching the search criteria.
-     * 
+     *
      * @param docPath
      *            document path to the given value
      * @param value
@@ -64,7 +65,7 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
 
     /**
      * Add an update to the statement setting the field, if it exists at the document path, to the given value.
-     * 
+     *
      * @param docPath
      *            document path to the given value
      * @param value
@@ -75,7 +76,7 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
 
     /**
      * Nullify the given fields.
-     * 
+     *
      * @param docPath
      *            one or more field names
      * @return {@link ModifyStatement}
@@ -86,7 +87,7 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
      * Takes in a patch object and applies it on all documents matching the modify() filter, using the JSON_MERGE_PATCH() function.
      * Please note that {@link DbDoc} does not support expressions as a field values, please use {@link #patch(String)} method if you need
      * such functionality.
-     * 
+     *
      * @param document
      *            patch object
      * @return {@link ModifyStatement}
@@ -101,7 +102,7 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
      * collection.modify("_id = :id")<br>
      * .patch("{\"zip\": address.zip-300000, \"street\": CONCAT($.name, '''s street: ', $.address.street)}")<br>
      * .bind("id", "2").execute();
-     * 
+     *
      * @param document
      *            patch object
      * @return {@link ModifyStatement}
@@ -110,7 +111,7 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
 
     /**
      * Insert a value into the specified array.
-     * 
+     *
      * @param docPath
      *            document path to the array field
      * @param value
@@ -121,7 +122,7 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
 
     /**
      * Append a value to the specified array.
-     * 
+     *
      * @param docPath
      *            document path to the array field
      * @param value
@@ -129,4 +130,5 @@ public interface ModifyStatement extends Statement<ModifyStatement, Result> {
      * @return {@link ModifyStatement}
      */
     ModifyStatement arrayAppend(String docPath, Object value);
+
 }

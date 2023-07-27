@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,10 +31,12 @@ package com.mysql.cj;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 public class NativeQueryAttributesBindings implements QueryAttributesBindings {
+
     Session session = null;
     private List<NativeQueryBindValue> bindAttributes = new ArrayList<>();
 
@@ -48,7 +50,7 @@ public class NativeQueryAttributesBindings implements QueryAttributesBindings {
         Object val = value;
         if (defaultMysqlType == null) {
             Optional<MysqlType> mysqlType = NativeQueryBindings.DEFAULT_MYSQL_TYPES.entrySet().stream()
-                    .filter(m -> m.getKey().isAssignableFrom(value.getClass())).map(m -> m.getValue()).findFirst();
+                    .filter(m -> m.getKey().isAssignableFrom(value.getClass())).map(Entry::getValue).findFirst();
             if (mysqlType.isPresent()) {
                 defaultMysqlType = mysqlType.get();
             } else {
@@ -82,4 +84,5 @@ public class NativeQueryAttributesBindings implements QueryAttributesBindings {
     public void clearAttributes() {
         this.bindAttributes.clear();
     }
+
 }

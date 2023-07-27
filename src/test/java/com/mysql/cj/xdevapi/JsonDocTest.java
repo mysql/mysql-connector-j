@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,6 +46,7 @@ import com.mysql.cj.exceptions.WrongArgumentException;
  * DbDoc tests.
  */
 public class JsonDocTest {
+
     protected static <EX extends Throwable> EX assertThrows(Class<EX> throwable, Callable<?> testRoutine) {
         try {
             testRoutine.call();
@@ -90,11 +91,9 @@ public class JsonDocTest {
         assertEquals('\t', val.getString().charAt(7));
         assertEquals(testStr, val.toString());
 
-        assertThrows(WrongArgumentException.class, "Unknown escape sequence '\\\\q'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseString(new StringReader("\"\\q\""));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Unknown escape sequence '\\\\q'.", () -> {
+            JsonParser.parseString(new StringReader("\"\\q\""));
+            return null;
         });
     }
 
@@ -123,26 +122,20 @@ public class JsonDocTest {
         assertEquals("\\// \"foo=bar\" & \uD83D\uDC2C\tbaz\n", jsonStr.getString());
 
         // don't ignore other symbols before opening quotation mark
-        assertThrows(WrongArgumentException.class, "Attempt to add character '\\\\' to unopened string.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseString(new StringReader("\\\\ \" "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Attempt to add character '\\\\' to unopened string.", () -> {
+            JsonParser.parseString(new StringReader("\\\\ \" "));
+            return null;
         });
 
-        assertThrows(WrongArgumentException.class, "Attempt to add character 'f' to unopened string.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseString(new StringReader(" f \" "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Attempt to add character 'f' to unopened string.", () -> {
+            JsonParser.parseString(new StringReader(" f \" "));
+            return null;
         });
 
         // check quotation marks
-        assertThrows(WrongArgumentException.class, "Missed closing '\"'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseString(new StringReader("\""));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Missed closing '\"'.", () -> {
+            JsonParser.parseString(new StringReader("\""));
+            return null;
         });
 
         val = JsonParser.parseString(new StringReader("\"\""));
@@ -166,85 +159,63 @@ public class JsonDocTest {
         val = JsonParser.parseNumber(new StringReader(" \n\r  1.2e12  "));
         assertEquals(new BigDecimal("1.2E12"), val.getBigDecimal());
 
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'k'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("-1.2E-12k  "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'k'.", () -> {
+            JsonParser.parseNumber(new StringReader("-1.2E-12k  "));
+            return null;
         });
 
         // '-' position
-        assertThrows(WrongArgumentException.class, "Wrong '-' position after '-1.2E-1'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("-1.2E-1-2  "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Wrong '-' position after '-1.2E-1'.", () -> {
+            JsonParser.parseNumber(new StringReader("-1.2E-1-2  "));
+            return null;
         });
 
         // exponent position
-        assertThrows(WrongArgumentException.class, "Wrong 'E' position after '-12.'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("-12.E-12  "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Wrong 'E' position after '-12.'.", () -> {
+            JsonParser.parseNumber(new StringReader("-12.E-12  "));
+            return null;
         });
 
         // dot position
-        assertThrows(WrongArgumentException.class, "Wrong '.' occurrence after '1.2', it is allowed only once per number.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("1.2.0E-12  "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Wrong '.' occurrence after '1.2', it is allowed only once per number.", () -> {
+            JsonParser.parseNumber(new StringReader("1.2.0E-12  "));
+            return null;
         });
 
-        assertThrows(WrongArgumentException.class, "Wrong '.' occurrence after '1.20E', it is allowed only once per number.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("1.20E.12  "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Wrong '.' occurrence after '1.20E', it is allowed only once per number.", () -> {
+            JsonParser.parseNumber(new StringReader("1.20E.12  "));
+            return null;
         });
 
-        assertThrows(WrongArgumentException.class, "'.' is not allowed in the exponent.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("10E.12  "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "'.' is not allowed in the exponent.", () -> {
+            JsonParser.parseNumber(new StringReader("10E.12  "));
+            return null;
         });
 
-        assertThrows(WrongArgumentException.class, "'.' is not allowed in the exponent.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("10E1.2  "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "'.' is not allowed in the exponent.", () -> {
+            JsonParser.parseNumber(new StringReader("10E1.2  "));
+            return null;
         });
 
         // '+' position
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character '\u002E'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("+10E12  "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character '\u002E'.", () -> {
+            JsonParser.parseNumber(new StringReader("+10E12  "));
+            return null;
         });
 
-        assertThrows(WrongArgumentException.class, "Wrong '\u002E' position after '1'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("1+0E12  "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Wrong '\u002E' position after '1'.", () -> {
+            JsonParser.parseNumber(new StringReader("1+0E12  "));
+            return null;
         });
 
-        assertThrows(WrongArgumentException.class, "Wrong '\u002E' position after '10'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("10+E12  "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Wrong '\u002E' position after '10'.", () -> {
+            JsonParser.parseNumber(new StringReader("10+E12  "));
+            return null;
         });
 
-        assertThrows(WrongArgumentException.class, "Wrong '\u002E' position after '10E1'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader("10E1+2  "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Wrong '\u002E' position after '10E1'.", () -> {
+            JsonParser.parseNumber(new StringReader("10E1+2  "));
+            return null;
         });
 
         // closing chars
@@ -320,11 +291,9 @@ public class JsonDocTest {
         assertEquals(12345, val.getInteger().intValue());
 
         // empty value
-        assertThrows(WrongArgumentException.class, "No valid value was found.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseNumber(new StringReader(""));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "No valid value was found.", () -> {
+            JsonParser.parseNumber(new StringReader(""));
+            return null;
         });
     }
 
@@ -348,39 +317,29 @@ public class JsonDocTest {
         val = JsonParser.parseLiteral(new StringReader(" \n\r  true]  "));
         assertEquals("true", val.toString());
 
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'q'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseLiteral(new StringReader(" q  true  "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'q'.", () -> {
+            JsonParser.parseLiteral(new StringReader(" q  true  "));
+            return null;
         });
 
         // incomplete literal
-        assertThrows(WrongArgumentException.class, "Wrong literal 't'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseLiteral(new StringReader("t"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Wrong literal 't'.", () -> {
+            JsonParser.parseLiteral(new StringReader("t"));
+            return null;
         });
 
         // empty value
-        assertThrows(WrongArgumentException.class, "No valid value was found.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseLiteral(new StringReader(""));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "No valid value was found.", () -> {
+            JsonParser.parseLiteral(new StringReader(""));
+            return null;
         });
-        assertThrows(WrongArgumentException.class, "No valid value was found.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseLiteral(new StringReader(" \r "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "No valid value was found.", () -> {
+            JsonParser.parseLiteral(new StringReader(" \r "));
+            return null;
         });
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character '}'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseLiteral(new StringReader("}"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character '}'.", () -> {
+            JsonParser.parseLiteral(new StringReader("}"));
+            return null;
         });
     }
 
@@ -404,39 +363,29 @@ public class JsonDocTest {
         val = JsonParser.parseLiteral(new StringReader(" \n\r  false]  "));
         assertEquals("false", val.toString());
 
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'q'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseLiteral(new StringReader(" q  false  "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'q'.", () -> {
+            JsonParser.parseLiteral(new StringReader(" q  false  "));
+            return null;
         });
 
         // incomplete literal
-        assertThrows(WrongArgumentException.class, "Wrong literal 'f'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseLiteral(new StringReader("f"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Wrong literal 'f'.", () -> {
+            JsonParser.parseLiteral(new StringReader("f"));
+            return null;
         });
 
         // empty value
-        assertThrows(WrongArgumentException.class, "No valid value was found.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseLiteral(new StringReader(""));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "No valid value was found.", () -> {
+            JsonParser.parseLiteral(new StringReader(""));
+            return null;
         });
-        assertThrows(WrongArgumentException.class, "No valid value was found.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseLiteral(new StringReader(" \r "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "No valid value was found.", () -> {
+            JsonParser.parseLiteral(new StringReader(" \r "));
+            return null;
         });
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character '}'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseLiteral(new StringReader("}"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character '}'.", () -> {
+            JsonParser.parseLiteral(new StringReader("}"));
+            return null;
         });
     }
 
@@ -460,39 +409,29 @@ public class JsonDocTest {
         val = JsonParser.parseLiteral(new StringReader(" \n\r  null]  "));
         assertEquals("null", val.toString());
 
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'q'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseLiteral(new StringReader(" q  true  "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'q'.", () -> {
+            JsonParser.parseLiteral(new StringReader(" q  true  "));
+            return null;
         });
 
         // incomplete literal
-        assertThrows(WrongArgumentException.class, "Wrong literal 'n'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseLiteral(new StringReader("n"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Wrong literal 'n'.", () -> {
+            JsonParser.parseLiteral(new StringReader("n"));
+            return null;
         });
 
         // empty value
-        assertThrows(WrongArgumentException.class, "No valid value was found.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseLiteral(new StringReader(""));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "No valid value was found.", () -> {
+            JsonParser.parseLiteral(new StringReader(""));
+            return null;
         });
-        assertThrows(WrongArgumentException.class, "No valid value was found.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseLiteral(new StringReader(" \r "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "No valid value was found.", () -> {
+            JsonParser.parseLiteral(new StringReader(" \r "));
+            return null;
         });
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character '}'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseLiteral(new StringReader("}"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character '}'.", () -> {
+            JsonParser.parseLiteral(new StringReader("}"));
+            return null;
         });
     }
 
@@ -525,29 +464,21 @@ public class JsonDocTest {
         assertEquals("[1, 2]", val.toFormattedString());
 
         // wrong spaces
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'a'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseArray(new StringReader(" a  [ b 1 c, d 2 e  ]  x "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'a'.", () -> {
+            JsonParser.parseArray(new StringReader(" a  [ b 1 c, d 2 e  ]  x "));
+            return null;
         });
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'b'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseArray(new StringReader("[ b 1 c, d 2 e  ]  x "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'b'.", () -> {
+            JsonParser.parseArray(new StringReader("[ b 1 c, d 2 e  ]  x "));
+            return null;
         });
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'c'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseArray(new StringReader("[1 c, d 2 e  ]  x "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'c'.", () -> {
+            JsonParser.parseArray(new StringReader("[1 c, d 2 e  ]  x "));
+            return null;
         });
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'd'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseArray(new StringReader("[1, d 2 e  ]  x "));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'd'.", () -> {
+            JsonParser.parseArray(new StringReader("[1, d 2 e  ]  x "));
+            return null;
         });
 
         val = JsonParser.parseArray(new StringReader("    [   1 ,  2   ]  x "));
@@ -555,11 +486,9 @@ public class JsonDocTest {
         assertEquals("[1, 2]", val.toFormattedString());
 
         // check brackets
-        assertThrows(WrongArgumentException.class, "Missed closing ']'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseArray(new StringReader("[123"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Missed closing ']'.", () -> {
+            JsonParser.parseArray(new StringReader("[123"));
+            return null;
         });
 
         // empty array
@@ -580,74 +509,54 @@ public class JsonDocTest {
         doc = JsonParser.parseDoc(new StringReader("{\"x\":22}"));
 
         // check brackets
-        assertThrows(WrongArgumentException.class, "Missed closing '}'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseDoc(new StringReader("{"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Missed closing '}'.", () -> {
+            JsonParser.parseDoc(new StringReader("{"));
+            return null;
         });
-        assertThrows(WrongArgumentException.class, "No valid JSON document was found.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseDoc(new StringReader("}"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "No valid JSON document was found.", () -> {
+            JsonParser.parseDoc(new StringReader("}"));
+            return null;
         });
 
         // key without value
-        assertThrows(WrongArgumentException.class, "Colon is missed after key 'key1'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseDoc(new StringReader("{\"key1\"}"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Colon is missed after key 'key1'.", () -> {
+            JsonParser.parseDoc(new StringReader("{\"key1\"}"));
+            return null;
         });
 
-        assertThrows(WrongArgumentException.class, "Invalid value was found after key 'key1'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseDoc(new StringReader("{\"key1\" : }"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid value was found after key 'key1'.", () -> {
+            JsonParser.parseDoc(new StringReader("{\"key1\" : }"));
+            return null;
         });
 
         // invalid whitespace
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'a'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseDoc(new StringReader(" a {\"key1\" x : \"value1\"}"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'a'.", () -> {
+            JsonParser.parseDoc(new StringReader(" a {\"key1\" x : \"value1\"}"));
+            return null;
         });
-        assertThrows(WrongArgumentException.class, "Attempt to add character 'a' to unopened string.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseDoc(new StringReader("  {a\"key1\" : \"value1\"}"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Attempt to add character 'a' to unopened string.", () -> {
+            JsonParser.parseDoc(new StringReader("  {a\"key1\" : \"value1\"}"));
+            return null;
         });
 
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'x'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseDoc(new StringReader("{\"key1\" x : \"value1\"}"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'x'.", () -> {
+            JsonParser.parseDoc(new StringReader("{\"key1\" x : \"value1\"}"));
+            return null;
         });
 
-        assertThrows(WrongArgumentException.class, "Invalid value was found after key 'key1'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseDoc(new StringReader("{\"key1\" : x \"value1\"}"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid value was found after key 'key1'.", () -> {
+            JsonParser.parseDoc(new StringReader("{\"key1\" : x \"value1\"}"));
+            return null;
         });
 
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'x'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseDoc(new StringReader("{\"key1\" : \"value1\"x}"));
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character 'x'.", () -> {
+            JsonParser.parseDoc(new StringReader("{\"key1\" : \"value1\"x}"));
+            return null;
         });
 
-        assertThrows(WrongArgumentException.class, "Invalid whitespace character ']'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                JsonParser.parseDoc("{\"_id\":\"1004\",\"F1\": ] }");
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "Invalid whitespace character ']'.", () -> {
+            JsonParser.parseDoc("{\"_id\":\"1004\",\"F1\": ] }");
+            return null;
         });
 
         StringBuilder sb = new StringBuilder();
@@ -762,4 +671,5 @@ public class JsonDocTest {
     public void testJsonNumberAtEnd() throws Exception {
         JsonParser.parseDoc(new StringReader("{\"x\":2}"));
     }
+
 }

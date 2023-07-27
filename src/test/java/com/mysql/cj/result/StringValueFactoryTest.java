@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,6 +46,7 @@ import com.mysql.cj.protocol.InternalTimestamp;
  * Tests for {@link StringValueFactory}
  */
 public class StringValueFactoryTest extends CommonAsserts {
+
     PropertySet pset = new DefaultPropertySet();
     ValueFactory<String> vf = new StringValueFactory(this.pset);
 
@@ -166,4 +167,5 @@ public class StringValueFactoryTest extends CommonAsserts {
     public void testCreateFromNull() {
         this.vf.createFromNull();
     }
+
 }

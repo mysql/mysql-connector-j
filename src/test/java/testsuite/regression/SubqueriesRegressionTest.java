@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,6 +40,7 @@ import testsuite.BaseTestCase;
  * Tests SubQueries
  */
 public class SubqueriesRegressionTest extends BaseTestCase {
+
     private final static int REPETITIONS = 100;
 
     @BeforeEach
@@ -143,4 +144,5 @@ public class SubqueriesRegressionTest extends BaseTestCase {
         this.stmt.executeUpdate("insert into t3 values ('aaaa', 'abcd'), ('bbbb', 'efgh'), ('cccc', 'ijkl')");
         this.stmt.executeUpdate("insert into t4 values ('abcd', 'type1'), ('efgh', 'type2'), ('ijkl', 'type3')");
     }
+
 }

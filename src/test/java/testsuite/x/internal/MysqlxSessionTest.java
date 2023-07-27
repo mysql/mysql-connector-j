@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -68,6 +68,7 @@ import com.mysql.cj.xdevapi.UpdateResultBuilder;
  * Tests for (internal) session-level APIs against X Plugin via X Protocol.
  */
 public class MysqlxSessionTest extends InternalXBaseTestCase {
+
     private MysqlxSession session;
 
     @BeforeEach
@@ -131,7 +132,7 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
 
         Set<String> strTypes = Arrays.stream(new DbObjectType[] { DbObjectType.COLLECTION }).map(DatabaseObject.DbObjectType::toString)
                 .collect(Collectors.toSet());
-        Predicate<com.mysql.cj.result.Row> rowFiler = r -> (strTypes).contains(r.getValue(1, svf));
+        Predicate<com.mysql.cj.result.Row> rowFiler = r -> strTypes.contains(r.getValue(1, svf));
         Function<com.mysql.cj.result.Row, String> rowToName = r -> r.getValue(0, svf);
 
         List<String> collNames = this.session.query(builder.buildListObjects(getTestDatabase(), null), rowFiler, rowToName, Collectors.toList());
@@ -221,4 +222,5 @@ public class MysqlxSessionTest extends InternalXBaseTestCase {
         assertEquals(new Integer(2), ints.get(0));
         assertEquals(new Integer(1), ints.get(1));
     }
+
 }

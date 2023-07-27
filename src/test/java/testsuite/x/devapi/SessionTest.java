@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -53,7 +53,6 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -112,6 +111,7 @@ import testsuite.InjectedSocketFactory;
 import testsuite.UnreliableSocketFactory;
 
 public class SessionTest extends DevApiBaseTestCase {
+
     @BeforeEach
     public void setupSessionTest() {
         assumeTrue(this.isSetForXTests, PropertyDefinitions.SYSP_testsuite_url_mysqlx + " must be set to run this test.");
@@ -136,7 +136,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
     /**
      * Create a random schema name. The schema will be dropped upon test cleanup.
-     * 
+     *
      * @return a string
      */
     private String getRandomTestSchemaName() {
@@ -391,11 +391,9 @@ public class SessionTest extends DevApiBaseTestCase {
         assertEquals("3", r.getString("3"));
         assertFalse(res.hasNext());
 
-        assertThrows(XDevAPIError.class, "Method getAutoIncrementValue\\(\\) is allowed only for insert statements.", new Callable<Void>() {
-            public Void call() throws Exception {
-                assertEquals(null, res.getAutoIncrementValue());
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Method getAutoIncrementValue\\(\\) is allowed only for insert statements.", () -> {
+            assertEquals(null, res.getAutoIncrementValue());
+            return null;
         });
     }
 
@@ -412,47 +410,33 @@ public class SessionTest extends DevApiBaseTestCase {
         // TODO SqlUpdateResult throws FeatureNotAvailableException("Not a multi-result");
         //res.nextResult();
 
-        assertThrows(FeatureNotAvailableException.class, "No data", new Callable<Void>() {
-            public Void call() throws Exception {
-                res.fetchAll();
-                return null;
-            }
+        assertThrows(FeatureNotAvailableException.class, "No data", () -> {
+            res.fetchAll();
+            return null;
         });
-        assertThrows(FeatureNotAvailableException.class, "No data", new Callable<Void>() {
-            public Void call() throws Exception {
-                res.next();
-                return null;
-            }
+        assertThrows(FeatureNotAvailableException.class, "No data", () -> {
+            res.next();
+            return null;
         });
-        assertThrows(FeatureNotAvailableException.class, "No data", new Callable<Void>() {
-            public Void call() throws Exception {
-                res.hasNext();
-                return null;
-            }
+        assertThrows(FeatureNotAvailableException.class, "No data", () -> {
+            res.hasNext();
+            return null;
         });
-        assertThrows(FeatureNotAvailableException.class, "No data", new Callable<Void>() {
-            public Void call() throws Exception {
-                res.getColumnCount();
-                return null;
-            }
+        assertThrows(FeatureNotAvailableException.class, "No data", () -> {
+            res.getColumnCount();
+            return null;
         });
-        assertThrows(FeatureNotAvailableException.class, "No data", new Callable<Void>() {
-            public Void call() throws Exception {
-                res.getColumns();
-                return null;
-            }
+        assertThrows(FeatureNotAvailableException.class, "No data", () -> {
+            res.getColumns();
+            return null;
         });
-        assertThrows(FeatureNotAvailableException.class, "No data", new Callable<Void>() {
-            public Void call() throws Exception {
-                res.getColumnNames();
-                return null;
-            }
+        assertThrows(FeatureNotAvailableException.class, "No data", () -> {
+            res.getColumnNames();
+            return null;
         });
-        assertThrows(FeatureNotAvailableException.class, "No data", new Callable<Void>() {
-            public Void call() throws Exception {
-                res.count();
-                return null;
-            }
+        assertThrows(FeatureNotAvailableException.class, "No data", () -> {
+            res.count();
+            return null;
         });
     }
 
@@ -523,7 +507,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
     /**
      * Tests fix for Bug #27652379, NPE FROM GETSESSION(PROPERTIES) WHEN HOST PARAMETER IS GIVEN IN SMALL LETTER.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -623,111 +607,81 @@ public class SessionTest extends DevApiBaseTestCase {
          */
         // pooling.enabled
         props.clear();
-        assertThrows(XDevAPIError.class, "Client option 'pooling\\.enabled' does not support value 'sure'\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                props.setProperty(ClientProperty.POOLING_ENABLED.getKeyName(), "sure");
-                cf.getClient(url, props);
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.enabled' does not support value 'sure'\\.", () -> {
+            props.setProperty(ClientProperty.POOLING_ENABLED.getKeyName(), "sure");
+            cf.getClient(url, props);
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Client option 'pooling\\.enabled' does not support value 'sure'\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                cf.getClient(url, "{\"pooling\": {\"enabled\": \"sure\"}}");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.enabled' does not support value 'sure'\\.", () -> {
+            cf.getClient(url, "{\"pooling\": {\"enabled\": \"sure\"}}");
+            return null;
         });
         // pooling.maxSize
         props.clear();
-        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxSize' does not support value '0'\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                props.setProperty(ClientProperty.POOLING_MAX_SIZE.getKeyName(), "0");
-                cf.getClient(url, props);
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxSize' does not support value '0'\\.", () -> {
+            props.setProperty(ClientProperty.POOLING_MAX_SIZE.getKeyName(), "0");
+            cf.getClient(url, props);
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxSize' does not support value '0'\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                cf.getClient(url, "{\"pooling\": {\"maxSize\": 0}}");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxSize' does not support value '0'\\.", () -> {
+            cf.getClient(url, "{\"pooling\": {\"maxSize\": 0}}");
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxSize' does not support value 'one'\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                cf.getClient(url, "{\"pooling\": {\"maxSize\": \"one\"}}");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxSize' does not support value 'one'\\.", () -> {
+            cf.getClient(url, "{\"pooling\": {\"maxSize\": \"one\"}}");
+            return null;
         });
         // pooling.maxIdleTime
         props.clear();
-        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxIdleTime' does not support value '-1'\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                props.setProperty(ClientProperty.POOLING_MAX_IDLE_TIME.getKeyName(), "-1");
-                cf.getClient(url, props);
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxIdleTime' does not support value '-1'\\.", () -> {
+            props.setProperty(ClientProperty.POOLING_MAX_IDLE_TIME.getKeyName(), "-1");
+            cf.getClient(url, props);
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxIdleTime' does not support value '-1'\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                cf.getClient(url, "{\"pooling\": {\"maxIdleTime\": -1}}");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxIdleTime' does not support value '-1'\\.", () -> {
+            cf.getClient(url, "{\"pooling\": {\"maxIdleTime\": -1}}");
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxIdleTime' does not support value 'one'\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                cf.getClient(url, "{\"pooling\": {\"maxIdleTime\": \"one\"}}");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.maxIdleTime' does not support value 'one'\\.", () -> {
+            cf.getClient(url, "{\"pooling\": {\"maxIdleTime\": \"one\"}}");
+            return null;
         });
         // pooling.queueTimeout
         props.clear();
-        assertThrows(XDevAPIError.class, "Client option 'pooling\\.queueTimeout' does not support value '-1'\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                props.setProperty(ClientProperty.POOLING_QUEUE_TIMEOUT.getKeyName(), "-1");
-                cf.getClient(url, props);
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.queueTimeout' does not support value '-1'\\.", () -> {
+            props.setProperty(ClientProperty.POOLING_QUEUE_TIMEOUT.getKeyName(), "-1");
+            cf.getClient(url, props);
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Client option 'pooling\\.queueTimeout' does not support value '-1'\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                cf.getClient(url, "{\"pooling\": {\"queueTimeout\": -1}}");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.queueTimeout' does not support value '-1'\\.", () -> {
+            cf.getClient(url, "{\"pooling\": {\"queueTimeout\": -1}}");
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Client option 'pooling\\.queueTimeout' does not support value 'one'\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                cf.getClient(url, "{\"pooling\": {\"queueTimeout\": \"one\"}}");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.queueTimeout' does not support value 'one'\\.", () -> {
+            cf.getClient(url, "{\"pooling\": {\"queueTimeout\": \"one\"}}");
+            return null;
         });
         // Unknown pooling option.
         props.clear();
-        assertThrows(XDevAPIError.class, "Client option 'pooling\\.foo' is not recognized as valid\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                props.setProperty("pooling.foo", "bar");
-                cf.getClient(url, props);
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.foo' is not recognized as valid\\.", () -> {
+            props.setProperty("pooling.foo", "bar");
+            cf.getClient(url, props);
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Client option 'pooling\\.foo' is not recognized as valid\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                cf.getClient(url, "{\"pooling\": {\"foo\": \"bar\"}}");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client option 'pooling\\.foo' is not recognized as valid\\.", () -> {
+            cf.getClient(url, "{\"pooling\": {\"foo\": \"bar\"}}");
+            return null;
         });
         // Unknown clientProps option.
         props.clear();
-        assertThrows(XDevAPIError.class, "Client option 'foo' is not recognized as valid\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                props.setProperty("foo", "bar");
-                cf.getClient(url, props);
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client option 'foo' is not recognized as valid\\.", () -> {
+            props.setProperty("foo", "bar");
+            cf.getClient(url, props);
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Client option 'foo' is not recognized as valid\\.", new Callable<Void>() {
-            public Void call() throws Exception {
-                cf.getClient(url, "{\"foo\": {\"bar\": \"baz\"}}");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client option 'foo' is not recognized as valid\\.", () -> {
+            cf.getClient(url, "{\"foo\": {\"bar\": \"baz\"}}");
+            return null;
         });
 
         /*
@@ -894,11 +848,9 @@ public class SessionTest extends DevApiBaseTestCase {
         assertEquals(0, ((Set<WeakReference<PooledXProtocol>>) fActiveSessions.get(cli0)).size());
 
         final Session ses = s1;
-        assertThrows(CJCommunicationsException.class, new Callable<Void>() {
-            public Void call() throws Exception {
-                ses.getSchemas();
-                return null;
-            }
+        assertThrows(CJCommunicationsException.class, () -> {
+            ses.getSchemas();
+            return null;
         });
 
         /*
@@ -906,11 +858,9 @@ public class SessionTest extends DevApiBaseTestCase {
          */
         Client cli2 = cf.getClient(this.baseUrl, "{\"pooling\": {\"enabled\": true}}");
         cli2.close();
-        assertThrows(XDevAPIError.class, "Client is closed.", new Callable<Void>() {
-            public Void call() throws Exception {
-                cli2.getSession();
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Client is closed.", () -> {
+            cli2.getSession();
+            return null;
         });
 
         /*
@@ -942,17 +892,14 @@ public class SessionTest extends DevApiBaseTestCase {
         s1 = cli3.getSession();
         Session s6 = cli3.getSession();
 
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(10000);
-                    s6.close();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-
+        Thread t = new Thread(() -> {
+            try {
+                Thread.sleep(10000);
+                s6.close();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
+
         });
 
         long begin = System.currentTimeMillis();
@@ -1023,22 +970,18 @@ public class SessionTest extends DevApiBaseTestCase {
         assertTrue(res.hasNext());
         assertNull(res.next().getString(0));
 
-        assertThrows(XProtocolError.class, ".*testpooledsessionstmps0' doesn't exist", new Callable<Void>() {
-            public Void call() throws Exception {
-                s0_new.sql("SHOW CREATE TABLE testpooledsessionstmps0").execute();
-                return null;
-            }
+        assertThrows(XProtocolError.class, ".*testpooledsessionstmps0' doesn't exist", () -> {
+            s0_new.sql("SHOW CREATE TABLE testpooledsessionstmps0").execute();
+            return null;
         });
 
         res = s1_new.sql("SELECT @a as a").execute();
         assertTrue(res.hasNext());
         assertNull(res.next().getString(0));
 
-        assertThrows(XProtocolError.class, ".*testpooledsessionstmps1' doesn't exist", new Callable<Void>() {
-            public Void call() throws Exception {
-                s1_new.sql("SHOW CREATE TABLE testpooledsessionstmps1").execute();
-                return null;
-            }
+        assertThrows(XProtocolError.class, ".*testpooledsessionstmps1' doesn't exist", () -> {
+            s1_new.sql("SHOW CREATE TABLE testpooledsessionstmps1").execute();
+            return null;
         });
 
         cli0.close();
@@ -2223,7 +2166,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
     /**
      * Tests fix for Bug#97730 (31699993), xdev api: ConcurrentModificationException at Session.close.
-     * 
+     *
      * @throws Throwable
      */
     @Test
@@ -2436,7 +2379,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
     /**
      * Few Negative Scenarios
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2513,7 +2456,7 @@ public class SessionTest extends DevApiBaseTestCase {
 
     /**
      * Test fix for Bug#97269 (30438500), POSSIBLE BUG IN COM.MYSQL.CJ.XDEVAPI.STREAMINGDOCRESULTBUILDER.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2592,6 +2535,6 @@ public class SessionTest extends DevApiBaseTestCase {
                 sess.close();
             }
         }
-
     }
+
 }

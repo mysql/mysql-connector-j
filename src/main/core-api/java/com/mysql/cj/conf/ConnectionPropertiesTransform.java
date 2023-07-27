@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,17 +36,19 @@ import java.util.Properties;
  * parsed to your transform implementation so that you can modify/substitute/add any that you desire.
  */
 public interface ConnectionPropertiesTransform {
+
     /**
      * The driver will call this method if the user has loaded your
      * implementation of this interface by specifying the 'propertiesTransform'
      * property in their URL.
-     * 
+     *
      * @param props
      *            the properties as passed by the driver (never null)
-     * 
+     *
      * @return the same properties with any transformations that your
      *         implementation has made
-     * 
+     *
      */
     Properties transformProperties(Properties props);
+
 }

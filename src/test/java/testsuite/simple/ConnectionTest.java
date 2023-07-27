@@ -75,7 +75,6 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
-import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -127,9 +126,10 @@ import testsuite.TestUtils;
  * Tests java.sql.Connection functionality
  */
 public class ConnectionTest extends BaseTestCase {
+
     /**
      * Tests catalog functionality
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -147,7 +147,7 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * Tests a cluster connection for failover, requires a two-node cluster URL specified in com.mysql.jdbc.testsuite.ClusterUrl system property.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -159,7 +159,7 @@ public class ConnectionTest extends BaseTestCase {
 
         Object versionNumObj = getSingleValueWithQuery("SHOW VARIABLES LIKE 'version'");
 
-        if ((versionNumObj != null) && (versionNumObj.toString().indexOf("cluster") != -1)) {
+        if (versionNumObj != null && versionNumObj.toString().indexOf("cluster") != -1) {
             Connection clusterConn = null;
             Statement clusterStmt = null;
 
@@ -218,7 +218,7 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * Old test was passing due to http://bugs.mysql.com/bug.php?id=989 which is fixed for 5.5+
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -282,7 +282,7 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * Tests isolation level functionality
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -317,7 +317,7 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * Tests the savepoint functionality in MySQL.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -418,7 +418,7 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * Tests functionality of the ConnectionPropertiesTransform interface.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -436,7 +436,7 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * Tests functionality of using URLs in 'LOAD DATA LOCAL INFILE' statements.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -592,7 +592,7 @@ public class ConnectionTest extends BaseTestCase {
     /**
      * Tests whether or not the configuration 'useLocalSessionState' actually prevents non-needed 'set autocommit=', 'set session transaction isolation ...'
      * and 'show variables like tx_isolation' queries.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -625,12 +625,11 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * Tests whether re-connect with non-read-only connection can happen.
-     * 
+     *
      * @throws Exception
      */
     @Test
     public void testFailoverConnection() throws Exception {
-
         if (!isServerRunningOnWindows()) { // windows sockets don't work for this test
             Properties props = new Properties();
             props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
@@ -687,22 +686,20 @@ public class ConnectionTest extends BaseTestCase {
         assertTrue("false".equals(cannedProps.getProperty(PropertyKey.failOverReadOnly.getKeyName())));
 
         // this will fail, but we test that too
-        assertThrows(InvalidConnectionAttributeException.class, "Can't find configuration template named 'clusterBase2'", new Callable<Void>() {
-            public Void call() throws Exception {
-                try {
-                    ConnectionUrl.getConnectionUrlInstance("jdbc:mysql:///?useConfigs=clusterBase,clusterBase2", null);
-                    return null;
-                } catch (Throwable t) {
-                    t.printStackTrace();
-                    throw t;
-                }
+        assertThrows(InvalidConnectionAttributeException.class, "Can't find configuration template named 'clusterBase2'", () -> {
+            try {
+                ConnectionUrl.getConnectionUrlInstance("jdbc:mysql:///?useConfigs=clusterBase,clusterBase2", null);
+                return null;
+            } catch (Throwable t) {
+                t.printStackTrace();
+                throw t;
             }
         });
     }
 
     /**
      * Checks implementation of 'dontTrackOpenResources' property.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -791,7 +788,7 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * Tests setting profileSQL on/off in the span of one connection.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -825,7 +822,7 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * Tests if gatherPerfMetrics works.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -854,7 +851,7 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * Tests if useCompress works.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -875,7 +872,7 @@ public class ConnectionTest extends BaseTestCase {
             this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'innodb_log_file_size'");
             this.rs.next();
             assumeFalse(this.rs.getInt(2) < 1024 * 1024 * 32 * 10,
-                    "You need to increase innodb_log_file_size to at least " + (1024 * 1024 * 32 * 10) + " before running this test!");
+                    "You need to increase innodb_log_file_size to at least " + 1024 * 1024 * 32 * 10 + " before running this test!");
         }
 
         try {
@@ -901,7 +898,7 @@ public class ConnectionTest extends BaseTestCase {
     /**
      * @param useCompression
      * @param maxPayloadSize
-     * 
+     *
      * @throws Exception
      */
     private void testCompressionWith(String useCompression, int maxPayloadSize) throws Exception {
@@ -911,7 +908,7 @@ public class ConnectionTest extends BaseTestCase {
         File testBlobFile = File.createTempFile("cmj-testblob", ".dat");
         testBlobFile.deleteOnExit();
 
-        // TODO: following cleanup doesn't work correctly during concurrent execution of testsuite 
+        // TODO: following cleanup doesn't work correctly during concurrent execution of testsuite
         // cleanupTempFiles(testBlobFile, "cmj-testblob");
 
         BufferedOutputStream bOut = new BufferedOutputStream(new FileOutputStream(testBlobFile));
@@ -966,7 +963,7 @@ public class ConnectionTest extends BaseTestCase {
      * Tests feature of "localSocketAddress", by enumerating local IF's and trying each one in turn. This test might take a long time to run, since we can't set
      * timeouts if we're using localSocketAddress. We try and keep the time down on the testcase by spawning the checking of each interface off into separate
      * threads.
-     * 
+     *
      * @throws Exception
      *             if the test can't use at least one of the local machine's interfaces to make an outgoing connection to the server.
      */
@@ -1019,6 +1016,7 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     class SpawnedWorkerCounter {
+
         protected int workerCount = 0;
 
         synchronized void setWorkerCount(int i) {
@@ -1029,9 +1027,11 @@ public class ConnectionTest extends BaseTestCase {
             this.workerCount--;
             notify();
         }
+
     }
 
     class LocalSocketAddressCheckThread extends Thread {
+
         boolean atLeastOneWorked = false;
         Enumeration<InetAddress> allAddresses = null;
         SpawnedWorkerCounter counter = null;
@@ -1043,7 +1043,6 @@ public class ConnectionTest extends BaseTestCase {
 
         @Override
         public void run() {
-
             while (this.allAddresses.hasMoreElements()) {
                 InetAddress addr = this.allAddresses.nextElement();
 
@@ -1065,6 +1064,7 @@ public class ConnectionTest extends BaseTestCase {
 
             this.counter.decrementWorkerCount();
         }
+
     }
 
     @Test
@@ -1177,7 +1177,7 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * Checks if setting useCursorFetch to "true" automatically enables server-side prepared statements.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1263,11 +1263,7 @@ public class ConnectionTest extends BaseTestCase {
 
             try {
                 toMatch.invoke(invokeOn, args);
-            } catch (IllegalArgumentException e) {
-
-            } catch (IllegalAccessException e) {
-
-            } catch (InvocationTargetException e) {
+            } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
 
             } catch (java.lang.AbstractMethodError e) {
                 throw e;
@@ -1422,7 +1418,7 @@ public class ConnectionTest extends BaseTestCase {
             this.rs.next();
             String str = this.rs.getString(1);
 
-            assertEquals((256 * 256 * 256 - 5), str.length());
+            assertEquals(256 * 256 * 256 - 5, str.length());
 
             for (int i = 0; i < str.length(); i++) {
                 if (str.charAt(i) != 'a') {
@@ -1513,7 +1509,7 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * IPv6 Connection test.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1531,7 +1527,7 @@ public class ConnectionTest extends BaseTestCase {
         connProps.setProperty(PropertyKey.PASSWORD.getKeyName(), testUser);
 
         List<Inet6Address> ipv6List = isMysqlRunningLocally() ? TestUtils.getIpv6List() : TestUtils.getIpv6List(getHostFromTestsuiteUrl());
-        List<String> ipv6Addrs = ipv6List.stream().map((e) -> e.getHostAddress()).collect(Collectors.toList());
+        List<String> ipv6Addrs = ipv6List.stream().map(Inet6Address::getHostAddress).collect(Collectors.toList());
         if (isMysqlRunningLocally()) {
             ipv6Addrs.add("::1"); // IPv6 loopback
         }
@@ -1572,56 +1568,48 @@ public class ConnectionTest extends BaseTestCase {
      */
     @Test
     public void testDriverAcceptsURLNullArgument() {
-        assertThrows(SQLException.class, "The database URL cannot be null.", new Callable<Void>() {
-            public Void call() throws Exception {
-                Driver mysqlDriver = new Driver();
-                mysqlDriver.acceptsURL(null);
-                return null;
-            }
+        assertThrows(SQLException.class, "The database URL cannot be null.", () -> {
+            Driver mysqlDriver = new Driver();
+            mysqlDriver.acceptsURL(null);
+            return null;
         });
     }
 
     /**
      * Test for Driver.connect() behavior clarifications:
      * - connect() throws SQLException if URL is null.
-     * 
+     *
      * @throws Exception
      */
     @Test
     public void testDriverConnectNullArgument() throws Exception {
         assertThrows(SQLException.class,
                 "Cannot load connection class because of underlying exception: com.mysql.cj.exceptions.WrongArgumentException: The database URL cannot be null.",
-                new Callable<Void>() {
-                    public Void call() throws Exception {
-                        Driver mysqlDriver = new Driver();
-                        mysqlDriver.connect(null, null);
-                        return null;
-                    }
+                () -> {
+                    Driver mysqlDriver = new Driver();
+                    mysqlDriver.connect(null, null);
+                    return null;
                 });
 
-        assertThrows(SQLException.class, "The url cannot be null", new Callable<Void>() {
-            public Void call() throws Exception {
-                DriverManager.getConnection(null);
-                return null;
-            }
+        assertThrows(SQLException.class, "The url cannot be null", () -> {
+            DriverManager.getConnection(null);
+            return null;
         });
     }
 
     /**
      * Test for Driver.connect() behavior clarifications:
      * - connect() properties precedence is implementation-defined.
-     * 
+     *
      * @throws Exception
      */
     @Test
     public void testDriverConnectPropertiesPrecedence() throws Exception {
-        assertThrows(SQLException.class, "Access denied for user 'dummy'@'[^']+' \\(using password: YES\\)", new Callable<Void>() {
-            public Void call() throws Exception {
-                DriverManager.getConnection(
-                        (BaseTestCase.dbUrl.endsWith("?") ? BaseTestCase.dbUrl : BaseTestCase.dbUrl + "&") + "sslMode=DISABLED&allowPublicKeyRetrieval=true",
-                        "dummy", "dummy");
-                return null;
-            }
+        assertThrows(SQLException.class, "Access denied for user 'dummy'@'[^']+' \\(using password: YES\\)", () -> {
+            DriverManager.getConnection(
+                    (BaseTestCase.dbUrl.endsWith("?") ? BaseTestCase.dbUrl : BaseTestCase.dbUrl + "&") + "sslMode=DISABLED&allowPublicKeyRetrieval=true",
+                    "dummy", "dummy");
+            return null;
         });
 
         // make sure the connection string doesn't contain 'maxRows'
@@ -1669,7 +1657,7 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * Test for REF_CURSOR support checking.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1680,11 +1668,11 @@ public class ConnectionTest extends BaseTestCase {
     /**
      * Test the new connection property 'enableEscapeProcessing', as well as the old connection property 'processEscapeCodesForPrepStmts' and interrelation
      * between them.
-     * 
+     *
      * This test uses a QueryInterceptor to capture the query sent to the server and assert whether escape processing has been done in the client side or if
      * the query is sent untouched and escape processing will be done at server side, according to provided connection properties and type of Statement objects
      * in use.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1762,12 +1750,13 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     public static class TestEnableEscapeProcessingQueryInterceptor extends BaseQueryInterceptor {
+
         @Override
         public <T extends Resultset> T preProcess(Supplier<String> str, Query interceptedQuery) {
             String sql = str == null ? null : str.get();
             if (sql == null) {
                 if (interceptedQuery instanceof ClientPreparedStatement) {
-                    sql = ((PreparedQuery) ((ClientPreparedStatement) interceptedQuery)).asSql();
+                    sql = ((PreparedQuery) (ClientPreparedStatement) interceptedQuery).asSql();
                 } else if (interceptedQuery instanceof PreparedQuery) {
                     sql = ((PreparedQuery) interceptedQuery).asSql();
                 }
@@ -1790,10 +1779,9 @@ public class ConnectionTest extends BaseTestCase {
                         || !isPreparedStatement && enableEscapeProcessing == escapeProcessingDone, testCase);
             }
             final String fsql = sql;
-            return super.preProcess(() -> {
-                return fsql;
-            }, interceptedQuery);
+            return super.preProcess(() -> fsql, interceptedQuery);
         }
+
     }
 
     @Test
@@ -1918,7 +1906,7 @@ public class ConnectionTest extends BaseTestCase {
     /**
      * Tests "LOAD DATA LOCAL INFILE" statements when enabled but restricted to a specific path, by specifying a path in the connection property
      * 'allowLoadLocalInfileInPath'.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2217,7 +2205,7 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * Tests WL#14392, Improve timeout error messages [classic].
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2238,7 +2226,7 @@ public class ConnectionTest extends BaseTestCase {
         Thread.sleep(1500 * seconds);
         if (versionMeetsMinimum(8, 0, 24) && !(isServerRunningOnWindows() && System.getProperty("os.name").contains("Windows"))) { // server reports timeout
             // TS.1.1 Create a connection to a MySQL configured with a short session timeout value.
-            // Sleep for a time longer than the specified timeout and assess that the error message obtained is the new one.        
+            // Sleep for a time longer than the specified timeout and assess that the error message obtained is the new one.
             assertThrows(CommunicationsException.class,
                     "The client was disconnected by the server because of inactivity. See wait_timeout and interactive_timeout for configuring this behavior.",
                     () -> timeoutConn.createStatement().executeQuery("SELECT 1"));
@@ -2267,7 +2255,7 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * Tests WL#14805, Remove support for TLS 1.0 and 1.1.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2284,7 +2272,7 @@ public class ConnectionTest extends BaseTestCase {
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
-        // TS.FR.1_1. Create a Connection with the connection property tlsVersions=TLSv1.2. Assess that the connection is created successfully and it is using 
+        // TS.FR.1_1. Create a Connection with the connection property tlsVersions=TLSv1.2. Assess that the connection is created successfully and it is using
         // TLSv1.2.
         props.setProperty(PropertyKey.tlsVersions.getKeyName(), "TLSv1.2");
         con = getConnectionWithProps(props);
@@ -2402,4 +2390,5 @@ public class ConnectionTest extends BaseTestCase {
         assertSessionStatusEquals(con.createStatement(), "ssl_version", "TLSv1.2");
         con.close();
     }
+
 }

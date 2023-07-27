@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,6 +38,7 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
 import testsuite.BaseTestCase;
 
 public class ExceptionSubclassesTest extends BaseTestCase {
+
     @Test
     public void testBug17750877() throws Exception {
         assertEquals("java.sql.SQLTransientConnectionException", SQLError.createSQLException("test", "08000", 0, true, null).getClass().getCanonicalName());
@@ -49,4 +50,5 @@ public class ExceptionSubclassesTest extends BaseTestCase {
         assertEquals("com.mysql.cj.jdbc.exceptions.MySQLQueryInterruptedException",
                 SQLError.createSQLException("test", "70100", null).getClass().getCanonicalName());
     }
+
 }

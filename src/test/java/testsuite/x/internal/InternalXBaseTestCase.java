@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -63,6 +63,7 @@ import testsuite.TestUtils;
  * Base class for tests of X DevAPI and X Protocol client internal components.
  */
 public class InternalXBaseTestCase {
+
     /**
      * The default character set used to interpret metadata. Use <i>latin1</i> - MySQL's default. This value is provided by higher layers above the protocol so
      * we avoid issues by using only ASCII characters for metadata in these tests.
@@ -123,7 +124,7 @@ public class InternalXBaseTestCase {
 
     /**
      * Create a new {@link XProtocol} instance for testing.
-     * 
+     *
      * @return an XProtocol instance
      */
     public XProtocol createTestProtocol() {
@@ -162,7 +163,7 @@ public class InternalXBaseTestCase {
 
     /**
      * Create a temporary collection for testing.
-     * 
+     *
      * @param protocol
      *
      * @return the temporary collection name
@@ -228,7 +229,7 @@ public class InternalXBaseTestCase {
 
     /**
      * Checks if the MySQL version we are connected to meets the minimum {@link ServerVersion} provided.
-     * 
+     *
      * @param version
      *            the minimum {@link ServerVersion} accepted
      * @return true or false according to versions comparison
@@ -247,7 +248,7 @@ public class InternalXBaseTestCase {
 
     /**
      * Checks if the MySQL version we are connected to meets the minimum {@link ServerVersion} provided.
-     * 
+     *
      * @param url
      *            server URL
      * @param version
@@ -277,4 +278,5 @@ public class InternalXBaseTestCase {
         String actual = rs.fetchOne().getString(1);
         assertNotEquals(unexpected, actual);
     }
+
 }

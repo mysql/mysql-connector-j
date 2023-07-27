@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2005, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -52,7 +52,6 @@ public class MysqlXid implements Xid {
 
     @Override
     public boolean equals(Object another) {
-
         if (another instanceof Xid) {
             Xid anotherAsXid = (Xid) another;
 
@@ -99,7 +98,7 @@ public class MysqlXid implements Xid {
     @Override
     public int getFormatId() {
         return this.myFormatId;
-    };
+    }
 
     @Override
     public byte[] getGlobalTransactionId() {
@@ -116,4 +115,5 @@ public class MysqlXid implements Xid {
 
         return this.hash;
     }
+
 }

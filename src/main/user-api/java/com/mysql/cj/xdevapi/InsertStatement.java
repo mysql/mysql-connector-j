@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,9 +36,10 @@ import java.util.List;
  * A statement INSERTing new row(s) into a table.
  */
 public interface InsertStatement extends Statement<InsertStatement, InsertResult> {
+
     /**
      * Add a row (sequence of values) to this statement.
-     * 
+     *
      * @param values
      *            list of values to insert
      * @return {@link InsertStatement}
@@ -47,7 +48,7 @@ public interface InsertStatement extends Statement<InsertStatement, InsertResult
 
     /**
      * Add a row (sequence of values) to this statement.
-     * 
+     *
      * @param values
      *            one or more values to insert
      * @return {@link InsertStatement}
@@ -55,4 +56,5 @@ public interface InsertStatement extends Statement<InsertStatement, InsertResult
     default InsertStatement values(Object... values) {
         return values(Arrays.asList(values));
     }
+
 }

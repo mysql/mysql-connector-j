@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -51,10 +51,12 @@ import testsuite.BaseTestCase;
  * Tests BLOB functionality in the driver.
  */
 public class BlobTest extends BaseTestCase {
+
     protected static File testBlobFile;
 
     static {
         Runtime.getRuntime().addShutdownHook(new Thread() {
+
             @Override
             public void run() {
                 for (int i = 0; i < 5; i++) {
@@ -66,12 +68,13 @@ public class BlobTest extends BaseTestCase {
                     }
                 }
             }
+
         });
     }
 
     /**
      * Setup the test case
-     * 
+     *
      * @throws Exception
      */
     @BeforeEach
@@ -90,7 +93,7 @@ public class BlobTest extends BaseTestCase {
         this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'");
         this.rs.next();
         long len = 4 + testBlobFile.length() * 2;
-        assumeTrue(this.rs.getInt(2) >= len, "You need to increase max_allowed_packet to at least " + (len) + " before running this test!");
+        assumeTrue(this.rs.getInt(2) >= len, "You need to increase max_allowed_packet to at least " + len + " before running this test!");
 
         if (versionMeetsMinimum(5, 6, 20) && !versionMeetsMinimum(5, 7)) {
             /*
@@ -103,16 +106,16 @@ public class BlobTest extends BaseTestCase {
             this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'innodb_log_file_size'");
             this.rs.next();
             assumeFalse(this.rs.getInt(2) < 10 * testBlobFile.length(),
-                    "You need to increase innodb_log_file_size to at least " + (10 * testBlobFile.length()) + " before running this test!");
+                    "You need to increase innodb_log_file_size to at least " + 10 * testBlobFile.length() + " before running this test!");
         }
         testByteStreamInsert(this.conn);
     }
 
     /**
      * Tests inserting blob data as a stream
-     * 
+     *
      * @param c
-     * 
+     *
      * @throws Exception
      */
     private void testByteStreamInsert(Connection c) throws Exception {
@@ -139,7 +142,7 @@ public class BlobTest extends BaseTestCase {
                         passed = false;
                         System.out.println("Byte pattern differed at position " + i + " , " + retrBytes[i] + " != " + fromFile);
 
-                        for (int j = 0; (j < (i + 10)) /* && (j < i) */; j++) {
+                        for (int j = 0; j < i + 10 /* && (j < i) */; j++) {
                             System.out.print(Integer.toHexString(retrBytes[j] & 0xff) + " ");
                         }
 
@@ -167,7 +170,7 @@ public class BlobTest extends BaseTestCase {
 
     /**
      * Mark this as deprecated to avoid warnings from compiler...
-     * 
+     *
      * @throws Exception
      */
     @SuppressWarnings("deprecation")
@@ -226,7 +229,7 @@ public class BlobTest extends BaseTestCase {
         testBlobFile = File.createTempFile(TEST_BLOB_FILE_PREFIX, ".dat");
         testBlobFile.deleteOnExit();
 
-        // TODO: following cleanup doesn't work correctly during concurrent execution of testsuite 
+        // TODO: following cleanup doesn't work correctly during concurrent execution of testsuite
         // cleanupTempFiles(testBlobFile, TEST_BLOB_FILE_PREFIX);
 
         BufferedOutputStream bOut = new BufferedOutputStream(new FileOutputStream(testBlobFile));
@@ -234,10 +237,11 @@ public class BlobTest extends BaseTestCase {
         int dataRange = Byte.MAX_VALUE - Byte.MIN_VALUE;
 
         for (int i = 0; i < size; i++) {
-            bOut.write((byte) ((Math.random() * dataRange) + Byte.MIN_VALUE));
+            bOut.write((byte) (Math.random() * dataRange + Byte.MIN_VALUE));
         }
 
         bOut.flush();
         bOut.close();
     }
+
 }

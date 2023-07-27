@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,6 +35,7 @@ import java.nio.ByteOrder;
 import com.mysql.cj.protocol.MessageHeader;
 
 public class XMessageHeader implements MessageHeader {
+
     public static final int MESSAGE_SIZE_LENGTH = 4;
     public static final int MESSAGE_TYPE_LENGTH = 1;
     public static final int HEADER_LENGTH = MESSAGE_SIZE_LENGTH + MESSAGE_TYPE_LENGTH;
@@ -81,4 +82,5 @@ public class XMessageHeader implements MessageHeader {
         parseBuffer();
         return this.messageType;
     }
+
 }

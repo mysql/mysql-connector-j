@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -59,7 +59,6 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
     // This is a real brain-dead implementation of BLOB. Once I add streamability to the I/O for MySQL this will be more efficiently implemented
     // (except for the position() method, ugh).
     //
-
     /** The binary data that makes up this BLOB */
     private byte[] binaryData = null;
     private boolean isClosed = false;
@@ -67,7 +66,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
 
     /**
      * Creates a Blob without data
-     * 
+     *
      * @param exceptionInterceptor
      *            exception interceptor
      */
@@ -78,7 +77,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
 
     /**
      * Creates a BLOB encapsulating the given binary data
-     * 
+     *
      * @param data
      *            data to fill the Blob
      * @param exceptionInterceptor
@@ -91,7 +90,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
 
     /**
      * Creates an updatable BLOB that can update in-place (not implemented yet).
-     * 
+     *
      * @param data
      *            data to fill the Blob
      * @param creatorResultSetToSet
@@ -133,7 +132,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
         }
 
         byte[] newData = new byte[length];
-        System.arraycopy(getBinaryData(), (int) (pos), newData, 0, length);
+        System.arraycopy(getBinaryData(), (int) pos, newData, 0, length);
 
         return newData;
     }
@@ -277,4 +276,5 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
             throw SQLError.createSQLException(Messages.getString("Blob.7"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
     }
+
 }

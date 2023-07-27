@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -77,6 +77,7 @@ import com.mysql.cj.util.StringUtils;
  * </dl>
  */
 public class ConnectionUrlParser implements DatabaseUrlContainer {
+
     private static final String DUMMY_SCHEMA = "cj://";
     private static final String USER_PASS_SEPARATOR = ":";
     private static final String USER_HOST_SEPARATOR = "@";
@@ -110,7 +111,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Static factory method for constructing instances of this class.
-     * 
+     *
      * @param connString
      *            The connection string to parse.
      * @return an instance of {@link ConnectionUrlParser}
@@ -121,7 +122,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Constructs a connection string parser for the given connection string.
-     * 
+     *
      * @param connString
      *            the connection string to parse
      */
@@ -140,7 +141,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
     /**
      * Checks if the scheme part of given connection string matches one of the {@link Type}s supported by Connector/J.
      * Throws {@link WrongArgumentException} if connString is null.
-     * 
+     *
      * @param connString
      *            connection string
      * @return true if supported
@@ -199,7 +200,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
      * When the symbol ":" is not used, it means an null/empty password or a default (HostInfo.NO_PORT) port, respectively.
      * When the symbol "@" is not used, it means that the authority part doesn't contain user information (depending on the scheme type can still be provided
      * via key=value pairs).
-     * 
+     *
      * @param authSegment
      *            the string containing the authority segment
      */
@@ -281,7 +282,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Builds an {@link HostInfo} instance for empty host authority segments.
-     * 
+     *
      * @param user
      *            the user to include in the final {@link HostInfo}
      * @param password
@@ -299,14 +300,14 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Parses the host information resorting to a URI object. This process handles most single-host well formed addresses.
-     * 
+     *
      * @param user
      *            the user to include in the final {@link HostInfo}
      * @param password
      *            the password to include in the final {@link HostInfo}
      * @param hostInfo
      *            the string containing the host information part
-     * 
+     *
      * @return the {@link HostInfo} instance containing the parsed information or <code>null</code> if unable to parse the host information
      */
     private HostInfo buildHostInfoResortingToUriParser(String user, String password, String hostInfo) {
@@ -338,7 +339,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Parses the host information using the alternate sub hosts lists syntax "[host1, host2, ...]".
-     * 
+     *
      * @param user
      *            the user to include in all the resulting {@link HostInfo}
      * @param password
@@ -361,7 +362,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
                 if ((hi = buildHostInfoForEmptyHost(user, password, h)) != null) {
                     hostInfoList.add(hi);
                 } else if ((hi = buildHostInfoResortingToUriParser(user, password, h)) != null
-                        || (maybeIPv6 && (hi = buildHostInfoResortingToUriParser(user, password, "[" + h + "]")) != null)) {
+                        || maybeIPv6 && (hi = buildHostInfoResortingToUriParser(user, password, "[" + h + "]")) != null) {
                     hostInfoList.add(hi);
                 } else if ((hi = buildHostInfoResortingToKeyValueSyntaxParser(user, password, h)) != null) {
                     hostInfoList.add(hi);
@@ -380,7 +381,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Parses the host information using the alternate syntax "(key1=value1, key2=value2, ...)".
-     * 
+     *
      * @param user
      *            the user to include in the resulting {@link HostInfo}
      * @param password
@@ -400,7 +401,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Parses the host information using the alternate syntax "address=(key1=value1)(key2=value2)...".
-     * 
+     *
      * @param user
      *            the user to include in the resulting {@link HostInfo}
      * @param password
@@ -421,7 +422,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Parses the host information using the generic syntax "host:port".
-     * 
+     *
      * @param user
      *            the user to include in the resulting {@link HostInfo}
      * @param password
@@ -443,7 +444,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Splits the given authority segment in the user information part and the host part.
-     * 
+     *
      * @param authSegment
      *            the string containing the authority segment, i.e., the user and host information parts
      * @return
@@ -462,7 +463,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Parses the given user information which is formed by the parts [user][:password].
-     * 
+     *
      * @param userInfo
      *            the string containing the user information
      * @return a {@link Pair} containing the user and password information or null if the user information can't be parsed
@@ -479,7 +480,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Parses a host:port pair and returns the two elements in a {@link Pair}
-     * 
+     *
      * @param hostInfo
      *            the host:pair to parse
      * @return a {@link Pair} containing the host and port information or null if the host information can't be parsed
@@ -521,7 +522,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
      * Takes a two-matching-groups (respectively named "key" and "value") pattern which is successively tested against the given string and produces a key/value
      * map with the matched values. The given pattern must ensure that there are no leftovers between successive tests, i.e., the end of the previous match must
      * coincide with the beginning of the next.
-     * 
+     *
      * @param pattern
      *            the regular expression pattern to match against to
      * @param input
@@ -555,7 +556,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * URL-decode the given string.
-     * 
+     *
      * @param text
      *            the string to decode
      * @return
@@ -575,7 +576,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * URL-decode the given string skipping all occurrences of the plus sign.
-     * 
+     *
      * @param text
      *            the string to decode
      * @return
@@ -596,7 +597,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Returns the original database URL that produced this connection string parser.
-     * 
+     *
      * @return the original database URL
      */
     @Override
@@ -606,7 +607,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Returns the scheme section.
-     * 
+     *
      * @return the scheme section
      */
     public String getScheme() {
@@ -615,7 +616,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Returns the authority section.
-     * 
+     *
      * @return the authority section
      */
     public String getAuthority() {
@@ -624,7 +625,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Returns the path section.
-     * 
+     *
      * @return the path section
      */
     public String getPath() {
@@ -633,7 +634,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Returns the query section.
-     * 
+     *
      * @return the query section
      */
     public String getQuery() {
@@ -642,7 +643,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Returns the hosts information.
-     * 
+     *
      * @return the hosts information
      */
     public List<HostInfo> getHosts() {
@@ -655,7 +656,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Returns the properties map contained in this connection string.
-     * 
+     *
      * @return the properties map
      */
     public Map<String, String> getProperties() {
@@ -667,7 +668,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * Returns a string representation of this object.
-     * 
+     *
      * @return a string representation of this object
      */
     @Override
@@ -680,13 +681,14 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
 
     /**
      * This class is a simple container for two elements.
-     * 
+     *
      * @param <T>
      *            left part type
      * @param <U>
      *            right part type
      */
     public static class Pair<T, U> {
+
         public final T left;
         public final U right;
 
@@ -701,5 +703,7 @@ public class ConnectionUrlParser implements DatabaseUrlContainer {
             asStr.append(String.format(" :: { left: %s, right: %s }", this.left, this.right));
             return asStr.toString();
         }
+
     }
+
 }

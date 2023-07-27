@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,6 +39,7 @@ import com.mysql.cj.conf.PropertySet;
  * A value factory for creating {@link java.math.BigDecimal} values.
  */
 public class BigDecimalValueFactory extends AbstractNumericValueFactory<BigDecimal> {
+
     int scale;
     boolean hasScale;
 
@@ -54,7 +55,7 @@ public class BigDecimalValueFactory extends AbstractNumericValueFactory<BigDecim
 
     /**
      * Adjust the result value by apply the scale, if appropriate.
-     * 
+     *
      * @param d
      *            value
      * @return result
@@ -97,7 +98,9 @@ public class BigDecimalValueFactory extends AbstractNumericValueFactory<BigDecim
         return new BigDecimal(new BigInteger(ByteBuffer.allocate(length + 1).put((byte) 0).put(bytes, offset, length).array()));
     }
 
+    @Override
     public String getTargetTypeName() {
         return BigDecimal.class.getName();
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,6 +47,7 @@ import com.mysql.cj.util.StringUtils;
  */
 public class MysqlBinaryValueDecoder implements ValueDecoder {
 
+    @Override
     public <T> T decodeTimestamp(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf) {
         if (length == 0) {
             return vf.createFromTimestamp(new InternalTimestamp());
@@ -66,7 +67,7 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
 
         int nanos = 0;
 
-        year = (bytes[offset + 0] & 0xff) | ((bytes[offset + 1] & 0xff) << 8);
+        year = bytes[offset + 0] & 0xff | (bytes[offset + 1] & 0xff) << 8;
         month = bytes[offset + 2];
         day = bytes[offset + 3];
 
@@ -78,13 +79,13 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
 
         if (length > NativeConstants.BIN_LEN_TIMESTAMP_NO_FRAC) {
             // MySQL PS protocol uses microseconds
-            nanos = 1000 * ((bytes[offset + 7] & 0xff) | ((bytes[offset + 8] & 0xff) << 8) | ((bytes[offset + 9] & 0xff) << 16)
-                    | ((bytes[offset + 10] & 0xff) << 24));
+            nanos = 1000 * (bytes[offset + 7] & 0xff | (bytes[offset + 8] & 0xff) << 8 | (bytes[offset + 9] & 0xff) << 16 | (bytes[offset + 10] & 0xff) << 24);
         }
 
         return vf.createFromTimestamp(new InternalTimestamp(year, month, day, hours, minutes, seconds, nanos, scale));
     }
 
+    @Override
     public <T> T decodeDatetime(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf) {
         if (length == 0) {
             return vf.createFromTimestamp(new InternalTimestamp());
@@ -104,7 +105,7 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
 
         int nanos = 0;
 
-        year = (bytes[offset + 0] & 0xff) | ((bytes[offset + 1] & 0xff) << 8);
+        year = bytes[offset + 0] & 0xff | (bytes[offset + 1] & 0xff) << 8;
         month = bytes[offset + 2];
         day = bytes[offset + 3];
 
@@ -116,13 +117,13 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
 
         if (length > NativeConstants.BIN_LEN_TIMESTAMP_NO_FRAC) {
             // MySQL PS protocol uses microseconds
-            nanos = 1000 * ((bytes[offset + 7] & 0xff) | ((bytes[offset + 8] & 0xff) << 8) | ((bytes[offset + 9] & 0xff) << 16)
-                    | ((bytes[offset + 10] & 0xff) << 24));
+            nanos = 1000 * (bytes[offset + 7] & 0xff | (bytes[offset + 8] & 0xff) << 8 | (bytes[offset + 9] & 0xff) << 16 | (bytes[offset + 10] & 0xff) << 24);
         }
 
         return vf.createFromDatetime(new InternalTimestamp(year, month, day, hours, minutes, seconds, nanos, scale));
     }
 
+    @Override
     public <T> T decodeTime(byte[] bytes, int offset, int length, int scale, ValueFactory<T> vf) {
         if (length == 0) {
             return vf.createFromTime(new InternalTime());
@@ -138,7 +139,7 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
 
         boolean negative = bytes[offset] == 1;
 
-        days = (bytes[offset + 1] & 0xff) | ((bytes[offset + 2] & 0xff) << 8) | ((bytes[offset + 3] & 0xff) << 16) | ((bytes[offset + 4] & 0xff) << 24);
+        days = bytes[offset + 1] & 0xff | (bytes[offset + 2] & 0xff) << 8 | (bytes[offset + 3] & 0xff) << 16 | (bytes[offset + 4] & 0xff) << 24;
         hours = bytes[offset + 5];
         minutes = bytes[offset + 6];
         seconds = bytes[offset + 7];
@@ -149,25 +150,26 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
 
         if (length > NativeConstants.BIN_LEN_TIME_NO_FRAC) {
             // MySQL PS protocol uses microseconds
-            nanos = 1000 * ((bytes[offset + 8] & 0xff) | ((bytes[offset + 9] & 0xff) << 8) | ((bytes[offset + 10] & 0xff) << 16)
-                    | ((bytes[offset + 11] & 0xff) << 24));
+            nanos = 1000 * (bytes[offset + 8] & 0xff | (bytes[offset + 9] & 0xff) << 8 | (bytes[offset + 10] & 0xff) << 16 | (bytes[offset + 11] & 0xff) << 24);
         }
 
         return vf.createFromTime(new InternalTime(days * 24 + hours, minutes, seconds, nanos, scale));
     }
 
+    @Override
     public <T> T decodeDate(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length == 0) {
             return vf.createFromDate(new InternalDate());
         } else if (length != NativeConstants.BIN_LEN_DATE) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "DATE" }));
         }
-        int year = (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8);
+        int year = bytes[offset] & 0xff | (bytes[offset + 1] & 0xff) << 8;
         int month = bytes[offset + 2];
         int day = bytes[offset + 3];
         return vf.createFromDate(new InternalDate(year, month, day));
     }
 
+    @Override
     public <T> T decodeUInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length != NativeConstants.BIN_LEN_INT1) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "BYTE" }));
@@ -175,6 +177,7 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
         return vf.createFromLong(bytes[offset] & 0xff);
     }
 
+    @Override
     public <T> T decodeInt1(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length != NativeConstants.BIN_LEN_INT1) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "BYTE" }));
@@ -182,49 +185,54 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
         return vf.createFromLong(bytes[offset]);
     }
 
+    @Override
     public <T> T decodeUInt2(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length != NativeConstants.BIN_LEN_INT2) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "SHORT" }));
         }
-        int asInt = ((bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8));
+        int asInt = bytes[offset] & 0xff | (bytes[offset + 1] & 0xff) << 8;
         return vf.createFromLong(asInt);
     }
 
+    @Override
     public <T> T decodeInt2(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length != NativeConstants.BIN_LEN_INT2) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "SHORT" }));
         }
-        short asShort = (short) ((bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8));
+        short asShort = (short) (bytes[offset] & 0xff | (bytes[offset + 1] & 0xff) << 8);
         return vf.createFromLong(asShort);
     }
 
+    @Override
     public <T> T decodeUInt4(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length != NativeConstants.BIN_LEN_INT4) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "INT" }));
         }
-        long asLong = (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8) | ((bytes[offset + 2] & 0xff) << 16)
-                | ((long) (bytes[offset + 3] & 0xff) << 24);
+        long asLong = bytes[offset] & 0xff | (bytes[offset + 1] & 0xff) << 8 | (bytes[offset + 2] & 0xff) << 16 | (long) (bytes[offset + 3] & 0xff) << 24;
         return vf.createFromLong(asLong);
     }
 
+    @Override
     public <T> T decodeInt4(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length != NativeConstants.BIN_LEN_INT4) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "SHORT" }));
         }
-        int asInt = (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8) | ((bytes[offset + 2] & 0xff) << 16) | ((bytes[offset + 3] & 0xff) << 24);
+        int asInt = bytes[offset] & 0xff | (bytes[offset + 1] & 0xff) << 8 | (bytes[offset + 2] & 0xff) << 16 | (bytes[offset + 3] & 0xff) << 24;
         return vf.createFromLong(asInt);
     }
 
+    @Override
     public <T> T decodeInt8(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length != NativeConstants.BIN_LEN_INT8) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "LONG" }));
         }
-        long asLong = (bytes[offset] & 0xff) | ((long) (bytes[offset + 1] & 0xff) << 8) | ((long) (bytes[offset + 2] & 0xff) << 16)
-                | ((long) (bytes[offset + 3] & 0xff) << 24) | ((long) (bytes[offset + 4] & 0xff) << 32) | ((long) (bytes[offset + 5] & 0xff) << 40)
-                | ((long) (bytes[offset + 6] & 0xff) << 48) | ((long) (bytes[offset + 7] & 0xff) << 56);
+        long asLong = bytes[offset] & 0xff | (long) (bytes[offset + 1] & 0xff) << 8 | (long) (bytes[offset + 2] & 0xff) << 16
+                | (long) (bytes[offset + 3] & 0xff) << 24 | (long) (bytes[offset + 4] & 0xff) << 32 | (long) (bytes[offset + 5] & 0xff) << 40
+                | (long) (bytes[offset + 6] & 0xff) << 48 | (long) (bytes[offset + 7] & 0xff) << 56;
         return vf.createFromLong(asLong);
     }
 
+    @Override
     public <T> T decodeUInt8(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length != NativeConstants.BIN_LEN_INT8) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "LONG" }));
@@ -242,33 +250,38 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
         return vf.createFromBigInteger(bigInt);
     }
 
+    @Override
     public <T> T decodeFloat(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length != NativeConstants.BIN_LEN_FLOAT) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "FLOAT" }));
         }
-        int asInt = (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8) | ((bytes[offset + 2] & 0xff) << 16) | ((bytes[offset + 3] & 0xff) << 24);
+        int asInt = bytes[offset] & 0xff | (bytes[offset + 1] & 0xff) << 8 | (bytes[offset + 2] & 0xff) << 16 | (bytes[offset + 3] & 0xff) << 24;
         return vf.createFromDouble(Float.intBitsToFloat(asInt));
     }
 
+    @Override
     public <T> T decodeDouble(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         if (length != NativeConstants.BIN_LEN_DOUBLE) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "DOUBLE" }));
         }
-        long valueAsLong = (bytes[offset + 0] & 0xff) | ((long) (bytes[offset + 1] & 0xff) << 8) | ((long) (bytes[offset + 2] & 0xff) << 16)
-                | ((long) (bytes[offset + 3] & 0xff) << 24) | ((long) (bytes[offset + 4] & 0xff) << 32) | ((long) (bytes[offset + 5] & 0xff) << 40)
-                | ((long) (bytes[offset + 6] & 0xff) << 48) | ((long) (bytes[offset + 7] & 0xff) << 56);
+        long valueAsLong = bytes[offset + 0] & 0xff | (long) (bytes[offset + 1] & 0xff) << 8 | (long) (bytes[offset + 2] & 0xff) << 16
+                | (long) (bytes[offset + 3] & 0xff) << 24 | (long) (bytes[offset + 4] & 0xff) << 32 | (long) (bytes[offset + 5] & 0xff) << 40
+                | (long) (bytes[offset + 6] & 0xff) << 48 | (long) (bytes[offset + 7] & 0xff) << 56;
         return vf.createFromDouble(Double.longBitsToDouble(valueAsLong));
     }
 
+    @Override
     public <T> T decodeDecimal(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         BigDecimal d = new BigDecimal(StringUtils.toAsciiCharArray(bytes, offset, length));
         return vf.createFromBigDecimal(d);
     }
 
+    @Override
     public <T> T decodeByteArray(byte[] bytes, int offset, int length, Field f, ValueFactory<T> vf) {
         return vf.createFromBytes(bytes, offset, length, f);
     }
 
+    @Override
     public <T> T decodeBit(byte[] bytes, int offset, int length, ValueFactory<T> vf) {
         return vf.createFromBit(bytes, offset, length);
     }
@@ -283,7 +296,8 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
         if (length != NativeConstants.BIN_LEN_INT2) {
             throw new DataReadException(Messages.getString("ResultSet.InvalidLengthForType", new Object[] { length, "YEAR" }));
         }
-        short asShort = (short) ((bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8));
+        short asShort = (short) (bytes[offset] & 0xff | (bytes[offset + 1] & 0xff) << 8);
         return vf.createFromYear(asShort);
     }
+
 }

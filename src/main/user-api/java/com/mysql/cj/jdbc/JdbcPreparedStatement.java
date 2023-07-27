@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,8 +33,8 @@ import java.math.BigInteger;
 import java.sql.SQLException;
 
 import com.mysql.cj.MysqlType;
-import com.mysql.cj.QueryInfo;
 import com.mysql.cj.QueryBindings;
+import com.mysql.cj.QueryInfo;
 
 public interface JdbcPreparedStatement extends java.sql.PreparedStatement, JdbcStatement {
 
@@ -57,4 +57,5 @@ public interface JdbcPreparedStatement extends java.sql.PreparedStatement, JdbcS
     void setNull(int parameterIndex, MysqlType mysqlType) throws SQLException;
 
     ParameterBindings getParameterBindings() throws SQLException;
+
 }

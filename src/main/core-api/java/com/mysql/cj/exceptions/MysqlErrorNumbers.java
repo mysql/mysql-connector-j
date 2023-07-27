@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1052,7 +1052,7 @@ public final class MysqlErrorNumbers {
     public final static int ER_QUERY_TIMEOUT = 1907; //SQLSTATE: HY000 Message: Query execution was interrupted, max_statement_time exceeded; was introduced in 5.7.4.
     public final static int ER_NON_RO_SELECT_DISABLE_TIMER = 1908; //SQLSTATE: HY000 Message: Select is not a read only statement, disabling timer; was introduced in 5.7.4.
     public final static int ER_DUP_LIST_ENTRY = 1909; //SQLSTATE: HY000 Message: Duplicate entry '%s'.; was introduced in 5.7.4.
-    public final static int ER_SQL_MODE_NO_EFFECT = 1910; //SQLSTATE: HY000 Message: '%s' mode no longer has any effect. Use STRICT_ALL_TABLES or STRICT_TRANS_TABLES instead.; was introduced in 5.7.4. 
+    public final static int ER_SQL_MODE_NO_EFFECT = 1910; //SQLSTATE: HY000 Message: '%s' mode no longer has any effect. Use STRICT_ALL_TABLES or STRICT_TRANS_TABLES instead.; was introduced in 5.7.4.
 
     public static final int ER_SESSION_WAS_KILLED = 3169;
 
@@ -1505,10 +1505,10 @@ public final class MysqlErrorNumbers {
 
     /**
      * Map MySQL error codes to SQL-99 error codes
-     * 
+     *
      * @param errno
      *            the MySQL error code
-     * 
+     *
      * @return the corresponding SQL-99 error code
      */
     public static String mysqlToSqlState(int errno) {
@@ -1518,4 +1518,5 @@ public final class MysqlErrorNumbers {
     private MysqlErrorNumbers() {
         // prevent instantiation
     }
+
 }

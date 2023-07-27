@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -99,7 +99,7 @@ public class NativeCapabilities implements ServerCapabilities {
 
             this.serverHasFracSecsSupport = this.serverVersion.meetsMinimum(new ServerVersion(5, 6, 4));
         } catch (Throwable t) {
-            // Chances are that the other end is talking X Protocol instead of MySQL protocol. 
+            // Chances are that the other end is talking X Protocol instead of MySQL protocol.
             // X Protocol message type byte (NOTICE = 11) coincides with MySQL protocol version byte in the Initial Handshake Packet.
             if (this.protocolVersion == 11 && IndexOutOfBoundsException.class.isAssignableFrom(t.getClass())) {
                 throw ExceptionFactory.createException(UnableToConnectException.class,
@@ -124,14 +124,17 @@ public class NativeCapabilities implements ServerCapabilities {
         this.capabilityFlags = capabilityFlags;
     }
 
+    @Override
     public ServerVersion getServerVersion() {
         return this.serverVersion;
     }
 
+    @Override
     public long getThreadId() {
         return this.threadId;
     }
 
+    @Override
     public void setThreadId(long threadId) {
         this.threadId = threadId;
     }
@@ -141,9 +144,10 @@ public class NativeCapabilities implements ServerCapabilities {
     }
 
     /**
-     * 
+     *
      * @return Collation index which server provided in handshake greeting packet
      */
+    @Override
     public int getServerDefaultCollationIndex() {
         return this.serverDefaultCollationIndex;
     }
@@ -160,4 +164,5 @@ public class NativeCapabilities implements ServerCapabilities {
     public boolean serverSupportsFracSecs() {
         return this.serverHasFracSecsSupport;
     }
+
 }

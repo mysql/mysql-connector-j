@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -87,7 +87,6 @@ public class Field implements ProtocolEntity {
     }
 
     private void adjustFlagsByMysqlType() {
-
         switch (this.mysqlType) {
             case BIT:
                 if (this.length > 1) {
@@ -116,7 +115,6 @@ public class Field implements ProtocolEntity {
             default:
                 break;
         }
-
     }
 
     /**
@@ -137,7 +135,6 @@ public class Field implements ProtocolEntity {
      *            length in characters or bytes (for BINARY data).
      */
     public Field(String tableName, String columnName, int collationIndex, String encoding, MysqlType mysqlType, int length) {
-
         this.databaseName = new LazyString(null);
         this.tableName = new LazyString(tableName);
         this.originalTableName = new LazyString(null);
@@ -237,11 +234,11 @@ public class Field implements ProtocolEntity {
     }
 
     public boolean isAutoIncrement() {
-        return ((this.colFlag & MysqlType.FIELD_FLAG_AUTO_INCREMENT) > 0);
+        return (this.colFlag & MysqlType.FIELD_FLAG_AUTO_INCREMENT) > 0;
     }
 
     public boolean isBinary() {
-        return ((this.colFlag & MysqlType.FIELD_FLAG_BINARY) > 0);
+        return (this.colFlag & MysqlType.FIELD_FLAG_BINARY) > 0;
     }
 
     public void setBinary() {
@@ -249,7 +246,7 @@ public class Field implements ProtocolEntity {
     }
 
     public boolean isBlob() {
-        return ((this.colFlag & MysqlType.FIELD_FLAG_BLOB) > 0);
+        return (this.colFlag & MysqlType.FIELD_FLAG_BLOB) > 0;
     }
 
     public void setBlob() {
@@ -257,15 +254,15 @@ public class Field implements ProtocolEntity {
     }
 
     public boolean isMultipleKey() {
-        return ((this.colFlag & MysqlType.FIELD_FLAG_MULTIPLE_KEY) > 0);
+        return (this.colFlag & MysqlType.FIELD_FLAG_MULTIPLE_KEY) > 0;
     }
 
     public boolean isNotNull() {
-        return ((this.colFlag & MysqlType.FIELD_FLAG_NOT_NULL) > 0);
+        return (this.colFlag & MysqlType.FIELD_FLAG_NOT_NULL) > 0;
     }
 
     public boolean isPrimaryKey() {
-        return ((this.colFlag & MysqlType.FIELD_FLAG_PRIMARY_KEY) > 0);
+        return (this.colFlag & MysqlType.FIELD_FLAG_PRIMARY_KEY) > 0;
     }
 
     public boolean isFromFunction() {
@@ -283,15 +280,15 @@ public class Field implements ProtocolEntity {
     }
 
     public boolean isUniqueKey() {
-        return ((this.colFlag & MysqlType.FIELD_FLAG_UNIQUE_KEY) > 0);
+        return (this.colFlag & MysqlType.FIELD_FLAG_UNIQUE_KEY) > 0;
     }
 
     public boolean isUnsigned() {
-        return ((this.colFlag & MysqlType.FIELD_FLAG_UNSIGNED) > 0);
+        return (this.colFlag & MysqlType.FIELD_FLAG_UNSIGNED) > 0;
     }
 
     public boolean isZeroFill() {
-        return ((this.colFlag & MysqlType.FIELD_FLAG_ZEROFILL) > 0);
+        return (this.colFlag & MysqlType.FIELD_FLAG_ZEROFILL) > 0;
     }
 
     @Override
@@ -372,7 +369,7 @@ public class Field implements ProtocolEntity {
     }
 
     public boolean isSingleBit() {
-        return (this.length <= 1);
+        return this.length <= 1;
     }
 
     public boolean getValueNeedsQuoting() {
@@ -419,4 +416,5 @@ public class Field implements ProtocolEntity {
     public void setFlags(short colFlag) {
         this.colFlag = colFlag;
     }
+
 }

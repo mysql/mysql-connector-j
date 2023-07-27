@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -248,7 +248,7 @@ public class XProtocolDecoder implements ValueDecoder {
             // read until we encounter the sign bit
             while (true) {
                 int b = 0xFF & inputStream.readRawByte();
-                if ((b >> 4) > 9) {
+                if (b >> 4 > 9) {
                     sign = (byte) (b >> 4);
                     break;
                 }
@@ -336,4 +336,5 @@ public class XProtocolDecoder implements ValueDecoder {
         // TODO Auto-generated method stub
         return null;
     }
+
 }

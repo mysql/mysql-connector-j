@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -42,4 +42,5 @@ public interface MessageBuilder<M extends Message> {
     M buildClose();
 
     M buildComQuery(M sharedPacket, Session sess, PreparedQuery preparedQuery, QueryBindings bindings, String characterEncoding);
+
 }

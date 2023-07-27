@@ -110,7 +110,6 @@ public class NativeSession extends CoreSession implements Serializable {
 
     public void connect(HostInfo hi, String user, String password, String database, int loginTimeout, TransactionEventHandler transactionManager)
             throws IOException {
-
         this.hostInfo = hi;
 
         // reset max-rows to default value
@@ -228,7 +227,7 @@ public class NativeSession extends CoreSession implements Serializable {
 
     /**
      * Used by MiniAdmin to shutdown a MySQL server
-     * 
+     *
      */
     public void shutdownServer() {
         if (versionMeetsMinimum(5, 7, 9)) {
@@ -251,7 +250,7 @@ public class NativeSession extends CoreSession implements Serializable {
     /**
      * Returns the packet used for sending data (used by PreparedStatement) with position set to 0.
      * Guarded by external synchronization on a mutex.
-     * 
+     *
      * @return A packet to send data with
      */
     public NativePacketPayload getSharedSendPacket() {
@@ -334,13 +333,17 @@ public class NativeSession extends CoreSession implements Serializable {
             this.serverConfigCache = cacheFactory.getInstance(syncMutex, this.hostInfo.getDatabaseUrl(), Integer.MAX_VALUE, Integer.MAX_VALUE);
 
             ExceptionInterceptor evictOnCommsError = new ExceptionInterceptor() {
+
+                @Override
                 public ExceptionInterceptor init(Properties config, Log log1) {
                     return this;
                 }
 
+                @Override
                 public void destroy() {
                 }
 
+                @Override
                 @SuppressWarnings("synthetic-access")
                 public Exception interceptException(Exception sqlEx) {
                     if (sqlEx instanceof SQLException && ((SQLException) sqlEx).getSQLState() != null
@@ -349,6 +352,7 @@ public class NativeSession extends CoreSession implements Serializable {
                     }
                     return null;
                 }
+
             };
 
             if (this.exceptionInterceptor == null) {
@@ -365,14 +369,13 @@ public class NativeSession extends CoreSession implements Serializable {
     /**
      * Loads the result of 'SHOW VARIABLES' into the serverVariables field so
      * that the driver can configure itself.
-     * 
+     *
      * @param syncMutex
      *            synchronization mutex
      * @param version
      *            driver version string
      */
     public void loadServerVariables(Object syncMutex, String version) {
-
         if (this.cacheServerConfiguration.getValue()) {
             createConfigCacheIfNeeded(syncMutex);
 
@@ -405,9 +408,9 @@ public class NativeSession extends CoreSession implements Serializable {
                 version = buf.toString();
             }
 
-            String versionComment = (this.propertySet.getBooleanProperty(PropertyKey.paranoid).getValue() || version == null) ? "" : "/* " + version + " */";
+            String versionComment = this.propertySet.getBooleanProperty(PropertyKey.paranoid).getValue() || version == null ? "" : "/* " + version + " */";
 
-            this.protocol.getServerSession().setServerVariables(new HashMap<String, String>());
+            this.protocol.getServerSession().setServerVariables(new HashMap<>());
 
             if (versionMeetsMinimum(5, 1, 0)) {
                 StringBuilder queryBuf = new StringBuilder(versionComment).append("SELECT");
@@ -435,7 +438,7 @@ public class NativeSession extends CoreSession implements Serializable {
                 queryBuf.append(", @@sql_mode AS sql_mode");
                 queryBuf.append(", @@system_time_zone AS system_time_zone");
                 queryBuf.append(", @@time_zone AS time_zone");
-                if (versionMeetsMinimum(8, 0, 3) || (versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0))) {
+                if (versionMeetsMinimum(8, 0, 3) || versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0)) {
                     queryBuf.append(", @@transaction_isolation AS transaction_isolation");
                 } else {
                     queryBuf.append(", @@tx_isolation AS transaction_isolation");
@@ -507,6 +510,7 @@ public class NativeSession extends CoreSession implements Serializable {
         }
     }
 
+    @Override
     public String getProcessHost() {
         try {
             long threadId = getThreadId();
@@ -578,7 +582,7 @@ public class NativeSession extends CoreSession implements Serializable {
 
     /**
      * Get the variable value from server.
-     * 
+     *
      * @param varName
      *            server variable name
      * @return server variable value
@@ -610,7 +614,7 @@ public class NativeSession extends CoreSession implements Serializable {
      * Send a query to the server. Returns one of the ResultSet objects.
      * To ensure that Statement's queries are serialized, calls to this method
      * should be enclosed in a connection mutex synchronized block.
-     * 
+     *
      * @param <T>
      *            extends {@link Resultset}
      * @param callingQuery
@@ -629,12 +633,11 @@ public class NativeSession extends CoreSession implements Serializable {
      *            use this metadata instead of the one provided on wire
      * @param isBatch
      *            is it a batch query
-     * 
+     *
      * @return a ResultSet holding the results
      */
     public <T extends Resultset> T execSQL(Query callingQuery, String query, int maxRows, NativePacketPayload packet, boolean streamResults,
             ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory, ColumnDefinition cachedMetadata, boolean isBatch) {
-
         long queryStartTime = this.gatherPerfMetrics.getValue() ? System.currentTimeMillis() : 0;
         int endOfQueryPacketPosition = packet != null ? packet.getPosition() : 0;
 
@@ -667,7 +670,7 @@ public class NativeSession extends CoreSession implements Serializable {
                 sqlE.appendMessage(messageBuf.toString());
             }
 
-            if ((this.autoReconnect.getValue())) {
+            if (this.autoReconnect.getValue()) {
                 if (sqlE instanceof CJCommunicationsException) {
                     // IO may be dirty or damaged beyond repair, force close it.
                     this.protocol.getSocketConnection().forceClose();
@@ -699,7 +702,6 @@ public class NativeSession extends CoreSession implements Serializable {
                 ((NativeProtocol) this.protocol).getMetricsHolder().registerQueryExecutionTime(System.currentTimeMillis() - queryStartTime);
             }
         }
-
     }
 
     public long getIdleFor() {
@@ -722,15 +724,15 @@ public class NativeSession extends CoreSession implements Serializable {
         long pingMillisLifetime = getPropertySet().getIntegerProperty(PropertyKey.selfDestructOnPingSecondsLifetime).getValue();
         int pingMaxOperations = getPropertySet().getIntegerProperty(PropertyKey.selfDestructOnPingMaxOperations).getValue();
 
-        if ((pingMillisLifetime > 0 && (System.currentTimeMillis() - this.connectionCreationTimeMillis) > pingMillisLifetime)
-                || (pingMaxOperations > 0 && pingMaxOperations <= getCommandCount())) {
+        if (pingMillisLifetime > 0 && System.currentTimeMillis() - this.connectionCreationTimeMillis > pingMillisLifetime
+                || pingMaxOperations > 0 && pingMaxOperations <= getCommandCount()) {
 
             invokeNormalCloseListeners();
 
             throw ExceptionFactory.createException(Messages.getString("Connection.exceededConnectionLifetime"),
                     MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, 0, false, null, this.exceptionInterceptor);
         }
-        this.protocol.sendCommand(this.commandBuilder.buildComPing(null), false, timeoutMillis); // it isn't safe to use a shared packet here 
+        this.protocol.sendCommand(this.commandBuilder.buildComPing(null), false, timeoutMillis); // it isn't safe to use a shared packet here
     }
 
     public long getConnectionCreationTimeMillis() {
@@ -741,6 +743,7 @@ public class NativeSession extends CoreSession implements Serializable {
         this.connectionCreationTimeMillis = connectionCreationTimeMillis;
     }
 
+    @Override
     public boolean isClosed() {
         return this.isClosed;
     }
@@ -823,4 +826,5 @@ public class NativeSession extends CoreSession implements Serializable {
         }
         return this.cancelTimer;
     }
+
 }

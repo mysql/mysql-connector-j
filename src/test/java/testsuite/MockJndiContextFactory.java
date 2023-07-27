@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -52,12 +52,14 @@ import javax.naming.spi.InitialContextFactory;
  * The following classes implement a mock JDNI provider that holds serialized objects in memory.
  */
 public class MockJndiContextFactory implements InitialContextFactory {
+
     @Override
     public Context getInitialContext(Hashtable<?, ?> environment) throws NamingException {
         return new MockJndiContext();
     }
 
     public static class MockJndiContext implements Context {
+
         private HashMap<String, byte[]> data = new HashMap<>();
 
         @Override
@@ -220,18 +222,22 @@ public class MockJndiContextFactory implements InitialContextFactory {
         public String getNameInNamespace() throws NamingException {
             return null;
         }
+
     }
 
     public static class MockJndiNameParser implements NameParser {
+
         @Override
         public Name parse(String name) throws NamingException {
             Name myName = new MockJndiName();
             myName.add(name);
             return myName;
         }
+
     }
 
     public static class MockJndiName implements Name {
+
         private static final long serialVersionUID = 1L;
 
         private String data = "";
@@ -312,5 +318,7 @@ public class MockJndiContextFactory implements InitialContextFactory {
         public Object clone() {
             return this;
         }
+
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -53,7 +53,6 @@ public class TextRowFactory extends AbstractRowFactory implements ProtocolEntity
 
     @Override
     public ResultsetRow createFromMessage(NativePacketPayload rowPacket) {
-
         // use a buffer row for reusable packets (streaming results), blobs and long strings
         // or if we're over the threshold
         boolean useBufferRow = this.canReuseRowPacketForBufferRow || this.columnDefinition.hasLargeFields()

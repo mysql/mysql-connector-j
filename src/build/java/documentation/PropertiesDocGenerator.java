@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,13 +46,15 @@ public class PropertiesDocGenerator {
     }
 
     static class XmlMap {
+
         protected Map<Integer, Map<String, PropertyDefinition<?>>> ordered = new TreeMap<>();
         protected Map<String, PropertyDefinition<?>> alpha = new TreeMap<>();
+
     }
 
     /**
      * Returns a description of the connection properties as an XML document.
-     * 
+     *
      * @return the connection properties as an XML document.
      */
     public static String exposeAsXml() {
@@ -140,4 +142,5 @@ public class PropertiesDocGenerator {
 
         return xmlBuf.toString();
     }
+
 }

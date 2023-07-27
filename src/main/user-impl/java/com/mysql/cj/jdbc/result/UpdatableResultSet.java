@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -73,6 +73,7 @@ import com.mysql.cj.util.StringUtils;
  * A result set that is updatable.
  */
 public class UpdatableResultSet extends ResultSetImpl {
+
     /** Marker for 'stream' data when doing INSERT rows */
     final static byte[] STREAM_DATA_MARKER = StringUtils.getBytes("** STREAM DATA **");
 
@@ -133,14 +134,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     /**
      * Creates a new ResultSet object.
-     * 
+     *
      * @param tuples
      *            actual row data
      * @param conn
      *            the Connection that created us.
      * @param creatorStmt
      *            statement owning this result set
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -206,7 +207,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     /**
      * Is this ResultSet updatable?
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -227,10 +228,10 @@ public class UpdatableResultSet extends ResultSetImpl {
             Field[] fields = this.getMetadata().getFields();
             // We can only do this if we know that there is a currently selected database, or if we're talking to a > 4.1 version of MySQL server (as it returns
             // database names in field info)
-            if ((this.db == null) || (this.db.length() == 0)) {
+            if (this.db == null || this.db.length() == 0) {
                 this.db = fields[0].getDatabaseName();
 
-                if ((this.db == null) || (this.db.length() == 0)) {
+                if (this.db == null || this.db.length() == 0) {
                     throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.43"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                             getExceptionInterceptor());
                 }
@@ -283,7 +284,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                     }
 
                     // Can't reference more than one database
-                    if ((dbName == null) || !dbName.equals(otherDbName)) {
+                    if (dbName == null || !dbName.equals(otherDbName)) {
                         this.isUpdatable = false;
                         this.notUpdatableReason = Messages.getString("NotUpdatableReason.1");
 
@@ -503,7 +504,6 @@ public class UpdatableResultSet extends ResultSetImpl {
                 ps.setBytes(psIdx, val);
                 break;
         }
-
     }
 
     private void extractDefaultValues() throws SQLException {
@@ -556,7 +556,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     /**
      * Figure out whether or not this ResultSet is updatable, and if so,
      * generate the PreparedStatements to support updates.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      * @throws NotUpdatable
@@ -714,7 +714,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     @Override
     public int getConcurrency() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            return (this.isUpdatable ? CONCUR_UPDATABLE : CONCUR_READ_ONLY);
+            return this.isUpdatable ? CONCUR_UPDATABLE : CONCUR_READ_ONLY;
         }
     }
 
@@ -846,39 +846,37 @@ public class UpdatableResultSet extends ResultSetImpl {
                 if (!this.populateInserterWithDefaultValues) {
                     this.inserter.setBytes(i + 1, StringUtils.getBytes("DEFAULT"), false);
                     newRowData = null;
-                } else {
-                    if (this.defaultColumnValue[i] != null) {
-                        Field f = fields[i];
+                } else if (this.defaultColumnValue[i] != null) {
+                    Field f = fields[i];
 
-                        switch (f.getMysqlTypeId()) {
-                            case MysqlType.FIELD_TYPE_DATE:
-                            case MysqlType.FIELD_TYPE_DATETIME:
-                            case MysqlType.FIELD_TYPE_TIME:
-                            case MysqlType.FIELD_TYPE_TIMESTAMP:
+                    switch (f.getMysqlTypeId()) {
+                        case MysqlType.FIELD_TYPE_DATE:
+                        case MysqlType.FIELD_TYPE_DATETIME:
+                        case MysqlType.FIELD_TYPE_TIME:
+                        case MysqlType.FIELD_TYPE_TIMESTAMP:
 
-                                if (this.defaultColumnValue[i].length > 7 && this.defaultColumnValue[i][0] == (byte) 'C'
-                                        && this.defaultColumnValue[i][1] == (byte) 'U' && this.defaultColumnValue[i][2] == (byte) 'R'
-                                        && this.defaultColumnValue[i][3] == (byte) 'R' && this.defaultColumnValue[i][4] == (byte) 'E'
-                                        && this.defaultColumnValue[i][5] == (byte) 'N' && this.defaultColumnValue[i][6] == (byte) 'T'
-                                        && this.defaultColumnValue[i][7] == (byte) '_') {
-                                    this.inserter.setBytes(i + 1, this.defaultColumnValue[i], false);
-                                } else {
-                                    this.inserter.setBytes(i + 1, this.defaultColumnValue[i]);
-                                }
-                                break;
-
-                            default:
+                            if (this.defaultColumnValue[i].length > 7 && this.defaultColumnValue[i][0] == (byte) 'C'
+                                    && this.defaultColumnValue[i][1] == (byte) 'U' && this.defaultColumnValue[i][2] == (byte) 'R'
+                                    && this.defaultColumnValue[i][3] == (byte) 'R' && this.defaultColumnValue[i][4] == (byte) 'E'
+                                    && this.defaultColumnValue[i][5] == (byte) 'N' && this.defaultColumnValue[i][6] == (byte) 'T'
+                                    && this.defaultColumnValue[i][7] == (byte) '_') {
+                                this.inserter.setBytes(i + 1, this.defaultColumnValue[i], false);
+                            } else {
                                 this.inserter.setBytes(i + 1, this.defaultColumnValue[i]);
-                        }
+                            }
+                            break;
 
-                        // This value _could_ be changed from a getBytes(), so we need a copy....
-                        byte[] defaultValueCopy = new byte[this.defaultColumnValue[i].length];
-                        System.arraycopy(this.defaultColumnValue[i], 0, defaultValueCopy, 0, defaultValueCopy.length);
-                        newRowData[i] = defaultValueCopy;
-                    } else {
-                        this.inserter.setNull(i + 1, MysqlType.NULL);
-                        newRowData[i] = null;
+                        default:
+                            this.inserter.setBytes(i + 1, this.defaultColumnValue[i]);
                     }
+
+                    // This value _could_ be changed from a getBytes(), so we need a copy....
+                    byte[] defaultValueCopy = new byte[this.defaultColumnValue[i].length];
+                    System.arraycopy(this.defaultColumnValue[i], 0, defaultValueCopy, 0, defaultValueCopy.length);
+                    newRowData[i] = defaultValueCopy;
+                } else {
+                    this.inserter.setNull(i + 1, MysqlType.NULL);
+                    newRowData[i] = null;
                 }
             }
         }
@@ -930,7 +928,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             SQLException sqlEx = null;
 
             if (this.useUsageAdvisor) {
-                if ((this.deleter == null) && (this.inserter == null) && (this.refresher == null) && (this.updater == null)) {
+                if (this.deleter == null && this.inserter == null && this.refresher == null && this.updater == null) {
                     this.eventSink.processEvent(ProfilerEvent.TYPE_USAGE, this.session, this.getOwningStatement(), this, 0, new Throwable(),
                             Messages.getString("UpdatableResultSet.34"));
                 }
@@ -1032,7 +1030,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             dataFrom = updateInsertStmt.getBytesRepresentation(index + 1);
 
             // Primary keys not set?
-            if (updateInsertStmt.isNull(index + 1) || (dataFrom.length == 0)) {
+            if (updateInsertStmt.isNull(index + 1) || dataFrom.length == 0) {
                 this.setParamValue(this.refresher, i + 1, this.thisRow, index, this.getMetadata().getFields()[index]);
                 continue;
             }
@@ -1050,7 +1048,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             if (rs.next()) {
                 for (int i = 0; i < numCols; i++) {
                     byte[] val = rs.getBytes(i + 1);
-                    rowToRefresh.setBytes(i, (val == null) || rs.wasNull() ? null : val);
+                    rowToRefresh.setBytes(i, val == null || rs.wasNull() ? null : val);
                 }
             } else {
                 throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.12"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
@@ -1117,7 +1115,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     /**
      * Reset UPDATE prepared statement to value in current row. This_Row MUST
      * point to current, valid row.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -1537,7 +1535,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     /**
      * Internal setObject implementation. Although targetType is not part of default ResultSet methods signatures, it is used for type conversions from
      * JDBC42UpdatableResultSet new JDBC 4.2 updateObject() methods.
-     * 
+     *
      * @param columnIndex
      *            column index
      * @param x
@@ -1562,7 +1560,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     /**
      * Internal setObject implementation.
-     * 
+     *
      * @param columnIndex
      *            column index
      * @param x

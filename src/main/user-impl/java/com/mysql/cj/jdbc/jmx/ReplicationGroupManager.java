@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,6 +41,7 @@ import com.mysql.cj.jdbc.ha.ReplicationConnectionGroup;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionGroupManager;
 
 public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
+
     private boolean isJmxRegistered = false;
 
     public synchronized void registerJmx() throws SQLException {
@@ -55,7 +56,6 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
         } catch (Exception e) {
             throw SQLError.createSQLException(Messages.getString("ReplicationGroupManager.0"), null, e, null);
         }
-
     }
 
     @Override
@@ -71,13 +71,11 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
     @Override
     public void promoteReplicaToSource(String groupFilter, String host) throws SQLException {
         ReplicationConnectionGroupManager.promoteReplicaToSource(groupFilter, host);
-
     }
 
     @Override
     public void removeSourceHost(String groupFilter, String host) throws SQLException {
         ReplicationConnectionGroupManager.removeSourceHost(groupFilter, host);
-
     }
 
     @Override
@@ -106,7 +104,6 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
             sb.append(host);
         }
         return sb.toString();
-
     }
 
     @Override

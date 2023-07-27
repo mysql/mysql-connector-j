@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,24 +35,26 @@ import java.util.List;
  * A result exposing a set of rows from a SELECT query.
  */
 public interface RowResult extends FetchResult<Row>, Result {
+
     /**
      * Count of columns.
-     * 
+     *
      * @return count
      */
     int getColumnCount();
 
     /**
      * Metadata.
-     * 
+     *
      * @return list of result {@link Column} objects
      */
     List<Column> getColumns();
 
     /**
      * Names of columns.
-     * 
+     *
      * @return list of result column names
      */
     List<String> getColumnNames();
+
 }

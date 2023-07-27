@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2007, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -98,4 +98,5 @@ public interface ParameterBindings {
     URL getURL(int parameterIndex) throws SQLException;
 
     boolean isNull(int parameterIndex) throws SQLException;
+
 }

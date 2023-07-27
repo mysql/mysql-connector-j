@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2010, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -42,6 +42,7 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.ha.LoadBalancedConnectionProxy;
 
 public class ConnectionGroup {
+
     private String groupName;
     private long connections = 0;
     private long activeConnections = 0;
@@ -72,7 +73,6 @@ public class ConnectionGroup {
         this.activeConnections++;
 
         return currentConnectionId;
-
     }
 
     public String getGroupName() {
@@ -141,12 +141,11 @@ public class ConnectionGroup {
         this.connectionProxies.remove(Long.valueOf(proxy.getConnectionGroupProxyID()));
         this.closedProxyTotalPhysicalConnections += proxy.getTotalPhysicalConnectionCount();
         this.closedProxyTotalTransactions += proxy.getTransactionCount();
-
     }
 
     /**
      * Remove the given host (host:port pair) from this Connection Group.
-     * 
+     *
      * @param hostPortPair
      *            The host:port pair to remove.
      * @throws SQLException
@@ -158,7 +157,7 @@ public class ConnectionGroup {
 
     /**
      * Remove the given host (host:port pair) from this Connection Group.
-     * 
+     *
      * @param hostPortPair
      *            The host:port pair to remove.
      * @param removeExisting
@@ -172,7 +171,7 @@ public class ConnectionGroup {
 
     /**
      * Remove the given host (host:port pair) from this Connection Group and, consequently, from all the load-balanced connections it holds.
-     * 
+     *
      * @param hostPortPair
      *            The host:port pair to remove.
      * @param removeExisting
@@ -214,7 +213,7 @@ public class ConnectionGroup {
 
     /**
      * Add the given host (host:port pair) to this Connection Group.
-     * 
+     *
      * @param hostPortPair
      *            The host:port pair to add.
      */
@@ -224,7 +223,7 @@ public class ConnectionGroup {
 
     /**
      * Add the given host (host:port pair) to this Connection Group and, consequently, to all the load-balanced connections it holds.
-     * 
+     *
      * @param hostPortPair
      *            The host:port pair to add.
      * @param forExisting
@@ -251,4 +250,5 @@ public class ConnectionGroup {
             proxy.addHost(hostPortPair);
         }
     }
+
 }

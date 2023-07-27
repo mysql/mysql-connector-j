@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,7 +41,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -145,7 +144,7 @@ public abstract class BaseTestCase {
 
         String newDbUrl = System.getProperty(PropertyDefinitions.SYSP_testsuite_url);
 
-        if ((newDbUrl != null) && (newDbUrl.trim().length() != 0)) {
+        if (newDbUrl != null && newDbUrl.trim().length() != 0) {
             dbUrl = sanitizeDbName(newDbUrl);
         }
         mainConnectionUrl = ConnectionUrl.getConnectionUrlInstance(dbUrl, null);
@@ -362,13 +361,13 @@ public abstract class BaseTestCase {
 
     /**
      * Returns a new connection with the given properties
-     * 
+     *
      * @param props
      *            the properties to use (the URL will come from the standard for
      *            this testcase).
-     * 
+     *
      * @return a new connection using the given properties.
-     * 
+     *
      * @throws SQLException
      */
     public Connection getConnectionWithProps(Properties props) throws SQLException {
@@ -389,7 +388,7 @@ public abstract class BaseTestCase {
     /**
      * Returns the per-instance counter (for messages when multi-threading
      * stress tests)
-     * 
+     *
      * @return int the instance number
      */
     protected int getInstanceNumber() {
@@ -408,12 +407,12 @@ public abstract class BaseTestCase {
 
     /**
      * Returns the named MySQL variable from the currently connected server.
-     * 
+     *
      * @param variableName
      *            the name of the variable to return
-     * 
+     *
      * @return the value of the given variable, or NULL if it doesn't exist
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -424,9 +423,9 @@ public abstract class BaseTestCase {
     /**
      * Returns the properties that represent the default URL used for
      * connections for all testcases.
-     * 
+     *
      * @return properties parsed from com.mysql.jdbc.testsuite.url
-     * 
+     *
      * @throws SQLException
      *             if parsing fails
      */
@@ -459,7 +458,7 @@ public abstract class BaseTestCase {
     /**
      * Some tests build connections strings for internal usage but, in order for them to work, they may require some connection properties set in the main test
      * suite URL. For example 'connectionTimeZone' is one of those properties.
-     * 
+     *
      * @param props
      *            the Properties object where to add the missing connection properties
      * @return
@@ -569,7 +568,7 @@ public abstract class BaseTestCase {
     }
 
     protected Object getSingleValue(String tableName, String columnName, String whereClause) throws SQLException {
-        return getSingleValueWithQuery("SELECT " + columnName + " FROM " + tableName + ((whereClause == null) ? "" : " " + whereClause));
+        return getSingleValueWithQuery("SELECT " + columnName + " FROM " + tableName + (whereClause == null ? "" : " " + whereClause));
     }
 
     protected Object getSingleValueWithQuery(String query) throws SQLException {
@@ -577,7 +576,7 @@ public abstract class BaseTestCase {
     }
 
     protected boolean isServerRunningOnWindows() throws SQLException {
-        return (getMysqlVariable("datadir").indexOf('\\') != -1);
+        return getMysqlVariable("datadir").indexOf('\\') != -1;
     }
 
     public void logDebug(String message) {
@@ -610,22 +609,22 @@ public abstract class BaseTestCase {
     /**
      * Checks whether a certain system property is defined, in order to
      * run/not-run certain tests
-     * 
+     *
      * @param propName
      *            the property name to check for
-     * 
+     *
      * @return true if the property is defined.
      */
     protected boolean isSysPropDefined(String propName) {
         String prop = System.getProperty(propName);
-        return (prop != null) && (prop.length() > 0);
+        return prop != null && prop.length() > 0;
     }
 
     /**
      * Creates resources used by all tests.
-     * 
+     *
      * @param testInfo
-     * 
+     *
      * @throws Exception
      *             if an error occurs.
      */
@@ -689,7 +688,7 @@ public abstract class BaseTestCase {
 
     /**
      * Destroys resources created during the test case.
-     * 
+     *
      * @throws Exception
      */
     @AfterEach
@@ -740,14 +739,14 @@ public abstract class BaseTestCase {
     /**
      * Checks whether the database we're connected to meets the given version
      * minimum
-     * 
+     *
      * @param major
      *            the major version to meet
      * @param minor
      *            the minor version to meet
-     * 
+     *
      * @return boolean if the major/minor is met
-     * 
+     *
      * @throws SQLException
      *             if an error occurs.
      */
@@ -758,26 +757,26 @@ public abstract class BaseTestCase {
     /**
      * Checks whether the database we're connected to meets the given version
      * minimum
-     * 
+     *
      * @param major
      *            the major version to meet
      * @param minor
      *            the minor version to meet
      * @param subminor
      *            the subminor version to meet
-     * 
+     *
      * @return boolean if the major/minor is met
-     * 
+     *
      * @throws SQLException
      *             if an error occurs.
      */
     public boolean versionMeetsMinimum(int major, int minor, int subminor) throws SQLException {
-        return (((JdbcConnection) this.conn).getSession().versionMeetsMinimum(major, minor, subminor));
+        return ((JdbcConnection) this.conn).getSession().versionMeetsMinimum(major, minor, subminor);
     }
 
     /**
      * Checks whether the server we're connected to is a MySQL Community edition
-     * 
+     *
      * @return true if connected to a community/gpl server
      */
     protected boolean isCommunityEdition() {
@@ -786,7 +785,7 @@ public abstract class BaseTestCase {
 
     /**
      * Checks whether the server we're connected to is an MySQL Enterprise edition
-     * 
+     *
      * @return true if connected to an enterprise/commercial server
      */
     protected boolean isEnterpriseEdition() {
@@ -805,7 +804,7 @@ public abstract class BaseTestCase {
     protected boolean isRunningOnJRockit() {
         String vmVendor = System.getProperty(PropertyDefinitions.SYSP_java_vm_vendor);
 
-        return (vmVendor != null && vmVendor.toUpperCase(Locale.US).startsWith("BEA"));
+        return vmVendor != null && vmVendor.toUpperCase(Locale.US).startsWith("BEA");
     }
 
     protected boolean isMysqlRunningLocally() {
@@ -832,22 +831,16 @@ public abstract class BaseTestCase {
         StringBuilder buf = new StringBuilder(length);
 
         for (int i = 0; i < length; i++) {
-            buf.append((char) ((Math.random() * 26) + 'a'));
+            buf.append((char) (Math.random() * 26 + 'a'));
         }
 
         return buf.toString();
     }
 
     protected void cleanupTempFiles(final File exampleTempFile, final String tempfilePrefix) {
-
         File tempfilePath = exampleTempFile.getParentFile();
 
-        File[] possibleFiles = tempfilePath.listFiles(new FilenameFilter() {
-
-            public boolean accept(File dir, String name) {
-                return (name.indexOf(tempfilePrefix) != -1 && !exampleTempFile.getName().equals(name));
-            }
-        });
+        File[] possibleFiles = tempfilePath.listFiles((dir, name) -> name.indexOf(tempfilePrefix) != -1 && !exampleTempFile.getName().equals(name));
 
         if (possibleFiles != null) {
             for (int i = 0; i < possibleFiles.length; i++) {
@@ -963,7 +956,7 @@ public abstract class BaseTestCase {
 
     /**
      * Asserts the most recent history of connection attempts from the global data in UnreliableSocketFactory.
-     * 
+     *
      * @param expectedConnectionsHistory
      *            The list of expected events. Use UnreliableSocketFactory.getHostConnectedStatus(String), UnreliableSocketFactory.getHostFailedStatus(String)
      *            and UnreliableSocketFactory.getHostUnknownStatus(String) to build proper syntax for host+status identification.
@@ -1042,7 +1035,7 @@ public abstract class BaseTestCase {
     /**
      * Retrieve the current system time in milliseconds, using the nanosecond
      * time if possible.
-     * 
+     *
      * @return current time in milliseconds
      */
     protected static final long currentTimeMillis() {
@@ -1197,6 +1190,7 @@ public abstract class BaseTestCase {
     }
 
     public static class MockConnectionConfiguration {
+
         String hostName;
         String port;
         String serverType;
@@ -1211,7 +1205,7 @@ public abstract class BaseTestCase {
 
         public String getAddress(boolean withTrailingPort) {
             return "address=(protocol=tcp)(host=" + this.hostName + ")(port=" + this.port + ")(type=" + this.serverType + ")"
-                    + (withTrailingPort ? (":" + this.port) : "");
+                    + (withTrailingPort ? ":" + this.port : "");
         }
 
         public String getAddress() {
@@ -1221,6 +1215,7 @@ public abstract class BaseTestCase {
         public String getHostPortPair() {
             return this.hostName + ":" + this.port;
         }
+
     }
 
     protected ReplicationConnection getUnreliableReplicationConnection(Set<MockConnectionConfiguration> configs, Properties props) throws Exception {
@@ -1241,7 +1236,7 @@ public abstract class BaseTestCase {
             hostString.append(glue);
             glue = ",";
             if (config.port == null) {
-                config.port = (port == null ? "3306" : port);
+                config.port = port == null ? "3306" : port;
             }
             hostString.append(config.getAddress());
             if (config.isDowned) {
@@ -1297,7 +1292,6 @@ public abstract class BaseTestCase {
         return version.meetsMinimum(new ServerVersion(5, 7, 28))
                 || version.meetsMinimum(new ServerVersion(5, 6, 46)) && !version.meetsMinimum(new ServerVersion(5, 7, 0))
                 || version.meetsMinimum(new ServerVersion(5, 6, 0)) && Util.isEnterpriseEdition(version.toString());
-
     }
 
     protected void assertSessionStatusEquals(Statement st, String statusVariable, String expected) throws Exception {

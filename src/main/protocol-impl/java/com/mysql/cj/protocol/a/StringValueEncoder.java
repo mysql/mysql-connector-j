@@ -120,7 +120,6 @@ public class StringValueEncoder extends AbstractValueEncoder {
             default:
                 return StringUtils.getBytes(getString(binding), this.charEncoding.getValue());
         }
-
     }
 
     @Override
@@ -256,7 +255,6 @@ public class StringValueEncoder extends AbstractValueEncoder {
         throw ExceptionFactory.createException(WrongArgumentException.class,
                 Messages.getString("PreparedStatement.67", new Object[] { binding.getValue().getClass().getName(), binding.getMysqlType().toString() }),
                 this.exceptionInterceptor);
-
     }
 
     @Override
@@ -410,4 +408,5 @@ public class StringValueEncoder extends AbstractValueEncoder {
         }
         return false;
     }
+
 }

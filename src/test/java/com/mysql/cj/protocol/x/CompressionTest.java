@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -52,6 +52,7 @@ import com.mysql.cj.x.protobuf.Mysqlx.ClientMessages;
 import com.mysql.cj.x.protobuf.MysqlxConnection.Compression;
 
 public class CompressionTest {
+
     static final byte[] data1 = ("[[ABCDEFGHIJKLMNOPQRSTUVWXYZ]][[ABCDEFGHIJKLMNOPQRSTUVWXYZ]][[ABCDEFGHIJKLMNOPQRSTUVWXYZ]][[ABCDEFGHIJKLMNOPQRSTUVWXYZ]]"
             + "[[ABCDEFGHIJKLMNOPQRSTUVWXYZ]][[ABCDEFGHIJKLMNOPQRSTUVWXYZ]][[ABCDEFGHIJKLMNOPQRSTUVWXYZ]][[ABCDEFGHIJKLMNOPQRSTUVWXYZ]]"
             + "[[ABCDEFGHIJKLMNOPQRSTUVWXYZ]][[ABCDEFGHIJKLMNOPQRSTUVWXYZ]][[ABCDEFGHIJKLMNOPQRSTUVWXYZ]][[ABCDEFGHIJKLMNOPQRSTUVWXYZ]]"
@@ -89,7 +90,7 @@ public class CompressionTest {
         try {
             deflaterOut.write(uncompressedFrame1);
             deflaterOut.flush();
-            // deflaterOut.close(); Deflater can't be closed so that a continuous stream of compressed bytes is possible. 
+            // deflaterOut.close(); Deflater can't be closed so that a continuous stream of compressed bytes is possible.
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -102,7 +103,7 @@ public class CompressionTest {
         try {
             deflaterOut.write(uncompressedFrame2);
             deflaterOut.flush();
-            // deflaterOut.close(); Deflater can't be closed so that a continuous stream of compressed bytes is possible. 
+            // deflaterOut.close(); Deflater can't be closed so that a continuous stream of compressed bytes is possible.
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -136,7 +137,7 @@ public class CompressionTest {
             // 2nd message.
             deflaterOut.write(uncompressedFrame2);
             deflaterOut.flush();
-            // deflaterOut.close(); Deflater can't be closed so that a continuous stream of compressed bytes is possible. 
+            // deflaterOut.close(); Deflater can't be closed so that a continuous stream of compressed bytes is possible.
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -158,7 +159,7 @@ public class CompressionTest {
         try {
             deflaterOut.write(uncompressedFrame1);
             deflaterOut.flush();
-            // deflaterOut.close(); Deflater can't be closed so that a continuous stream of compressed bytes is possible. 
+            // deflaterOut.close(); Deflater can't be closed so that a continuous stream of compressed bytes is possible.
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -176,7 +177,7 @@ public class CompressionTest {
 
     /**
      * Tests that the {@link CompressionSplittedInputStream} reads from original underlying {@link InputStream} when data is not compressed.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -231,7 +232,7 @@ public class CompressionTest {
 
     /**
      * Tests that the {@link CompressionSplittedInputStream} reads single compressed messages and inflates them properly.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -283,7 +284,7 @@ public class CompressionTest {
 
     /**
      * Tests that the {@link CompressionSplittedInputStream} reads multiple compressed messages and inflates them properly.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -335,7 +336,7 @@ public class CompressionTest {
 
     /**
      * Tests that the {@link CompressionSplittedOutputStream} writes into an underlying OutputStream properly deflated data.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -381,4 +382,5 @@ public class CompressionTest {
             assertArrayEquals(uncompressedFrame2, dataWritten);
         }
     }
+
 }

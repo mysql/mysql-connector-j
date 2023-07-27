@@ -52,7 +52,6 @@ public class NativeSocketConnection extends AbstractSocketConnection implements 
 
     @Override
     public void connect(String hostName, int portNumber, PropertySet propSet, ExceptionInterceptor excInterceptor, Log log, int loginTimeout) {
-
         try {
             this.port = portNumber;
             this.host = hostName;
@@ -107,4 +106,5 @@ public class NativeSocketConnection extends AbstractSocketConnection implements 
         this.mysqlOutput = new BufferedOutputStream(getMysqlSocket().getOutputStream(), 16384);
         this.mysqlOutput.flush();
     }
+
 }

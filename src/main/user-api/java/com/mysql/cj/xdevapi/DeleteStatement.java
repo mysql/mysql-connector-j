@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,9 +33,10 @@ package com.mysql.cj.xdevapi;
  * A statement to delete rows from a table.
  */
 public interface DeleteStatement extends Statement<DeleteStatement, Result> {
+
     /**
      * Add/replace the filter for the deletion.
-     * 
+     *
      * @param searchCondition
      *            condition expression
      * @return {@link DeleteStatement}
@@ -44,7 +45,7 @@ public interface DeleteStatement extends Statement<DeleteStatement, Result> {
 
     /**
      * Add/replace the order by specification for the deletion.
-     * 
+     *
      * @param sortFields
      *            sort expression
      * @return {@link DeleteStatement}
@@ -53,10 +54,11 @@ public interface DeleteStatement extends Statement<DeleteStatement, Result> {
 
     /**
      * Add/replace the row limit for the deletion.
-     * 
+     *
      * @param numberOfRows
      *            limit
      * @return {@link DeleteStatement}
      */
     DeleteStatement limit(long numberOfRows);
+
 }

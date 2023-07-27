@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -52,6 +52,7 @@ import com.mysql.cj.result.Row;
  * Result builder producing a {@link SqlResult} instance.
  */
 public class SqlResultBuilder implements ResultBuilder<SqlResult> {
+
     private ArrayList<Field> fields = new ArrayList<>();
     private ColumnDefinition metadata;
     private List<Row> rows = new ArrayList<>();
@@ -123,8 +124,8 @@ public class SqlResultBuilder implements ResultBuilder<SqlResult> {
 
     @Override
     public SqlResult build() {
-        return this.isRowResult ? new SqlMultiResult(() -> {
-            return this.resultSets.size() > 0 ? this.resultSets.remove(0) : null;
-        }) : new SqlUpdateResult(this.statementExecuteOkBuilder.build());
+        return this.isRowResult ? new SqlMultiResult(() -> (this.resultSets.size() > 0 ? this.resultSets.remove(0) : null))
+                : new SqlUpdateResult(this.statementExecuteOkBuilder.build());
     }
+
 }

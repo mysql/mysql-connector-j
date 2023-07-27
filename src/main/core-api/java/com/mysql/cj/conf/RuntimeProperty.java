@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,7 +46,7 @@ public interface RuntimeProperty<T> {
      * This value will also be the initial one, i.e. {@link #resetValue()} will reset to this value, not the default one.
      * <p>
      * If extractFrom does not contain such property then this RuntimeProperty remains unchanged.
-     * 
+     *
      * @param extractFrom
      *            {@link Properties} object containing key-value pairs usually passed from connection string.
      * @param exceptionInterceptor
@@ -65,7 +65,7 @@ public interface RuntimeProperty<T> {
 
     /**
      * Add listener for this property changes.
-     * 
+     *
      * @param l
      *            {@link RuntimePropertyListener}
      */
@@ -75,33 +75,35 @@ public interface RuntimeProperty<T> {
 
     @FunctionalInterface
     public static interface RuntimePropertyListener {
+
         void handlePropertyChange(RuntimeProperty<?> prop);
+
     }
 
     /**
      * Get internal value representation as Object.
-     * 
+     *
      * @return value
      */
     T getValue();
 
     /**
      * Get initial value (default or defined in connection string/Properties)
-     * 
+     *
      * @return value
      */
     T getInitialValue();
 
     /**
      * Get internal value representation as String.
-     * 
+     *
      * @return value
      */
     String getStringValue();
 
     /**
      * Set the object value of a property directly. Validation against allowable values will be performed.
-     * 
+     *
      * @param value
      *            value
      */
@@ -109,7 +111,7 @@ public interface RuntimeProperty<T> {
 
     /**
      * Set the object value of a property directly. Validation against allowable values will be performed.
-     * 
+     *
      * @param value
      *            value
      * @param exceptionInterceptor

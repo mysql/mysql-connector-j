@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -45,6 +45,7 @@ import testsuite.BaseTestCase;
  * Simple performance testing unit test.
  */
 public class LoadStorePerfTest extends BasePerfTest {
+
     /** The table type to use (only for MySQL), 'HEAP' by default */
     private String tableType = "HEAP";
 
@@ -60,7 +61,7 @@ public class LoadStorePerfTest extends BasePerfTest {
 
         this.largeResults = "TRUE".equalsIgnoreCase(System.getProperty(PropertyDefinitions.SYSP_testsuite_loadstoreperf_useBigResults));
 
-        if ((newTableType != null) && (newTableType.length() > 0)) {
+        if (newTableType != null && newTableType.length() > 0) {
             this.tableType = newTableType;
 
             System.out.println("Using specified table type of '" + this.tableType + "'");
@@ -87,7 +88,7 @@ public class LoadStorePerfTest extends BasePerfTest {
                 + "PRIMARY KEY (priKey))";
 
         if (BaseTestCase.dbUrl.indexOf("mysql") != -1) {
-            query += ("ENGINE =" + this.tableType);
+            query += "ENGINE =" + this.tableType;
         }
 
         this.stmt.executeUpdate(query);
@@ -143,7 +144,7 @@ public class LoadStorePerfTest extends BasePerfTest {
 
     /**
      * Tests and times 1000 load/store type transactions
-     * 
+     *
      * @throws Exception
      *             if an error occurs
      */
@@ -159,7 +160,7 @@ public class LoadStorePerfTest extends BasePerfTest {
 
     /**
      * Runs one iteration of the test.
-     * 
+     *
      * @see testsuite.perf.BasePerfTest#doOneIteration()
      */
     @Override
@@ -274,7 +275,7 @@ public class LoadStorePerfTest extends BasePerfTest {
 
         long end = System.currentTimeMillis();
 
-        long timeElapsed = (end - begin);
+        long timeElapsed = end - begin;
 
         double timeElapsedSeconds = (double) timeElapsed / 1000;
         double tps = transactionCount / timeElapsedSeconds;
@@ -289,7 +290,7 @@ public class LoadStorePerfTest extends BasePerfTest {
 
     /**
      * Runs the test 10 times to get JIT going, and GC going
-     * 
+     *
      * @throws Exception
      *             if an error occurs.
      */
@@ -311,4 +312,5 @@ public class LoadStorePerfTest extends BasePerfTest {
             throw ex;
         }
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -48,7 +48,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Hashtable;
-import java.util.concurrent.Callable;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -92,11 +91,12 @@ import testsuite.MockJndiContextFactory;
  * Tests fixes for bugs related to datasources.
  */
 public class DataSourceRegressionTest extends BaseTestCase {
+
     private Context ctx;
 
     /**
      * Sets up this test, calling registerDataSource() to bind a DataSource into JNDI, using the FSContext JNDI provider from Sun
-     * 
+     *
      * @throws Exception
      */
     @BeforeEach
@@ -118,7 +118,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
 
     /**
      * Un-binds the DataSource and closes the context
-     * 
+     *
      * @throws Exception
      */
     @AfterEach
@@ -129,7 +129,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#4808- Calling .close() twice on a PooledConnection causes NPE.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -145,7 +145,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#3848, port # alone parsed incorrectly
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -158,7 +158,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
         String port = System.getProperty(PropertyDefinitions.SYSP_testsuite_ds_port);
 
         // Only run this test if at least one of the above are set
-        if ((databaseName != null) || (userName != null) || (password != null) || (port != null)) {
+        if (databaseName != null || userName != null || password != null || port != null) {
             MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
 
             if (databaseName != null) {
@@ -205,7 +205,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
 
     /**
      * Tests that we can get a connection from the DataSource bound in JNDI during test setup
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -218,7 +218,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
         String port = System.getProperty(PropertyDefinitions.SYSP_testsuite_ds_port);
         String serverName = System.getProperty(PropertyDefinitions.SYSP_testsuite_ds_host);
 
-        assumeTrue((databaseName != null) || (serverName != null) || (userName != null) || (password != null) || (port != null),
+        assumeTrue(databaseName != null || serverName != null || userName != null || password != null || port != null,
                 "This test requires that at least one of the following properties is set:\n" + PropertyDefinitions.SYSP_testsuite_ds_db + ",\n"
                         + PropertyDefinitions.SYSP_testsuite_ds_user + ",\n" + PropertyDefinitions.SYSP_testsuite_ds_password + ",\n"
                         + PropertyDefinitions.SYSP_testsuite_ds_port + ",\n" + PropertyDefinitions.SYSP_testsuite_ds_host);
@@ -282,7 +282,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#19169 - ConnectionProperties (and thus some subclasses) are not serializable, even though some J2EE containers expect them to be.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -387,7 +387,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#16791 - NullPointerException in MysqlDataSourceFactory due to Reference containing RefAddrs with null content.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -422,7 +422,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#32101 - When using a connection from our ConnectionPoolDataSource, some Connection.prepareStatement() methods would return null instead
      * of a prepared statement.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -483,7 +483,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#72890 - Java jdbc driver returns incorrect return code when it's part of XA transaction
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -529,11 +529,9 @@ public class DataSourceRegressionTest extends BaseTestCase {
             assertFalse(connAliveChecks == 0, "Failed to kill the Connection id " + connId + " in a timely manner.");
 
             XAException xaEx = assertThrows(XAException.class, "Undetermined error occurred in the underlying Connection - check your data for consistency",
-                    new Callable<Void>() {
-                        public Void call() throws Exception {
-                            xaRes.commit(xid, false);
-                            return null;
-                        }
+                    () -> {
+                        xaRes.commit(xid, false);
+                        return null;
                     });
             assertEquals(XAException.XAER_RMFAIL, xaEx.errorCode, "XAException error code");
 
@@ -560,24 +558,22 @@ public class DataSourceRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#72632 - NullPointerException for invalid JDBC URL.
-     * 
+     *
      * @throws Exception
      */
     @Test
     public void testBug72632() throws Exception {
         final MysqlDataSource dataSource = new MysqlDataSource();
         dataSource.setUrl("jdbc:mysql:nonsupported:");
-        assertThrows(SQLException.class, "Connector/J cannot handle a connection string 'jdbc:mysql:nonsupported:'.", new Callable<Void>() {
-            public Void call() throws Exception {
-                dataSource.getConnection();
-                return null;
-            }
+        assertThrows(SQLException.class, "Connector/J cannot handle a connection string 'jdbc:mysql:nonsupported:'.", () -> {
+            dataSource.getConnection();
+            return null;
         });
     }
 
     /**
      * Tests fix for Bug#104954 (Bug#33361205), MysqlDataSource fails to URL encode database name when constructing JDBC URL.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -604,4 +600,5 @@ public class DataSourceRegressionTest extends BaseTestCase {
             assertFalse(this.rs.next());
         }
     }
+
 }

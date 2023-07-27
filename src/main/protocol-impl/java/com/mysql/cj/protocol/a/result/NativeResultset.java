@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -70,7 +70,7 @@ public class NativeResultset implements Resultset {
 
     /**
      * Create a result set for an executeUpdate statement.
-     * 
+     *
      * @param ok
      *            {@link OkPacket}
      */
@@ -97,7 +97,6 @@ public class NativeResultset implements Resultset {
         } else {
             this.thisRow = null;
         }
-
     }
 
     @Override
@@ -110,6 +109,7 @@ public class NativeResultset implements Resultset {
         return this.columnDefinition;
     }
 
+    @Override
     public boolean hasRows() {
         return this.rowData != null;
     }
@@ -119,13 +119,15 @@ public class NativeResultset implements Resultset {
         return this.resultId;
     }
 
+    @Override
     public void initRowsWithMetadata() {
         if (this.rowData != null) {
             this.rowData.setMetadata(this.columnDefinition);
         }
-        this.columnDefinition.setColumnToIndexCache(new HashMap<String, Integer>());
+        this.columnDefinition.setColumnToIndexCache(new HashMap<>());
     }
 
+    @Override
     public synchronized void setNextResultset(Resultset nextResultset) {
         this.nextResultset = nextResultset;
     }
@@ -133,6 +135,7 @@ public class NativeResultset implements Resultset {
     /**
      * @return the nextResultSet, if any, null if none exists.
      */
+    @Override
     public synchronized Resultset getNextResultset() {
         // read next RS from streamer ?
         return this.nextResultset;
@@ -142,19 +145,23 @@ public class NativeResultset implements Resultset {
      * We can't do this ourselves, otherwise the contract for
      * Statement.getMoreResults() won't work correctly.
      */
+    @Override
     public synchronized void clearNextResultset() {
         // TODO release resources of nextResultset, close streamer
         this.nextResultset = null;
     }
 
+    @Override
     public long getUpdateCount() {
         return this.updateCount;
     }
 
+    @Override
     public long getUpdateID() {
         return this.updateId;
     }
 
+    @Override
     public String getServerInfo() {
         return this.serverInfo;
     }
@@ -163,4 +170,5 @@ public class NativeResultset implements Resultset {
     public ResultsetRows getRows() {
         return this.rowData;
     }
+
 }

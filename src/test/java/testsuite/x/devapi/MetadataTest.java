@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -52,6 +52,7 @@ import com.mysql.cj.xdevapi.Type;
  * Tests for "Column" table metadata API.
  */
 public class MetadataTest extends BaseTableTestCase {
+
     @BeforeEach
     public void setupTableTest() {
         if (this.isSetForXTests) {
@@ -318,7 +319,7 @@ public class MetadataTest extends BaseTableTestCase {
     /**
      * Some metadata fields have no sense with concrete SQL data type. The following table from {@link ColumnMetaData}
      * describes which fields are relevant to each type:
-     * 
+     *
      * <pre>
      *     ================= ============ ======= ========== ====== ========
      *     SQL Type          .type        .length .frac_dig  .flags .charset
@@ -1653,4 +1654,5 @@ public class MetadataTest extends BaseTableTestCase {
             sqlUpdate("drop table if exists qatable");
         }
     }
+
 }

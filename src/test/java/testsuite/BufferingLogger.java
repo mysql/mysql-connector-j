@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -60,7 +60,6 @@ public class BufferingLogger extends StandardLogger {
 
     @Override
     protected String logInternal(int level, Object msg, Throwable exception) {
-
         String messageAsString = super.logInternal(level, msg, exception);
 
         if (bufferedLog != null) {
@@ -69,4 +68,5 @@ public class BufferingLogger extends StandardLogger {
 
         return messageAsString;
     }
+
 }

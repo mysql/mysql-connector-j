@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -51,6 +51,7 @@ import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
  * Utilities to deal with Expr (and related) structures.
  */
 public class ExprUtil {
+
     // Date formats for sending dates and times to the server as strings.
     private static SimpleDateFormat javaSqlDateFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd", null);
     private static SimpleDateFormat javaSqlTimestampFormat = TimeUtil.getSimpleDateFormat(null, "yyyy-MM-dd'T'HH:mm:ss.S", null);
@@ -59,7 +60,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build a LITERAL Expr with a Scalar NULL type.
-     * 
+     *
      * @return {@link Expr}
      */
     public static Expr buildLiteralNullScalar() {
@@ -68,7 +69,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build a LITERAL Expr with a Scalar DOUBLE type.
-     * 
+     *
      * @param d
      *            value
      * @return {@link Expr}
@@ -79,7 +80,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build a LITERAL Expr with a Scalar SINT (signed int) type.
-     * 
+     *
      * @param l
      *            value
      * @return {@link Expr}
@@ -90,7 +91,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build a LITERAL Expr with a Scalar STRING type.
-     * 
+     *
      * @param str
      *            value
      * @return {@link Expr}
@@ -101,7 +102,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build a LITERAL Expr with a Scalar OCTETS type.
-     * 
+     *
      * @param bytes
      *            value
      * @return {@link Expr}
@@ -112,7 +113,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build a LITERAL Expr with a Scalar BOOL type.
-     * 
+     *
      * @param b
      *            value
      * @return {@link Expr}
@@ -123,7 +124,7 @@ public class ExprUtil {
 
     /**
      * Wrap an Any value in a LITERAL expression.
-     * 
+     *
      * @param scalar
      *            {@link Scalar}
      * @return {@link Expr}
@@ -134,7 +135,7 @@ public class ExprUtil {
 
     /**
      * Creates a placeholder expression for the given position in the <code>args</code> array
-     * 
+     *
      * @param pos
      *            the position of the placeholder in the <code>args</code> array
      * @return {@link Expr}
@@ -145,7 +146,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build a Scalar NULL type.
-     * 
+     *
      * @return {@link Scalar}
      */
     public static Scalar nullScalar() {
@@ -154,7 +155,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build a Scalar DOUBLE type.
-     * 
+     *
      * @param d
      *            value
      * @return {@link Scalar}
@@ -165,7 +166,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build a Scalar SINT (signed int) type.
-     * 
+     *
      * @param l
      *            value
      * @return {@link Scalar}
@@ -176,7 +177,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build a Scalar STRING type.
-     * 
+     *
      * @param str
      *            value
      * @return {@link Scalar}
@@ -188,7 +189,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build a Scalar OCTETS type.
-     * 
+     *
      * @param bytes
      *            value
      * @return {@link Scalar}
@@ -200,7 +201,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build a Scalar BOOL type.
-     * 
+     *
      * @param b
      *            value
      * @return {@link Scalar}
@@ -211,7 +212,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build an Any Scalar type.
-     * 
+     *
      * @param s
      *            value
      * @return {@link Any}
@@ -222,7 +223,7 @@ public class ExprUtil {
 
     /**
      * Build a Protocol buffers Any with a string value.
-     * 
+     *
      * @param str
      *            value
      * @return {@link Any}
@@ -236,7 +237,7 @@ public class ExprUtil {
 
     /**
      * Build a Protocol buffers Any with a boolean value.
-     * 
+     *
      * @param b
      *            value
      * @return {@link Any}
@@ -247,7 +248,7 @@ public class ExprUtil {
 
     /**
      * Build a Protocol buffers Collection.
-     * 
+     *
      * @param schemaName
      *            schema name
      * @param collectionName
@@ -260,7 +261,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build a Scalar type with any object.
-     * 
+     *
      * @param value
      *            value
      * @return {@link Scalar}
@@ -275,7 +276,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build an Any type with any object.
-     * 
+     *
      * @param value
      *            value
      * @return {@link Any}
@@ -287,7 +288,7 @@ public class ExprUtil {
 
     /**
      * Protocol buffers helper to build Expr with any object.
-     * 
+     *
      * @param value
      *            value
      * @param allowRelationalColumns
@@ -332,7 +333,7 @@ public class ExprUtil {
             return buildLiteralScalar(javaUtilDateFormat.format((java.util.Date) value));
 
         } else if (DbDoc.class.isAssignableFrom(cls)) {
-            return (new ExprParser(((DbDoc) value).toString())).parse();
+            return new ExprParser(((DbDoc) value).toString()).parse();
 
         } else if (cls == JsonArray.class) {
             return Expr.newBuilder().setType(Expr.Type.ARRAY).setArray(Expr.newBuilder().setType(Expr.Type.ARRAY).getArrayBuilder()
@@ -348,4 +349,5 @@ public class ExprUtil {
 
         throw new FeatureNotAvailableException("Can not create an expression from " + cls);
     }
+
 }

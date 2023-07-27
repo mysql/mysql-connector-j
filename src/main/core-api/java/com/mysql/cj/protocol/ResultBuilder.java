@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,7 +39,7 @@ public interface ResultBuilder<T> {
 
     /**
      * Add ProtocolEntity.
-     * 
+     *
      * @param entity
      *            {@link ProtocolEntity} object
      * @return true - if this builder is ready for building the result;
@@ -49,7 +49,7 @@ public interface ResultBuilder<T> {
 
     /**
      * Build the result using already added protocol instances.
-     * 
+     *
      * @return {@link T} instance
      */
     T build();

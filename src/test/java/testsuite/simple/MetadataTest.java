@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -75,6 +75,7 @@ import testsuite.BaseTestCase;
  * Tests DatabaseMetaData methods.
  */
 public class MetadataTest extends BaseTestCase {
+
     @Test
     public void testSupports() throws SQLException {
         Properties props = new Properties();
@@ -468,7 +469,7 @@ public class MetadataTest extends BaseTestCase {
                         this.rs.getString("PK_NAME");
                     }
 
-                    assertFalse((keySeqs[0] != 3) && (keySeqs[1] != 2) && (keySeqs[2] != 4) && (keySeqs[3] != 1), "Keys returned in wrong order");
+                    assertFalse(keySeqs[0] != 3 && keySeqs[1] != 2 && keySeqs[2] != 4 && keySeqs[3] != 1, "Keys returned in wrong order");
 
                 } finally {
                     if (conn1 != null) {
@@ -481,9 +482,9 @@ public class MetadataTest extends BaseTestCase {
 
     /**
      * Tests the implementation of metadata for views.
-     * 
+     *
      * This test automatically detects whether or not the server it is running against supports the creation of views.
-     * 
+     *
      * @throws SQLException
      */
     @Test
@@ -537,7 +538,7 @@ public class MetadataTest extends BaseTestCase {
 
     /**
      * Tests detection of read-only fields.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -648,7 +649,6 @@ public class MetadataTest extends BaseTestCase {
 
     @Test
     private void checkBitOrBooleanType(boolean usingBit) throws SQLException {
-
         assertTrue(this.rs.next());
         assertEquals("java.lang.Boolean", this.rs.getObject(1).getClass().getName());
         if (!usingBit) {
@@ -668,20 +668,24 @@ public class MetadataTest extends BaseTestCase {
         this.rs = this.stmt.executeQuery("SELECT c1 as QQQ, c2, g1 FROM t1");
 
         assertThrows(SQLException.class, "Column index out of range.", new Callable<Void>() {
+
             @SuppressWarnings("synthetic-access")
             @Override
             public Void call() throws Exception {
                 MetadataTest.this.rs.getMetaData().getColumnType(0);
                 return null;
             }
+
         });
         assertThrows(SQLException.class, "Column index out of range.", new Callable<Void>() {
+
             @SuppressWarnings("synthetic-access")
             @Override
             public Void call() throws Exception {
                 MetadataTest.this.rs.getMetaData().getColumnType(100);
                 return null;
             }
+
         });
 
         assertEquals(Types.CHAR, this.rs.getMetaData().getColumnType(1));
@@ -710,7 +714,7 @@ public class MetadataTest extends BaseTestCase {
 
     /**
      * Tests the implementation of Information Schema for primary keys.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -798,7 +802,7 @@ public class MetadataTest extends BaseTestCase {
 
     /**
      * Tests the implementation of getColumns.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -854,7 +858,7 @@ public class MetadataTest extends BaseTestCase {
 
     /**
      * Tests the implementation of Information Schema for tables.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -977,12 +981,11 @@ public class MetadataTest extends BaseTestCase {
 
     /**
      * Tests the implementation of column privileges metadata.
-     * 
+     *
      * @throws Exception
      */
     @Test
     public void testGetColumnPrivileges() throws Exception {
-
         assumeFalse(isSysPropDefined(PropertyDefinitions.SYSP_testsuite_cantGrant),
                 "This testcase needs to be run with a URL that allows the user to issue GRANTs "
                         + " in the current database. Aborted because the system property \"" + PropertyDefinitions.SYSP_testsuite_cantGrant + "\" is set.");
@@ -1374,7 +1377,7 @@ public class MetadataTest extends BaseTestCase {
 
     /**
      * Tests the implementation of Information Schema for foreign key.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1542,12 +1545,12 @@ public class MetadataTest extends BaseTestCase {
 
     /**
      * WL#411 - Generated columns.
-     * 
+     *
      * Test for new syntax and support in DatabaseMetaData.getColumns().
-     * 
+     *
      * New syntax for CREATE TABLE, introduced in MySQL 5.7.6:
      * - col_name data_type [GENERATED ALWAYS] AS (expression) [VIRTUAL | STORED] [UNIQUE [KEY]] [COMMENT comment] [[NOT] NULL] [[PRIMARY] KEY]
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1637,9 +1640,9 @@ public class MetadataTest extends BaseTestCase {
     /**
      * Tests DatabaseMetaData.getSQLKeywords().
      * (Related to BUG#70701 - DatabaseMetaData.getSQLKeywords() doesn't match MySQL 5.6 reserved words)
-     * 
+     *
      * This test checks the statically maintained keywords list.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1669,9 +1672,9 @@ public class MetadataTest extends BaseTestCase {
     /**
      * Tests DatabaseMetaData.getSQLKeywords().
      * WL#10544, Update MySQL 8.0 keywords list.
-     * 
+     *
      * This test checks the dynamically maintained keywords lists.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1745,6 +1748,7 @@ public class MetadataTest extends BaseTestCase {
     }
 
     public static class TestGetSqlKeywordsDynamicQueryInterceptor extends BaseQueryInterceptor {
+
         public static List<String> interceptedQueries = new ArrayList<>();
 
         @Override
@@ -1752,6 +1756,7 @@ public class MetadataTest extends BaseTestCase {
             interceptedQueries.add(sql.get());
             return super.preProcess(sql, interceptedQuery);
         }
+
     }
 
     @Test
@@ -1890,4 +1895,5 @@ public class MetadataTest extends BaseTestCase {
         assertEquals(DatabaseMetaData.bestRowNotPseudo, rs1.getShort("PSEUDO_COLUMN"));
         assertFalse(rs1.next());
     }
+
 }

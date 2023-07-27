@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2005, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -48,7 +48,6 @@ public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADa
 
     @Override
     public XAConnection getXAConnection() throws SQLException {
-
         Connection conn = getConnection();
 
         return wrapConnection(conn);
@@ -56,7 +55,6 @@ public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADa
 
     @Override
     public XAConnection getXAConnection(String u, String p) throws SQLException {
-
         Connection conn = getConnection(u, p);
 
         return wrapConnection(conn);
@@ -64,7 +62,7 @@ public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADa
 
     /**
      * Wraps a connection as a 'fake' XAConnection
-     * 
+     *
      * @param conn
      *            connection to wrap
      * @return {@link XAConnection}
@@ -79,4 +77,5 @@ public class MysqlXADataSource extends MysqlDataSource implements javax.sql.XADa
 
         return MysqlXAConnection.getInstance((JdbcConnection) conn, getBooleanProperty(PropertyKey.logXaCommands).getValue());
     }
+
 }

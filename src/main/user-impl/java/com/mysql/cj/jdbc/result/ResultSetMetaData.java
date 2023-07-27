@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,6 +46,7 @@ import com.mysql.cj.result.Field;
  * A ResultSetMetaData object can be used to find out about the types and properties of the columns in a ResultSet
  */
 public class ResultSetMetaData implements java.sql.ResultSetMetaData {
+
     private static int clampedGetLength(Field f) {
         long fieldLength = f.getLength();
 
@@ -67,10 +68,10 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     /**
      * Initialize for a result with a tuple set and a field descriptor set
-     * 
+     *
      * @param session
      *            this {@link Session}
-     * 
+     *
      * @param fields
      *            the array of field descriptors
      * @param useOldAliasBehavior
@@ -94,19 +95,19 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
             return "";
         }
         String database = getField(column).getDatabaseName();
-        return (database == null) ? "" : database;
+        return database == null ? "" : database;
     }
 
     /**
      * What's the Java character encoding name for the given column?
-     * 
+     *
      * @param column
      *            the first column is 1, the second is 2, etc.
-     * 
+     *
      * @return the Java character encoding name for the given column, or null if
      *         no Java character encoding maps to the MySQL character set for
      *         the given column.
-     * 
+     *
      * @throws SQLException
      *             if an invalid column index is given.
      */
@@ -116,12 +117,12 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     /**
      * What's the MySQL character set name for the given column?
-     * 
+     *
      * @param column
      *            the first column is 1, the second is 2, etc.
-     * 
+     *
      * @return the MySQL character set name for the given column
-     * 
+     *
      * @throws SQLException
      *             if an invalid column index is given.
      */
@@ -143,7 +144,6 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
             default:
                 return f.getMysqlType().getClassName();
         }
-
     }
 
     @Override
@@ -201,17 +201,17 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     /**
      * Returns the field instance for the given column index
-     * 
+     *
      * @param columnIndex
      *            the column number to retrieve a field instance for
-     * 
+     *
      * @return the field instance for the given column index
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
     protected Field getField(int columnIndex) throws SQLException {
-        if ((columnIndex < 1) || (columnIndex > this.fields.length)) {
+        if (columnIndex < 1 || columnIndex > this.fields.length) {
             throw SQLError.createSQLException(Messages.getString("ResultSetMetaData.46"), MysqlErrorNumbers.SQL_STATE_INVALID_COLUMN_NUMBER,
                     this.exceptionInterceptor);
         }
@@ -255,7 +255,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
             return "";
         }
         String database = getField(column).getDatabaseName();
-        return (database == null) ? "" : database;
+        return database == null ? "" : database;
     }
 
     @Override
@@ -308,7 +308,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
             case ENUM:
             case SET:
                 String collationName = this.session.getServerSession().getCharsetSettings().getCollationNameForCollationIndex(field.getCollationIndex());
-                return ((collationName != null) && !collationName.endsWith("_ci"));
+                return collationName != null && !collationName.endsWith("_ci");
 
             default:
                 return true;
@@ -388,4 +388,5 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
     public Field[] getFields() {
         return this.fields;
     }
+
 }

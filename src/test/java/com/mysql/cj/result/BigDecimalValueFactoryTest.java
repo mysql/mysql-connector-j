@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,7 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.math.BigDecimal;
-import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
@@ -51,39 +50,31 @@ import com.mysql.cj.protocol.InternalTimestamp;
  * Tests for {@link BigDecimalValueFactory}
  */
 public class BigDecimalValueFactoryTest extends CommonAsserts {
+
     PropertySet pset = new DefaultPropertySet();
     ValueFactory<BigDecimal> vf = new BigDecimalValueFactory(this.pset);
 
     @Test
     public void testCreateFromDate() {
-        assertThrows(DataConversionException.class, "Unsupported conversion from DATE to java.math.BigDecimal", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                BigDecimalValueFactoryTest.this.vf.createFromDate(new InternalDate(2006, 1, 1));
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Unsupported conversion from DATE to java.math.BigDecimal", () -> {
+            BigDecimalValueFactoryTest.this.vf.createFromDate(new InternalDate(2006, 1, 1));
+            return null;
         });
     }
 
     @Test
     public void testCreateFromTime() {
-        assertThrows(DataConversionException.class, "Unsupported conversion from TIME to java.math.BigDecimal", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                BigDecimalValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0, 0));
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Unsupported conversion from TIME to java.math.BigDecimal", () -> {
+            BigDecimalValueFactoryTest.this.vf.createFromTime(new InternalTime(12, 0, 0, 0, 0));
+            return null;
         });
     }
 
     @Test
     public void testCreateFromTimestamp() {
-        assertThrows(DataConversionException.class, "Unsupported conversion from TIMESTAMP to java.math.BigDecimal", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                BigDecimalValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0, 0));
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Unsupported conversion from TIMESTAMP to java.math.BigDecimal", () -> {
+            BigDecimalValueFactoryTest.this.vf.createFromTimestamp(new InternalTimestamp(2006, 1, 1, 12, 0, 0, 0, 0));
+            return null;
         });
     }
 
@@ -131,12 +122,9 @@ public class BigDecimalValueFactoryTest extends CommonAsserts {
         assertEquals(BigDecimal.ZERO, this.vf.createFromBytes("".getBytes(), 0, 0, f));
 
         this.pset.getBooleanProperty(PropertyKey.emptyStringsConvertToZero).setValue(false);
-        assertThrows(DataConversionException.class, "Cannot determine value type from string ''", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                BigDecimalValueFactoryTest.this.vf.createFromBytes("".getBytes(), 0, 0, f);
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Cannot determine value type from string ''", () -> {
+            BigDecimalValueFactoryTest.this.vf.createFromBytes("".getBytes(), 0, 0, f);
+            return null;
         });
 
         assertEquals(BigDecimal.valueOf(-1.0), this.vf.createFromBytes("-1.0".getBytes(), 0, 4, f));
@@ -154,12 +142,9 @@ public class BigDecimalValueFactoryTest extends CommonAsserts {
         assertEquals(Constants.BIG_DECIMAL_ZERO, this.vf.createFromBytes("0".getBytes(), 0, 1, f));
         assertEquals(Constants.BIG_DECIMAL_ZERO, this.vf.createFromBytes("000".getBytes(), 0, 3, f));
 
-        assertThrows(DataConversionException.class, "Cannot determine value type from string 'just a string'", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                BigDecimalValueFactoryTest.this.vf.createFromBytes("just a string".getBytes(), 0, 13, f);
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Cannot determine value type from string 'just a string'", () -> {
+            BigDecimalValueFactoryTest.this.vf.createFromBytes("just a string".getBytes(), 0, 13, f);
+            return null;
         });
     }
 
@@ -186,4 +171,5 @@ public class BigDecimalValueFactoryTest extends CommonAsserts {
     public void testCreateFromNull() {
         assertNull(this.vf.createFromNull());
     }
+
 }

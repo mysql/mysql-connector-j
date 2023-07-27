@@ -249,6 +249,7 @@ public class NativeServerSession implements ServerSession {
         this.serverVariables = serverVariables;
     }
 
+    @Override
     public final ServerVersion getServerVersion() {
         return this.capabilities.getServerVersion();
     }
@@ -260,7 +261,7 @@ public class NativeServerSession implements ServerSession {
 
     /**
      * Should SET AUTOCOMMIT be sent to server if we are going to set autoCommitFlag in driver
-     * 
+     *
      * @param autoCommitFlag
      *            autocommit status we are going to set in driver
      * @param elideSetAutoCommitsFlag
@@ -301,20 +302,23 @@ public class NativeServerSession implements ServerSession {
         return "1".equalsIgnoreCase(lowerCaseTables) || "on".equalsIgnoreCase(lowerCaseTables);
     }
 
+    @Override
     public boolean isQueryCacheEnabled() {
         return "ON".equalsIgnoreCase(this.serverVariables.get("query_cache_type")) && !"0".equalsIgnoreCase(this.serverVariables.get("query_cache_size"));
     }
 
     /**
      * Is the server in a sql_mode that does not allow us to use \\ to escape things?
-     * 
+     *
      * @return Returns the noBackslashEscapes.
      */
+    @Override
     public boolean isNoBackslashEscapesSet() {
         String sqlModeAsString = this.serverVariables.get("sql_mode");
         return sqlModeAsString != null && sqlModeAsString.indexOf("NO_BACKSLASH_ESCAPES") != -1;
     }
 
+    @Override
     public boolean useAnsiQuotedIdentifiers() {
         String sqlModeAsString = this.serverVariables.get("sql_mode");
         return sqlModeAsString != null && sqlModeAsString.indexOf("ANSI_QUOTES") != -1;
@@ -326,14 +330,17 @@ public class NativeServerSession implements ServerSession {
         return sqlModeAsString != null && sqlModeAsString.indexOf("TIME_TRUNCATE_FRACTIONAL") != -1;
     }
 
+    @Override
     public boolean isAutoCommit() {
         return this.autoCommit;
     }
 
+    @Override
     public void setAutoCommit(boolean autoCommit) {
         this.autoCommit = autoCommit;
     }
 
+    @Override
     public TimeZone getSessionTimeZone() {
         if (this.sessionTimeZone == null) {
             String configuredTimeZoneOnServer = getServerVariable("time_zone");
@@ -352,10 +359,12 @@ public class NativeServerSession implements ServerSession {
         return this.sessionTimeZone;
     }
 
+    @Override
     public void setSessionTimeZone(TimeZone sessionTimeZone) {
         this.sessionTimeZone = sessionTimeZone;
     }
 
+    @Override
     public TimeZone getDefaultTimeZone() {
         if (this.cacheDefaultTimeZone.getValue()) {
             return this.defaultTimeZone;
@@ -377,4 +386,5 @@ public class NativeServerSession implements ServerSession {
     public void setCharsetSettings(CharsetSettings charsetSettings) {
         this.charsetSettings = charsetSettings;
     }
+
 }

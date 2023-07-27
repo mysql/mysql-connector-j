@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2010, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -44,7 +44,6 @@ public class LoadBalanceConnectionGroupManager implements LoadBalanceConnectionG
     private boolean isJmxRegistered = false;
 
     public LoadBalanceConnectionGroupManager() {
-
     }
 
     public synchronized void registerJmx() throws SQLException {
@@ -59,7 +58,6 @@ public class LoadBalanceConnectionGroupManager implements LoadBalanceConnectionG
         } catch (Exception e) {
             throw SQLError.createSQLException(Messages.getString("LoadBalanceConnectionGroupManager.0"), null, e, null);
         }
-
     }
 
     @Override
@@ -89,31 +87,26 @@ public class LoadBalanceConnectionGroupManager implements LoadBalanceConnectionG
     @Override
     public int getTotalHostCount(String group) {
         return ConnectionGroupManager.getTotalHostCount(group);
-
     }
 
     @Override
     public long getTotalLogicalConnectionCount(String group) {
         return ConnectionGroupManager.getTotalLogicalConnectionCount(group);
-
     }
 
     @Override
     public long getTotalPhysicalConnectionCount(String group) {
         return ConnectionGroupManager.getTotalPhysicalConnectionCount(group);
-
     }
 
     @Override
     public long getTotalTransactionCount(String group) {
         return ConnectionGroupManager.getTotalTransactionCount(group);
-
     }
 
     @Override
     public void removeHost(String group, String host) throws SQLException {
         ConnectionGroupManager.removeHost(group, host);
-
     }
 
     @Override
@@ -129,7 +122,6 @@ public class LoadBalanceConnectionGroupManager implements LoadBalanceConnectionG
     @Override
     public void stopNewConnectionsToHost(String group, String host) throws SQLException {
         ConnectionGroupManager.removeHost(group, host);
-
     }
 
 }

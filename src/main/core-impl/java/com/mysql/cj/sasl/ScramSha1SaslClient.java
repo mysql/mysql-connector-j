@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,12 +46,13 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 
 /**
  * A {@link SaslClient} implementation for SCRAM-SHA-1, as specified in <a href="https://tools.ietf.org/html/rfc5802">RFC 5802</a>.
- * 
+ *
  * The IANA-registered mechanism was renamed to "MYSQLCJ-SCRAM-SHA-1" in order to avoid future conflicts with an officially supported implementation.
  * When there is a Java-supported implementation for SCRAM-SHA-1, it will have to be thoroughly tested with Connector/J and if that works, this code can be
  * obsoleted.
  */
 public class ScramSha1SaslClient extends ScramShaSaslClient {
+
     public static final String IANA_MECHANISM_NAME = "SCRAM-SHA-1";
     public static final String MECHANISM_NAME = "MYSQLCJ-" + IANA_MECHANISM_NAME;
 
@@ -77,7 +78,7 @@ public class ScramSha1SaslClient extends ScramShaSaslClient {
     /**
      * The "H(str)" cryptographic hash function as described in <a href="https://tools.ietf.org/html/rfc5802#section-2.2">RFC 5802, Section 2.2</a>. This
      * implementation corresponds to SHA-1.
-     * 
+     *
      * @param str
      *            the string to hash.
      * @return
@@ -96,7 +97,7 @@ public class ScramSha1SaslClient extends ScramShaSaslClient {
     /**
      * The "HMAC(key, str)" HMAC keyed hash algorithm as described in <a href="https://tools.ietf.org/html/rfc5802#section-2.2">RFC 5802, Section 2.2</a>.
      * This implementation corresponds to 'HmacSHA1'.
-     * 
+     *
      * @param key
      *            the hash key.
      * @param str
@@ -120,14 +121,14 @@ public class ScramSha1SaslClient extends ScramShaSaslClient {
     /**
      * The "Hi(str, salt, i)" PBKDF2 function as described in <a href="https://tools.ietf.org/html/rfc5802#section-2.2">RFC 5802, Section 2.2</a>.
      * This implementation corresponds to 'PBKDF2WithHmacSHA1'.
-     * 
+     *
      * @param str
      *            the string value to use as the internal HMAC key.
      * @param salt
      *            the input string to hash in the initial iteration.
      * @param iterations
      *            the number of iterations to run the algorithm.
-     * 
+     *
      * @return
      *         an hash value with an output length equal to the length of H(str).
      */
@@ -141,4 +142,5 @@ public class ScramSha1SaslClient extends ScramShaSaslClient {
             throw ExceptionFactory.createException(e.getMessage());
         }
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,6 +33,7 @@ package com.mysql.cj.xdevapi;
  * A wrapper for expression strings. Used as parameters values e.g.: <code>set("b", Expression.expr("a + 1"))</code>.
  */
 public class Expression {
+
     private String expressionString;
 
     public Expression(String expressionString) {
@@ -41,7 +42,7 @@ public class Expression {
 
     /**
      * Get the string form of this expression
-     * 
+     *
      * @return expression string
      */
     public String getExpressionString() {
@@ -50,7 +51,7 @@ public class Expression {
 
     /**
      * Static method for static import to allow: <code>set("b", expr("a + 1"))</code>
-     * 
+     *
      * @param expressionString
      *            expression string
      * @return {@link Expression}
@@ -58,4 +59,5 @@ public class Expression {
     public static Expression expr(String expressionString) {
         return new Expression(expressionString);
     }
+
 }

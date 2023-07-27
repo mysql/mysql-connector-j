@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -50,18 +50,20 @@ import com.mysql.cj.log.Log;
  * A socket factory for named pipes (on Windows)
  */
 public class NamedPipeSocketFactory implements SocketFactory {
+
     private static final int DEFAULT_TIMEOUT = 100;
 
     /**
      * A socket that encapsulates named pipes on Windows
      */
     class NamedPipeSocket extends Socket {
+
         private boolean isClosed = false;
 
         private RandomAccessFile namedPipeFile;
 
         NamedPipeSocket(String filePath, int timeout) throws IOException {
-            if ((filePath == null) || (filePath.length() == 0)) {
+            if (filePath == null || filePath.length() == 0) {
                 throw new IOException(Messages.getString("NamedPipeSocketFactory.4"));
             }
 
@@ -125,12 +127,14 @@ public class NamedPipeSocketFactory implements SocketFactory {
         public void shutdownInput() throws IOException {
             // no-op
         }
+
     }
 
     /**
      * Enables OutputStream-type functionality for a RandomAccessFile
      */
     class RandomAccessFileInputStream extends InputStream {
+
         RandomAccessFile raFile;
 
         RandomAccessFileInputStream(RandomAccessFile file) {
@@ -176,12 +180,14 @@ public class NamedPipeSocketFactory implements SocketFactory {
         public int read(byte[] b, int off, int len) throws IOException {
             return this.raFile.read(b, off, len);
         }
+
     }
 
     /**
      * Enables OutputStream-type functionality for a RandomAccessFile
      */
     class RandomAccessFileOutputStream extends OutputStream {
+
         RandomAccessFile raFile;
 
         RandomAccessFileOutputStream(RandomAccessFile file) {
@@ -218,6 +224,7 @@ public class NamedPipeSocketFactory implements SocketFactory {
         @Override
         public void write(int b) throws IOException {
         }
+
     }
 
     private Socket namedPipeSocket;
@@ -258,7 +265,7 @@ public class NamedPipeSocketFactory implements SocketFactory {
         }
 
         int connectTimeout = props.getIntegerProperty(PropertyKey.connectTimeout.getKeyName()).getValue();
-        int timeout = (connectTimeout > 0 && loginTimeout > 0) ? Math.min(connectTimeout, loginTimeout) : connectTimeout + loginTimeout;
+        int timeout = connectTimeout > 0 && loginTimeout > 0 ? Math.min(connectTimeout, loginTimeout) : connectTimeout + loginTimeout;
 
         this.namedPipeSocket = new NamedPipeSocket(namedPipePath, timeout);
 
@@ -270,4 +277,5 @@ public class NamedPipeSocketFactory implements SocketFactory {
         // Until I learn otherwise (or learn how to detect it), I assume that we are
         return true;
     }
+
 }

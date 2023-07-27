@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -75,7 +75,7 @@ public interface BindValue {
 
     /**
      * Gets the length of this bind value in the text protocol representation.
-     * 
+     *
      * @return
      *         the expected length, in bytes, of this bind value after being encoded.
      */
@@ -83,7 +83,7 @@ public interface BindValue {
 
     /**
      * Gets the length of this bind value in the binary protocol representation.
-     * 
+     *
      * @return
      *         the expected length, in bytes, of this bind value after being encoded.
      */
@@ -109,7 +109,7 @@ public interface BindValue {
      * <p>
      * <i>If the value is a part of key for UpdatableResultSet updater, it should keep original milliseconds.</i>
      * </p>
-     * 
+     *
      * @param value
      *            the value to set
      */
@@ -121,7 +121,7 @@ public interface BindValue {
 
     /**
      * Gets the name of this query attribute.
-     * 
+     *
      * @return
      *         the name of this query attribute.
      */

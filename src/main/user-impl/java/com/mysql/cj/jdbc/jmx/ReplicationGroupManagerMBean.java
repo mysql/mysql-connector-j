@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,7 +37,7 @@ public interface ReplicationGroupManagerMBean {
 
     /**
      * Use {@link #addReplicaHost(String, String)} instead.
-     * 
+     *
      * @param groupFilter
      *            filter
      * @param host
@@ -54,7 +54,7 @@ public interface ReplicationGroupManagerMBean {
 
     /**
      * Use {@link #removeReplicaHost(String, String)} instead.
-     * 
+     *
      * @param groupFilter
      *            filter
      * @param host
@@ -71,7 +71,7 @@ public interface ReplicationGroupManagerMBean {
 
     /**
      * Use {@link #promoteReplicaToSource(String, String)} instead.
-     * 
+     *
      * @param groupFilter
      *            filter
      * @param host
@@ -88,7 +88,7 @@ public interface ReplicationGroupManagerMBean {
 
     /**
      * Use {@link #removeSourceHost(String, String)} instead.
-     * 
+     *
      * @param groupFilter
      *            filter
      * @param host
@@ -105,7 +105,7 @@ public interface ReplicationGroupManagerMBean {
 
     /**
      * Use {@link #getSourceHostsList(String)} instead.
-     * 
+     *
      * @param group
      *            group
      * @return source hosts
@@ -120,7 +120,7 @@ public interface ReplicationGroupManagerMBean {
 
     /**
      * Use {@link #getReplicaHostsList(String)} instead.
-     * 
+     *
      * @param group
      *            group
      * @return replica hosts
@@ -137,7 +137,7 @@ public interface ReplicationGroupManagerMBean {
 
     /**
      * Use {@link #getActiveSourceHostCount(String)} instead.
-     * 
+     *
      * @param group
      *            group
      * @return count
@@ -152,7 +152,7 @@ public interface ReplicationGroupManagerMBean {
 
     /**
      * Use {@link #getActiveReplicaHostCount(String)} instead.
-     * 
+     *
      * @param group
      *            group
      * @return count
@@ -167,7 +167,7 @@ public interface ReplicationGroupManagerMBean {
 
     /**
      * Use {@link #getReplicaPromotionCount(String)} instead.
-     * 
+     *
      * @param group
      *            group
      * @return count

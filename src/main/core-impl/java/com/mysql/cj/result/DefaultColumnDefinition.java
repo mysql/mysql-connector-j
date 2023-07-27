@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -67,10 +67,12 @@ public class DefaultColumnDefinition implements ColumnDefinition {
         this.fields = fields;
     }
 
+    @Override
     public Field[] getFields() {
         return this.fields;
     }
 
+    @Override
     public void setFields(Field[] fields) {
         this.fields = fields;
     }
@@ -116,42 +118,52 @@ public class DefaultColumnDefinition implements ColumnDefinition {
         this.builtIndexMapping = true;
     }
 
+    @Override
     public boolean hasBuiltIndexMapping() {
         return this.builtIndexMapping;
     }
 
+    @Override
     public Map<String, Integer> getColumnLabelToIndex() {
         return this.columnLabelToIndex;
     }
 
+    @Override
     public void setColumnLabelToIndex(Map<String, Integer> columnLabelToIndex) {
         this.columnLabelToIndex = columnLabelToIndex;
     }
 
+    @Override
     public Map<String, Integer> getFullColumnNameToIndex() {
         return this.fullColumnNameToIndex;
     }
 
+    @Override
     public void setFullColumnNameToIndex(Map<String, Integer> fullColNameToIndex) {
         this.fullColumnNameToIndex = fullColNameToIndex;
     }
 
+    @Override
     public Map<String, Integer> getColumnNameToIndex() {
         return this.columnNameToIndex;
     }
 
+    @Override
     public void setColumnNameToIndex(Map<String, Integer> colNameToIndex) {
         this.columnNameToIndex = colNameToIndex;
     }
 
+    @Override
     public Map<String, Integer> getColumnToIndexCache() {
         return this.columnToIndexCache;
     }
 
+    @Override
     public void setColumnToIndexCache(Map<String, Integer> columnToIndexCache) {
         this.columnToIndexCache = columnToIndexCache;
     }
 
+    @Override
     public void initializeFrom(ColumnDefinition columnDefinition) {
         this.fields = columnDefinition.getFields();
         this.columnLabelToIndex = columnDefinition.getColumnNameToIndex();
@@ -159,14 +171,15 @@ public class DefaultColumnDefinition implements ColumnDefinition {
         this.builtIndexMapping = true;
     }
 
+    @Override
     public void exportTo(ColumnDefinition columnDefinition) {
         columnDefinition.setFields(this.fields);
         columnDefinition.setColumnNameToIndex(this.columnLabelToIndex);
         columnDefinition.setFullColumnNameToIndex(this.fullColumnNameToIndex);
     }
 
+    @Override
     public int findColumn(String columnName, boolean useColumnNamesInFindColumn, int indexBase) {
-
         Integer index;
 
         if (!hasBuiltIndexMapping()) {
@@ -213,9 +226,10 @@ public class DefaultColumnDefinition implements ColumnDefinition {
      * exist in this ColumnDefinition.
      * This check is used for making a decision about whether we want to force a
      * buffer row (better for rows with large fields).
-     * 
+     *
      * @return true if this ColumnDefinition has large fields
      */
+    @Override
     public boolean hasLargeFields() {
         if (this.fields != null) {
             for (int i = 0; i < this.fields.length; i++) {

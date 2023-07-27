@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2007, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -39,16 +39,17 @@ import com.mysql.cj.log.Log;
 /**
  * Implementors of this interface can be installed via the "connectionLifecycleInterceptors" configuration property and receive events and alter behavior of
  * "lifecycle" methods on our connection implementation.
- * 
+ *
  * The driver will create one instance of a given interceptor per-connection.
  */
 public interface ConnectionLifecycleInterceptor {
+
     /**
      * Called once per connection that wants to use the extension
-     * 
+     *
      * The properties are the same ones passed in in the URL or arguments to
      * Driver.connect() or DriverManager.getConnection().
-     * 
+     *
      * @param conn
      *            the connection for which this extension is being created
      * @param props
@@ -73,7 +74,7 @@ public interface ConnectionLifecycleInterceptor {
     /**
      * Called when an application calls Connection.close(), before the driver
      * processes its own internal logic for close.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -82,13 +83,13 @@ public interface ConnectionLifecycleInterceptor {
     /**
      * Called when an application calls Connection.commit(), before the
      * driver processes its own internal logic for commit().
-     * 
+     *
      * Interceptors should return "true" if the driver should perform
      * its own internal logic for commit(), or "false" if not.
-     * 
+     *
      * @return "true" if the driver should perform
      *         its own internal logic for commit(), or "false" if not.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -97,13 +98,13 @@ public interface ConnectionLifecycleInterceptor {
     /**
      * Called when an application calls Connection.rollback(), before the
      * driver processes its own internal logic for rollback().
-     * 
+     *
      * Interceptors should return "true" if the driver should perform
      * its own internal logic for rollback(), or "false" if not.
-     * 
+     *
      * @return "true" if the driver should perform
      *         its own internal logic for rollback(), or "false" if not.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -112,7 +113,7 @@ public interface ConnectionLifecycleInterceptor {
     /**
      * Called when an application calls Connection.rollback(), before the
      * driver processes its own internal logic for rollback().
-     * 
+     *
      * Interceptors should return "true" if the driver should perform
      * its own internal logic for rollback(), or "false" if not.
      *
@@ -120,7 +121,7 @@ public interface ConnectionLifecycleInterceptor {
      *            savepoint
      * @return "true" if the driver should perform
      *         its own internal logic for rollback(), or "false" if not.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -129,15 +130,15 @@ public interface ConnectionLifecycleInterceptor {
     /**
      * Called when an application calls Connection.setAutoCommit(), before the
      * driver processes its own internal logic for setAutoCommit().
-     * 
+     *
      * Interceptors should return "true" if the driver should perform
      * its own internal logic for setAutoCommit(), or "false" if not.
-     * 
+     *
      * @param flag
      *            autocommit flag
      * @return "true" if the driver should perform
      *         its own internal logic for setAutoCommit(), or "false" if not.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -146,15 +147,15 @@ public interface ConnectionLifecycleInterceptor {
     /**
      * Called when an application calls Connection.setCatalog() or Connection.setSchema(),
      * before the driver processes its own internal logic for these methods.
-     * 
+     *
      * Interceptors should return "true" if the driver should perform its own internal logic
      * for setCatalog() or setSchema(), or "false" if not.
-     * 
+     *
      * @param db
      *            database name
      * @return "true" if the driver should perform
      *         its own internal logic for setCatalog() or setSchema(), or "false" if not.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -163,7 +164,7 @@ public interface ConnectionLifecycleInterceptor {
     /**
      * Called when the driver has been told by the server that a transaction
      * is now in progress (when one has not been currently in progress).
-     * 
+     *
      * @return true if transaction is in progress
      */
     boolean transactionBegun();
@@ -171,8 +172,9 @@ public interface ConnectionLifecycleInterceptor {
     /**
      * Called when the driver has been told by the server that a transaction
      * has completed, and no transaction is currently in progress.
-     * 
+     *
      * @return true if transaction is completed
      */
     boolean transactionCompleted();
+
 }

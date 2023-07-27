@@ -40,6 +40,7 @@ import com.mysql.cj.log.StandardLogger;
 import com.mysql.cj.util.PerVmServerConfigCacheFactory;
 
 public class PropertyDefinitions {
+
     /*
      * Built-in system properties.
      */
@@ -142,7 +143,7 @@ public class PropertyDefinitions {
     /*
      * Property enums.
      */
-    public enum ZeroDatetimeBehavior { // zeroDateTimeBehavior 
+    public enum ZeroDatetimeBehavior { // zeroDateTimeBehavior
         CONVERT_TO_NULL, EXCEPTION, ROUND;
     }
 
@@ -905,4 +906,5 @@ public class PropertyDefinitions {
     public static PropertyDefinition<?> getPropertyDefinition(PropertyKey propertyKey) {
         return PROPERTY_KEY_TO_PROPERTY_DEFINITION.get(propertyKey);
     }
+
 }

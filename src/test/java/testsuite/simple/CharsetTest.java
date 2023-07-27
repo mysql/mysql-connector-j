@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2005, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -66,6 +66,7 @@ import com.mysql.cj.util.StringUtils;
 import testsuite.BaseTestCase;
 
 public class CharsetTest extends BaseTestCase {
+
     @Test
     public void testCP932Backport() throws Exception {
         try {
@@ -259,7 +260,7 @@ public class CharsetTest extends BaseTestCase {
 
     /**
      * Prints static mappings for analysis.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -321,7 +322,7 @@ public class CharsetTest extends BaseTestCase {
 
     /**
      * Test for the gb18030 character set
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -416,7 +417,7 @@ public class CharsetTest extends BaseTestCase {
 
     /**
      * Tests the ability to set the connection collation via properties.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -724,7 +725,7 @@ public class CharsetTest extends BaseTestCase {
     /**
      * Tests if the driver configures character sets correctly for 4.1.x servers. Requires that the 'admin connection' is configured, as this test needs to
      * create/drop databases.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -847,7 +848,7 @@ public class CharsetTest extends BaseTestCase {
 
     /**
      * These two charsets have different names depending on version of MySQL server.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -865,7 +866,7 @@ public class CharsetTest extends BaseTestCase {
 
     /**
      * Tests that 'latin1' character conversion works correctly.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -922,7 +923,7 @@ public class CharsetTest extends BaseTestCase {
                     char rChar = retrievedString.charAt(i);
                     char origChar = latin1String.charAt(i);
 
-                    assertFalse((rChar != '?') && (rChar != origChar),
+                    assertFalse(rChar != '?' && rChar != origChar,
                             "characters differ at position " + i + "'" + rChar + "' retrieved from database, original char was '" + origChar + "'");
                 }
             }
@@ -935,7 +936,7 @@ public class CharsetTest extends BaseTestCase {
 
     /**
      * Tests that the 0x5c escaping works (we didn't use to have this).
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1023,7 +1024,7 @@ public class CharsetTest extends BaseTestCase {
 
     /**
      * Tests that UTF-8 character conversion works correctly.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1121,7 +1122,6 @@ public class CharsetTest extends BaseTestCase {
         String testValue = this.rs.getString(1);
         System.out.println(testValue);
         assertTrue(testValue.equals(charsToTest));
-
     }
 
     @Test
@@ -1223,7 +1223,7 @@ public class CharsetTest extends BaseTestCase {
          * from
          * ftp://ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/
          * CP1252.TXT
-         * 
+         *
          * 0x80 0x20AC #EURO SIGN 0x81 #UNDEFINED 0x82 0x201A #SINGLE LOW-9
          * QUOTATION MARK 0x83 0x0192 #LATIN SMALL LETTER F WITH HOOK 0x84
          * 0x201E #DOUBLE LOW-9 QUOTATION MARK 0x85 0x2026 #HORIZONTAL
@@ -1250,4 +1250,5 @@ public class CharsetTest extends BaseTestCase {
         this.rs.next();
         assertEquals(this.rs.getString(1), codePage1252);
     }
+
 }

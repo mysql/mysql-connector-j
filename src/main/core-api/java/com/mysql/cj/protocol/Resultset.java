@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -32,7 +32,7 @@ package com.mysql.cj.protocol;
 /**
  * Represents protocol specific result set,
  * eg., for native protocol, a ProtocolText::Resultset or ProtocolBinary::Resultset entity.
- * 
+ *
  * See:
  * http://dev.mysql.com/doc/internals/en/com-query-response.html#packet-ProtocolText::Resultset
  * http://dev.mysql.com/doc/internals/en/binary-protocol-resultset.html
@@ -41,6 +41,7 @@ package com.mysql.cj.protocol;
 public interface Resultset extends ProtocolEntity {
 
     public enum Concurrency {
+
         /**
          * The constant indicating the concurrency mode for a
          * <code>Resultset</code> object that may NOT be updated.
@@ -75,6 +76,7 @@ public interface Resultset extends ProtocolEntity {
     }
 
     public enum Type {
+
         /**
          * The constant indicating the type for a <code>Resultset</code> object
          * whose cursor may move only forward.
@@ -113,6 +115,7 @@ public interface Resultset extends ProtocolEntity {
             }
             return backupValue;
         }
+
     }
 
     /**
@@ -120,7 +123,7 @@ public interface Resultset extends ProtocolEntity {
      * or need to coerce the metadata returned by queries into that required by the particular specification
      * (eg metadata returned by metadata queries into that required by the JDBC specification).
      * So it can call this to set it after the fact.
-     * 
+     *
      * @param metadata
      *            field-level metadata for the result set
      */
@@ -130,7 +133,7 @@ public interface Resultset extends ProtocolEntity {
 
     /**
      * Does the result set contain rows, or is it the result of a DDL or DML statement?
-     * 
+     *
      * @return true if result set contains rows
      */
     boolean hasRows();
@@ -144,7 +147,7 @@ public interface Resultset extends ProtocolEntity {
 
     /**
      * The id (used when profiling) to identify us
-     * 
+     *
      * @return result id
      */
     int getResultId();
@@ -158,7 +161,7 @@ public interface Resultset extends ProtocolEntity {
     /**
      * Returns the next ResultSet in a multi-resultset "chain", if any,
      * null if none exists.
-     * 
+     *
      * @return the next Resultset
      */
     Resultset getNextResultset();
@@ -172,7 +175,7 @@ public interface Resultset extends ProtocolEntity {
     /**
      * Returns the update count for this result set (if one exists), otherwise
      * -1.
-     * 
+     *
      * @return return the update count for this result set (if one exists), otherwise
      *         -1.
      */
@@ -181,7 +184,7 @@ public interface Resultset extends ProtocolEntity {
     /**
      * Returns the AUTO_INCREMENT value for the DDL/DML statement which created
      * this result set.
-     * 
+     *
      * @return the AUTO_INCREMENT value for the DDL/DML statement which created
      *         this result set.
      */
@@ -190,7 +193,7 @@ public interface Resultset extends ProtocolEntity {
     /**
      * Returns the server informational message returned from a DDL or DML
      * statement (if any), or null if none.
-     * 
+     *
      * @return the server informational message
      */
     String getServerInfo();

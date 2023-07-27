@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -42,10 +42,11 @@ import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.util.StringUtils;
 
 public class LoadBalanceConnectionUrl extends ConnectionUrl {
+
     /**
      * Constructs an instance of {@link LoadBalanceConnectionUrl}, performing all the required initializations and validations. A load-balanced connection
      * cannot deal with multiple hosts with same host:port.
-     * 
+     *
      * @param connStrParser
      *            a {@link ConnectionUrlParser} instance containing the parsed version of the original connection string
      * @param info
@@ -72,7 +73,7 @@ public class LoadBalanceConnectionUrl extends ConnectionUrl {
      * Constructs an instance of a {@link LoadBalanceConnectionUrl} based on a list of hosts and a global set of properties instead of connection string
      * parsing.
      * {@link ConnectionUrl} instances created by this process are not cached.
-     * 
+     *
      * @param hosts
      *            the hosts list to use in this connection URL
      * @param properties
@@ -90,7 +91,7 @@ public class LoadBalanceConnectionUrl extends ConnectionUrl {
 
     /**
      * Injects additional properties into the connection arguments while it's being constructed.
-     * 
+     *
      * @param props
      *            the properties already containing all known connection arguments
      */
@@ -116,17 +117,17 @@ public class LoadBalanceConnectionUrl extends ConnectionUrl {
 
     /**
      * Returns a list of this connection URL hosts in the form of host:port pairs.
-     * 
+     *
      * @return a list of this connection URL hosts in the form of host:port pairs
      */
     public List<String> getHostInfoListAsHostPortPairs() {
-        return this.hosts.stream().map(hi -> hi.getHostPortPair()).collect(Collectors.toList());
+        return this.hosts.stream().map(HostInfo::getHostPortPair).collect(Collectors.toList());
     }
 
     /**
      * Returns the list of {@link HostInfo} instances that matches the given collection of host:port pairs. Isolated host info elements are spawned for the
      * missing elements.
-     * 
+     *
      * @param hostPortPairs
      *            a list of host:port pairs
      * @return a list of {@link HostInfo} instances corresponding to the given host:port pairs
@@ -134,4 +135,5 @@ public class LoadBalanceConnectionUrl extends ConnectionUrl {
     public List<HostInfo> getHostInfoListFromHostPortPairs(Collection<String> hostPortPairs) {
         return hostPortPairs.stream().map(this::getHostOrSpawnIsolated).collect(Collectors.toList());
     }
+
 }

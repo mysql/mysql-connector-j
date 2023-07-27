@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,6 +30,7 @@
 package com.mysql.cj.protocol.x;
 
 public enum XpluginStatementCommand {
+
     XPLUGIN_STMT_CREATE_COLLECTION("create_collection"), XPLUGIN_STMT_CREATE_COLLECTION_INDEX("create_collection_index"),
     XPLUGIN_STMT_DROP_COLLECTION("drop_collection"), XPLUGIN_STMT_DROP_COLLECTION_INDEX("drop_collection_index"),
     XPLUGIN_STMT_MODIFY_COLLECTION_OPTIONS("modify_collection_options"), XPLUGIN_STMT_PING("ping"), XPLUGIN_STMT_LIST_OBJECTS("list_objects"),
@@ -41,4 +42,5 @@ public enum XpluginStatementCommand {
     private XpluginStatementCommand(String commandName) {
         this.commandName = commandName;
     }
+
 }

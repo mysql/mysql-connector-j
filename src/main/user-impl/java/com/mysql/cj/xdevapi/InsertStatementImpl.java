@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,6 +38,7 @@ import com.mysql.cj.protocol.x.XMessage;
 import com.mysql.cj.protocol.x.XMessageBuilder;
 
 public class InsertStatementImpl implements InsertStatement {
+
     private MysqlxSession mysqlxSession;
     private String schemaName;
     private String tableName;
@@ -57,20 +58,24 @@ public class InsertStatementImpl implements InsertStatement {
         this.insertParams.setFieldsAndValues(fieldsAndValues);
     }
 
+    @Override
     public InsertResult execute() {
         return this.mysqlxSession.query(
                 ((XMessageBuilder) this.mysqlxSession.<XMessage>getMessageBuilder()).buildRowInsert(this.schemaName, this.tableName, this.insertParams),
                 new InsertResultBuilder());
     }
 
+    @Override
     public CompletableFuture<InsertResult> executeAsync() {
         return this.mysqlxSession.queryAsync(
                 ((XMessageBuilder) this.mysqlxSession.<XMessage>getMessageBuilder()).buildRowInsert(this.schemaName, this.tableName, this.insertParams),
                 new InsertResultBuilder());
     }
 
+    @Override
     public InsertStatement values(List<Object> row) {
         this.insertParams.addRow(row);
         return this;
     }
+
 }

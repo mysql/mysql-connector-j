@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -58,8 +58,8 @@ import java.util.Map;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
-import com.mysql.cj.QueryInfo;
 import com.mysql.cj.PreparedQuery;
+import com.mysql.cj.QueryInfo;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
@@ -124,9 +124,11 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         protected Object clone() throws CloneNotSupportedException {
             return super.clone();
         }
+
     }
 
     public class CallableStatementParamInfo implements ParameterMetaData {
+
         String dbInUse;
 
         boolean isFunctionCall;
@@ -152,7 +154,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         /**
          * Constructor that converts a full list of parameter metadata into one
          * that only represents the placeholders present in the {CALL ()}.
-         * 
+         *
          * @param fullParamInfo
          *            the metadata for all parameters for this stored
          *            procedure or function.
@@ -222,14 +224,14 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                 String paramName = paramTypesRs.getString(4);
                 int inOutModifier;
                 switch (paramTypesRs.getInt(5)) {
-                    case DatabaseMetaData.procedureColumnIn:
+                    case java.sql.DatabaseMetaData.procedureColumnIn:
                         inOutModifier = ParameterMetaData.parameterModeIn;
                         break;
-                    case DatabaseMetaData.procedureColumnInOut:
+                    case java.sql.DatabaseMetaData.procedureColumnInOut:
                         inOutModifier = ParameterMetaData.parameterModeInOut;
                         break;
-                    case DatabaseMetaData.procedureColumnOut:
-                    case DatabaseMetaData.procedureColumnReturn:
+                    case java.sql.DatabaseMetaData.procedureColumnOut:
+                    case java.sql.DatabaseMetaData.procedureColumnReturn:
                         inOutModifier = ParameterMetaData.parameterModeOut;
                         break;
                     default:
@@ -270,7 +272,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         protected void checkBounds(int paramIndex) throws SQLException {
             int localParamIndex = paramIndex - 1;
 
-            if ((paramIndex < 0) || (localParamIndex >= this.numParameters)) {
+            if (paramIndex < 0 || localParamIndex >= this.numParameters) {
                 throw SQLError.createSQLException(Messages.getString("CallableStatement.11", new Object[] { paramIndex, this.numParameters }),
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
@@ -312,7 +314,6 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                 default:
                     return mysqlType.getClassName();
             }
-
         }
 
         @Override
@@ -399,6 +400,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
+
     }
 
     private final static int NOT_OUTPUT_PARAMETER_INDICATOR = Integer.MIN_VALUE;
@@ -443,12 +445,12 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     /**
      * Creates a new CallableStatement
-     * 
+     *
      * @param conn
      *            the connection creating this statement
      * @param paramInfo
      *            the SQL to prepare
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -469,7 +471,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     /**
      * Creates a callable statement instance
-     * 
+     *
      * @param conn
      *            the connection creating this statement
      * @param sql
@@ -489,7 +491,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     /**
      * Creates a callable statement instance
-     * 
+     *
      * @param conn
      *            the connection creating this statement
      * @param paramInfo
@@ -521,7 +523,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                 parameterCountFromMetaData--;
             }
 
-            PreparedQuery q = ((PreparedQuery) this.query);
+            PreparedQuery q = (PreparedQuery) this.query;
             if (this.paramInfo != null && q.getParameterCount() != parameterCountFromMetaData) {
                 this.placeholderToParameterIndexMap = new int[q.getParameterCount()];
 
@@ -562,7 +564,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     /**
      * Creates a new CallableStatement
-     * 
+     *
      * @param conn
      *            the connection creating this statement
      * @param sql
@@ -571,7 +573,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
      *            the current database
      * @param isFunctionCall
      *            is it a function call or a procedure call?
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -608,7 +610,6 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
     }
 
     private CallableStatementParam checkIsOutputParam(int paramIndex) throws SQLException {
-
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.callingStoredFunction) {
                 if (paramIndex == 1) {
@@ -655,7 +656,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
     /**
      * @param paramIndex
      *            parameter index
-     * 
+     *
      * @throws SQLException
      *             if a database access error occurs or this method is called on a closed PreparedStatement
      */
@@ -669,7 +670,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
      * Checks whether or not this statement is supposed to be providing
      * streamable result sets...If output parameters are registered, the driver
      * can not stream the results.
-     * 
+     *
      * @throws SQLException
      *             if a database access error occurs
      */
@@ -698,10 +699,10 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
     /**
      * Used to fake up some metadata when we don't have access to
      * SHOW CREATE PROCEDURE or mysql.proc.
-     * 
+     *
      * @param isReallyProcedure
      *            is it a procedure or function
-     * 
+     *
      * @throws SQLException
      *             if we can't build the metadata.
      */
@@ -801,7 +802,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                         hasResults = true;
                     }
                 } catch (Exception e) {
-                    // paramTypesRs is empty, proceed with fake params. swallow, was expected 
+                    // paramTypesRs is empty, proceed with fake params. swallow, was expected
                 }
                 if (hasResults) {
                     convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);
@@ -924,7 +925,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             for (int i = 0; i < statementLength; i++) {
                 char c = trimmedStatement.charAt(i);
 
-                if (Character.isWhitespace(c) || (c == '(') || (c == '?')) {
+                if (Character.isWhitespace(c) || c == '(' || c == '?') {
                     break;
                 }
                 nameBuf.append(c);
@@ -939,12 +940,12 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     /**
      * Adds 'at' symbol to beginning of parameter names if needed.
-     * 
+     *
      * @param paramNameIn
      *            the parameter name to 'fix'
-     * 
+     *
      * @return the parameter name with an 'a' prepended, if needed
-     * 
+     *
      * @throws SQLException
      *             if the parameter name is null or empty.
      */
@@ -1322,7 +1323,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
-            if ((paramName == null) || (paramName.length() == 0)) {
+            if (paramName == null || paramName.length() == 0) {
                 throw SQLError.createSQLException(Messages.getString("CallableStatement.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
                         getExceptionInterceptor());
             }
@@ -1437,12 +1438,12 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
     /**
      * Returns the ResultSet that holds the output parameters, or throws an
      * appropriate exception if none exist, or they weren't returned.
-     * 
+     *
      * @param paramIndex
      *            parameter index
-     * 
+     *
      * @return the ResultSet that holds the output parameters
-     * 
+     *
      * @throws SQLException
      *             if no output parameters were defined, or if no output
      *             parameters were returned.
@@ -1688,7 +1689,6 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
     }
 
     protected int mapOutputParameterIndexToRsIndex(int paramIndex) throws SQLException {
-
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.returnValueParam != null && paramIndex == 1) {
                 return 1;
@@ -1826,7 +1826,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
     /**
      * Issues a second query to retrieve all output parameters.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs.
      */
@@ -2132,7 +2132,6 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
     @Override
     public int[] executeBatch() throws SQLException {
         return Util.truncateAndConvertToInt(executeLargeBatch());
-
     }
 
     @Override
@@ -2147,90 +2146,76 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
     @Override
     public void setAsciiStream(String parameterName, InputStream x) throws SQLException {
         setAsciiStream(getNamedParamIndex(parameterName, false), x);
-
     }
 
     @Override
     public void setAsciiStream(String parameterName, InputStream x, long length) throws SQLException {
         setAsciiStream(getNamedParamIndex(parameterName, false), x, length);
-
     }
 
     @Override
     public void setBinaryStream(String parameterName, InputStream x) throws SQLException {
         setBinaryStream(getNamedParamIndex(parameterName, false), x);
-
     }
 
     @Override
     public void setBinaryStream(String parameterName, InputStream x, long length) throws SQLException {
         setBinaryStream(getNamedParamIndex(parameterName, false), x, length);
-
     }
 
     @Override
     public void setBlob(String parameterName, Blob x) throws SQLException {
         setBlob(getNamedParamIndex(parameterName, false), x);
-
     }
 
     @Override
     public void setBlob(String parameterName, InputStream inputStream) throws SQLException {
         setBlob(getNamedParamIndex(parameterName, false), inputStream);
-
     }
 
     @Override
     public void setBlob(String parameterName, InputStream inputStream, long length) throws SQLException {
         setBlob(getNamedParamIndex(parameterName, false), inputStream, length);
-
     }
 
     @Override
     public void setCharacterStream(String parameterName, Reader reader) throws SQLException {
         setCharacterStream(getNamedParamIndex(parameterName, false), reader);
-
     }
 
     @Override
     public void setCharacterStream(String parameterName, Reader reader, long length) throws SQLException {
         setCharacterStream(getNamedParamIndex(parameterName, false), reader, length);
-
     }
 
     @Override
     public void setClob(String parameterName, Clob x) throws SQLException {
         setClob(getNamedParamIndex(parameterName, false), x);
-
     }
 
     @Override
     public void setClob(String parameterName, Reader reader) throws SQLException {
         setClob(getNamedParamIndex(parameterName, false), reader);
-
     }
 
     @Override
     public void setClob(String parameterName, Reader reader, long length) throws SQLException {
         setClob(getNamedParamIndex(parameterName, false), reader, length);
-
     }
 
     @Override
     public void setNCharacterStream(String parameterName, Reader value) throws SQLException {
         setNCharacterStream(getNamedParamIndex(parameterName, false), value);
-
     }
 
     @Override
     public void setNCharacterStream(String parameterName, Reader value, long length) throws SQLException {
         setNCharacterStream(getNamedParamIndex(parameterName, false), value, length);
-
     }
 
     /**
      * Check whether the stored procedure alters any data or is safe for read-only usage.
-     * 
+     *
      * @return true if procedure does not alter data
      * @throws SQLException
      *             if a database access error occurs or this method is called on a closed PreparedStatement
@@ -2295,7 +2280,6 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.paramInfo.isReadOnlySafeProcedure = false;
         }
         return false;
-
     }
 
     @Override
@@ -2351,25 +2335,21 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
     @Override
     public void setNClob(String parameterName, NClob value) throws SQLException {
         setNClob(getNamedParamIndex(parameterName, false), value);
-
     }
 
     @Override
     public void setNClob(String parameterName, Reader reader) throws SQLException {
         setNClob(getNamedParamIndex(parameterName, false), reader);
-
     }
 
     @Override
     public void setNClob(String parameterName, Reader reader, long length) throws SQLException {
         setNClob(getNamedParamIndex(parameterName, false), reader, length);
-
     }
 
     @Override
     public void setSQLXML(String parameterName, SQLXML xmlObject) throws SQLException {
         setSQLXML(getNamedParamIndex(parameterName, false), xmlObject);
-
     }
 
     @Override
@@ -2381,7 +2361,6 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         this.outputParamWasNull = rs.wasNull();
 
         return retValue;
-
     }
 
     @Override
@@ -2526,4 +2505,5 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
         return super.executeLargeBatch();
     }
+
 }

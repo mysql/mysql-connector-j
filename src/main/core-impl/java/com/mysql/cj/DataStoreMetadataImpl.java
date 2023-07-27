@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -44,6 +44,7 @@ public class DataStoreMetadataImpl implements DataStoreMetadata {
         this.session = sess;
     }
 
+    @Override
     public boolean schemaExists(String schemaName) {
         StringBuilder stmt = new StringBuilder("select count(*) from information_schema.schemata where schema_name = '");
         // TODO: verify quoting rules
@@ -55,6 +56,7 @@ public class DataStoreMetadataImpl implements DataStoreMetadata {
         return 1 == counters.get(0);
     }
 
+    @Override
     public boolean tableExists(String schemaName, String tableName) {
         StringBuilder stmt = new StringBuilder("select count(*) from information_schema.tables where table_schema = '");
         // TODO: verify quoting rules

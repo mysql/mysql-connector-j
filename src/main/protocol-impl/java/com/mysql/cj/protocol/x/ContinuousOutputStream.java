@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,6 +37,7 @@ import java.io.OutputStream;
  * An {@link OutputStream} wrapper that can't be closed and flushes data instead when {@link #close()} is called.
  */
 public class ContinuousOutputStream extends FilterOutputStream {
+
     protected ContinuousOutputStream(OutputStream out) {
         super(out);
     }
@@ -48,4 +49,5 @@ public class ContinuousOutputStream extends FilterOutputStream {
     public void close() throws IOException {
         flush();
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,6 +36,7 @@ import java.io.IOException;
  * A java.io.OutputStream used to write ASCII data into Blobs and Clobs
  */
 public class WatchableOutputStream extends ByteArrayOutputStream implements WatchableStream {
+
     private OutputStreamWatcher watcher;
 
     /**
@@ -50,7 +51,9 @@ public class WatchableOutputStream extends ByteArrayOutputStream implements Watc
         }
     }
 
+    @Override
     public void setWatcher(OutputStreamWatcher watcher) {
         this.watcher = watcher;
     }
+
 }

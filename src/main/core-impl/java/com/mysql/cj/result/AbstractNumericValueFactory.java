@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -57,7 +57,7 @@ public abstract class AbstractNumericValueFactory<T> extends DefaultValueFactory
         } else if (s.matches("-?\\d+")) {
             // integer
             if (s.charAt(0) == '-' // TODO shouldn't we check the length as well?
-                    || length <= (MysqlTextValueDecoder.MAX_SIGNED_LONG_LEN - 1) && newBytes[0] >= '0' && newBytes[0] <= '8') {
+                    || length <= MysqlTextValueDecoder.MAX_SIGNED_LONG_LEN - 1 && newBytes[0] >= '0' && newBytes[0] <= '8') {
                 return createFromLong(MysqlTextValueDecoder.getLong(newBytes, 0, newBytes.length));
             }
             return createFromBigInteger(MysqlTextValueDecoder.getBigInteger(newBytes, 0, newBytes.length));
@@ -69,4 +69,5 @@ public abstract class AbstractNumericValueFactory<T> extends DefaultValueFactory
     public T createFromYear(long l) {
         return createFromLong(l);
     }
+
 }

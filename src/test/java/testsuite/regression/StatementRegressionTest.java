@@ -168,7 +168,9 @@ import testsuite.simple.StatementsTest;
  * Regression tests for the Statement class
  */
 public class StatementRegressionTest extends BaseTestCase {
+
     class PrepareThread extends Thread {
+
         Connection c;
 
         PrepareThread(Connection cn) {
@@ -190,6 +192,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 }
             }
         }
+
     }
 
     static int count = 0;
@@ -465,7 +468,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#10155, double quotes not recognized when parsing client-side prepared statements.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -475,7 +478,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#10630, Statement.getWarnings() fails with NPE if statement has been closed.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -508,7 +511,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#11115, Varbinary data corrupted when using server-side prepared statements.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -605,7 +608,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#11663, autoGenerateTestcaseScript uses bogus parameter names for server-side prepared statements.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -654,7 +657,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#11798 - Pstmt.setObject(...., Types.BOOLEAN) throws exception.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -675,7 +678,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#13255 - Reconnect during middle of executeBatch()
      * should not happen.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -755,7 +758,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#15024 - Driver incorrectly closes streams passed as
      * arguments to PreparedStatements.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -795,7 +798,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * PreparedStatement should call EscapeProcessor.escapeSQL?
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -839,7 +842,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#18041 - Server-side prepared statements don't cause
      * truncation exceptions to be thrown.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -905,6 +908,7 @@ public class StatementRegressionTest extends BaseTestCase {
         public boolean isClosed() {
             return this.isClosed;
         }
+
     }
 
     class IsClosedInputStream extends ByteArrayInputStream {
@@ -921,7 +925,6 @@ public class StatementRegressionTest extends BaseTestCase {
 
         @Override
         public void close() throws IOException {
-
             super.close();
             this.isClosed = true;
         }
@@ -929,11 +932,12 @@ public class StatementRegressionTest extends BaseTestCase {
         public boolean isClosed() {
             return this.isClosed;
         }
+
     }
 
     /**
      * Tests fix for BUG#1774 -- Truncated words after double quote
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -960,7 +964,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#1901 -- PreparedStatement.setObject(int, Object, int,
      * int) doesn't support CLOB or BLOB types.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -988,7 +992,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Test fix for BUG#1933 -- Driver property 'maxRows' has no effect.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1047,7 +1051,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests the fix for BUG#1934 -- prepareStatement dies silently when
      * encountering Statement.RETURN_GENERATED_KEY
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1071,7 +1075,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#1958 - Improper bounds checking on
      * PreparedStatement.setFoo().
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1101,7 +1105,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests the fix for BUG#2606, server-side prepared statements not returning
      * datatype YEAR correctly.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1125,7 +1129,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests the fix for BUG#2671, nulls encoded incorrectly in server-side prepared statements.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1157,9 +1161,9 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#3103 -- java.util.Date not accepted as parameter to
      * PreparedStatement.setObject().
-     * 
+     *
      * @throws Exception
-     * 
+     *
      * @deprecated uses deprecated methods of Date class
      */
     @Deprecated
@@ -1187,9 +1191,9 @@ public class StatementRegressionTest extends BaseTestCase {
             java.util.Date retrUtilDate = new java.util.Date(this.rs.getTimestamp(1).getTime());
 
             // We can only compare on the day/month/year hour/minute/second interval, because the timestamp has added milliseconds to the internal date...
-            assertTrue((utilDate.getMonth() == retrUtilDate.getMonth()) && (utilDate.getDate() == retrUtilDate.getDate())
-                    && (utilDate.getYear() == retrUtilDate.getYear()) && (utilDate.getHours() == retrUtilDate.getHours())
-                    && (utilDate.getMinutes() == retrUtilDate.getMinutes()) && (utilDate.getSeconds() == retrUtilDate.getSeconds()), "Dates not equal");
+            assertTrue(utilDate.getMonth() == retrUtilDate.getMonth() && utilDate.getDate() == retrUtilDate.getDate()
+                    && utilDate.getYear() == retrUtilDate.getYear() && utilDate.getHours() == retrUtilDate.getHours()
+                    && utilDate.getMinutes() == retrUtilDate.getMinutes() && utilDate.getSeconds() == retrUtilDate.getSeconds(), "Dates not equal");
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3103");
         }
@@ -1197,7 +1201,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#3520
-     * 
+     *
      * @throws Exception
      *             ...
      */
@@ -1217,7 +1221,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Test fix for BUG#3557 -- UpdatableResultSet not picking up default values
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1250,7 +1254,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#3620 -- Timezone not respected correctly.
-     * 
+     *
      * @throws SQLException
      *
      */
@@ -1330,14 +1334,14 @@ public class StatementRegressionTest extends BaseTestCase {
             Timestamp tsValuePstmtNoCal = this.rs.getTimestamp(1);
             System.out.println("Timestamp specifying no calendar from prepared statement: " + tsValuePstmtNoCal.toString());
 
-            long stmtDeltaTWithCal = (tsValueStmtNoCal.getTime() - ts.getTime());
+            long stmtDeltaTWithCal = tsValueStmtNoCal.getTime() - ts.getTime();
             long deltaOrig = Math.abs(stmtDeltaTWithCal - pointInTimeOffset);
-            assertTrue((deltaOrig < epsillon), "Difference between original timestamp and timestamp retrieved using java.sql.Statement "
+            assertTrue(deltaOrig < epsillon, "Difference between original timestamp and timestamp retrieved using java.sql.Statement "
                     + "set in database using UTC calendar is not ~= " + epsillon + " it is actually " + deltaOrig);
 
-            long pStmtDeltaTWithCal = (tsValuePstmtNoCal.getTime() - ts.getTime());
+            long pStmtDeltaTWithCal = tsValuePstmtNoCal.getTime() - ts.getTime();
             deltaOrig = Math.abs(pStmtDeltaTWithCal - pointInTimeOffset);
-            assertTrue((deltaOrig < epsillon), "Difference between original timestamp and timestamp retrieved using java.sql.PreparedStatement "
+            assertTrue(deltaOrig < epsillon, "Difference between original timestamp and timestamp retrieved using java.sql.PreparedStatement "
                     + "set in database using UTC calendar is not ~= " + epsillon + ", it is actually " + deltaOrig);
 
             System.out.println("Difference between original ts and ts with no calendar: " + (tsValuePstmtNoCal.getTime() - ts.getTime()) + ", offset should be "
@@ -1349,7 +1353,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests that DataTruncation is thrown when data is truncated.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1383,7 +1387,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#3804, data truncation on server should throw
      * DataTruncation exception.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1410,7 +1414,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests BUG#3873 - PreparedStatement.executeBatch() not returning all
      * generated keys (even though that's not JDBC compliant).
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1457,7 +1461,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#4119 -- misbehavior in a managed environment from
      * MVCSoft JDO
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1489,7 +1493,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#4311 - Error in JDBC retrieval of mediumint column when
      * using prepared statements and binary result sets.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1515,7 +1519,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#4510 -- Statement.getGeneratedKeys() fails when key >
      * 32767
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1543,7 +1547,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Server doesn't accept everything as a server-side prepared statement, so
      * by default we scan for stuff it can't handle.
-     * 
+     *
      * @throws SQLException
      */
     @Test
@@ -1589,7 +1593,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#5012 -- ServerPreparedStatements dealing with return of
      * DECIMAL type don't work.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1618,7 +1622,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#5133 -- PreparedStatement.toString() doesn't return
      * correct value if no parameters are present in statement.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1633,7 +1637,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests for BUG#5191 -- PreparedStatement.executeQuery() gives
      * OutOfMemoryError
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1653,7 +1657,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
             for (int i = 0; i < questions.length; i++) {
                 this.stmt.executeUpdate("INSERT INTO testBug5191Q(Text) VALUES (\"" + questions[i] + "\")");
-                int catagory = (i < 3) ? 0 : i;
+                int catagory = i < 3 ? 0 : i;
 
                 this.stmt.executeUpdate("INSERT INTO testBug5191C (CategoryId, QuestionId) VALUES (" + catagory + ", " + i + ")");
                 /*
@@ -1685,7 +1689,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests for BUG#5235, ClassCastException on all-zero date field when
      * zeroDatetimeBehavior is 'CONVERT_TO_NULL'.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1833,7 +1837,6 @@ public class StatementRegressionTest extends BaseTestCase {
 
     @Test
     public void testBug8181() throws Exception {
-
         try {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug8181");
             this.stmt.executeUpdate("CREATE TABLE testBug8181(col1 VARCHAR(20),col2 INT)");
@@ -1860,7 +1863,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#8487 - PreparedStatements not creating streaming result
      * sets.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1893,7 +1896,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests multiple statement support with fix for BUG#9704.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1956,7 +1959,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests that you can close a statement twice without an NPE.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1968,7 +1971,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests all forms of statements influencing getGeneratedKeys().
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2037,7 +2040,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests that max_rows and 'limit' don't cause exceptions to be thrown.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2062,39 +2065,39 @@ public class StatementRegressionTest extends BaseTestCase {
     /*
      * public void testBug9595() throws Exception { double[] vals = new double[]
      * {52.21, 52.22, 52.23, 52.24};
-     * 
+     *
      * createTable("testBug9595", "(field1 DECIMAL(10,2), sortField INT)");
-     * 
+     *
      * this.pstmt = this.conn.prepareStatement("INSERT INTO testBug9595 VALUES
      * (?, ?)"); // Try setting as doubles for (int i = 0; i < vals.length; i++)
      * { this.pstmt.setDouble(1, vals[i]); this.pstmt.setInt(2, i);
      * this.pstmt.executeUpdate(); }
-     * 
+     *
      * this.pstmt = this.conn.prepareStatement("SELECT field1 FROM testBug9595
      * ORDER BY sortField"); this.rs = this.pstmt.executeQuery();
-     * 
+     *
      * int i = 0;
-     * 
+     *
      * while (this.rs.next()) { double valToTest = vals[i++];
-     * 
+     *
      * assertEquals(this.rs.getDouble(1), valToTest, 0.001);
      * assertEquals(this.rs.getBigDecimal(1).doubleValue(), valToTest, 0.001); }
-     * 
+     *
      * this.pstmt = this.conn.prepareStatement("INSERT INTO testBug9595 VALUES
      * (?, ?)");
-     * 
+     *
      * this.stmt.executeUpdate("TRUNCATE TABLE testBug9595"); // Now, as
      * BigDecimals for (i = 0; i < vals.length; i++) { BigDecimal foo = new
      * BigDecimal(vals[i]);
-     * 
+     *
      * this.pstmt.setObject(1, foo, Types.DECIMAL, 2); this.pstmt.setInt(2, i);
      * this.pstmt.executeUpdate(); }
-     * 
+     *
      * this.pstmt = this.conn.prepareStatement("SELECT field1 FROM testBug9595
      * ORDER BY sortField"); this.rs = this.pstmt.executeQuery();
-     * 
+     *
      * i = 0;
-     * 
+     *
      * while (this.rs.next()) { double valToTest = vals[i++];
      * System.out.println(this.rs.getString(1));
      * assertEquals(this.rs.getDouble(1), valToTest, 0.001);
@@ -2104,7 +2107,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests that 'LOAD DATA LOCAL INFILE' works
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2126,7 +2129,7 @@ public class StatementRegressionTest extends BaseTestCase {
         int rowCount = 128; // maxAllowedPacket * 4;
 
         for (int i = 0; i < rowCount; i++) {
-            out.write((localCount++) + "\t" + (localCount++) + "\n");
+            out.write(localCount++ + "\t" + localCount++ + "\n");
         }
 
         out.close();
@@ -2194,7 +2197,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#1658
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2238,76 +2241,76 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests for BUG#9288, parameter index out of range if LIKE, ESCAPE '\'
      * present in query.
-     * 
+     *
      * @throws Exception
      */
     /*
      * public void testBug9288() throws Exception { String tableName =
      * "testBug9288"; PreparedStatement pStmt = null;
-     * 
+     *
      * try { createTable(tableName, "(field1 VARCHAR(32), field2 INT)"); pStmt =
      * ((com.mysql.jdbc.Connection)this.conn).clientPrepareStatement( "SELECT
      * COUNT(1) FROM " + tableName + " WHERE " + "field1 LIKE '%' ESCAPE '\\'
      * AND " + "field2 > ?"); pStmt.setInt(1, 0);
-     * 
+     *
      * this.rs = pStmt.executeQuery(); } finally { if (this.rs != null) {
      * this.rs.close(); this.rs = null; }
-     * 
+     *
      * if (pStmt != null) { pStmt.close(); } } }
      */
 
     /*
      * public void testBug10999() throws Exception { if (versionMeetsMinimum(5,
      * 0, 5)) {
-     * 
+     *
      * String tableName = "testBug10999"; String updateTrigName =
      * "testBug10999Update"; String insertTrigName = "testBug10999Insert"; try {
      * createTable(tableName, "(pkfield INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
      * field1 VARCHAR(32))");
-     * 
+     *
      * try { this.stmt.executeUpdate("DROP TRIGGER " + updateTrigName); } catch
      * (SQLException sqlEx) { // ignore for now }
-     * 
+     *
      * this.stmt.executeUpdate("CREATE TRIGGER " + updateTrigName + " AFTER
      * UPDATE ON " + tableName + " FOR EACH ROW " + "BEGIN " + "END");
-     * 
+     *
      * try { this.stmt.executeUpdate("DROP TRIGGER " + insertTrigName); } catch
      * (SQLException sqlEx) { // ignore }
-     * 
+     *
      * this.stmt.executeUpdate("CREATE TRIGGER " + insertTrigName + " AFTER
      * INSERT ON " + tableName + " FOR EACH ROW " + " BEGIN " + "END");
-     * 
+     *
      * this.conn.setAutoCommit(false);
-     * 
+     *
      * String updateSQL = "INSERT INTO " + tableName + " (field1) VALUES
      * ('abcdefg')"; int rowCount = this.stmt.executeUpdate(updateSQL,
      * Statement.RETURN_GENERATED_KEYS);
-     * 
+     *
      * this.rs = stmt.getGeneratedKeys(); if (rs.next()) {
      * System.out.println(rs.getInt(1)); int id = rs.getInt(1); //if
      * (log.isDebugEnabled()) // log.debug("Retrieved ID = " + id); } //else {
      * //log.error("Can't retrieve ID with getGeneratedKeys."); // Retrieve ID
      * using a SELECT statement instead. // querySQL = "SELECT id from tab1
      * WHERE ...";
-     * 
+     *
      * //if (log.isDebugEnabled()) // log.debug(querySQL);
-     * 
+     *
      * //rs = stmt.executeQuery(querySQL); this.rs =
      * this.stmt.executeQuery("SELECT pkfield FROM " + tableName); } finally {
      * this.conn.setAutoCommit(true);
-     * 
+     *
      * try { this.stmt.executeUpdate("DROP TRIGGER IF EXISTS " +
      * insertTrigName); } catch (SQLException sqlEx) { // ignore }
-     * 
+     *
      * try { this.stmt.executeUpdate("DROP TRIGGER IF EXISTS " +
      * updateTrigName); } catch (SQLException sqlEx) { // ignore } } } }
      */
 
     /**
      * Tests that binary dates/times are encoded/decoded correctly.
-     * 
+     *
      * @throws Exception
-     * 
+     *
      * @deprecated because we need to use this particular constructor for the
      *             date class, as Calendar-constructed dates don't pass the
      *             .equals() test :(
@@ -2343,7 +2346,6 @@ public class StatementRegressionTest extends BaseTestCase {
 
     @Test
     public void testServerPrepStmtDeadlock() throws Exception {
-
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
@@ -2360,7 +2362,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests PreparedStatement.setCharacterStream() to ensure it accepts > 4K
      * streams
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2428,7 +2430,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.pstmt = this.conn.prepareStatement("INSERT INTO `charStream'RegressTest` VALUES (?)");
 
             reader = new CharArrayReader(charBuf);
-            this.pstmt.setCharacterStream(1, reader, (charBuf.length * 2));
+            this.pstmt.setCharacterStream(1, reader, charBuf.length * 2);
             this.pstmt.executeUpdate();
 
             this.rs = this.stmt.executeQuery("SELECT field1 FROM `charStream'RegressTest`");
@@ -2459,7 +2461,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests a bug where Statement.setFetchSize() does not work for values other
      * than 0 or Integer.MIN_VALUE
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2475,7 +2477,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#907
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2495,9 +2497,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests for timestamp NPEs occuring in binary-format timestamps.
-     * 
+     *
      * @throws Exception
-     * 
+     *
      * @deprecated yes, we know we are using deprecated methods here :)
      */
     @Deprecated
@@ -2550,7 +2552,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for updatable streams being supported in updatable result sets.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2588,7 +2590,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#15383 - PreparedStatement.setObject() serializes BigInteger as object, rather than sending as numeric value (and is thus not
      * complementary to .getObject() on an UNSIGNED LONG type).
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2626,12 +2628,11 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#17099 - Statement.getGeneratedKeys() throws NPE when no query has been processed.
-     * 
+     *
      * @throws Exception
      */
     @Test
     public void testBug17099() throws Exception {
-
         PreparedStatement pStmt = this.conn.prepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
         assertNotNull(pStmt.getGeneratedKeys());
 
@@ -2641,7 +2642,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#17587 - clearParameters() on a closed prepared statement causes NPE.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2675,7 +2676,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#19615, PreparedStatement.setObject(int, Object, int) doesn't respect scale of BigDecimals.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2708,12 +2709,12 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#20029 - NPE thrown from executeBatch().
-     * 
+     *
      * @throws Exception
      */
     @Test
     public void testBug20029() throws Exception {
-        createTable("testBug20029", ("(field1 int)"));
+        createTable("testBug20029", "(field1 int)");
 
         long initialTimeout = 20; // may need to raise this depending on environment we try and do this automatically in this testcase
 
@@ -2734,6 +2735,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 }
 
                 Thread t = new Thread() {
+
                     @Override
                     public void run() {
                         try {
@@ -2743,6 +2745,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
                         }
                     }
+
                 };
 
                 t.start();
@@ -2755,9 +2758,6 @@ public class StatementRegressionTest extends BaseTestCase {
 
                     toBeKilledPstmt.executeBatch();
                     fail("Should've caught a SQLException for the statement being closed here");
-                } catch (BatchUpdateException batchEx) {
-                    assertEquals("08003", batchEx.getSQLState());
-                    break;
                 } catch (SQLException sqlEx) {
                     assertEquals("08003", sqlEx.getSQLState());
                     break;
@@ -2778,7 +2778,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Fixes BUG#20687 - Can't pool server-side prepared statements, exception raised when re-using them.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2862,7 +2862,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#20650 - Statement.cancel() causes NullPointerException if underlying connection has been closed due to server failure.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2893,7 +2893,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#20888 - escape of quotes in client-side prepared statements parsing not respected.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2909,7 +2909,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests Bug#21207 - Driver throws NPE when tracing prepared statements that have been closed (in asSQL()).
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2922,7 +2922,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests BUG#21438, server-side PS fails when using jdbcCompliantTruncation. If either is set to FALSE (&useServerPrepStmts=false or
      * &jdbcCompliantTruncation=false) test succedes.
-     * 
+     *
      * @throws Exception
      */
     @SuppressWarnings("deprecation")
@@ -2947,7 +2947,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#22359 - Driver was using millis for Statement.setQueryTimeout() when spec says argument is seconds.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2966,7 +2966,7 @@ public class StatementRegressionTest extends BaseTestCase {
             } catch (MySQLTimeoutException timeoutEx) {
                 long end = System.currentTimeMillis();
 
-                assertTrue((end - begin) > 1000);
+                assertTrue(end - begin > 1000);
             }
         } finally {
             if (timeoutStmt != null) {
@@ -2978,7 +2978,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#22290 - Driver issues truncation on write exception when it shouldn't (due to sending big decimal incorrectly to server with
      * server-side prepared statement).
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3022,7 +3022,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#24360 .setFetchSize() breaks prepared SHOW and other commands.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3052,9 +3052,9 @@ public class StatementRegressionTest extends BaseTestCase {
      * prepared statements. (this is now fixed if moving from server-side prepared statements to client-side prepared statements by setting
      * "useSSPSCompatibleTimezoneShift" to "true", as the driver can't tell if this is a new deployment that never used server-side prepared statements, or if
      * it is an existing deployment that is switching to client-side prepared statements from server-side prepared statements.
-     * 
+     *
      * Note: The properties 'useJDBCCompliantTimezoneShift' and 'useSSPSCompatibleTimezoneShift' no longer exist in Connector/J 6.0.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3107,7 +3107,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#25073 - rewriting batched statements leaks internal statement instances, and causes a memory leak.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3207,7 +3207,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#25009 - Results from updates not handled correctly in multi-statement queries.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3251,7 +3251,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#25025 - Client-side prepared statement parser gets confused by in-line (slash-star) comments and therefore can't rewrite batched
      * statements or reliably detect type of statements when they're used.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3322,7 +3322,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#28256 - When connection is in read-only mode, queries that are parentheized incorrectly identified as DML.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3339,10 +3339,10 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#28469 - PreparedStatement.getMetaData() for statements containing leading one-line comments is not returned correctly.
-     * 
+     *
      * As part of this fix, we also overhauled detection of DML for executeQuery() and SELECTs for executeUpdate() in plain and prepared statements to be aware
      * of the same types of comments.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3395,7 +3395,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests error with slash-star comment at EOL
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3407,7 +3407,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#28851 - parser in client-side prepared statements eats character following '/' if it's not a multi-line comment.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3423,9 +3423,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#28596 - parser in client-side prepared statements runs to end of statement, rather than end-of-line for '#' comments.
-     * 
+     *
      * Also added support for '--' single-line comments
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3450,7 +3450,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#30550 - executeBatch() on an empty batch when there are no elements in the batch causes a divide-by-zero error when rewriting is
      * enabled.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3499,7 +3499,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#27412 - cached metadata with PreparedStatement.execute() throws NullPointerException.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3611,10 +3611,10 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#32577 - no way to store two timestamp/datetime values that happens over the DST switchover, as the hours end up being the same when
      * sent as the literal that MySQL requires.
-     * 
+     *
      * Note that to get this scenario to work with MySQL (since it doesn't support per-value timezones), you need to configure your server (or session) to be in
      * UTC. This will cause the driver to always convert to/from the server and client timezone consistently.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3680,7 +3680,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#30508 - ResultSet returned by Statement.getGeneratedKeys() is not closed automatically when statement that created it is closed.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3757,740 +3757,948 @@ public class StatementRegressionTest extends BaseTestCase {
     public void testBug33823() throws Exception {
         ResultSetInternalMethods resultSetInternalMethods = new ResultSetInternalMethods() {
 
+            @Override
             public void clearNextResultset() {
             }
 
+            @Override
             public char getFirstCharOfQuery() {
                 return 0;
             }
 
+            @Override
             public ResultSetInternalMethods getNextResultset() {
                 return null;
             }
 
+            @Override
             public Object getObjectStoredProc(int columnIndex, int desiredSqlType) throws SQLException {
                 return null;
             }
 
+            @Override
             public Object getObjectStoredProc(int i, Map<Object, Object> map, int desiredSqlType) throws SQLException {
                 return null;
             }
 
+            @Override
             public Object getObjectStoredProc(String columnName, int desiredSqlType) throws SQLException {
                 return null;
             }
 
+            @Override
             public Object getObjectStoredProc(String colName, Map<Object, Object> map, int desiredSqlType) throws SQLException {
                 return null;
             }
 
+            @Override
             public String getServerInfo() {
                 return null;
             }
 
+            @Override
             public long getUpdateCount() {
                 return 0;
             }
 
+            @Override
             public long getUpdateID() {
                 return 0;
             }
 
+            @Override
             public void initializeWithMetadata() throws SQLException {
             }
 
+            @Override
             public void populateCachedMetaData(CachedResultSetMetaData cachedMetaData) throws SQLException {
             }
 
+            @Override
             public void realClose(boolean calledExplicitly) throws SQLException {
             }
 
+            @Override
             public boolean isClosed() {
                 return false;
             }
 
+            @Override
             public boolean hasRows() {
                 return false;
             }
 
+            @Override
             public void setFirstCharOfQuery(char firstCharUpperCase) {
             }
 
+            @Override
             public void setOwningStatement(JdbcStatement owningStatement) {
             }
 
+            @Override
             public void setStatementUsedForFetchingRows(JdbcPreparedStatement stmt) {
             }
 
+            @Override
             public void setWrapperStatement(Statement wrapperStatement) {
             }
 
+            @Override
             public boolean absolute(int row) throws SQLException {
                 return false;
             }
 
+            @Override
             public void afterLast() throws SQLException {
             }
 
+            @Override
             public void beforeFirst() throws SQLException {
             }
 
+            @Override
             public void cancelRowUpdates() throws SQLException {
             }
 
+            @Override
             public void clearWarnings() throws SQLException {
             }
 
+            @Override
             public void close() throws SQLException {
             }
 
+            @Override
             public void deleteRow() throws SQLException {
             }
 
+            @Override
             public int findColumn(String columnName) throws SQLException {
                 return 0;
             }
 
+            @Override
             public boolean first() throws SQLException {
                 return false;
             }
 
+            @Override
             public Array getArray(int i) throws SQLException {
                 return null;
             }
 
+            @Override
             public Array getArray(String colName) throws SQLException {
                 return null;
             }
 
+            @Override
             public InputStream getAsciiStream(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public InputStream getAsciiStream(String columnName) throws SQLException {
                 return null;
             }
 
+            @Override
             public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public BigDecimal getBigDecimal(String columnName) throws SQLException {
                 return null;
             }
 
+            @Override
             @Deprecated
             public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
                 return null;
             }
 
+            @Override
             @Deprecated
             public BigDecimal getBigDecimal(String columnName, int scale) throws SQLException {
                 return null;
             }
 
+            @Override
             public InputStream getBinaryStream(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public InputStream getBinaryStream(String columnName) throws SQLException {
                 return null;
             }
 
+            @Override
             public Blob getBlob(int i) throws SQLException {
                 return null;
             }
 
+            @Override
             public Blob getBlob(String colName) throws SQLException {
                 return null;
             }
 
+            @Override
             public boolean getBoolean(int columnIndex) throws SQLException {
                 return false;
             }
 
+            @Override
             public boolean getBoolean(String columnName) throws SQLException {
                 return false;
             }
 
+            @Override
             public byte getByte(int columnIndex) throws SQLException {
                 return 0;
             }
 
+            @Override
             public byte getByte(String columnName) throws SQLException {
                 return 0;
             }
 
+            @Override
             public byte[] getBytes(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public byte[] getBytes(String columnName) throws SQLException {
                 return null;
             }
 
+            @Override
             public Reader getCharacterStream(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public Reader getCharacterStream(String columnName) throws SQLException {
                 return null;
             }
 
+            @Override
             public Clob getClob(int i) throws SQLException {
                 return null;
             }
 
+            @Override
             public Clob getClob(String colName) throws SQLException {
                 return null;
             }
 
+            @Override
             public int getConcurrency() throws SQLException {
                 return 0;
             }
 
+            @Override
             public String getCursorName() throws SQLException {
                 return null;
             }
 
+            @Override
             public Date getDate(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public Date getDate(String columnName) throws SQLException {
                 return null;
             }
 
+            @Override
             public Date getDate(int columnIndex, Calendar cal) throws SQLException {
                 return null;
             }
 
+            @Override
             public Date getDate(String columnName, Calendar cal) throws SQLException {
                 return null;
             }
 
+            @Override
             public double getDouble(int columnIndex) throws SQLException {
                 return 0;
             }
 
+            @Override
             public double getDouble(String columnName) throws SQLException {
                 return 0;
             }
 
+            @Override
             public int getFetchDirection() throws SQLException {
                 return 0;
             }
 
+            @Override
             public int getFetchSize() throws SQLException {
                 return 0;
             }
 
+            @Override
             public float getFloat(int columnIndex) throws SQLException {
                 return 0;
             }
 
+            @Override
             public float getFloat(String columnName) throws SQLException {
                 return 0;
             }
 
+            @Override
             public int getInt(int columnIndex) throws SQLException {
                 return 0;
             }
 
+            @Override
             public int getInt(String columnName) throws SQLException {
                 return 0;
             }
 
+            @Override
             public long getLong(int columnIndex) throws SQLException {
                 return 0;
             }
 
+            @Override
             public long getLong(String columnName) throws SQLException {
                 return 0;
             }
 
+            @Override
             public ResultSetMetaData getMetaData() throws SQLException {
                 return null;
             }
 
+            @Override
             public Object getObject(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public Object getObject(String columnName) throws SQLException {
                 return null;
             }
 
+            @Override
             public Object getObject(int arg0, Map<String, Class<?>> arg1) throws SQLException {
                 return null;
             }
 
+            @Override
             public Object getObject(String arg0, Map<String, Class<?>> arg1) throws SQLException {
                 return null;
             }
 
+            @Override
             public Ref getRef(int i) throws SQLException {
                 return null;
             }
 
+            @Override
             public Ref getRef(String colName) throws SQLException {
                 return null;
             }
 
+            @Override
             public int getRow() throws SQLException {
                 return 0;
             }
 
+            @Override
             public short getShort(int columnIndex) throws SQLException {
                 return 0;
             }
 
+            @Override
             public short getShort(String columnName) throws SQLException {
                 return 0;
             }
 
+            @Override
             public Statement getStatement() throws SQLException {
                 return null;
             }
 
+            @Override
             public String getString(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public String getString(String columnName) throws SQLException {
                 return null;
             }
 
+            @Override
             public Time getTime(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public Time getTime(String columnName) throws SQLException {
                 return null;
             }
 
+            @Override
             public Time getTime(int columnIndex, Calendar cal) throws SQLException {
                 return null;
             }
 
+            @Override
             public Time getTime(String columnName, Calendar cal) throws SQLException {
                 return null;
             }
 
+            @Override
             public Timestamp getTimestamp(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public Timestamp getTimestamp(String columnName) throws SQLException {
                 return null;
             }
 
+            @Override
             public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
                 return null;
             }
 
+            @Override
             public Timestamp getTimestamp(String columnName, Calendar cal) throws SQLException {
                 return null;
             }
 
+            @Override
             public int getType() throws SQLException {
                 return 0;
             }
 
+            @Override
             public URL getURL(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public URL getURL(String columnName) throws SQLException {
                 return null;
             }
 
+            @Override
             @Deprecated
             public InputStream getUnicodeStream(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             @Deprecated
             public InputStream getUnicodeStream(String columnName) throws SQLException {
                 return null;
             }
 
+            @Override
             public SQLWarning getWarnings() throws SQLException {
                 return null;
             }
 
+            @Override
             public void insertRow() throws SQLException {
             }
 
+            @Override
             public boolean isAfterLast() throws SQLException {
                 return false;
             }
 
+            @Override
             public boolean isBeforeFirst() throws SQLException {
                 return false;
             }
 
+            @Override
             public boolean isFirst() throws SQLException {
                 return false;
             }
 
+            @Override
             public boolean isLast() throws SQLException {
                 return false;
             }
 
+            @Override
             public boolean last() throws SQLException {
                 return false;
             }
 
+            @Override
             public void moveToCurrentRow() throws SQLException {
             }
 
+            @Override
             public void moveToInsertRow() throws SQLException {
             }
 
+            @Override
             public boolean next() throws SQLException {
                 return false;
             }
 
+            @Override
             public boolean previous() throws SQLException {
                 return false;
             }
 
+            @Override
             public void refreshRow() throws SQLException {
             }
 
+            @Override
             public boolean relative(int rows) throws SQLException {
                 return false;
             }
 
+            @Override
             public boolean rowDeleted() throws SQLException {
                 return false;
             }
 
+            @Override
             public boolean rowInserted() throws SQLException {
                 return false;
             }
 
+            @Override
             public boolean rowUpdated() throws SQLException {
                 return false;
             }
 
+            @Override
             public void setFetchDirection(int direction) throws SQLException {
             }
 
+            @Override
             public void setFetchSize(int rows) throws SQLException {
             }
 
+            @Override
             public void updateArray(int columnIndex, Array x) throws SQLException {
             }
 
+            @Override
             public void updateArray(String columnName, Array x) throws SQLException {
             }
 
+            @Override
             public void updateAsciiStream(int columnIndex, InputStream x, int length) throws SQLException {
             }
 
+            @Override
             public void updateAsciiStream(String columnName, InputStream x, int length) throws SQLException {
             }
 
+            @Override
             public void updateBigDecimal(int columnIndex, BigDecimal x) throws SQLException {
-
             }
 
+            @Override
             public void updateBigDecimal(String columnName, BigDecimal x) throws SQLException {
             }
 
+            @Override
             public void updateBinaryStream(int columnIndex, InputStream x, int length) throws SQLException {
             }
 
+            @Override
             public void updateBinaryStream(String columnName, InputStream x, int length) throws SQLException {
             }
 
+            @Override
             public void updateBlob(int columnIndex, Blob x) throws SQLException {
             }
 
+            @Override
             public void updateBlob(String columnName, Blob x) throws SQLException {
             }
 
+            @Override
             public void updateBoolean(int columnIndex, boolean x) throws SQLException {
             }
 
+            @Override
             public void updateBoolean(String columnName, boolean x) throws SQLException {
             }
 
+            @Override
             public void updateByte(int columnIndex, byte x) throws SQLException {
             }
 
+            @Override
             public void updateByte(String columnName, byte x) throws SQLException {
             }
 
+            @Override
             public void updateBytes(int columnIndex, byte[] x) throws SQLException {
             }
 
+            @Override
             public void updateBytes(String columnName, byte[] x) throws SQLException {
             }
 
+            @Override
             public void updateCharacterStream(int columnIndex, Reader x, int length) throws SQLException {
             }
 
+            @Override
             public void updateCharacterStream(String columnName, Reader reader, int length) throws SQLException {
             }
 
+            @Override
             public void updateClob(int columnIndex, Clob x) throws SQLException {
             }
 
+            @Override
             public void updateClob(String columnName, Clob x) throws SQLException {
             }
 
+            @Override
             public void updateDate(int columnIndex, Date x) throws SQLException {
             }
 
+            @Override
             public void updateDate(String columnName, Date x) throws SQLException {
             }
 
+            @Override
             public void updateDouble(int columnIndex, double x) throws SQLException {
             }
 
+            @Override
             public void updateDouble(String columnName, double x) throws SQLException {
             }
 
+            @Override
             public void updateFloat(int columnIndex, float x) throws SQLException {
             }
 
+            @Override
             public void updateFloat(String columnName, float x) throws SQLException {
             }
 
+            @Override
             public void updateInt(int columnIndex, int x) throws SQLException {
             }
 
+            @Override
             public void updateInt(String columnName, int x) throws SQLException {
             }
 
+            @Override
             public void updateLong(int columnIndex, long x) throws SQLException {
             }
 
+            @Override
             public void updateLong(String columnName, long x) throws SQLException {
             }
 
+            @Override
             public void updateNull(int columnIndex) throws SQLException {
             }
 
+            @Override
             public void updateNull(String columnName) throws SQLException {
             }
 
+            @Override
             public void updateObject(int columnIndex, Object x) throws SQLException {
             }
 
+            @Override
             public void updateObject(String columnName, Object x) throws SQLException {
             }
 
+            @Override
             public void updateObject(int columnIndex, Object x, int scale) throws SQLException {
             }
 
+            @Override
             public void updateObject(String columnName, Object x, int scale) throws SQLException {
             }
 
+            @Override
             public void updateRef(int columnIndex, Ref x) throws SQLException {
             }
 
+            @Override
             public void updateRef(String columnName, Ref x) throws SQLException {
             }
 
+            @Override
             public void updateRow() throws SQLException {
             }
 
+            @Override
             public void updateShort(int columnIndex, short x) throws SQLException {
             }
 
+            @Override
             public void updateShort(String columnName, short x) throws SQLException {
             }
 
+            @Override
             public void updateString(int columnIndex, String x) throws SQLException {
             }
 
+            @Override
             public void updateString(String columnName, String x) throws SQLException {
             }
 
+            @Override
             public void updateTime(int columnIndex, Time x) throws SQLException {
             }
 
+            @Override
             public void updateTime(String columnName, Time x) throws SQLException {
             }
 
+            @Override
             public void updateTimestamp(int columnIndex, Timestamp x) throws SQLException {
             }
 
+            @Override
             public void updateTimestamp(String columnName, Timestamp x) throws SQLException {
             }
 
+            @Override
             public boolean wasNull() throws SQLException {
                 return false;
             }
 
+            @Override
             public RowId getRowId(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public RowId getRowId(String columnLabel) throws SQLException {
                 return null;
             }
 
+            @Override
             public void updateRowId(int columnIndex, RowId x) throws SQLException {
             }
 
+            @Override
             public void updateRowId(String columnLabel, RowId x) throws SQLException {
             }
 
+            @Override
             public int getHoldability() throws SQLException {
                 return 0;
             }
 
+            @Override
             public void updateNString(int columnIndex, String nString) throws SQLException {
             }
 
+            @Override
             public void updateNString(String columnLabel, String nString) throws SQLException {
             }
 
+            @Override
             public void updateNClob(int columnIndex, NClob nClob) throws SQLException {
             }
 
+            @Override
             public void updateNClob(String columnLabel, NClob nClob) throws SQLException {
             }
 
+            @Override
             public NClob getNClob(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public NClob getNClob(String columnLabel) throws SQLException {
                 return null;
             }
 
+            @Override
             public SQLXML getSQLXML(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public SQLXML getSQLXML(String columnLabel) throws SQLException {
                 return null;
             }
 
+            @Override
             public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException {
             }
 
+            @Override
             public void updateSQLXML(String columnLabel, SQLXML xmlObject) throws SQLException {
             }
 
+            @Override
             public String getNString(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public String getNString(String columnLabel) throws SQLException {
                 return null;
             }
 
+            @Override
             public Reader getNCharacterStream(int columnIndex) throws SQLException {
                 return null;
             }
 
+            @Override
             public Reader getNCharacterStream(String columnLabel) throws SQLException {
                 return null;
             }
 
+            @Override
             public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
             }
 
+            @Override
             public void updateNCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
             }
 
+            @Override
             public void updateAsciiStream(int columnIndex, InputStream x, long length) throws SQLException {
             }
 
+            @Override
             public void updateBinaryStream(int columnIndex, InputStream x, long length) throws SQLException {
             }
 
+            @Override
             public void updateCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
             }
 
+            @Override
             public void updateAsciiStream(String columnLabel, InputStream x, long length) throws SQLException {
             }
 
+            @Override
             public void updateBinaryStream(String columnLabel, InputStream x, long length) throws SQLException {
             }
 
+            @Override
             public void updateCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
             }
 
+            @Override
             public void updateBlob(int columnIndex, InputStream inputStream, long length) throws SQLException {
             }
 
+            @Override
             public void updateBlob(String columnLabel, InputStream inputStream, long length) throws SQLException {
             }
 
+            @Override
             public void updateClob(int columnIndex, Reader reader, long length) throws SQLException {
             }
 
+            @Override
             public void updateClob(String columnLabel, Reader reader, long length) throws SQLException {
             }
 
+            @Override
             public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException {
             }
 
+            @Override
             public void updateNClob(String columnLabel, Reader reader, long length) throws SQLException {
             }
 
+            @Override
             public void updateNCharacterStream(int columnIndex, Reader x) throws SQLException {
             }
 
+            @Override
             public void updateNCharacterStream(String columnLabel, Reader reader) throws SQLException {
             }
 
+            @Override
             public void updateAsciiStream(int columnIndex, InputStream x) throws SQLException {
             }
 
+            @Override
             public void updateBinaryStream(int columnIndex, InputStream x) throws SQLException {
             }
 
+            @Override
             public void updateCharacterStream(int columnIndex, Reader x) throws SQLException {
             }
 
+            @Override
             public void updateAsciiStream(String columnLabel, InputStream x) throws SQLException {
             }
 
+            @Override
             public void updateBinaryStream(String columnLabel, InputStream x) throws SQLException {
             }
 
+            @Override
             public void updateCharacterStream(String columnLabel, Reader reader) throws SQLException {
             }
 
+            @Override
             public void updateBlob(int columnIndex, InputStream inputStream) throws SQLException {
             }
 
+            @Override
             public void updateBlob(String columnLabel, InputStream inputStream) throws SQLException {
             }
 
+            @Override
             public void updateClob(int columnIndex, Reader reader) throws SQLException {
             }
 
+            @Override
             public void updateClob(String columnLabel, Reader reader) throws SQLException {
             }
 
+            @Override
             public void updateNClob(int columnIndex, Reader reader) throws SQLException {
             }
 
+            @Override
             public void updateNClob(String columnLabel, Reader reader) throws SQLException {
             }
 
+            @Override
             public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
                 return null;
             }
 
+            @Override
             public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
                 return null;
             }
 
+            @Override
             public <T> T unwrap(Class<T> iface) throws SQLException {
                 return null;
             }
 
+            @Override
             public boolean isWrapperFor(Class<?> iface) throws SQLException {
                 return false;
             }
@@ -4575,6 +4783,7 @@ public class StatementRegressionTest extends BaseTestCase {
             public Object getSyncMutex() {
                 return null;
             }
+
         };
 
         resultSetInternalMethods.close();
@@ -4583,7 +4792,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#34093 - Statements with batched values do not return correct values for getGeneratedKeys() when "rewriteBatchedStatements" is set to
      * "true", and the statement has an "ON DUPLICATE KEY UPDATE" clause.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -4760,7 +4969,7 @@ public class StatementRegressionTest extends BaseTestCase {
      * "(`id` int(11) unsigned NOT NULL auto_increment," +
      * "`field` varchar(20) NOT NULL," + "`date` datetime NOT NULL," +
      * "PRIMARY KEY  (`id`)" + ") ENGINE=MyISAM DEFAULT CHARSET=latin1");
-     * 
+     *
      * this.stmt.executeUpdate("INSERT INTO testBug35307 (field) values ('works')"
      * ); }
      */
@@ -4798,6 +5007,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.rs = deadlockStmt.executeQuery("SELECT * FROM t2 WHERE id=0 FOR UPDATE");
 
             new Thread() {
+
                 @Override
                 public void run() {
                     try {
@@ -4814,6 +5024,7 @@ public class StatementRegressionTest extends BaseTestCase {
                         }
                     }
                 }
+
             }.run();
 
             this.stmt.executeUpdate("INSERT INTO t1 VALUES (0, 0)");
@@ -4916,9 +5127,9 @@ public class StatementRegressionTest extends BaseTestCase {
                         this.rs = this.pstmt.getGeneratedKeys();
 
                         this.rs.next();
-                        assertEquals(1, this.rs.getInt(1), "For engine " + engineName + ((i == 1) ? " rewritten " : " plain "));
+                        assertEquals(1, this.rs.getInt(1), "For engine " + engineName + (i == 1 ? " rewritten " : " plain "));
                         this.rs.next();
-                        assertEquals(3, this.rs.getInt(1), "For engine " + engineName + ((i == 1) ? " rewritten " : " plain "));
+                        assertEquals(3, this.rs.getInt(1), "For engine " + engineName + (i == 1 ? " rewritten " : " plain "));
 
                         createTable(tableName, "(k int primary key auto_increment, p varchar(4)) ENGINE=" + engineName);
                         Statement twoStmt = twoConn.createStatement();
@@ -4933,7 +5144,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
                         for (int j = 0; j < 10; j++) {
                             this.rs.next();
-                            assertEquals(key, this.rs.getInt(1), "For engine " + engineName + ((i == 1) ? " rewritten " : " plain "));
+                            assertEquals(key, this.rs.getInt(1), "For engine " + engineName + (i == 1 ? " rewritten " : " plain "));
                             key += 2;
                         }
                     }
@@ -4998,7 +5209,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Ensures that cases listed in Bug#41448 actually work - we don't think there's a bug here right now
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -5131,7 +5342,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#41532 - regression in performance for batched inserts when using ON DUPLICATE KEY UPDATE
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -5212,7 +5423,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#44056 - Statement.getGeneratedKeys() retains result set instances until statement is closed.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -5292,7 +5503,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Bug #42253 - multiple escaped quotes cause exception from EscapeProcessor.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -5305,7 +5516,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Bug #41566 - Quotes within comments not correctly ignored by escape parser
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -5345,12 +5556,12 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public static class Bug39426Interceptor extends BaseQueryInterceptor {
+
         public static List<Integer> vals = new ArrayList<>();
         String prevSql;
 
         @Override
         public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
-
             if (interceptedQuery instanceof ClientPreparedStatement) {
                 String asSql = interceptedQuery.toString();
                 int firstColon = asSql.indexOf(":");
@@ -5370,11 +5581,12 @@ public class StatementRegressionTest extends BaseTestCase {
             }
             return null;
         }
+
     }
 
     /**
      * Bug #39426 - executeBatch passes most recent PreparedStatement params to StatementInterceptor
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -5452,7 +5664,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Bug #37458 - MySQL 5.1 returns generated keys in ascending order
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -5623,6 +5835,7 @@ public class StatementRegressionTest extends BaseTestCase {
         public void destroy() {
             this.connection = null;
         }
+
     }
 
     @Test
@@ -5646,12 +5859,12 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public static class ScanDetectingInterceptor extends BaseQueryInterceptor {
+
         static boolean hasSeenScan = false;
         static boolean hasSeenBadIndex = false;
 
         @Override
         public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
-
             if (serverSession.noIndexUsed()) {
                 hasSeenScan = true;
             }
@@ -5662,11 +5875,12 @@ public class StatementRegressionTest extends BaseTestCase {
 
             return null;
         }
+
     }
 
     /**
      * Tests fix for Bug#51704, rewritten batched statements don't honor escape processing flag of Statement that they are created for
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -5686,7 +5900,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 rewriteStmt.addBatch("INSERT INTO testBug51704 VALUES ({tsp '2002-11-12 10:00:00'})");
             }
 
-            rewriteStmt.executeBatch(); // this should pass, because mysqld doesn't validate any escape sequences, 
+            rewriteStmt.executeBatch(); // this should pass, because mysqld doesn't validate any escape sequences,
                                        // it just strips them, where our escape processor validates them
 
             Statement batchStmt = this.conn.createStatement();
@@ -5717,7 +5931,7 @@ public class StatementRegressionTest extends BaseTestCase {
      * Tests fix for Bug#58728, NPE in com.mysql.jdbc.StatementWrappe.getResultSet()
      * ((com.mysql.jdbc.ResultSetInternalMethods) rs).setWrapperStatement(this);
      * when rs is null
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -5832,7 +6046,7 @@ public class StatementRegressionTest extends BaseTestCase {
     @Test
     public void testbug12565726() throws Exception {
         // Not putting the space between VALUES() and ON DUPLICATE KEY UPDATE
-        // causes C/J a) enter rewriting the query altrhough it has ON UPDATE 
+        // causes C/J a) enter rewriting the query altrhough it has ON UPDATE
         // and b) to generate the wrong query with multiple ON DUPLICATE KEY
 
         Properties props = new Properties();
@@ -5926,7 +6140,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#40279 - Timestamp values get truncated when passed as prepared statement parameters
      * (and duplicate BUG#60584 - prepared statements truncate milliseconds)
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -5981,7 +6195,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for BUG#35653 - executeQuery() in Statement.java let "TRUNCATE" queries being executed.
      * "RENAME" is also filtered now.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -6006,7 +6220,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#64805 - StatementImpl$CancelTask occasionally throws NullPointerExceptions.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -6028,16 +6242,17 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * WL#4897 - Add EXPLAIN INSERT/UPDATE/DELETE
-     * 
+     *
      * Added support for EXPLAIN INSERT/REPLACE/UPDATE/DELETE. Connector/J must issue a warning containing the execution plan for slow queries when connection
      * properties logSlowQueries=true and explainSlowQueries=true are used.
-     * 
+     *
      * @throws Exception
      */
     @Test
     public void testExecutionPlanForSlowQueries() throws Exception {
         // once slow query (with execution plan) warning is sent to System.err, we capture messages sent here to check proper operation.
         final class TestHandler {
+
             // System.err diversion handling
             PrintStream systemErrBackup = null;
             ByteArrayOutputStream systemErrDetour = null;
@@ -6094,6 +6309,7 @@ public class StatementRegressionTest extends BaseTestCase {
                     this.testConn = null;
                 }
             }
+
         }
 
         TestHandler testHandler = new TestHandler();
@@ -6132,7 +6348,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#68562 - Combination rewriteBatchedStatements and useAffectedRows not working as expected
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -6142,7 +6358,6 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     private void testBug68562BatchWithSize(int batchSize) throws Exception {
-
         createTable("testBug68562_found", "(id INTEGER NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL, version VARCHAR(255)) ENGINE=InnoDB;");
         createTable("testBug68562_affected", "(id INTEGER NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL, version VARCHAR(255)) ENGINE=InnoDB;");
 
@@ -6189,7 +6404,6 @@ public class StatementRegressionTest extends BaseTestCase {
 
     private int[] testBug68562ExecuteBatch(int batchSize, boolean useAffectedRows, boolean rewriteBatchedStatements, boolean realUpdate)
             throws ClassNotFoundException, SQLException {
-
         String tableName = "testBug68562";
 
         Properties properties = new Properties();
@@ -6226,7 +6440,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#55340 - initializeResultsMetadataFromCache fails on second call to stored proc
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -6274,7 +6488,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#71396 - setMaxRows (SQL_SELECT_LIMIT) from one query used in later queries (sometimes)
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -6545,7 +6759,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Initializes and returns a Statement with maxRows defined. Tests the SQL_SELECT_LIMIT defined. Executing this query also forces this limit to be defined
      * at session level.
-     * 
+     *
      * @param testConn
      * @param maxRows
      * @return a Statement
@@ -6566,7 +6780,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Executes a set of queries using a Statement (newly created) and tests if the results count is the expected.
-     * 
+     *
      * @param testConn
      * @param queries
      * @param expRowCount
@@ -6581,7 +6795,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Executes a set of queries using a Statement and tests if the results count is the expected.
-     * 
+     *
      * @param testStmt
      * @param queries
      * @param expRowCount
@@ -6596,7 +6810,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Executes one query using a Statement and tests if the results count is the expected.
-     * 
+     *
      * @param testStmt
      * @param query
      * @param expRowCount
@@ -6619,7 +6833,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Initializes and returns an array of PreparedStatements, with maxRows defined, for a set of queries.
-     * 
+     *
      * @param testConn
      * @param queries
      * @param maxRows
@@ -6640,7 +6854,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Closes all PreparedStatements in the array.
-     * 
+     *
      * @param testPStmt
      * @throws SQLException
      */
@@ -6652,7 +6866,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Executes a set of queries using newly created PreparedStatements and tests if the results count is the expected.
-     * 
+     *
      * @param testConn
      * @param queries
      * @param expRowCount
@@ -6667,7 +6881,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Executes a set of queries using the given PreparedStatements and tests if the results count is the expected.
-     * 
+     *
      * @param testPStmt
      * @param queries
      * @param expRowCount
@@ -6682,7 +6896,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Executes one query using a newly created PreparedStatement, setting its maxRows limit, and tests if the results count is the expected.
-     * 
+     *
      * @param testConn
      * @param query
      * @param expRowCount
@@ -6702,7 +6916,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Executes one query using a PreparedStatement and tests if the results count is the expected.
-     * 
+     *
      * @param testPStmt
      * @param query
      * @param expRowCount
@@ -6726,7 +6940,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Executes a query containing the clause LIMIT with a Statement and a PreparedStatement, using a combination of Connection properties, maxRows value and
      * limit clause value, and tests if the results count is the expected.
-     * 
+     *
      * @param connProps
      * @param maxRows
      * @param limitClause
@@ -6751,7 +6965,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for 18091639 - STRINGINDEXOUTOFBOUNDSEXCEPTION IN PREPAREDSTATEMENT.SETTIMESTAMP WITH 5.6.15
-     * 
+     *
      * @throws SQLException
      */
     @Test
@@ -6765,11 +6979,9 @@ public class StatementRegressionTest extends BaseTestCase {
         str = TimeUtil.formatNanos(900000000, 0);
         assertEquals("0", str);
 
-        assertThrows(WrongArgumentException.class, "fsp value must be in 0 to 6 range but was 9", new Callable<Void>() {
-            public Void call() throws Exception {
-                TimeUtil.formatNanos(1, 9);
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "fsp value must be in 0 to 6 range but was 9", () -> {
+            TimeUtil.formatNanos(1, 9);
+            return null;
         });
 
         str = TimeUtil.formatNanos(1, 6);
@@ -6784,11 +6996,9 @@ public class StatementRegressionTest extends BaseTestCase {
         str = TimeUtil.formatNanos(123999, 4);
         assertEquals("0001", str);
 
-        assertThrows(WrongArgumentException.class, "nanos value must be in 0 to 999999999 range but was 1000000010", new Callable<Void>() {
-            public Void call() throws Exception {
-                TimeUtil.formatNanos(1000000010, 6);
-                return null;
-            }
+        assertThrows(WrongArgumentException.class, "nanos value must be in 0 to 999999999 range but was 1000000010", () -> {
+            TimeUtil.formatNanos(1000000010, 6);
+            return null;
         });
 
         str = TimeUtil.formatNanos(100000000, 6);
@@ -6797,12 +7007,11 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#66947 (16004987) - Calling ServerPreparedStatement.close() twice corrupts cached statements
-     * 
+     *
      * @throws Exception
      */
     @Test
     public void testBug66947() throws Exception {
-
         Connection con = null;
         try {
             Properties props = new Properties();
@@ -6870,10 +7079,10 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#68916 - closeOnCompletion doesn't work.
-     * 
+     *
      * This test requires help and timezone tables in mysql database to be initialized, see http://dev.mysql.com/doc/refman/5.7/en/time-zone-support.html and
      * http://dev.mysql.com/doc/refman/5.7/en/server-side-help-support.html
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -8207,6 +8416,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     private class subTestBug68916ConcurrentTask implements Callable<String> {
+
         Connection testConnection = null;
         String query = null;
         boolean closeOnCompletionIsOverriden = false;
@@ -8217,6 +8427,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.closeOnCompletionIsOverriden = closeOnCompletionIsOverriden;
         }
 
+        @Override
         public String call() throws Exception {
             String threadName = Thread.currentThread().getName();
             long startTime = System.currentTimeMillis();
@@ -8258,11 +8469,12 @@ public class StatementRegressionTest extends BaseTestCase {
             }
             return threadName + ": processed " + count1 + " rows in " + (stopTime - startTime) + " milliseconds.";
         }
+
     }
 
     /**
      * Tests fix for Bug#71672 - Every SQL statement is checked if it contains "ON DUPLICATE KEY UPDATE" or not
-     * 
+     *
      * @throws SQLException
      */
     @Test
@@ -8489,7 +8701,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Check the update count and returned keys for an INSERT query using a Statement object. If expectedUpdateCount < 0 then runs Statement.execute() otherwise
      * Statement.executeUpdate().
-     * 
+     *
      * @param testStep
      * @param testConn
      * @param query
@@ -8520,7 +8732,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Check the update count and returned keys for an INSERT query using a PreparedStatement object. If expectedUpdateCount < 0 then runs
      * PreparedStatement.execute() otherwise PreparedStatement.executeUpdate().
-     * 
+     *
      * @param testStep
      * @param testConn
      * @param query
@@ -8550,7 +8762,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#71923 - Incorrect generated keys if ON DUPLICATE KEY UPDATE not exact
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -8698,9 +8910,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#73163 - IndexOutOfBoundsException thrown preparing statement.
-     * 
+     *
      * This bug occurs only if running with Java6+.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -8714,17 +8926,17 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#74998 - readRemainingMultiPackets not computed correctly for rows larger than 16 MB.
-     * 
+     *
      * This bug is observed only when a multipacket uses packets 127 and 128. It happens due to the transition from positive to negative values in a signed byte
      * numeric value (127 + 1 == -128).
-     * 
+     *
      * The test case forces a multipacket to use packets 127, 128 and 129, where packet 129 is 0-length, this being another boundary case.
      * Query (*1) generates the following MySQL protocol packets from the server:
      * - Packets 1 to 4 contain protocol control data and results metadata info. (*2)
      * - Packets 5 to 126 contain each row "X". (*3)
      * - Packets 127 to 129 contain row "Y..." as a multipacket (size("Y...") = 32*1024*1024-15 requires 3 packets). (*4)
      * - Packet 130 contains row "Z". (*5)
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -8738,7 +8950,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.rs.next();
             long defaultInnodbLogFileSize = this.rs.getInt(2);
             assumeFalse(defaultInnodbLogFileSize < maxAllowedPacketMinimumForTest * 10,
-                    "This test requires innodb_log_file_size > " + (maxAllowedPacketMinimumForTest * 10));
+                    "This test requires innodb_log_file_size > " + maxAllowedPacketMinimumForTest * 10);
         }
 
         createTable("testBug74998", "(id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, data LONGBLOB)"); // (*2)
@@ -8800,13 +9012,13 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for BUG#50348 - mysql connector/j 5.1.10 render the wrong value for dateTime column in GMT DB.
-     * 
+     *
      * With the right time zone settings in server and client, and using the property 'useTimezone=true', time shifts are computed in the opposite direction of
      * those that are computed otherwise.
-     * 
+     *
      * This issue is observed when the server is configured with time zone 'GMT' and the client other than 'GMT'. However, if the server's time zone is one
      * equivalent to 'GMT' but under a different identifier, say "UTC" or "GMT+00", the wrong behavior isn't observed anymore.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -8845,7 +9057,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 testConn.close();
             }
 
-            // Cycle through a wide range of generic 'GMT+/-hh:mm' and assert the expected time shift for a specific point in time. 
+            // Cycle through a wide range of generic 'GMT+/-hh:mm' and assert the expected time shift for a specific point in time.
             for (int tzOffset = -15; tzOffset <= 15; tzOffset++) { // cover a wider range than standard
                 for (int tzSubOffset : new int[] { 0, 30 }) {
                     final StringBuilder tz = new StringBuilder("GMT");
@@ -8921,9 +9133,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#77449 - Add 'truncateFractionalSeconds=true|false' property (contribution).
-     * 
+     *
      * The property actually added was 'sendFractionalSeconds' and works as the opposite of the proposed one.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -9141,6 +9353,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public static class TestBug77449QueryInterceptor extends BaseQueryInterceptor {
+
         private boolean sendFracSecs = false;
 
         @Override
@@ -9158,24 +9371,24 @@ public class StatementRegressionTest extends BaseTestCase {
                     query = query.substring(query.indexOf(':') + 2);
                 }
 
-                if (query != null
-                        && ((query.startsWith("INSERT") || query.startsWith("UPDATE") || query.startsWith("CALL")) && !query.contains("no_ts_trunk"))) {
+                if (query != null && (query.startsWith("INSERT") || query.startsWith("UPDATE") || query.startsWith("CALL")) && !query.contains("no_ts_trunk")) {
                     assertFalse(this.sendFracSecs ^ query.contains(".999"), "Wrong TIMESTAMP trunctation in query [" + query + "]");
                 }
             }
             return super.preProcess(sql, interceptedQuery);
         }
+
     }
 
     /**
      * Tests fix for BUG#77681 - rewrite replace sql like insert when rewriteBatchedStatements=true (contribution)
-     * 
+     *
      * When using 'rewriteBatchedStatements=true' we rewrite several batched statements into one single query by extending its VALUES clause. Although INSERT
      * REPLACE have the same syntax, this wasn't happening for REPLACE statements.
-     * 
+     *
      * This tests the number of queries actually sent to server when rewriteBatchedStatements is used and not by using a QueryInterceptor. The test is
      * repeated for server side prepared statements. Without the fix, this test fails while checking the number of expected REPLACE queries.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -9246,6 +9459,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public static class TestBug77681QueryInterceptor extends BaseQueryInterceptor {
+
         private static final char[] expectedNonRWBS = new char[] { 'I', 'I', 'I', 'I', 'I', 'R', 'R', 'R', 'I', 'I', 'I', 'I', 'I', 'R', 'R', 'R', 'R', 'R' };
         private static final char[] expectedRWBS = new char[] { 'I', 'R', 'I', 'R' };
 
@@ -9276,13 +9490,14 @@ public class StatementRegressionTest extends BaseTestCase {
             }
             return super.preProcess(sql, interceptedQuery);
         }
+
     }
 
     /**
      * Tests fix for Bug#21876798 - CONNECTOR/J WITH MYSQL FABRIC AND SPRING PRODUCES PROXY ERROR.
-     * 
+     *
      * Although this is a Fabric related bug we are able reproduce it using a couple of multi-host connections.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -9351,9 +9566,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#78961 - Can't call MySQL procedure with InOut parameters in Fabric environment.
-     * 
+     *
      * Although this is a Fabric related bug we are able reproduce it using a couple of multi-host connections.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -9384,7 +9599,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Test Bug#75956 - Inserting timestamps using a server PreparedStatement and useLegacyDatetimeCode=false
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -9417,25 +9632,23 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#71131 - Poor error message in CallableStatement.java.
-     * 
+     *
      * @throws Exception
      */
     @Test
     public void testBug71131() throws Exception {
         createProcedure("testBug71131", "(IN r DOUBLE, OUT p DOUBLE) BEGIN SET p = 2 * r * PI(); END");
         final CallableStatement cstmt = this.conn.prepareCall("{ CALL testBug71131 (?, 5) }");
-        assertThrows(SQLException.class, "Parameter p is not registered as an output parameter", new Callable<Void>() {
-            public Void call() throws Exception {
-                cstmt.execute();
-                return null;
-            }
+        assertThrows(SQLException.class, "Parameter p is not registered as an output parameter", () -> {
+            cstmt.execute();
+            return null;
         });
         cstmt.close();
     }
 
     /**
      * Tests fix for Bug#23188498 - CLIENT HANG WHILE USING SERVERPREPSTMT WHEN PROFILESQL=TRUE AND USEIS=TRUE.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -9455,11 +9668,9 @@ public class StatementRegressionTest extends BaseTestCase {
         this.pstmt = testConn.prepareStatement("INSERT INTO testBug23188498 (id) VALUES (?)");
         this.pstmt.setInt(1, 10);
         final PreparedStatement localPStmt1 = this.pstmt;
-        Future<Void> future1 = executor.submit(new Callable<Void>() {
-            public Void call() throws Exception {
-                localPStmt1.executeUpdate();
-                return null;
-            }
+        Future<Void> future1 = executor.submit(() -> {
+            localPStmt1.executeUpdate();
+            return null;
         });
         try {
             future1.get(5, TimeUnit.SECONDS);
@@ -9474,11 +9685,7 @@ public class StatementRegressionTest extends BaseTestCase {
         this.pstmt = testConn.prepareStatement("SELECT * FROM testBug23188498 WHERE id > ?");
         this.pstmt.setInt(1, 1);
         final PreparedStatement localPStmt2 = this.pstmt;
-        Future<ResultSet> future2 = executor.submit(new Callable<ResultSet>() {
-            public ResultSet call() throws Exception {
-                return localPStmt2.executeQuery();
-            }
-        });
+        Future<ResultSet> future2 = executor.submit(() -> localPStmt2.executeQuery());
         try {
             this.rs = future2.get(5, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
@@ -9497,7 +9704,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#23201930 - CLIENT HANG WHEN RSLT CUNCURRENCY=CONCUR_UPDATABLE AND RSLTSET TYPE=FORWARD_ONLY.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -9538,34 +9745,32 @@ public class StatementRegressionTest extends BaseTestCase {
             final JdbcConnection testConn = (JdbcConnection) getConnectionWithProps(props);
 
             final ExecutorService executor = Executors.newSingleThreadExecutor();
-            final Future<Void> future = executor.submit(new Callable<Void>() {
-                public Void call() throws Exception {
-                    final Statement testStmt = testConn.createStatement();
-                    testStmt.execute("INSERT INTO testBug23201930 (id) VALUES (100)");
+            final Future<Void> future = executor.submit(() -> {
+                final Statement testStmt = testConn.createStatement();
+                testStmt.execute("INSERT INTO testBug23201930 (id) VALUES (100)");
 
-                    PreparedStatement testPstmt = testConn.prepareStatement("INSERT INTO testBug23201930 (id, fl) VALUES (?, ?)", ResultSet.TYPE_FORWARD_ONLY,
-                            ResultSet.CONCUR_UPDATABLE);
-                    testPstmt.setObject(1, 101, java.sql.Types.INTEGER);
-                    testPstmt.setObject(2, longData, java.sql.Types.VARCHAR);
-                    testPstmt.execute();
-                    testPstmt.setObject(1, 102, java.sql.Types.INTEGER);
-                    testPstmt.execute();
-                    testPstmt.close();
+                PreparedStatement testPstmt = testConn.prepareStatement("INSERT INTO testBug23201930 (id, fl) VALUES (?, ?)", ResultSet.TYPE_FORWARD_ONLY,
+                        ResultSet.CONCUR_UPDATABLE);
+                testPstmt.setObject(1, 101, java.sql.Types.INTEGER);
+                testPstmt.setObject(2, longData, java.sql.Types.VARCHAR);
+                testPstmt.execute();
+                testPstmt.setObject(1, 102, java.sql.Types.INTEGER);
+                testPstmt.execute();
+                testPstmt.close();
 
-                    testPstmt = testConn.prepareStatement("SELECT * FROM testBug23201930 WHERE id >= ? ORDER BY id ASC", ResultSet.TYPE_FORWARD_ONLY,
-                            ResultSet.CONCUR_UPDATABLE);
-                    testPstmt.setObject(1, 100, java.sql.Types.INTEGER);
-                    final ResultSet testRs = testPstmt.executeQuery();
-                    assertTrue(testRs.next());
-                    assertEquals(100, testRs.getInt(1));
-                    assertTrue(testRs.next());
-                    assertEquals(101, testRs.getInt(1));
-                    assertTrue(testRs.next());
-                    assertEquals(102, testRs.getInt(1));
-                    assertFalse(testRs.next());
-                    testPstmt.close();
-                    return null;
-                }
+                testPstmt = testConn.prepareStatement("SELECT * FROM testBug23201930 WHERE id >= ? ORDER BY id ASC", ResultSet.TYPE_FORWARD_ONLY,
+                        ResultSet.CONCUR_UPDATABLE);
+                testPstmt.setObject(1, 100, java.sql.Types.INTEGER);
+                final ResultSet testRs = testPstmt.executeQuery();
+                assertTrue(testRs.next());
+                assertEquals(100, testRs.getInt(1));
+                assertTrue(testRs.next());
+                assertEquals(101, testRs.getInt(1));
+                assertTrue(testRs.next());
+                assertEquals(102, testRs.getInt(1));
+                assertFalse(testRs.next());
+                testPstmt.close();
+                return null;
             });
 
             try {
@@ -9583,7 +9788,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#80615 - prepared statement leak when rewriteBatchedStatements=true and useServerPrepStmt.
-     * 
+     *
      * There are two bugs here:
      * 1. A server prepared statement leakage by not actually closing the statement on server when .close() is called in the client side. This occurs when
      * setting 'cachePrepStmts=true&useServerPrepStmts=true' and a prepared statement is set as non-poolable ('setPoolable(false)'). By itself this doesn't
@@ -9594,13 +9799,13 @@ public class StatementRegressionTest extends BaseTestCase {
      * 'rewriteBatchedStatements=true&useServerPrepStmts=true' when a query happens to be rewritten a new (server-side) prepared statement is required but the
      * fail-safe mechanism isn't implemented in this spot, so, since the leakage described above already consumed all available prepared statements on server,
      * this ends up throwing the exception.
-     * 
+     *
      * This test combines three elements:
      * 1. Call .close() on a server prepared statement. This promotes a prepared statement for caching if prepared statements cache is enabled.
      * 2. cachePrepStmts=true|false. Turns on/off the prepared statements cache.
      * 3. Call .setPoolable(true|false) on the prepared statement. This allows canceling the prepared statement caching, on a per statement basis. It has no
      * effect if the prepared statements cache if turned off for the current connection.
-     * 
+     *
      * Expected behavior:
      * - If .close() is not called on server prepared statements then they also can't be promoted for caching. This causes a server prepared statements leak in
      * all remaining combinations.
@@ -9608,7 +9813,7 @@ public class StatementRegressionTest extends BaseTestCase {
      * then the statements is immediately closed on server side too.
      * - If .close() is called on server prepared statements and the prepared statements cache is enabled (both in the connection and in the statement) then the
      * statement is cached and only effectively closed in the server side if and when removed from the cache.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -9640,7 +9845,7 @@ public class StatementRegressionTest extends BaseTestCase {
             // Check if it is still possible to prepare new statements after setting the new max. This test requires at least prepStmtCacheSize + 2.
             // The extra two statements are:
             // 1 - The first statement that only gets cached in the end (when calling .close() on it).
-            // 2 - The statement that triggers the expelling of the oldest element of the cache to get room for itself.  
+            // 2 - The statement that triggers the expelling of the oldest element of the cache to get room for itself.
             for (int i = 1; i <= prepStmtCacheSize + 2; i++) {
                 checkPstmt = checkConn.prepareStatement("SELECT " + i);
                 assertTrue(checkPstmt instanceof ServerPreparedStatement,
@@ -9720,7 +9925,7 @@ public class StatementRegressionTest extends BaseTestCase {
                     if (closeStmt) {
                         testPstmt2.close();
                         if (isSPS) {
-                            if (useCache && poolable && (prepCount - 1) > prepStmtCacheSize) { // The first statement isn't cached yet.
+                            if (useCache && poolable && prepCount - 1 > prepStmtCacheSize) { // The first statement isn't cached yet.
                                 // A statement (oldest in cache) is effectively closed on server side only after local statements cache is full.
                                 expectedCloseCount++;
                             } else if (!useCache || !poolable) {
@@ -9785,7 +9990,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#81706 - NullPointerException in driver.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -9846,6 +10051,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public static class TestBug81706QueryInterceptor extends BaseQueryInterceptor {
+
         public static boolean isActive = false;
         public static String testCase = "";
 
@@ -9861,11 +10067,12 @@ public class StatementRegressionTest extends BaseTestCase {
             }
             return super.preProcess(sql, interceptedQuery);
         }
+
     }
 
     /**
      * Tests fix for Bug#66430 - setCatalog on connection leaves ServerPreparedStatement cache for old catalog.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -9950,7 +10157,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#84783 - query timeout is not working(thread hang).
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -9958,11 +10165,9 @@ public class StatementRegressionTest extends BaseTestCase {
         // Test using a standard connection.
         final Statement testStmt = this.conn.createStatement();
         testStmt.setQueryTimeout(1);
-        assertThrows(SQLException.class, "Statement cancelled due to timeout or client request", new Callable<Void>() {
-            public Void call() throws Exception {
-                testStmt.executeQuery("SELECT SLEEP(3)");
-                return null;
-            }
+        assertThrows(SQLException.class, "Statement cancelled due to timeout or client request", () -> {
+            testStmt.executeQuery("SELECT SLEEP(3)");
+            return null;
         });
         testStmt.close();
 
@@ -9981,19 +10186,15 @@ public class StatementRegressionTest extends BaseTestCase {
             testConn = getUnreliableFailoverConnection(new String[] { "host1", "host2" }, props);
             final Statement testStmtFO = testConn.createStatement();
             testStmtFO.setQueryTimeout(1);
-            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", new Callable<Void>() {
-                public Void call() throws Exception {
-                    testStmtFO.executeQuery("SELECT SLEEP(3)");
-                    return null;
-                }
+            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", () -> {
+                testStmtFO.executeQuery("SELECT SLEEP(3)");
+                return null;
             });
             final PreparedStatement testPstmtFO = testConn.prepareStatement("SELECT SLEEP(3)");
             testPstmtFO.setQueryTimeout(1);
-            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", new Callable<Void>() {
-                public Void call() throws Exception {
-                    testPstmtFO.executeQuery();
-                    return null;
-                }
+            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", () -> {
+                testPstmtFO.executeQuery();
+                return null;
             });
             testConn.close();
 
@@ -10001,19 +10202,15 @@ public class StatementRegressionTest extends BaseTestCase {
             testConn = getUnreliableLoadBalancedConnection(new String[] { "host1", "host2" }, props);
             final Statement testStmtLB = testConn.createStatement();
             testStmtLB.setQueryTimeout(1);
-            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", new Callable<Void>() {
-                public Void call() throws Exception {
-                    testStmtLB.executeQuery("SELECT SLEEP(3)");
-                    return null;
-                }
+            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", () -> {
+                testStmtLB.executeQuery("SELECT SLEEP(3)");
+                return null;
             });
             final PreparedStatement testPstmtLB = testConn.prepareStatement("SELECT SLEEP(3)");
             testPstmtLB.setQueryTimeout(1);
-            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", new Callable<Void>() {
-                public Void call() throws Exception {
-                    testPstmtLB.executeQuery();
-                    return null;
-                }
+            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", () -> {
+                testPstmtLB.executeQuery();
+                return null;
             });
             testConn.close();
 
@@ -10021,19 +10218,15 @@ public class StatementRegressionTest extends BaseTestCase {
             testConn = getUnreliableReplicationConnection(new String[] { "host1", "host2" }, props);
             final Statement testStmtR = testConn.createStatement();
             testStmtR.setQueryTimeout(1);
-            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", new Callable<Void>() {
-                public Void call() throws Exception {
-                    testStmtR.executeQuery("SELECT SLEEP(3)");
-                    return null;
-                }
+            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", () -> {
+                testStmtR.executeQuery("SELECT SLEEP(3)");
+                return null;
             });
             final PreparedStatement testPstmtR = testConn.prepareStatement("SELECT SLEEP(3)");
             testPstmtR.setQueryTimeout(1);
-            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", new Callable<Void>() {
-                public Void call() throws Exception {
-                    testPstmtR.executeQuery();
-                    return null;
-                }
+            assertThrows(testCase, SQLException.class, "Statement cancelled due to timeout or client request", () -> {
+                testPstmtR.executeQuery();
+                return null;
             });
             testConn.close();
         } while (useSPS = !useSPS);
@@ -10041,7 +10234,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#74932 - ConnectionImp Doesn't Close Server Prepared Statement (PreparedStatement Leak).
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -10120,7 +10313,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#78313 - proxies not handling Object.equals(Object) calls correctly.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -10188,7 +10381,7 @@ public class StatementRegressionTest extends BaseTestCase {
         assertTrue(this.rs.equals(this.rs));
         testConn.close();
 
-        // Load-balanced connection; all JDBC objects are proxied. 
+        // Load-balanced connection; all JDBC objects are proxied.
         testConn = getLoadBalancedConnection(props);
         assertTrue(testConn.getClass().getName().matches("^(?:com\\.sun\\.proxy\\.)?\\$Proxy\\d*"));
         assertTrue(testConn.equals(testConn));
@@ -10248,10 +10441,10 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#87429 - repeated close of ServerPreparedStatement causes memory leak.
-     * 
+     *
      * Original de-cache on double close() behavior modified by:
      * WL#11101 - Remove de-cache and close of SSPSs on double call to close().
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -10329,10 +10522,10 @@ public class StatementRegressionTest extends BaseTestCase {
                     assertEquals(cachedSPS ? 4 : 3, testConn.getActiveStatementCount());
                     pstmt3.close();
                     pstmt3.close(); // No-op.
-                    assertEquals(cachedSPS ? (j >= 3 ? 4 : 3) : 2, testConn.getActiveStatementCount());
+                    assertEquals(cachedSPS ? j >= 3 ? 4 : 3 : 2, testConn.getActiveStatementCount());
                     pstmt2.close();
                     pstmt2.close(); // No-op.
-                    assertEquals(cachedSPS ? (j >= 2 ? 3 : 2) : 1, testConn.getActiveStatementCount());
+                    assertEquals(cachedSPS ? j >= 2 ? 3 : 2 : 1, testConn.getActiveStatementCount());
                     pstmt1.close();
                     pstmt1.close(); // No-op.
                     assertEquals(cachedSPS ? 2 : 0, testConn.getActiveStatementCount());
@@ -10355,14 +10548,14 @@ public class StatementRegressionTest extends BaseTestCase {
                         assertFalse(cachedSPS && j == 4, "Exception [" + e.getMessage() + "] not expected.");
                     }
                     pstmt4.close(); // No-op.
-                    assertEquals(cachedSPS ? (j < 4 ? 2 : 1) : 0, testConn.getActiveStatementCount());
+                    assertEquals(cachedSPS ? j < 4 ? 2 : 1 : 0, testConn.getActiveStatementCount());
                     try {
                         pstmt3.setPoolable(false); // De-caches the statement or no-op if not cached.
                     } catch (SQLException e) {
                         assertFalse(cachedSPS && j == 3, "Exception [" + e.getMessage() + "] not expected.");
                     }
                     pstmt3.close(); // No-op.
-                    assertEquals(cachedSPS ? (j < 3 ? 2 : 1) : 0, testConn.getActiveStatementCount());
+                    assertEquals(cachedSPS ? j < 3 ? 2 : 1 : 0, testConn.getActiveStatementCount());
                     try {
                         pstmt2.setPoolable(false); // De-caches the statement or no-op if not cached.
                     } catch (SQLException e) {
@@ -10386,7 +10579,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#26995710 - WL#11161 : NULL POINTER EXCEPTION IN EXECUTEBATCH() AND CLOSE().
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -10512,7 +10705,7 @@ public class StatementRegressionTest extends BaseTestCase {
                 rset = ps.executeQuery();
                 rset.next();
                 System.out.println(" Rec Cnt " + rset.getInt(1));
-                //  assertEquals(4,rs.getInt(1));   
+                //  assertEquals(4,rs.getInt(1));
 
                 rset.close();
                 ps.close();
@@ -10540,7 +10733,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#26748909, NO OPERATIONS ALLOWED AFTER STATEMENT CLOSED FOR TOSTRING()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -10610,7 +10803,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for Bug#87534 - UNION ALL query fails when useServerPrepStmts=true on database connection.
      * Base Bug#27422376 - NEWDATE TYPE IS LEAKING OUT, fixed in MySQL 5.7.22.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -10663,7 +10856,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#84813 (25501750), rewriteBatchedStatements fails in INSERT.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -10726,7 +10919,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#81063 (23098159), w/ rewriteBatchedStatements, when 2 tables involved, the rewriting not correct.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -10806,7 +10999,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#22931700, BINDINGS.GETBOOLEAN() ALWAYS RETURNS FALSE.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -10839,7 +11032,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#27453692, CHARACTERS GET GARBLED IN CONCAT() IN PS WHEN USECURSORFETCH=TRUE.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -10872,7 +11065,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#96442 (30151808), INCORRECT DATE ERROR WHEN CALLING GETMETADATA ON PREPARED STATEMENT.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -10903,7 +11096,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#Bug#91112 (28125069), AGAIN WRONG JAVA.SQL.DATE.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -10917,8 +11110,8 @@ public class StatementRegressionTest extends BaseTestCase {
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.put(PropertyKey.connectionTimeZone, "UTC");
         try {
-            // setting a custom calendar time zone later than the client one to detect day switch 
-            Calendar cal_Los_Angeles = GregorianCalendar.getInstance(TimeZone.getTimeZone("America/Los_Angeles"), Locale.US);
+            // setting a custom calendar time zone later than the client one to detect day switch
+            Calendar cal_Los_Angeles = Calendar.getInstance(TimeZone.getTimeZone("America/Los_Angeles"), Locale.US);
             SimpleDateFormat sdf_Los_Angeles = TimeUtil.getSimpleDateFormat("yyyy-MM-dd HH:mm:ss", cal_Los_Angeles);
 
             for (boolean useSSPS : new boolean[] { false, true }) {
@@ -10928,7 +11121,7 @@ public class StatementRegressionTest extends BaseTestCase {
                     props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "" + useSSPS);
                     props.put(PropertyKey.cacheDefaultTimeZone.getKeyName(), "" + cacheDefaultTimeZone);
 
-                    // setting a client time zone ahead of the server one to detect day switch 
+                    // setting a client time zone ahead of the server one to detect day switch
                     TimeZone.setDefault(TimeZone.getTimeZone("Europe/Moscow"));
 
                     Connection con = getConnectionWithProps(props);
@@ -11037,7 +11230,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#98536 (30877755), SIMPLEDATEFORMAT COULD CACHE A WRONG CALENDAR.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11103,7 +11296,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#98237 (30911870), PREPAREDSTATEMENT.SETOBJECT(I, "FALSE", TYPES.BOOLEAN) ALWAYS SETS TRUE OR 1.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11149,12 +11342,10 @@ public class StatementRegressionTest extends BaseTestCase {
                 }
 
                 ps.clearParameters();
-                assertThrows(SQLException.class, "No conversion from abc to Types.BOOLEAN possible.+", new Callable<Void>() {
-                    public Void call() throws Exception {
-                        ps.setObject(1, "abc", Types.BOOLEAN);
-                        ps.execute();
-                        return null;
-                    }
+                assertThrows(SQLException.class, "No conversion from abc to Types.BOOLEAN possible.+", () -> {
+                    ps.setObject(1, "abc", Types.BOOLEAN);
+                    ps.execute();
+                    return null;
                 });
 
             } finally {
@@ -11165,7 +11356,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#99713 (31418928), NPE DURING COM.MYSQL.CJ.SERVERPREPAREDQUERYBINDVALUE.STOREDATE().
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11196,7 +11387,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#101242 (32046007), CANNOT USE BYTEARRAYINPUTSTREAM AS ARGUMENTS IN PREPARED STATEMENTS ANYMORE.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11230,12 +11421,11 @@ public class StatementRegressionTest extends BaseTestCase {
                 con.close();
             }
         }
-
     }
 
     /**
      * Tests fix for Bug#98695 (30962953), EXECUTION OF "LOAD DATA LOCAL INFILE" COMMAND THROUGH JDBC FOR DATETIME COLUMN.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11304,12 +11494,11 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals(name, ((LocalDateTime) dt).format(TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET));
 
         }
-
     }
 
     /**
      * Tests fix for Bug#101558 (32141210), NULLPOINTEREXCEPTION WHEN EXECUTING INVALID QUERY WITH USEUSAGEADVISOR ENABLED.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11336,7 +11525,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Test fix for Bug#20453773, EXECUTEUPDATE() FAILS FOR SERVER SIDE STMT WHEN LOGSLOWQUERIES=TRUE.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11373,7 +11562,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Test fix for Bug#21132376, PSTMT->CLOSE() AFTER PSTMT->EXECUTEBATCH() CALL RETURNS ERROR.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11429,7 +11618,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Test fix for Bug#20391550, SETSTRING() CALL AFTER CONNECTION CLOSE RESULTS IN NULLPOINTEREXCEPTION.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11475,7 +11664,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Test fix for Bug#103303 (32766143), JAVA.LANG.CLASSCASTEXCEPTION WHEN INSERTING BLOB WITH SERVER PREPARED STATEMENT.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11497,7 +11686,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
                     con = getConnectionWithProps(props);
 
-                    PreparedStatement statement = con.prepareStatement("INSERT INTO testBug103303(blob1) VALUES(?)", PreparedStatement.RETURN_GENERATED_KEYS);
+                    PreparedStatement statement = con.prepareStatement("INSERT INTO testBug103303(blob1) VALUES(?)", Statement.RETURN_GENERATED_KEYS);
                     statement.setBlob(1, new SerialBlob("test1".getBytes()));
                     statement.addBatch();
                     statement.setBlob(1, new SerialBlob("test2".getBytes()));
@@ -11522,7 +11711,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#103796 (32922715), CONNECTOR/J 8 STMT SETQUERYTIMEOUT CAN NOT WORK.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11557,7 +11746,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#103878 (32954449), CONNECTOR/J 8 : QUERY WITH 'SHOW XXX' WILL GET EXCEPTION WHEN USE CURSOR.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11612,9 +11801,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#23204652, CURSOR POSITIONING API'S DOESNOT CHECK THE VALIDITY OF RESULTSET.
-     * 
+     *
      * @throws Exception
-     * 
+     *
      * @see StatementsTest#testResultSetProducingQueries()
      */
     @Test
@@ -11627,7 +11816,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#71929 (18346501), Prefixing query with double comments cancels query DML validation.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11653,9 +11842,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Test fix for Bug#103612 (32902019), Incorrectly identified WITH...SELECT as unsafe for read-only connections.
-     * 
+     *
      * @throws Exception
-     * 
+     *
      * @see StatementsTest#testReadOnlySafeStatements()
      */
     @Test
@@ -11688,7 +11877,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#101389 (32089018), GETWARNINGS SHOULD CHECK WARNING COUNT BEFORE SENDING SHOW.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11719,6 +11908,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public static class Bug101389QueryInterceptor extends BaseQueryInterceptor {
+
         public static boolean enabled = false;
 
         @Override
@@ -11732,11 +11922,12 @@ public class StatementRegressionTest extends BaseTestCase {
         @Override
         public <M extends Message> M preProcess(M queryPacket) {
             if (enabled) {
-                String sql = StringUtils.toString(queryPacket.getByteBuffer(), 1, (queryPacket.getPosition() - 1));
+                String sql = StringUtils.toString(queryPacket.getByteBuffer(), 1, queryPacket.getPosition() - 1);
                 assertFalse(sql.contains("SHOW WARNINGS"), "Unexpected [SHOW WARNINGS] was issued");
             }
             return super.preProcess(queryPacket);
         }
+
     }
 
     @Test
@@ -11800,7 +11991,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Test fix for Bug#105211 (33468860), class java.time.LocalDate cannot be cast to class java.sql.Date.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11836,7 +12027,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Test fix for Bug#84365 (33425867), INSERT..VALUE with VALUES function lead to a StringIndexOutOfBoundsException.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11883,7 +12074,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Test fix for Bug#85223 (25656020), MYSQLSQLXML SETSTRING CRASH.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11908,7 +12099,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Test fix for Bug#96900 (30355150), STATEMENT.CANCEL()CREATE A DATABASE CONNECTION BUT DOES NOT CLOSE THE CONNECTION.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -11944,7 +12135,7 @@ public class StatementRegressionTest extends BaseTestCase {
         }).start();
 
         // The difference between the `initialSessionCount` and the current session count would be greater than one if connections external to this test are
-        // created in between. Chances for this to happen in a controlled or development environment are very low and can be neglected. 
+        // created in between. Chances for this to happen in a controlled or development environment are very low and can be neglected.
         assertEquals(1, sessionCount.get() - initialSessionCount);
 
         testStmt.cancel();
@@ -11956,7 +12147,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#99260 (31189960), statement.setQueryTimeout,creates a database connection and does not close.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12002,7 +12193,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#85317 (25672958), EXECUTE BATCH WILL THROW NULL POINTER EXCEPTION WHERE THE COLUMN IS BLOB!
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12043,12 +12234,11 @@ public class StatementRegressionTest extends BaseTestCase {
             assertEquals(9999, cnt);
 
         } while ((useSPS = !useSPS) || (rewriteBS = !rewriteBS));
-
     }
 
     /**
      * Tests fix for Bug#104349 (33563548), com.mysql.cj NPE.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12097,7 +12287,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests for Bug#62006 (16714956), JAVA.IO.NOTSERIALIZABLEEXCEPTION: JAVA.IO.STRINGREADER WHEN PROFILESQL=TRUE.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12126,7 +12316,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#106240 (33781440), StringIndexOutOfBoundsException when VALUE is at the end of the query.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12177,7 +12367,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests for Bug#81468 (23312764), MySQL server fails to rewrite batch insert when column name contains word select.
      * Resolved by fix for Bug#106240 (33781440), StringIndexOutOfBoundsException when VALUE is at the end of the query.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12252,6 +12442,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public static class TestBug81468QueryInterceptor extends BaseQueryInterceptor {
+
         private static int expectedNumberOfExecutions = 0;
         private static int expectedNumberOfQueries = 0;
         private static int expectedNumberOfValues = 0;
@@ -12287,11 +12478,12 @@ public class StatementRegressionTest extends BaseTestCase {
             }
             return query.split("\\(\\d{2}\\)").length - 1;
         }
+
     }
 
     /**
      * Tests for Bug#21978230, COMMENT PARSING NOT PROPER IN PREPSTMT.EXECUTEBATCH().
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12386,9 +12578,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests for Bug#76623 (20856749), JDBC driver misinterprets "--" as a comment, instead of "-- ".
-     * 
+     *
      * Fixed in Connector/J 8.0.27 under fix for Bug#71929 (18346501), Prefixing query with double comments cancels query DML validation.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12545,7 +12737,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#104753 (Bug#33286177), PreparedStatement.setFetchSize(0) causes ArrayIndexOutOfBoundsException.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12610,7 +12802,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#107222 (Bug#34150112), ClientPreparedStatement.toString() no longer interpolates byte arrays.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12676,7 +12868,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#108419 (Bug#34578010), Contribution: Recognize "ON DUPLICATE KEY UPDATE" in "INSERT SET" Statement.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12741,7 +12933,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#106252 (Bug#33968169), Connector/J client hangs after prepare & execute process with old version server.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12792,7 +12984,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#108414 (Bug#34578541), Malformed packet generation for `COM_STMT_EXECUTE`.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12834,7 +13026,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#108195 (Bug#34512212), Connector/J rejects UNION with CTE.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12852,7 +13044,7 @@ public class StatementRegressionTest extends BaseTestCase {
     /**
      * Tests fix for Bug#99604 (Bug#31612628), Add support to row alias on INSERT... ON DUPLICATE KEY UPDATE on batch mode.
      * Resolved by fix for Bug#106240 (33781440), StringIndexOutOfBoundsException when VALUE is at the end of the query.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12897,7 +13089,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#102520 (Bug#32476663), serverSideStatementCache ignores resultSetType.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12951,7 +13143,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#109243 (Bug#34852047), Judge whether the returned result set of the sql statement is incorrect.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -12967,10 +13159,10 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#77368 (Bug#21321849), "LOAD DATA LOCAL INFILE" doesn't work properly with relative paths.
-     * 
+     *
      * Testing this would require changing the value of "user.dir" which could cause other tests to fail. As such, only basic testing to verify that the default
      * relative paths work fine is done here.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -13008,7 +13200,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#109864 (Bug#35034666), Connector/J 8.0.32 hangs on MySQL 5.5 with prepared statements.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -13054,7 +13246,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#109377 (Bug#34900156), rewriteBatchedStatements doesn't work when parenthesis are found in values.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -13093,10 +13285,10 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests for Bug#107577 (Bug#34325361), rewriteBatchedStatements not work when table column name contains 'value' string.
-     * 
+     *
      * Duplicate of Bug#40439 (Bug#11750096), Error rewriting batched statement if table name ends with "values", that re-surfaced while fixing Bug#109377
      * (Bug#34900156).
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -13136,6 +13328,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     public static class QueryInfoQueryInterceptor extends BaseQueryInterceptor {
+
         private static boolean enabled = false;
         private static List<String> capturedSql = new ArrayList<>();
 
@@ -13159,11 +13352,12 @@ public class StatementRegressionTest extends BaseTestCase {
             }
             return super.preProcess(sql, interceptedQuery);
         }
+
     }
 
     /**
      * Tests fix for Bug#34558945, PS using setCharacterStream() fails with "Incorrect string value" if the Java program encoding is not UTF-8 after 8.0.29.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -13253,7 +13447,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
     /**
      * Tests fix for Bug#110321 (Bug#35167701), Issue in JDBC PreparedStatement on adding NO_BACKSLASH_ESCAPES in sql_mode.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -13294,4 +13488,5 @@ public class StatementRegressionTest extends BaseTestCase {
             }
         } while (useSPS = !useSPS);
     }
+
 }

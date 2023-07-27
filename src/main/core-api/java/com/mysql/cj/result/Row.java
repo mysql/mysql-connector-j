@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,6 +37,7 @@ import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.protocol.ValueDecoder;
 
 public interface Row extends ProtocolEntity {
+
     /**
      * Retrieve a value for the given column. This is the main facility to access values from the Row
      * involving {@link ValueDecoder} and {@link ValueFactory} chain. Metadata <i>must</i> be set via
@@ -55,7 +56,7 @@ public interface Row extends ProtocolEntity {
 
     /**
      * Set metadata to enable getValue functionality.
-     * 
+     *
      * @param columnDefinition
      *            {@link ColumnDefinition}
      * @return {@link Row}
@@ -67,7 +68,7 @@ public interface Row extends ProtocolEntity {
     /**
      * Returns the value at the given column as a byte array.
      * The bytes represent the raw values returned by the server.
-     * 
+     *
      * @param columnIndex
      *            index of column (starting at 0) to return from.
      * @return the value for the given column; if the value is SQL <code>NULL</code>, the value returned is <code>null</code>
@@ -79,7 +80,7 @@ public interface Row extends ProtocolEntity {
 
     /**
      * Sets the given byte array as a raw column value (only works currently with ByteArrayRow).
-     * 
+     *
      * @param columnIndex
      *            index of the column (starting at 0) to set to.
      * @param value
@@ -91,18 +92,19 @@ public interface Row extends ProtocolEntity {
 
     /**
      * Check whether a column is NULL and update the 'wasNull' status.
-     * 
+     *
      * @param columnIndex
      *            of the column value (starting at 0) to check.
-     * 
+     *
      * @return true if the column value is NULL, false if not.
      */
     boolean getNull(int columnIndex);
 
     /**
      * Was the last value retrieved a NULL value?
-     * 
+     *
      * @return true if the last retrieved value was NULL.
      */
     boolean wasNull();
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2014, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,7 +31,7 @@ package com.mysql.cj.util;
 
 /**
  * This decoder implements standard Base64 decoding except it allows and silently ignores non-base64 input characters (spaces, line breaks etc)
- * 
+ *
  * Note: Java 6+ provide standard decoders
  */
 public class Base64Decoder {
@@ -46,11 +46,13 @@ public class Base64Decoder {
             32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1 };
 
     public static class IntWrapper {
+
         public int value;
 
         public IntWrapper(int value) {
             this.value = value;
         }
+
     }
 
     private static byte getNextValidByte(byte[] in, IntWrapper pos, int maxPos) {
@@ -60,7 +62,7 @@ public class Base64Decoder {
             }
             pos.value++;
         }
-        // padding if reached max position 
+        // padding if reached max position
         return '=';
     }
 
@@ -68,7 +70,7 @@ public class Base64Decoder {
         IntWrapper offset = new Base64Decoder.IntWrapper(pos);
         byte[] sestet = new byte[4];
 
-        int outLen = (length * 3) / 4; // over-estimated if non-base64 characters present
+        int outLen = length * 3 / 4; // over-estimated if non-base64 characters present
         byte[] octet = new byte[outLen];
         int octetId = 0;
 
@@ -80,13 +82,13 @@ public class Base64Decoder {
             sestet[3] = decoderMap[getNextValidByte(in, offset, maxPos)];
 
             if (sestet[1] != -2) {
-                octet[octetId++] = (byte) ((sestet[0] << 2) | (sestet[1] >>> 4));
+                octet[octetId++] = (byte) (sestet[0] << 2 | sestet[1] >>> 4);
             }
             if (sestet[2] != -2) {
-                octet[octetId++] = (byte) (((sestet[1] & 0xf) << 4) | (sestet[2] >>> 2));
+                octet[octetId++] = (byte) ((sestet[1] & 0xf) << 4 | sestet[2] >>> 2);
             }
             if (sestet[3] != -2) {
-                octet[octetId++] = (byte) (((sestet[2] & 3) << 6) | sestet[3]);
+                octet[octetId++] = (byte) ((sestet[2] & 3) << 6 | sestet[3]);
             }
         }
         // return real-length value
@@ -94,4 +96,5 @@ public class Base64Decoder {
         System.arraycopy(octet, 0, out, 0, octetId);
         return out;
     }
+
 }

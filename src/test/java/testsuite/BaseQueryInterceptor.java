@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,21 +41,26 @@ import com.mysql.cj.protocol.ServerSession;
 
 public class BaseQueryInterceptor implements QueryInterceptor {
 
+    @Override
     public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
         return this;
     }
 
+    @Override
     public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
         return null;
     }
 
+    @Override
     public boolean executeTopLevelOnly() {
         return false;
     }
 
+    @Override
     public void destroy() {
     }
 
+    @Override
     public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
         return originalResultSet;
     }

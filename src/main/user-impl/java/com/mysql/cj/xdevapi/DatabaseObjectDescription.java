@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,12 +33,13 @@ package com.mysql.cj.xdevapi;
  * Represents the item of XPLUGIN_STMT_LIST_OBJECTS operation result.
  */
 public class DatabaseObjectDescription {
+
     private String objectName;
     private DatabaseObject.DbObjectType objectType;
 
     /**
      * Constructor.
-     * 
+     *
      * @param name
      *            database object name
      * @param type
@@ -51,7 +52,7 @@ public class DatabaseObjectDescription {
 
     /**
      * Get database object name.
-     * 
+     *
      * @return database object name
      */
     public String getObjectName() {
@@ -60,10 +61,11 @@ public class DatabaseObjectDescription {
 
     /**
      * Get database object type
-     * 
+     *
      * @return {@link DatabaseObject.DbObjectType}
      */
     public DatabaseObject.DbObjectType getObjectType() {
         return this.objectType;
     }
+
 }

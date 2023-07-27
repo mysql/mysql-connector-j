@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,9 +36,11 @@ import org.junit.jupiter.api.Test;
 import com.mysql.cj.conf.DefaultPropertySet;
 
 public class BinaryStreamValueFactoryTest extends CommonAsserts {
+
     @Test
     public void testBasics() {
         BinaryStreamValueFactory vf = new BinaryStreamValueFactory(new DefaultPropertySet());
         assertEquals("java.io.InputStream", vf.getTargetTypeName());
     }
+
 }

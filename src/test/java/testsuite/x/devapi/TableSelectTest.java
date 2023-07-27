@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -42,7 +42,6 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -74,6 +73,7 @@ import com.mysql.cj.xdevapi.Type;
  * @todo
  */
 public class TableSelectTest extends BaseTableTestCase {
+
     @Test
     public void basicQuery() {
         try {
@@ -276,32 +276,24 @@ public class TableSelectTest extends BaseTableTestCase {
         assertEquals(BigDecimal.valueOf(29104508263162465L).toString(), row.getString("c7"));
         assertEquals(BigDecimal.valueOf(7523094288207667809L).toString(), row.getString("c8"));
 
-        assertThrows(DataConversionException.class, "Unsupported conversion from BIT to java.sql.Date", new Callable<Void>() {
-            public Void call() throws Exception {
-                row.getDate("c1");
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Unsupported conversion from BIT to java.sql.Date", () -> {
+            row.getDate("c1");
+            return null;
         });
 
-        assertThrows(DataConversionException.class, "Unsupported conversion from BIT to com.mysql.cj.xdevapi.DbDoc", new Callable<Void>() {
-            public Void call() throws Exception {
-                row.getDbDoc("c1");
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Unsupported conversion from BIT to com.mysql.cj.xdevapi.DbDoc", () -> {
+            row.getDbDoc("c1");
+            return null;
         });
 
-        assertThrows(DataConversionException.class, "Unsupported conversion from BIT to java.sql.Time", new Callable<Void>() {
-            public Void call() throws Exception {
-                row.getTime("c1");
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Unsupported conversion from BIT to java.sql.Time", () -> {
+            row.getTime("c1");
+            return null;
         });
 
-        assertThrows(DataConversionException.class, "Unsupported conversion from BIT to java.sql.Timestamp", new Callable<Void>() {
-            public Void call() throws Exception {
-                row.getTimestamp("c1");
-                return null;
-            }
+        assertThrows(DataConversionException.class, "Unsupported conversion from BIT to java.sql.Timestamp", () -> {
+            row.getTimestamp("c1");
+            return null;
         });
 
         // test negative values
@@ -514,11 +506,9 @@ public class TableSelectTest extends BaseTableTestCase {
             session2.startTransaction();
             table2.select("_id").where("_id = '2'").lockShared().execute(); // should return immediately
             CompletableFuture<RowResult> res2 = table2.select("_id").where("_id = '1'").lockShared().executeAsync(); // session2 blocks
-            assertThrows(TimeoutException.class, new Callable<Void>() {
-                public Void call() throws Exception {
-                    res2.get(5, TimeUnit.SECONDS);
-                    return null;
-                }
+            assertThrows(TimeoutException.class, () -> {
+                res2.get(5, TimeUnit.SECONDS);
+                return null;
             });
 
             session1.rollback(); // session2 should unblock now
@@ -535,11 +525,9 @@ public class TableSelectTest extends BaseTableTestCase {
             table2.select("_id").where("_id = '2'").lockExclusive().execute(); // should return immediately
             table2.select("_id").where("_id = '3'").lockShared().execute(); // should return immediately
             CompletableFuture<RowResult> res3 = table2.select("_id").where("_id = '1'").lockExclusive().executeAsync(); // session2 blocks
-            assertThrows(TimeoutException.class, new Callable<Void>() {
-                public Void call() throws Exception {
-                    res3.get(5, TimeUnit.SECONDS);
-                    return null;
-                }
+            assertThrows(TimeoutException.class, () -> {
+                res3.get(5, TimeUnit.SECONDS);
+                return null;
             });
 
             session1.rollback(); // session2 should unblock now
@@ -554,11 +542,9 @@ public class TableSelectTest extends BaseTableTestCase {
             session2.startTransaction();
             table2.select("_id").where("_id = '2'").lockExclusive().execute(); // should return immediately
             CompletableFuture<RowResult> res4 = table2.select("_id").where("_id = '1'").lockExclusive().executeAsync(); // session2 blocks
-            assertThrows(TimeoutException.class, new Callable<Void>() {
-                public Void call() throws Exception {
-                    res4.get(5, TimeUnit.SECONDS);
-                    return null;
-                }
+            assertThrows(TimeoutException.class, () -> {
+                res4.get(5, TimeUnit.SECONDS);
+                return null;
             });
 
             session1.rollback(); // session2 should unblock now
@@ -871,7 +857,7 @@ public class TableSelectTest extends BaseTableTestCase {
     /**
      * Tests fix for Bug#22038729, X DEVAPI: ANY API CALL AFTER A FAILED CALL PROC() RESULTS IN HANG
      * and for duplicate Bug#25575010, X DEVAPI: ANY API CALL AFTER A FAILED SELECT RESULTS IN HANG
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1196,4 +1182,5 @@ public class TableSelectTest extends BaseTableTestCase {
             sqlUpdate("DROP TABLE IF EXISTS testBug31667405");
         }
     }
+
 }

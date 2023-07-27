@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -49,6 +49,7 @@ import com.mysql.cj.result.RowList;
  * Result builder producing a streaming {@link DocResult} instance.
  */
 public class StreamingDocResultBuilder implements ResultBuilder<DocResult> {
+
     private ArrayList<Field> fields = new ArrayList<>();
     private ColumnDefinition metadata;
     private RowList rowList = null;
@@ -88,8 +89,7 @@ public class StreamingDocResultBuilder implements ResultBuilder<DocResult> {
 
     @Override
     public DocResult build() {
-        return new DocResultImpl(this.rowList, () -> {
-            return this.protocol.readQueryResult(this.statementExecuteOkBuilder);
-        }, this.pset);
+        return new DocResultImpl(this.rowList, () -> this.protocol.readQueryResult(this.statementExecuteOkBuilder), this.pset);
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,9 +38,10 @@ import java.sql.Timestamp;
  * A row element returned from a SELECT query.
  */
 public interface Row {
+
     /**
      * Retrieve the value for column `fieldName' as a decimal value.
-     * 
+     *
      * @param fieldName
      *            field name
      * @return value
@@ -49,7 +50,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a decimal value.
-     * 
+     *
      * @param pos
      *            field position
      * @return value
@@ -58,7 +59,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column `fieldName' as a boolean value.
-     * 
+     *
      * @param fieldName
      *            field name
      * @return value
@@ -67,7 +68,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a boolean value.
-     * 
+     *
      * @param pos
      *            field position
      *            field position
@@ -77,7 +78,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column `fieldName' as a byte value.
-     * 
+     *
      * @param fieldName
      *            field name
      * @return value
@@ -86,7 +87,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a byte value.
-     * 
+     *
      * @param pos
      *            field position
      *            field position
@@ -96,7 +97,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column `fieldName' as a {@link Date} value.
-     * 
+     *
      * @param fieldName
      *            field name
      * @return value
@@ -105,7 +106,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a byte value.
-     * 
+     *
      * @param pos
      *            field position
      *            field position
@@ -115,7 +116,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column `fieldName' as a DbDoc value.
-     * 
+     *
      * @param fieldName
      *            field name
      * @return value
@@ -124,7 +125,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a DbDoc value.
-     * 
+     *
      * @param pos
      *            field position
      *            field position
@@ -134,7 +135,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column `fieldName' as a double value.
-     * 
+     *
      * @param fieldName
      *            field name
      * @return value
@@ -143,7 +144,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a double value.
-     * 
+     *
      * @param pos
      *            field position
      *            field position
@@ -153,7 +154,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column `fieldName' as an integer value.
-     * 
+     *
      * @param fieldName
      *            field name
      * @return value
@@ -162,7 +163,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as an integer value.
-     * 
+     *
      * @param pos
      *            field position
      *            field position
@@ -172,7 +173,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column `fieldName' as a long value.
-     * 
+     *
      * @param fieldName
      *            field name
      * @return value
@@ -181,7 +182,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a long value.
-     * 
+     *
      * @param pos
      *            field position
      * @return value
@@ -190,7 +191,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column `fieldName' as a string value.
-     * 
+     *
      * @param fieldName
      *            field name
      * @return value
@@ -199,7 +200,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a string value.
-     * 
+     *
      * @param pos
      *            field position
      * @return value
@@ -208,7 +209,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column `fieldName' as a {@link Time} value.
-     * 
+     *
      * @param fieldName
      *            field name
      * @return value
@@ -217,7 +218,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a byte value.
-     * 
+     *
      * @param pos
      *            field position
      * @return value
@@ -226,7 +227,7 @@ public interface Row {
 
     /**
      * Retrieve the value for column `fieldName' as a {@link Timestamp} value.
-     * 
+     *
      * @param fieldName
      *            field name
      * @return value
@@ -235,10 +236,11 @@ public interface Row {
 
     /**
      * Retrieve the value for column at position `pos' (starting at 0) as a byte value.
-     * 
+     *
      * @param pos
      *            field position
      * @return value
      */
     Timestamp getTimestamp(int pos);
+
 }

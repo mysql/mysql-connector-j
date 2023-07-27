@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -46,6 +46,7 @@ import com.mysql.cj.x.protobuf.MysqlxExpr.Expr;
  * Abstract implementation of {@link FilterParams}.
  */
 public abstract class AbstractFilterParams implements FilterParams {
+
     protected Collection collection;
     protected Long limit;
     protected Long offset;
@@ -69,7 +70,7 @@ public abstract class AbstractFilterParams implements FilterParams {
 
     /**
      * Constructor.
-     * 
+     *
      * @param schemaName
      *            Schema name
      * @param collectionName
@@ -85,45 +86,55 @@ public abstract class AbstractFilterParams implements FilterParams {
         this.isRelational = isRelational;
     }
 
+    @Override
     public Object getCollection() {
         return this.collection;
     }
 
+    @Override
     public Object getOrder() {
         // type is reserved as hidden knowledge, don't expose protobuf internals
         return this.order;
     }
 
+    @Override
     public void setOrder(String... orderExpression) {
         this.orderExpr = orderExpression;
         // TODO: does this support placeholders? how do we prevent it?
         this.order = new ExprParser(Arrays.stream(orderExpression).collect(Collectors.joining(", ")), this.isRelational).parseOrderSpec();
     }
 
+    @Override
     public Long getLimit() {
         return this.limit;
     }
 
+    @Override
     public void setLimit(Long limit) {
         this.limit = limit;
     }
 
+    @Override
     public Long getOffset() {
         return this.offset;
     }
 
+    @Override
     public void setOffset(Long offset) {
         this.offset = offset;
     }
 
+    @Override
     public boolean supportsOffset() {
         return this.supportsOffset;
     }
 
+    @Override
     public Object getCriteria() {
         return this.criteria;
     }
 
+    @Override
     public void setCriteria(String criteriaString) {
         this.criteriaStr = criteriaString;
         ExprParser parser = new ExprParser(criteriaString, this.isRelational);
@@ -134,6 +145,7 @@ public abstract class AbstractFilterParams implements FilterParams {
         }
     }
 
+    @Override
     public Object getArgs() {
         if (this.args == null) {
             return null;
@@ -141,6 +153,7 @@ public abstract class AbstractFilterParams implements FilterParams {
         return Arrays.asList(this.args);
     }
 
+    @Override
     public void addArg(String name, Object value) {
         if (this.args == null) {
             throw new WrongArgumentException("No placeholders");
@@ -151,6 +164,7 @@ public abstract class AbstractFilterParams implements FilterParams {
         this.args[this.placeholderNameToPosition.get(name)] = ExprUtil.argObjectToScalar(value);
     }
 
+    @Override
     public void verifyAllArgsBound() {
         if (this.args != null) {
             IntStream.range(0, this.args.length)
@@ -164,53 +178,66 @@ public abstract class AbstractFilterParams implements FilterParams {
         }
     }
 
+    @Override
     public void clearArgs() {
         if (this.args != null) {
             IntStream.range(0, this.args.length).forEach(i -> this.args[i] = null);
         }
     }
 
+    @Override
     public boolean isRelational() {
         return this.isRelational;
     }
 
+    @Override
     public abstract void setFields(String... projection);
 
+    @Override
     public Object getFields() {
         return this.fields;
     }
 
+    @Override
     public void setGrouping(String... groupBy) {
         this.groupBy = groupBy;
         this.grouping = new ExprParser(Arrays.stream(groupBy).collect(Collectors.joining(", ")), isRelational()).parseExprList();
     }
 
+    @Override
     public Object getGrouping() {
         return this.grouping;
     }
 
+    @Override
     public void setGroupingCriteria(String having) {
         this.having = having;
         this.groupingCriteria = new ExprParser(having, isRelational()).parse();
     }
 
+    @Override
     public Object getGroupingCriteria() {
         return this.groupingCriteria;
     }
 
+    @Override
     public RowLock getLock() {
         return this.lock;
     }
 
+    @Override
     public void setLock(RowLock rowLock) {
         this.lock = rowLock;
     }
 
+    @Override
     public RowLockOptions getLockOption() {
         return this.lockOption;
     }
 
+    @Override
     public void setLockOption(RowLockOptions lockOption) {
         this.lockOption = lockOption;
     }
+
 }

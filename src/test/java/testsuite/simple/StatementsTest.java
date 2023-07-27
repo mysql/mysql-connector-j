@@ -73,7 +73,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
@@ -105,6 +104,7 @@ import testsuite.BaseTestCase;
 import testsuite.regression.ConnectionRegressionTest.CountingReBalanceStrategy;
 
 public class StatementsTest extends BaseTestCase {
+
     @Test
     public void testAccessorsAndMutators() throws SQLException {
         assertTrue(this.stmt.getConnection() == this.conn, "Connection can not be null, and must be same connection");
@@ -182,7 +182,7 @@ public class StatementsTest extends BaseTestCase {
             assertTrue(this.rs.next(), "Failed to retrieve AUTO_INCREMENT using LAST_INSERT_ID()");
             autoIncKeyFromFunc = this.rs.getInt(1);
 
-            assertTrue((autoIncKeyFromApi != -1) && (autoIncKeyFromFunc != -1), "AutoIncrement keys were '0'");
+            assertTrue(autoIncKeyFromApi != -1 && autoIncKeyFromFunc != -1, "AutoIncrement keys were '0'");
             assertTrue(autoIncKeyFromApi == autoIncKeyFromFunc, "Key retrieved from API (" + autoIncKeyFromApi
                     + ") does not match key retrieved from LAST_INSERT_ID() " + autoIncKeyFromFunc + ") function");
         } finally {
@@ -200,7 +200,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests all variants of numerical types (signed/unsigned) for correct operation when used as return values from a prepared statement.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -313,7 +313,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests stored procedure functionality
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -350,7 +350,7 @@ public class StatementsTest extends BaseTestCase {
             int numRows = 0;
 
             while (this.rs.next()) {
-                assertTrue(this.rs.getString(1).equals(stringVal) && (this.rs.getInt(2) == intVal));
+                assertTrue(this.rs.getString(1).equals(stringVal) && this.rs.getInt(2) == intVal);
 
                 numRows++;
             }
@@ -381,7 +381,6 @@ public class StatementsTest extends BaseTestCase {
 
     @Test
     public void testCancelStatement() throws Exception {
-
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
@@ -611,11 +610,9 @@ public class StatementsTest extends BaseTestCase {
             final Statement forceStmt = forceCancel.createStatement();
             forceStmt.setQueryTimeout(1);
 
-            assertThrows(MySQLTimeoutException.class, new Callable<Void>() {
-                public Void call() throws Exception {
-                    forceStmt.execute("SELECT SLEEP(30)");
-                    return null;
-                }
+            assertThrows(MySQLTimeoutException.class, () -> {
+                forceStmt.execute("SELECT SLEEP(30)");
+                return null;
             });
 
             int count = 1000;
@@ -630,11 +627,9 @@ public class StatementsTest extends BaseTestCase {
 
             assertFalse(count == 0, "Connection was never killed");
 
-            assertThrows(MySQLStatementCancelledException.class, new Callable<Void>() {
-                public Void call() throws Exception {
-                    forceCancel.setAutoCommit(true);
-                    return null;
-                }
+            assertThrows(MySQLStatementCancelledException.class, () -> {
+                forceCancel.setAutoCommit(true);
+                return null;
             });
 
         } finally {
@@ -802,7 +797,7 @@ public class StatementsTest extends BaseTestCase {
 
             for (int i = 0; i < 10; i++) {
                 int updateCount = this.stmt.executeUpdate("INSERT INTO statement_test (strdata1,strdata2) values ('abcdefg', 'poi')");
-                assertTrue((updateCount == 1), "Update count must be '1', was '" + updateCount + "'");
+                assertTrue(updateCount == 1, "Update count must be '1', was '" + updateCount + "'");
             }
 
             int insertIdFromGeneratedKeys = Integer.MIN_VALUE;
@@ -840,7 +835,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests multiple statement support
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -903,7 +898,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests that NULLs and '' work correctly.
-     * 
+     *
      * @throws SQLException
      */
     @Test
@@ -917,7 +912,7 @@ public class StatementsTest extends BaseTestCase {
 
             this.rs.next();
 
-            assertTrue((this.rs.getString("field_1") == null) && this.rs.wasNull(), "NULL field not returned as NULL");
+            assertTrue(this.rs.getString("field_1") == null && this.rs.wasNull(), "NULL field not returned as NULL");
 
             this.rs.next();
 
@@ -970,7 +965,7 @@ public class StatementsTest extends BaseTestCase {
         this.pstmt.setString(2, "higjklmn");
 
         int updateCount = this.pstmt.executeUpdate();
-        assertTrue((updateCount == 1), "Update count must be '1', was '" + updateCount + "'");
+        assertTrue(updateCount == 1, "Update count must be '1', was '" + updateCount + "'");
 
         this.pstmt.clearParameters();
 
@@ -1007,7 +1002,7 @@ public class StatementsTest extends BaseTestCase {
         int[] updateCounts = this.pstmt.executeBatch();
 
         for (int i = 0; i < updateCounts.length; i++) {
-            assertTrue((updateCounts[i] == 1), "Update count must be '1', was '" + updateCounts[i] + "'");
+            assertTrue(updateCounts[i] == 1, "Update count must be '1', was '" + updateCounts[i] + "'");
         }
     }
 
@@ -1101,7 +1096,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests for PreparedStatement.setObject()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1123,7 +1118,7 @@ public class StatementsTest extends BaseTestCase {
 
         this.pstmt = conn1.prepareStatement("INSERT INTO t1 VALUES (?, ?, ?, ?, ?, ?, ?)");
 
-        long currentTime = (System.currentTimeMillis() / 1000) * 1000; // removing fractional seconds
+        long currentTime = System.currentTimeMillis() / 1000 * 1000; // removing fractional seconds
 
         this.pstmt.setObject(1, "1000", Types.DECIMAL);
         this.pstmt.setObject(2, "2000", Types.VARCHAR);
@@ -1150,7 +1145,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests for PreparedStatement.setObject(...SQLType...)
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1171,7 +1166,7 @@ public class StatementsTest extends BaseTestCase {
 
         this.pstmt = conn1.prepareStatement("INSERT INTO t1 VALUES (?, ?, ?, ?, ?, ?, ?)");
 
-        long currentTime = (System.currentTimeMillis() / 1000) * 1000; // removing fractional seconds
+        long currentTime = System.currentTimeMillis() / 1000 * 1000; // removing fractional seconds
 
         this.pstmt.setObject(1, "1000", MysqlType.DECIMAL);
         this.pstmt.setObject(2, "2000", MysqlType.VARCHAR);
@@ -1344,8 +1339,8 @@ public class StatementsTest extends BaseTestCase {
                 differentTypes[i][2] = Math.random() < .5 ? null : new Integer((int) (Math.random() * Integer.MAX_VALUE));
                 differentTypes[i][3] = Math.random() < .5 ? null : new Long((long) (Math.random() * Long.MAX_VALUE));
                 differentTypes[i][4] = Math.random() < .5 ? null : new BigDecimal("19.95");
-                differentTypes[i][5] = Math.random() < .5 ? null : new Float(3 + ((float) (Math.random())));
-                differentTypes[i][6] = Math.random() < .5 ? null : new Double(3 + (Math.random()));
+                differentTypes[i][5] = Math.random() < .5 ? null : new Float(3 + (float) Math.random());
+                differentTypes[i][6] = Math.random() < .5 ? null : new Double(3 + Math.random());
                 differentTypes[i][7] = Math.random() < .5 ? null : randomString();
                 differentTypes[i][8] = Math.random() < .5 ? null : randomString();
                 differentTypes[i][9] = Math.random() < .5 ? null : randomString().getBytes();
@@ -1466,8 +1461,7 @@ public class StatementsTest extends BaseTestCase {
                             assertEquals(new Integer(((Short) differentTypes[idx][k]).shortValue()), this.rs.getObject(k + 1),
                                     "On row " + idx + ", column " + (k + 1));
                         } else {
-                            System.out
-                                    .println((k + 1) + ": " + this.rs.getMetaData().getColumnName(k + 1) + ": " + differentTypes[idx][k].getClass().getName());//+ " " + this.rs.getObject(k + 1).getClass().getName());
+                            System.out.println(k + 1 + ": " + this.rs.getMetaData().getColumnName(k + 1) + ": " + differentTypes[idx][k].getClass().getName());//+ " " + this.rs.getObject(k + 1).getClass().getName());
                             assertEquals(differentTypes[idx][k].toString(), this.rs.getObject(k + 1).toString(), "On row " + idx + ", column " + (k + 1) + " ("
                                     + differentTypes[idx][k].getClass() + "/" + this.rs.getObject(k + 1).getClass());
                         }
@@ -1743,7 +1737,7 @@ public class StatementsTest extends BaseTestCase {
          * this.rs.getString(1);
          * } finally {
          * closeMemberJDBCResources();
-         * 
+         *
          * if (interceptedConn != null) {
          * interceptedConn.close();
          * }
@@ -1861,7 +1855,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests for ResultSet.getNCharacterStream()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1881,7 +1875,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests for ResultSet.getNClob()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1915,7 +1909,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests for ResultSet.getNString()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1931,7 +1925,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests for PreparedStatement.setNCharacterSteam()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1983,7 +1977,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests for ServerPreparedStatement.setNCharacterSteam()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2027,7 +2021,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests for PreparedStatement.setNClob()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2067,7 +2061,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests for ServerPreparedStatement.setNClob()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2128,7 +2122,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests for PreparedStatement.setNString()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2182,7 +2176,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests for ServerPreparedStatement.setNString()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2226,7 +2220,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests for ResultSet.updateNCharacterStream()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2290,7 +2284,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests for ResultSet.updateNClob()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2362,7 +2356,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Tests for ResultSet.updateNString()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2467,7 +2461,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test shared test data validity.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2483,7 +2477,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test for Statement.executeLargeBatch(). Validate update count returned and generated keys.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2569,7 +2563,7 @@ public class StatementsTest extends BaseTestCase {
      * Test for Statement.executeLargeUpdate(String).
      * Validate update count returned and generated keys.
      * Case: without requesting generated keys.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2582,11 +2576,9 @@ public class StatementsTest extends BaseTestCase {
 
         final Statement stmtTmp = this.stmt;
         assertThrows(SQLException.class, "Generated keys not requested. You need to specify Statement.RETURN_GENERATED_KEYS to Statement.executeUpdate\\(\\), "
-                + "Statement.executeLargeUpdate\\(\\) or Connection.prepareStatement\\(\\).", new Callable<Void>() {
-                    public Void call() throws Exception {
-                        stmtTmp.getGeneratedKeys();
-                        return null;
-                    }
+                + "Statement.executeLargeUpdate\\(\\) or Connection.prepareStatement\\(\\).", () -> {
+                    stmtTmp.getGeneratedKeys();
+                    return null;
                 });
     }
 
@@ -2596,7 +2588,7 @@ public class StatementsTest extends BaseTestCase {
      * Case 1: explicitly requesting generated keys.
      * Case 2: requesting generated keys by defining column indexes.
      * Case 3: requesting generated keys by defining column names.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2641,7 +2633,7 @@ public class StatementsTest extends BaseTestCase {
     /**
      * Test for PreparedStatement.executeLargeBatch().
      * Validate update count returned and generated keys.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2739,7 +2731,7 @@ public class StatementsTest extends BaseTestCase {
      * Test for PreparedStatement.executeLargeUpdate().
      * Validate update count returned and generated keys.
      * Case: without requesting generated keys.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2759,11 +2751,9 @@ public class StatementsTest extends BaseTestCase {
 
         final Statement stmtTmp = this.pstmt;
         assertThrows(SQLException.class, "Generated keys not requested. You need to specify Statement.RETURN_GENERATED_KEYS to Statement.executeUpdate\\(\\), "
-                + "Statement.executeLargeUpdate\\(\\) or Connection.prepareStatement\\(\\).", new Callable<Void>() {
-                    public Void call() throws Exception {
-                        stmtTmp.getGeneratedKeys();
-                        return null;
-                    }
+                + "Statement.executeLargeUpdate\\(\\) or Connection.prepareStatement\\(\\).", () -> {
+                    stmtTmp.getGeneratedKeys();
+                    return null;
                 });
     }
 
@@ -2771,7 +2761,7 @@ public class StatementsTest extends BaseTestCase {
      * Test for PreparedStatement.executeLargeUpdate().
      * Validate update count returned and generated keys.
      * Case: explicitly requesting generated keys.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2807,7 +2797,7 @@ public class StatementsTest extends BaseTestCase {
     /**
      * Test for CallableStatement.executeLargeBatch().
      * Validate update count returned and generated keys.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2915,7 +2905,7 @@ public class StatementsTest extends BaseTestCase {
     /**
      * Test for CallableStatement.executeLargeUpdate().
      * Validate update count returned and generated keys.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -2956,7 +2946,7 @@ public class StatementsTest extends BaseTestCase {
     /**
      * Test for (Server)PreparedStatement.executeLargeBatch().
      * Validate update count returned and generated keys.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3058,7 +3048,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test for Statement.[get/set]LargeMaxRows().
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3072,11 +3062,9 @@ public class StatementsTest extends BaseTestCase {
         assertEquals(50000000, this.stmt.getLargeMaxRows());
 
         final Statement stmtTmp = this.stmt;
-        assertThrows(SQLException.class, "setMaxRows\\(\\) out of range. 50000001 > 50000000.", new Callable<Void>() {
-            public Void call() throws Exception {
-                stmtTmp.setMaxRows(50000001);
-                return null;
-            }
+        assertThrows(SQLException.class, "setMaxRows\\(\\) out of range. 50000001 > 50000000.", () -> {
+            stmtTmp.setMaxRows(50000001);
+            return null;
         });
 
         this.stmt.setLargeMaxRows(0);
@@ -3089,18 +3077,16 @@ public class StatementsTest extends BaseTestCase {
         assertEquals(50000000, this.stmt.getMaxRows());
         assertEquals(50000000, this.stmt.getLargeMaxRows());
 
-        assertThrows(SQLException.class, "setMaxRows\\(\\) out of range. 50000001 > 50000000.", new Callable<Void>() {
-            public Void call() throws Exception {
-                stmtTmp.setLargeMaxRows(50000001L);
-                return null;
-            }
+        assertThrows(SQLException.class, "setMaxRows\\(\\) out of range. 50000001 > 50000000.", () -> {
+            stmtTmp.setLargeMaxRows(50000001L);
+            return null;
         });
     }
 
     /**
      * Test for PreparedStatement.setObject().
      * Validate new methods as well as support for the types java.time.Local[Date][Time] and java.time.Offset[Date]Time.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3128,7 +3114,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test for PreparedStatement.setObject(), unsupported SQL types TIME_WITH_TIMEZONE, TIMESTAMP_WITH_TIMEZONE and REF_CURSOR.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3139,7 +3125,7 @@ public class StatementsTest extends BaseTestCase {
     /**
      * Test for CallableStatement.setObject().
      * Validate new methods as well as support for the types java.time.Local[Date][Time] and java.time.Offset[Date]Time.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3172,7 +3158,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test for CallableStatement.setObject(), unsupported SQL types TIME_WITH_TIMEZONE, TIMESTAMP_WITH_TIMEZONE and REF_CURSOR.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3184,7 +3170,7 @@ public class StatementsTest extends BaseTestCase {
     /**
      * Test for (Server)PreparedStatement.setObject().
      * Validate new methods as well as support for the types java.time.Local[Date][Time] and java.time.Offset[Date]Time.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3214,7 +3200,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test for (Server)PreparedStatement.setObject(), unsupported SQL types TIME_WITH_TIMEZONE, TIMESTAMP_WITH_TIMEZONE and REF_CURSOR.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3236,7 +3222,7 @@ public class StatementsTest extends BaseTestCase {
      * 3 - `t` TIME (or any kind of *CHAR)
      * 4 - `dt` DATETIME (or any kind of *CHAR)
      * 5 - `ts` TIMESTAMP (or any kind of *CHAR)
-     * 
+     *
      * @param prepStmt
      * @return the row count of inserted records.
      * @throws Exception
@@ -3343,9 +3329,9 @@ public class StatementsTest extends BaseTestCase {
      * 3 - `t` TIME (or any kind of *CHAR)
      * 4 - `dt` DATETIME (or any kind of *CHAR)
      * 5 - `ts` TIMESTAMP (or any kind of *CHAR)
-     * 
+     *
      * Additionally validate support for the types java.time.Local[Date][Time] in ResultSet.getObject().
-     * 
+     *
      * @param tableName
      * @param expectedRowCount
      * @throws Exception
@@ -3401,7 +3387,7 @@ public class StatementsTest extends BaseTestCase {
      * 3 - `ot2` BLOB
      * 4 - `odt1` VARCHAR
      * 5 - `odt2` BLOB
-     * 
+     *
      * @param prepStmt
      * @return the row count of inserted records.
      * @throws Exception
@@ -3442,9 +3428,9 @@ public class StatementsTest extends BaseTestCase {
      * 3 - `ot2` BLOB
      * 4 - `odt1` VARCHAR
      * 5 - `odt2` BLOB
-     * 
+     *
      * Additionally validate support for the types java.time.Offset[Date]Time in ResultSet.getObject().
-     * 
+     *
      * @param tableName
      * @param expectedRowCount
      * @throws Exception
@@ -3490,7 +3476,7 @@ public class StatementsTest extends BaseTestCase {
      * Helper method for *SetObject* tests.
      * Check unsupported types behavior for the given PreparedStatement with a single placeholder. If this is a CallableStatement then the placeholder must
      * coincide with a parameter named `param`.
-     * 
+     *
      * @param prepStmt
      */
     private void checkUnsupportedTypesBehavior(final PreparedStatement prepStmt) {
@@ -3499,60 +3485,42 @@ public class StatementsTest extends BaseTestCase {
         /*
          * Unsupported SQL types TIME_WITH_TIMEZONE and TIMESTAMP_WITH_TIMEZONE.
          */
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                prepStmt.setObject(1, OffsetTime.now(), JDBCType.TIME_WITH_TIMEZONE);
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", () -> {
+            prepStmt.setObject(1, OffsetTime.now(), JDBCType.TIME_WITH_TIMEZONE);
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                prepStmt.setObject(1, OffsetDateTime.now(), JDBCType.TIMESTAMP_WITH_TIMEZONE);
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", () -> {
+            prepStmt.setObject(1, OffsetDateTime.now(), JDBCType.TIMESTAMP_WITH_TIMEZONE);
+            return null;
         });
         if (cstmt != null) {
-            assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", new Callable<Void>() {
-                @Override
-                public Void call() throws Exception {
-                    cstmt.setObject("param", OffsetTime.now(), JDBCType.TIME_WITH_TIMEZONE);
-                    return null;
-                }
+            assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", () -> {
+                cstmt.setObject("param", OffsetTime.now(), JDBCType.TIME_WITH_TIMEZONE);
+                return null;
             });
-            assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", new Callable<Void>() {
-                @Override
-                public Void call() throws Exception {
-                    cstmt.setObject("param", OffsetDateTime.now(), JDBCType.TIMESTAMP_WITH_TIMEZONE);
-                    return null;
-                }
+            assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", () -> {
+                cstmt.setObject("param", OffsetDateTime.now(), JDBCType.TIMESTAMP_WITH_TIMEZONE);
+                return null;
             });
         }
         /*
          * Unsupported SQL type REF_CURSOR.
          */
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                prepStmt.setObject(1, new Object(), JDBCType.REF_CURSOR);
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", () -> {
+            prepStmt.setObject(1, new Object(), JDBCType.REF_CURSOR);
+            return null;
         });
         if (cstmt != null) {
-            assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", new Callable<Void>() {
-                @Override
-                public Void call() throws Exception {
-                    cstmt.setObject("param", new Object(), JDBCType.REF_CURSOR);
-                    return null;
-                }
+            assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", () -> {
+                cstmt.setObject("param", new Object(), JDBCType.REF_CURSOR);
+                return null;
             });
         }
     }
 
     /**
      * Test for CallableStatement.registerOutParameter().
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3619,7 +3587,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test for CallableStatement.registerOutParameter(...MysqlType...).
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3686,7 +3654,7 @@ public class StatementsTest extends BaseTestCase {
 
     /**
      * Test for CallableStatement.registerOutParameter(), unsupported SQL types TIME_WITH_TIMEZONE, TIMESTAMP_WITH_TIMEZONE and REF_CURSOR.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -3697,141 +3665,87 @@ public class StatementsTest extends BaseTestCase {
         /*
          * Unsupported SQL types TIME_WITH_TIMEZONE and TIMESTAMP_WITH_TIMEZONE.
          */
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter(1, JDBCType.TIME_WITH_TIMEZONE);
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", () -> {
+            testCstmt.registerOutParameter(1, JDBCType.TIME_WITH_TIMEZONE);
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter(1, JDBCType.TIME_WITH_TIMEZONE, 1);
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", () -> {
+            testCstmt.registerOutParameter(1, JDBCType.TIME_WITH_TIMEZONE, 1);
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter(1, JDBCType.TIME_WITH_TIMEZONE, "dummy");
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", () -> {
+            testCstmt.registerOutParameter(1, JDBCType.TIME_WITH_TIMEZONE, "dummy");
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter("param", JDBCType.TIME_WITH_TIMEZONE);
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", () -> {
+            testCstmt.registerOutParameter("param", JDBCType.TIME_WITH_TIMEZONE);
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter("param", JDBCType.TIME_WITH_TIMEZONE, 1);
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", () -> {
+            testCstmt.registerOutParameter("param", JDBCType.TIME_WITH_TIMEZONE, 1);
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter("param", JDBCType.TIME_WITH_TIMEZONE, "dummy");
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIME_WITH_TIMEZONE", () -> {
+            testCstmt.registerOutParameter("param", JDBCType.TIME_WITH_TIMEZONE, "dummy");
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter(1, JDBCType.TIMESTAMP_WITH_TIMEZONE);
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", () -> {
+            testCstmt.registerOutParameter(1, JDBCType.TIMESTAMP_WITH_TIMEZONE);
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter(1, JDBCType.TIMESTAMP_WITH_TIMEZONE, 1);
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", () -> {
+            testCstmt.registerOutParameter(1, JDBCType.TIMESTAMP_WITH_TIMEZONE, 1);
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter(1, JDBCType.TIMESTAMP_WITH_TIMEZONE, "dummy");
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", () -> {
+            testCstmt.registerOutParameter(1, JDBCType.TIMESTAMP_WITH_TIMEZONE, "dummy");
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter("param", JDBCType.TIMESTAMP_WITH_TIMEZONE);
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", () -> {
+            testCstmt.registerOutParameter("param", JDBCType.TIMESTAMP_WITH_TIMEZONE);
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter("param", JDBCType.TIMESTAMP_WITH_TIMEZONE, 1);
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", () -> {
+            testCstmt.registerOutParameter("param", JDBCType.TIMESTAMP_WITH_TIMEZONE, 1);
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter("param", JDBCType.TIMESTAMP_WITH_TIMEZONE, "dummy");
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: TIMESTAMP_WITH_TIMEZONE", () -> {
+            testCstmt.registerOutParameter("param", JDBCType.TIMESTAMP_WITH_TIMEZONE, "dummy");
+            return null;
         });
 
         /*
          * Unsupported SQL type REF_CURSOR.
          */
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter(1, JDBCType.REF_CURSOR);
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", () -> {
+            testCstmt.registerOutParameter(1, JDBCType.REF_CURSOR);
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter(1, JDBCType.REF_CURSOR, 1);
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", () -> {
+            testCstmt.registerOutParameter(1, JDBCType.REF_CURSOR, 1);
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter(1, JDBCType.REF_CURSOR, "dummy");
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", () -> {
+            testCstmt.registerOutParameter(1, JDBCType.REF_CURSOR, "dummy");
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter("param", JDBCType.REF_CURSOR);
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", () -> {
+            testCstmt.registerOutParameter("param", JDBCType.REF_CURSOR);
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter("param", JDBCType.REF_CURSOR, 1);
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", () -> {
+            testCstmt.registerOutParameter("param", JDBCType.REF_CURSOR, 1);
+            return null;
         });
-        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                testCstmt.registerOutParameter("param", JDBCType.REF_CURSOR, "dummy");
-                return null;
-            }
+        assertThrows(SQLFeatureNotSupportedException.class, "Unsupported SQL type: REF_CURSOR", () -> {
+            testCstmt.registerOutParameter("param", JDBCType.REF_CURSOR, "dummy");
+            return null;
         });
     }
 
     /**
      * WL#11101 - Remove de-cache and close of SSPSs on double call to close()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -4653,7 +4567,7 @@ public class StatementsTest extends BaseTestCase {
             // } else if (!rwBS && useSPS) {
             //     QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testQueryInfo VALUES ROW(?, ?) AS new(v1, v2)",
             //             "INSERT INTO testQueryInfo VALUES ROW(?, ?) AS new(v1, v2)");
-            // } else 
+            // } else
             if (rwBS) { // && !useSPS
                 QueryInfoQueryInterceptor.assertCapturedSql(testCase, "INSERT INTO testQueryInfo VALUES ROW(1, 2),ROW(3, 4) AS new(v1, v2)");
             } else { // !rwBS && !useSPS
@@ -4680,7 +4594,7 @@ public class StatementsTest extends BaseTestCase {
             //     QueryInfoQueryInterceptor.assertCapturedSql(testCase,
             //             "INSERT INTO testQueryInfo VALUES ROW(?, ?) AS new(v1, v2) ON DUPLICATE KEY UPDATE c1 = new.v2, c2 = VALUES(c1)",
             //             "INSERT INTO testQueryInfo VALUES ROW(?, ?) AS new(v1, v2) ON DUPLICATE KEY UPDATE c1 = new.v2, c2 = VALUES(c1)");
-            // } else 
+            // } else
             if (rwBS) { // && !useSPS
                 QueryInfoQueryInterceptor.assertCapturedSql(testCase,
                         "INSERT INTO testQueryInfo VALUES ROW(1, 2),ROW(3, 4) AS new(v1, v2) ON DUPLICATE KEY UPDATE c1 = new.v2, c2 = VALUES(c1)");
@@ -5578,6 +5492,7 @@ public class StatementsTest extends BaseTestCase {
     }
 
     public static class QueryInfoQueryInterceptor extends BaseQueryInterceptor {
+
         private static boolean enabled = false;
         private static List<String> capturedSql = new ArrayList<>();
 
@@ -5601,5 +5516,7 @@ public class StatementsTest extends BaseTestCase {
             }
             return super.preProcess(sql, interceptedQuery);
         }
+
     }
+
 }

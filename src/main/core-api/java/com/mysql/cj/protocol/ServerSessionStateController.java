@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,6 +36,7 @@ import com.mysql.cj.exceptions.CJOperationNotSupportedException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 
 public interface ServerSessionStateController {
+
     public static int SESSION_TRACK_SYSTEM_VARIABLES = 0x00;
     public static int SESSION_TRACK_SCHEMA = 0x01;
     public static int SESSION_TRACK_STATE_CHANGE = 0x02;
@@ -45,10 +46,10 @@ public interface ServerSessionStateController {
 
     /**
      * Set the object containing server session changes collected from the latest query execution. Used internally.
-     * 
+     *
      * @param changes
      *            {@link ServerSessionStateChanges} object.
-     * 
+     *
      */
     default void setSessionStateChanges(ServerSessionStateChanges changes) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
@@ -61,7 +62,7 @@ public interface ServerSessionStateController {
      * {@link ServerSessionStateChanges} object after the recent user's query. If this is an issue, a {@link SessionStateChangesListener} can be added via
      * {@link #addSessionStateChangesListener(SessionStateChangesListener)} to catch all session changes.
      * </p>
-     * 
+     *
      * @return {@link ServerSessionStateChanges} object.
      */
     default ServerSessionStateChanges getSessionStateChanges() {
@@ -70,12 +71,14 @@ public interface ServerSessionStateController {
 
     @FunctionalInterface
     public static interface SessionStateChangesListener {
+
         void handleSessionStateChanges(ServerSessionStateChanges changes);
+
     }
 
     /**
      * Add the {@link SessionStateChangesListener} that will process {@link ServerSessionStateChanges} on it's arrival.
-     * 
+     *
      * @param l
      *            {@link SessionStateChangesListener} object.
      */
@@ -85,7 +88,7 @@ public interface ServerSessionStateController {
 
     /**
      * Remove {@link SessionStateChangesListener}.
-     * 
+     *
      * @param l
      *            {@link SessionStateChangesListener} object.
      */
@@ -98,10 +101,12 @@ public interface ServerSessionStateController {
      * <p>
      * Driver is getting these changes when connection property trackSessionState=true and server supports session tracking.
      * </p>
-     * 
+     *
      */
     public static interface ServerSessionStateChanges {
+
         List<SessionStateChange> getSessionStateChangesList();
+
     }
 
     /**
@@ -124,6 +129,7 @@ public interface ServerSessionStateController {
      * </p>
      */
     public static class SessionStateChange {
+
         private int type;
         private List<String> values = new ArrayList<>();
 
@@ -143,5 +149,7 @@ public interface ServerSessionStateController {
             this.values.add(value);
             return this;
         }
+
     }
+
 }

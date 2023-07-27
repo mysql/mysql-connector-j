@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -49,6 +49,7 @@ import com.mysql.cj.exceptions.WrongArgumentException;
  * Tests for {@link TimeUtil}.
  */
 public class TimeUtilTest {
+
     @Test
     public void testAdjustTimestampNanosPrecision() {
         assertTrue(Timestamp.valueOf("2020-02-26 14:30:11").equals(TimeUtil.adjustNanosPrecision(Timestamp.valueOf("2020-02-26 14:30:10.999999999"), 3, true)));
@@ -71,7 +72,6 @@ public class TimeUtilTest {
 
     @Test
     public void testParseToDateTimeObject() throws IOException {
-
         /* DATE literals */
 
         assertEquals(LocalDate.of(2020, 1, 1), TimeUtil.parseToDateTimeObject("2020-01-01", MysqlType.DATE));
@@ -324,7 +324,6 @@ public class TimeUtilTest {
         assertThrows(WrongArgumentException.class, () -> {
             TimeUtil.parseToDateTimeObject("2013#04$17$03@14%07", MysqlType.DATETIME);
         }, "There is no known date-time pattern for.*");
-
     }
 
 }

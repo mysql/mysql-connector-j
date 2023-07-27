@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -30,24 +30,26 @@
 package com.mysql.cj.protocol;
 
 public interface Warning {
+
     /**
      * Get warning level.
-     * 
+     *
      * @return Warning level
      */
     int getLevel();
 
     /**
      * Get warning code.
-     * 
+     *
      * @return Warning code
      */
     long getCode();
 
     /**
      * Get warning message.
-     * 
+     *
      * @return Warning message
      */
     String getMessage();
+
 }

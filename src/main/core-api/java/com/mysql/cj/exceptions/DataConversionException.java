@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -33,10 +33,12 @@ package com.mysql.cj.exceptions;
  * Indicates that data could not be converted according to the given request.
  */
 public class DataConversionException extends DataReadException {
+
     private static final long serialVersionUID = -863576663404236982L;
 
     public DataConversionException(String msg) {
         super(msg);
         setSQLState("22018");
     }
+
 }

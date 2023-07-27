@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -47,7 +47,6 @@ import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Properties;
 import java.util.TimeZone;
-import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
@@ -58,6 +57,7 @@ import com.mysql.cj.util.TimeUtil;
 import testsuite.BaseTestCase;
 
 public class DateTest extends BaseTestCase {
+
     @Test
     public void testTimestamp() throws SQLException {
         createTable("DATETEST", "(tstamp TIMESTAMP, dt DATE, dtime DATETIME, tm TIME)");
@@ -152,11 +152,9 @@ public class DateTest extends BaseTestCase {
             assertTrue(rs1.getTimestamp(1).getNanos() == 900000, rs1.getTimestamp(1).getNanos() + " != 900000");
             assertTrue(rs1.next());
 
-            assertThrows(SQLDataException.class, "Cannot convert string '1969-12-31 18:00:00.' to java.sql.Timestamp value", new Callable<Void>() {
-                public Void call() throws Exception {
-                    rs1.getTimestamp(1);
-                    return null;
-                }
+            assertThrows(SQLDataException.class, "Cannot convert string '1969-12-31 18:00:00.' to java.sql.Timestamp value", () -> {
+                rs1.getTimestamp(1);
+                return null;
             });
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testNanosParsing");
@@ -165,7 +163,7 @@ public class DateTest extends BaseTestCase {
 
     /**
      * Tests the configurability of all-zero date/datetime/timestamp handling in the driver.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -369,4 +367,5 @@ public class DateTest extends BaseTestCase {
         System.out.println(rs1.getTimestamp(3));
         System.out.println(rs1.getTimestamp(4));
     }
+
 }

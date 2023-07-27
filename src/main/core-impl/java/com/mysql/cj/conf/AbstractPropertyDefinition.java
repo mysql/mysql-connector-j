@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -52,7 +52,6 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
 
     public AbstractPropertyDefinition(String name, String camelCaseAlias, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion,
             String category, int orderInCategory) {
-
         this.name = name;
         this.ccAlias = camelCaseAlias;
         this.setDefaultValue(defaultValue);
@@ -65,7 +64,6 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
 
     public AbstractPropertyDefinition(PropertyKey key, T defaultValue, boolean isRuntimeModifiable, String description, String sinceVersion, String category,
             int orderInCategory) {
-
         this.key = key;
         this.name = key.getKeyName();
         this.ccAlias = key.getCcAlias();
@@ -84,10 +82,12 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
         this.setUpperBound(upperBound);
     }
 
+    @Override
     public boolean hasValueConstraints() {
-        return (getAllowableValues() != null) && (getAllowableValues().length > 0);
+        return getAllowableValues() != null && getAllowableValues().length > 0;
     }
 
+    @Override
     public boolean isRangeBased() {
         return false;
     }
@@ -97,6 +97,7 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
         return this.key;
     }
 
+    @Override
     public String getName() {
         return this.name;
     }
@@ -111,6 +112,7 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
         return this.ccAlias != null && this.ccAlias.length() > 0;
     }
 
+    @Override
     public T getDefaultValue() {
         return this.defaultValue;
     }
@@ -119,6 +121,7 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
         this.defaultValue = defaultValue;
     }
 
+    @Override
     public boolean isRuntimeModifiable() {
         return this.isRuntimeModifiable;
     }
@@ -127,6 +130,7 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
         this.isRuntimeModifiable = isRuntimeModifiable;
     }
 
+    @Override
     public String getDescription() {
         return this.description;
     }
@@ -135,6 +139,7 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
         this.description = description;
     }
 
+    @Override
     public String getSinceVersion() {
         return this.sinceVersion;
     }
@@ -143,6 +148,7 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
         this.sinceVersion = sinceVersion;
     }
 
+    @Override
     public String getCategory() {
         return this.category;
     }
@@ -151,6 +157,7 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
         this.category = category;
     }
 
+    @Override
     public int getOrder() {
         return this.order;
     }
@@ -159,10 +166,12 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
         this.order = order;
     }
 
+    @Override
     public String[] getAllowableValues() {
         return null;
     }
 
+    @Override
     public int getLowerBound() {
         return this.lowerBound;
     }
@@ -171,6 +180,7 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
         this.lowerBound = lowerBound;
     }
 
+    @Override
     public int getUpperBound() {
         return this.upperBound;
     }
@@ -179,5 +189,7 @@ public abstract class AbstractPropertyDefinition<T> implements PropertyDefinitio
         this.upperBound = upperBound;
     }
 
+    @Override
     public abstract T parseObject(String value, ExceptionInterceptor exceptionInterceptor);
+
 }

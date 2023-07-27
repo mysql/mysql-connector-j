@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -132,7 +132,7 @@ public class FieldFactory implements ProtocolEntityFactory<Field, XMessage> {
 
             // According to SQL standard, NUMERIC_SCALE should be NULL for approximate numeric data types.
             // DECIMAL_NOT_SPECIFIED=31 is the MySQL internal constant value used to indicate that NUMERIC_SCALE is not applicable.
-            // It's probably a mistake that it's exposed by protocol as a decimals and it should be replaced with 0. 
+            // It's probably a mistake that it's exposed by protocol as a decimals and it should be replaced with 0.
             switch (mysqlType) {
                 case FLOAT:
                 case FLOAT_UNSIGNED:
@@ -242,4 +242,5 @@ public class FieldFactory implements ProtocolEntityFactory<Field, XMessage> {
         }
         throw new WrongArgumentException("TODO: unknown field type: " + type);
     }
+
 }

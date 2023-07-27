@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,6 +37,7 @@ import com.mysql.cj.protocol.MessageSender;
 import com.mysql.cj.util.StringUtils;
 
 public class DebugBufferingPacketSender implements MessageSender<NativePacketPayload> {
+
     private MessageSender<NativePacketPayload> packetSender;
     private LinkedList<StringBuilder> packetDebugBuffer;
     private RuntimeProperty<Integer> packetDebugBufferSize;
@@ -57,7 +58,7 @@ public class DebugBufferingPacketSender implements MessageSender<NativePacketPay
 
     /**
      * Add a packet to the debug buffer.
-     * 
+     *
      * @param packet
      *            packet as bytes
      * @param packetLen
@@ -80,13 +81,14 @@ public class DebugBufferingPacketSender implements MessageSender<NativePacketPay
             packetDump.append("\nNote: Packet of " + packetLen + " bytes truncated to " + this.maxPacketDumpLength + " bytes.\n");
         }
 
-        if ((this.packetDebugBuffer.size() + 1) > this.packetDebugBufferSize.getValue()) {
+        if (this.packetDebugBuffer.size() + 1 > this.packetDebugBufferSize.getValue()) {
             this.packetDebugBuffer.removeFirst();
         }
 
         this.packetDebugBuffer.addLast(packetDump);
     }
 
+    @Override
     public void send(byte[] packet, int packetLen, byte packetSequence) throws IOException {
         pushPacketToDebugBuffer(packet, packetLen);
         this.packetSender.send(packet, packetLen, packetSequence);
@@ -101,4 +103,5 @@ public class DebugBufferingPacketSender implements MessageSender<NativePacketPay
     public MessageSender<NativePacketPayload> undecorate() {
         return this.packetSender;
     }
+
 }

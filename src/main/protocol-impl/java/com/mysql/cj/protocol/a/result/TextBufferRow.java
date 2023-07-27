@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2007, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,7 +41,7 @@ import com.mysql.cj.result.ValueFactory;
 /**
  * A ResultSetRow implementation that holds one row packet (which is re-used by the driver, and thus saves memory allocations), and tries when possible to avoid
  * allocations to break out the results as individual byte[]s.
- * 
+ *
  * (this isn't possible when doing things like reading floating point values).
  */
 public class TextBufferRow extends AbstractBufferRow {
@@ -60,7 +60,6 @@ public class TextBufferRow extends AbstractBufferRow {
 
     @Override
     protected int findAndSeekToOffset(int index) {
-
         if (index == 0) {
             this.lastRequestedIndex = 0;
             this.lastRequestedPos = this.homePosition;
@@ -131,4 +130,5 @@ public class TextBufferRow extends AbstractBufferRow {
         int length = (int) this.rowFromServer.readInteger(IntegerDataType.INT_LENENC);
         return getValueFromBytes(columnIndex, this.rowFromServer.getByteBuffer(), this.rowFromServer.getPosition(), length, vf);
     }
+
 }

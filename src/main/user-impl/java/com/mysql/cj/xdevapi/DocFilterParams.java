@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -42,7 +42,7 @@ public class DocFilterParams extends AbstractFilterParams {
 
     /**
      * Constructor.
-     * 
+     *
      * @param schemaName
      *            Schema name
      * @param collectionName
@@ -54,7 +54,7 @@ public class DocFilterParams extends AbstractFilterParams {
 
     /**
      * Constructor.
-     * 
+     *
      * @param schemaName
      *            Schema name
      * @param collectionName
@@ -68,7 +68,7 @@ public class DocFilterParams extends AbstractFilterParams {
 
     /**
      * Parse projection expressions into X Protocol Projection objects.
-     * 
+     *
      * @param docProjection
      *            projection expression
      */
@@ -80,4 +80,5 @@ public class DocFilterParams extends AbstractFilterParams {
     public void setFields(String... projection) {
         this.fields = new ExprParser(Arrays.stream(projection).collect(Collectors.joining(", ")), false).parseDocumentProjection();
     }
+
 }

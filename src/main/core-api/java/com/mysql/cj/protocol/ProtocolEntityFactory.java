@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,7 +36,7 @@ public interface ProtocolEntityFactory<T, M extends Message> {
 
     /**
      * Create ProtocolEntity of type {@link T} from protocol message.
-     * 
+     *
      * @param message
      *            {@link Message} instance
      * @return T
@@ -59,7 +59,7 @@ public interface ProtocolEntityFactory<T, M extends Message> {
 
     /**
      * Create object from protocol entity.
-     * 
+     *
      * @param protocolEntity
      *            the {@link ProtocolEntity} to create from
      * @return a new ProtocolEntity
@@ -67,4 +67,5 @@ public interface ProtocolEntityFactory<T, M extends Message> {
     default T createFromProtocolEntity(ProtocolEntity protocolEntity) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not allowed");
     }
+
 }

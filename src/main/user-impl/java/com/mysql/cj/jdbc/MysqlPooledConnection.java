@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -77,7 +77,7 @@ public class MysqlPooledConnection implements PooledConnection {
 
     /**
      * Construct a new MysqlPooledConnection and set instance variables
-     * 
+     *
      * @param connection
      *            physical connection to db
      */
@@ -90,7 +90,6 @@ public class MysqlPooledConnection implements PooledConnection {
 
     @Override
     public synchronized void addConnectionEventListener(ConnectionEventListener connectioneventlistener) {
-
         if (this.connectionEventListeners != null) {
             this.connectionEventListeners.put(connectioneventlistener, connectioneventlistener);
         }
@@ -98,7 +97,6 @@ public class MysqlPooledConnection implements PooledConnection {
 
     @Override
     public synchronized void removeConnectionEventListener(ConnectionEventListener connectioneventlistener) {
-
         if (this.connectionEventListeners != null) {
             this.connectionEventListeners.remove(connectioneventlistener);
         }
@@ -107,7 +105,6 @@ public class MysqlPooledConnection implements PooledConnection {
     @Override
     public synchronized Connection getConnection() throws SQLException {
         return getConnection(true, false);
-
     }
 
     protected synchronized Connection getConnection(boolean resetServerState, boolean forXa) throws SQLException {
@@ -166,7 +163,7 @@ public class MysqlPooledConnection implements PooledConnection {
      * Instantiates a new ConnectionEvent which wraps sqlException and invokes
      * either connectionClose or connectionErrorOccurred on listener as
      * appropriate.
-     * 
+     *
      * @param eventType
      *            value indicating whether connectionClosed or
      *            connectionErrorOccurred called
@@ -174,7 +171,6 @@ public class MysqlPooledConnection implements PooledConnection {
      *            the exception being thrown
      */
     protected synchronized void callConnectionEventListeners(int eventType, SQLException sqlException) {
-
         if (this.connectionEventListeners == null) {
 
             return;

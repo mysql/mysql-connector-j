@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -43,6 +43,7 @@ import com.mysql.cj.xdevapi.SessionFactory;
  * Sample program showing how to use Connector/J's Dev API support.
  */
 public class DevApiSample {
+
     public static void main(String[] args) {
         Session session = new SessionFactory().getSession("mysqlx://localhost:33060/test?user=user&password=password1234");
         System.err.println("Connected!");
@@ -81,4 +82,5 @@ public class DevApiSample {
 
         schema.dropCollection(coll.getName());
     }
+
 }

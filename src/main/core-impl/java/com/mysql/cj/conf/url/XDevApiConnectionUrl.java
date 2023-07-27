@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -54,6 +54,7 @@ import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.util.StringUtils;
 
 public class XDevApiConnectionUrl extends ConnectionUrl {
+
     private static final int DEFAULT_PORT = 33060;
 
     private boolean prioritySorted = false;
@@ -61,7 +62,7 @@ public class XDevApiConnectionUrl extends ConnectionUrl {
 
     /**
      * Constructs an instance of {@link XDevApiConnectionUrl}, performing all the required initializations.
-     * 
+     *
      * @param connStrParser
      *            a {@link ConnectionUrlParser} instance containing the parsed version of the original connection string
      * @param info
@@ -166,4 +167,5 @@ public class XDevApiConnectionUrl extends ConnectionUrl {
         }
         return super.getHostsList(view);
     }
+
 }

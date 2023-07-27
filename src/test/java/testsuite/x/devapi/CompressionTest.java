@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -73,6 +73,7 @@ import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SqlResult;
 
 public class CompressionTest extends DevApiBaseTestCase {
+
     private final Properties compressFreeTestProperties = (Properties) this.testProperties.clone();
     private String compressFreeBaseUrl = this.baseUrl;
 
@@ -87,6 +88,7 @@ public class CompressionTest extends DevApiBaseTestCase {
     private CompressionCounters counters = null;
 
     private class CompressionCounters {
+
         private static final String MYSQLX_BYTES_RECEIVED = "Mysqlx_bytes_received";
         private static final String MYSQLX_BYTES_RECEIVED_COMPRESSED_PAYLOAD = "Mysqlx_bytes_received_compressed_payload";
         private static final String MYSQLX_BYTES_RECEIVED_UNCOMPRESSED_FRAME = "Mysqlx_bytes_received_uncompressed_frame";
@@ -153,11 +155,13 @@ public class CompressionTest extends DevApiBaseTestCase {
                 fail(e.getMessage());
             }
         }
+
     }
 
     private CompressionSettings compressionSettings = null;
 
     private class CompressionSettings {
+
         private final boolean serverSupportsCompression;
         private final String compressionAlgorithms;
 
@@ -181,33 +185,40 @@ public class CompressionTest extends DevApiBaseTestCase {
         void resetCompressionSettings() {
             setCompressionAlgorithms(this.compressionAlgorithms);
         }
+
     }
 
     public static class TestInflaterInputStream extends InflaterInputStream {
+
         public static boolean instantiatedAtLeastOnce = false;
 
         public TestInflaterInputStream(InputStream in) {
             super(in);
             instantiatedAtLeastOnce = true;
         }
+
     }
 
     public static class TestSyncFlushDeflaterOutputStream extends SyncFlushDeflaterOutputStream {
+
         public static boolean instantiatedAtLeastOnce = false;
 
         public TestSyncFlushDeflaterOutputStream(OutputStream out) {
             super(out);
             instantiatedAtLeastOnce = true;
         }
+
     }
 
     public static class TestInputStream extends FilterInputStream {
+
         public static boolean instantiatedAtLeastOnce = false;
 
         public TestInputStream(InputStream in) {
             super(in);
             instantiatedAtLeastOnce = true;
         }
+
     }
 
     private String compressionAlgorithmAgreed(Session sess) {
@@ -334,7 +345,6 @@ public class CompressionTest extends DevApiBaseTestCase {
             assertEquals("deflate_stream", compressionAlgorithmAgreed(testSession));
             testSession.close();
         }
-
     }
 
     /**
@@ -785,10 +795,10 @@ public class CompressionTest extends DevApiBaseTestCase {
 
     /**
      * Test fix for Bug#99708 (31510398), mysql-connector-java 8.0.20 ASSERTION FAILED: Unknown message type: 57 s.close.
-     * 
+     *
      * This test is not entirely deterministic, since it depends on the size of the compressed data returned from the server. Observations showed that it fails
      * in pretty close to 100% of executions.
-     * 
+     *
      * The test fails by throwing an exception.
      */
     @Test
@@ -815,4 +825,5 @@ public class CompressionTest extends DevApiBaseTestCase {
             dropCollection("testBug99708");
         }
     }
+
 }

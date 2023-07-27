@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,6 +37,7 @@ import com.mysql.cj.protocol.x.StatementExecuteOk;
  * A result from the collection.add() statement.
  */
 public class AddResultImpl extends UpdateResult implements AddResult {
+
     /**
      * Constructor.
      *
@@ -51,4 +52,5 @@ public class AddResultImpl extends UpdateResult implements AddResult {
     public List<String> getGeneratedIds() {
         return this.ok.getGeneratedIds();
     }
+
 }

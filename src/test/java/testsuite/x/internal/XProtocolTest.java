@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -77,6 +77,7 @@ import com.mysql.cj.xdevapi.WarningImpl;
  * Tests for protocol-level APIs against X Plugin via X Protocol.
  */
 public class XProtocolTest extends InternalXBaseTestCase {
+
     private XProtocol protocol;
     private XMessageBuilder messageBuilder;
 
@@ -466,7 +467,7 @@ public class XProtocolTest extends InternalXBaseTestCase {
         SqlResult res = this.protocol
                 .readQueryResult(new SqlResultBuilder(this.protocol.getServerSession().getDefaultTimeZone(), this.protocol.getPropertySet()));
         Iterable<Warning> iterable = () -> res.getWarnings();
-        List<Warning> warnings = StreamSupport.stream(iterable.spliterator(), false).map(w -> new WarningImpl(w)).collect(Collectors.toList());
+        List<Warning> warnings = StreamSupport.stream(iterable.spliterator(), false).map(WarningImpl::new).collect(Collectors.toList());
 
         assertEquals(1, warnings.size());
         Warning w = warnings.get(0);
@@ -542,4 +543,5 @@ public class XProtocolTest extends InternalXBaseTestCase {
         assertTrue(capabilities.getAuthenticationMechanisms().contains("MYSQL41"));
         assertEquals("text", capabilities.getDocFormats());
     }
+
 }

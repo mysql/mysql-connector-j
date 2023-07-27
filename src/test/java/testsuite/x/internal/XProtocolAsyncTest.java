@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -64,6 +64,7 @@ import com.mysql.cj.xdevapi.RowResult;
  */
 @Tag("Async")
 public class XProtocolAsyncTest extends InternalXBaseTestCase {
+
     private XProtocol protocol;
     private XMessageBuilder messageBuilder;
 
@@ -84,19 +85,23 @@ public class XProtocolAsyncTest extends InternalXBaseTestCase {
 
     /**
      * Helper class to hold values across threads and closures.
-     * 
+     *
      * @param <T>
      */
     public static class ValueHolder<T> implements Consumer<T>, Supplier<T> {
+
         T val;
 
+        @Override
         public void accept(T t) {
             this.val = t;
         }
 
+        @Override
         public T get() {
             return this.val;
         }
+
     }
 
     @Test
@@ -151,6 +156,7 @@ public class XProtocolAsyncTest extends InternalXBaseTestCase {
                 public RowResult build() {
                     return null;
                 }
+
             });
 
             synchronized (this) {
@@ -166,4 +172,5 @@ public class XProtocolAsyncTest extends InternalXBaseTestCase {
             dropTempTestCollection(this.protocol);
         }
     }
+
 }

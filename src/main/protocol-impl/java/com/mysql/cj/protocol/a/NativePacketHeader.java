@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,7 +36,7 @@ import com.mysql.cj.protocol.MessageHeader;
 /**
  * Represents the legacy protocol packet header, consisting of
  * 3-bytes payload_length and 1-byte sequence_id.
- * 
+ *
  * see http://dev.mysql.com/doc/internals/en/mysql-packet.html
  */
 public class NativePacketHeader implements MessageHeader {
@@ -51,6 +51,7 @@ public class NativePacketHeader implements MessageHeader {
         this.packetHeaderBuf = ByteBuffer.wrap(buf);
     }
 
+    @Override
     public ByteBuffer getBuffer() {
         return this.packetHeaderBuf;
     }
@@ -64,4 +65,5 @@ public class NativePacketHeader implements MessageHeader {
     public byte getMessageSequence() {
         return this.packetHeaderBuf.array()[3];
     }
+
 }

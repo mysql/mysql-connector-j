@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,6 +40,7 @@ import java.util.Queue;
  * continuous, source.
  */
 public class ContinuousInputStream extends FilterInputStream {
+
     private Queue<InputStream> inputStreams = new LinkedList<>();
 
     private boolean closed = false;
@@ -50,7 +51,7 @@ public class ContinuousInputStream extends FilterInputStream {
 
     /**
      * Returns the number of bytes available in the active underlying {@link InputStream}.
-     * 
+     *
      * @return the number of bytes available.
      * @see FilterInputStream#available()
      */
@@ -66,7 +67,7 @@ public class ContinuousInputStream extends FilterInputStream {
 
     /**
      * Closes this stream and all underlying {@link InputStream}s.
-     * 
+     *
      * @see FilterInputStream#close()
      */
     @Override
@@ -82,7 +83,7 @@ public class ContinuousInputStream extends FilterInputStream {
 
     /**
      * Reads one byte from the underlying {@link InputStream}. When EOF is reached, then reads from the next {@link InputStream} in the queue.
-     * 
+     *
      * @see FilterInputStream#read()
      */
     @Override
@@ -100,7 +101,7 @@ public class ContinuousInputStream extends FilterInputStream {
 
     /**
      * Forwards the read to {@link #read(byte[], int, int)}.
-     * 
+     *
      * @see FilterInputStream#read(byte[])
      */
     @Override
@@ -111,7 +112,7 @@ public class ContinuousInputStream extends FilterInputStream {
 
     /**
      * Reads bytes from the underlying {@link InputStream}. When EOF is reached, then reads from the next {@link InputStream} in the queue.
-     * 
+     *
      * @see FilterInputStream#read(byte[], int, int)
      */
     @Override
@@ -130,7 +131,7 @@ public class ContinuousInputStream extends FilterInputStream {
 
     /**
      * Adds another {@link InputStream} to the {@link InputStream}s queue.
-     * 
+     *
      * @param newIn
      *            the {@link InputStream} to add.
      * @return
@@ -142,7 +143,7 @@ public class ContinuousInputStream extends FilterInputStream {
 
     /**
      * Closes the currently active {@link InputStream} and replaces it by the the head of the {@link InputStream}s queue.
-     * 
+     *
      * @return
      *         <code>true</code> if the currently active {@link InputStream} was replaced by a new one.
      * @throws IOException
@@ -160,7 +161,7 @@ public class ContinuousInputStream extends FilterInputStream {
 
     /**
      * Ensures that this {@link InputStream} wasn't closed yet.
-     * 
+     *
      * @throws IOException
      *             if this {@link InputStream} was closed.
      */
@@ -169,4 +170,5 @@ public class ContinuousInputStream extends FilterInputStream {
             throw new IOException("Stream closed");
         }
     }
+
 }

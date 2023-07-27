@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2021, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -57,6 +57,7 @@ import com.oracle.bmc.ConfigFileReader.ConfigFile;
  * MySQL 'authentication_iam_client' authentication plugin.
  */
 public class AuthenticationOciClient implements AuthenticationPlugin<NativePacketPayload> {
+
     public static String PLUGIN_NAME = "authentication_oci_client";
 
     private String sourceOfAuthData = PLUGIN_NAME;
@@ -215,4 +216,5 @@ public class AuthenticationOciClient implements AuthenticationPlugin<NativePacke
             throw ExceptionFactory.createException(Messages.getString("AuthenticationOciClientPlugin.FailedReadingSecurityTokenFile"), e);
         }
     }
+
 }

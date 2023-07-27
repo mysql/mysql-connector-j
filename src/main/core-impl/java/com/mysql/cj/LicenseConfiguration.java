@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,11 +41,11 @@ public class LicenseConfiguration {
     /**
      * Used in commercially-licensed clients that require connections to
      * commercially-licensed servers as part of the licensing terms.
-     * 
+     *
      * @param serverVariables
      *            a Map of the output of 'show variables' from the server we're
      *            connecting to.
-     * 
+     *
      * @throws CJException
      *             if commercial license is required, but not found
      */
@@ -56,4 +56,5 @@ public class LicenseConfiguration {
     private LicenseConfiguration() {
         // this is a static utility class
     }
+
 }

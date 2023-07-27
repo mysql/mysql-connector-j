@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,13 +37,16 @@ import com.mysql.cj.protocol.MessageSender;
  * Common functionality for packet sender tests.
  */
 public class PacketSenderTestBase {
+
     /**
      * Get a no-op packet sender that can be used when testing decorators.
-     * 
+     *
      * @return a MessageSender
      */
     protected MessageSender<NativePacketPayload> getNoopPacketSender() {
         return new MessageSender<NativePacketPayload>() {
+
+            @Override
             public void send(byte[] packet, int packetLen, byte packetSequence) throws java.io.IOException {
                 // no-op
             }
@@ -57,6 +60,7 @@ public class PacketSenderTestBase {
             public MessageSender<NativePacketPayload> undecorate() {
                 return this;
             }
+
         };
     }
 
@@ -71,4 +75,5 @@ public class PacketSenderTestBase {
             assertEquals((byte) i, packet[offset + i]);
         }
     }
+
 }

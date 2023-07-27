@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2010, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -81,7 +81,6 @@ public class ConnectionGroupManager {
             s.add(o);
         }
         return s;
-
     }
 
     public static void addHost(String group, String hostPortPair, boolean forExisting) {
@@ -92,7 +91,6 @@ public class ConnectionGroupManager {
     }
 
     public static int getActiveHostCount(String group) {
-
         Set<String> active = new HashSet<>();
         Collection<ConnectionGroup> s = getGroupsMatching(group);
         for (ConnectionGroup cg : s) {
@@ -209,7 +207,6 @@ public class ConnectionGroupManager {
             sep = ",";
         }
         return sb.toString();
-
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,7 +38,7 @@ public interface Client {
 
     /**
      * Get <code>Session</code> from pool or the new one.
-     * 
+     *
      * @return {@link Session}
      */
     public Session getSession();
@@ -53,6 +53,7 @@ public interface Client {
     public void close();
 
     public enum ClientProperty {
+
         POOLING_ENABLED("pooling.enabled"), POOLING_MAX_SIZE("pooling.maxSize"), POOLING_MAX_IDLE_TIME("pooling.maxIdleTime"),
         POOLING_QUEUE_TIMEOUT("pooling.queueTimeout");
 
@@ -65,6 +66,7 @@ public interface Client {
         public String getKeyName() {
             return this.keyName;
         }
+
     }
 
 }

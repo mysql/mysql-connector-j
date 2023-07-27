@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -65,7 +65,6 @@ public class CancelQueryTaskImpl extends TimerTask implements CancelQueryTask {
 
     @Override
     public void run() {
-
         Thread cancelThread = new Thread() {
 
             @Override
@@ -95,12 +94,15 @@ public class CancelQueryTaskImpl extends TimerTask implements CancelQueryTask {
                             try {
                                 newSession = new NativeSession(hostInfo, session.getPropertySet());
                                 newSession.connect(hostInfo, user, password, database, 30000, new TransactionEventHandler() {
+
                                     @Override
                                     public void transactionCompleted() {
                                     }
 
+                                    @Override
                                     public void transactionBegun() {
                                     }
+
                                 });
                                 newSession.getProtocol().sendCommand(new NativeMessageBuilder(newSession.getServerSession().supportsQueryAttributes())
                                         .buildComQuery(newSession.getSharedSendPacket(), "KILL QUERY " + origConnId), false, 0);
@@ -124,24 +126,30 @@ public class CancelQueryTaskImpl extends TimerTask implements CancelQueryTask {
                     setQueryToCancel(null);
                 }
             }
+
         };
 
         cancelThread.start();
     }
 
+    @Override
     public Throwable getCaughtWhileCancelling() {
         return this.caughtWhileCancelling;
     }
 
+    @Override
     public void setCaughtWhileCancelling(Throwable caughtWhileCancelling) {
         this.caughtWhileCancelling = caughtWhileCancelling;
     }
 
+    @Override
     public Query getQueryToCancel() {
         return this.queryToCancel;
     }
 
+    @Override
     public void setQueryToCancel(Query queryToCancel) {
         this.queryToCancel = queryToCancel;
     }
+
 }

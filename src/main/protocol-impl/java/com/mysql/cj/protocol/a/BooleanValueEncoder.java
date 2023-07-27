@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2022, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -78,7 +78,7 @@ public class BooleanValueEncoder extends AbstractValueEncoder {
                 return StringUtils.fixDecimalExponent(Double.toString(b ? 1d : 0d));
             case DECIMAL:
             case DECIMAL_UNSIGNED:
-                return (new BigDecimal(b ? 1d : 0d)).toPlainString();
+                return new BigDecimal(b ? 1d : 0d).toPlainString();
             default:
                 throw ExceptionFactory.createException(WrongArgumentException.class,
                         Messages.getString("PreparedStatement.67", new Object[] { binding.getValue().getClass().getName(), binding.getMysqlType().toString() }),
@@ -131,7 +131,7 @@ public class BooleanValueEncoder extends AbstractValueEncoder {
             case DECIMAL:
             case DECIMAL_UNSIGNED:
                 intoPacket.writeBytes(StringSelfDataType.STRING_LENENC,
-                        StringUtils.getBytes((new BigDecimal(b ? 1d : 0d)).toPlainString(), this.charEncoding.getValue()));
+                        StringUtils.getBytes(new BigDecimal(b ? 1d : 0d).toPlainString(), this.charEncoding.getValue()));
                 return;
             default:
                 throw ExceptionFactory.createException(WrongArgumentException.class,
@@ -146,4 +146,5 @@ public class BooleanValueEncoder extends AbstractValueEncoder {
         NativePacketPayload intoPacket = (NativePacketPayload) msg;
         intoPacket.writeInteger(IntegerDataType.INT1, b ? 1L : 0L);
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -268,9 +268,9 @@ public class NativeQueryBindValue implements BindValue {
     @Override
     public void setCalendar(Calendar cal) {
         this.calendar = cal;
-
     }
 
+    @Override
     public int getFieldType() {
         switch (this.targetType) {
             case NULL:
@@ -392,4 +392,5 @@ public class NativeQueryBindValue implements BindValue {
     public void writeAsQueryAttribute(Message intoMessage) {
         this.valueEncoder.encodeAsQueryAttribute(intoMessage, this);
     }
+
 }

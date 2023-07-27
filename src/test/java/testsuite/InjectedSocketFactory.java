@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -87,8 +87,6 @@ public class InjectedSocketFactory extends StandardSocketFactory {
             this.rawSocket = new SocketWrapper(super.connect(this.hi.getHost(), this.hi.getPort(), this.propSet, this.loginTimeoutCountdown), this.propSet,
                     this.hi);
             socket = this.rawSocket;
-        } catch (SocketException e) {
-            throw e;
         } catch (IOException e) {
             throw e;
         }
@@ -296,9 +294,11 @@ public class InjectedSocketFactory extends StandardSocketFactory {
         public String toString() {
             return this.underlyingSocket.toString();
         }
+
     }
 
     static class InjectedInputStream extends InputStream {
+
         final InputStream underlyingInputStream;
         final PropertySet propSet;
         final HostInfo hi;
@@ -379,5 +379,7 @@ public class InjectedSocketFactory extends StandardSocketFactory {
             this.loopCount = 0;
             return this.underlyingInputStream.read();
         }
+
     }
+
 }

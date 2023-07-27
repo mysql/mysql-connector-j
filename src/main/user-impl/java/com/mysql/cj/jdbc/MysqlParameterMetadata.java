@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2005, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -42,6 +42,7 @@ import com.mysql.cj.jdbc.result.ResultSetMetaData;
 import com.mysql.cj.result.Field;
 
 public class MysqlParameterMetadata implements ParameterMetaData {
+
     boolean returnSimpleMetadata = false;
 
     ResultSetMetaData metadata = null;
@@ -60,7 +61,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
     /**
      * Used for "fake" basic metadata for client-side prepared statements when
      * we don't know the parameter types.
-     * 
+     *
      * @param count
      *            parameters number
      */
@@ -98,7 +99,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 
         checkAvailable();
 
-        return (this.metadata.isSigned(arg0));
+        return this.metadata.isSigned(arg0);
     }
 
     @Override
@@ -111,7 +112,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 
         checkAvailable();
 
-        return (this.metadata.getPrecision(arg0));
+        return this.metadata.getPrecision(arg0);
     }
 
     @Override
@@ -124,7 +125,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 
         checkAvailable();
 
-        return (this.metadata.getScale(arg0));
+        return this.metadata.getScale(arg0);
     }
 
     @Override
@@ -137,7 +138,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 
         checkAvailable();
 
-        return (this.metadata.getColumnType(arg0));
+        return this.metadata.getColumnType(arg0);
     }
 
     @Override
@@ -150,7 +151,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 
         checkAvailable();
 
-        return (this.metadata.getColumnTypeName(arg0));
+        return this.metadata.getColumnTypeName(arg0);
     }
 
     @Override
@@ -163,7 +164,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 
         checkAvailable();
 
-        return (this.metadata.getColumnClassName(arg0));
+        return this.metadata.getColumnClassName(arg0);
     }
 
     @Override
@@ -200,4 +201,5 @@ public class MysqlParameterMetadata implements ParameterMetaData {
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
     }
+
 }

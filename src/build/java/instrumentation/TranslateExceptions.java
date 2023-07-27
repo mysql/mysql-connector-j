@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -96,7 +96,6 @@ public class TranslateExceptions {
     private static boolean verbose = false;
 
     public static void main(String[] args) throws Exception {
-
         System.out.println("Applying TranslateExceptions.");
 
         verbose = "true".equalsIgnoreCase(args[1]);
@@ -193,7 +192,7 @@ public class TranslateExceptions {
         clazz.writeFile(args[0]);
 
         /*
-         * 
+         *
          * java.sql.Connection extends java.sql.Wrapper
          * ----> com.mysql.cj.jdbc.JdbcConnection extends java.sql.Connection, MysqlConnection
          * ----------> com.mysql.cj.jdbc.ConnectionImpl
@@ -542,7 +541,7 @@ public class TranslateExceptions {
 
         /*
          * These classes have no implementations in c/J:
-         * 
+         *
          * java.sql.Array
          * java.sql.BatchUpdateException
          * java.sql.ClientInfoStatus
@@ -570,7 +569,7 @@ public class TranslateExceptions {
          * java.sql.Time
          * java.sql.Timestamp
          * java.sql.Types
-         * 
+         *
          * javax.sql.CommonDataSource
          * javax.sql.ConnectionEvent
          * javax.sql.ConnectionEventListener
@@ -583,7 +582,7 @@ public class TranslateExceptions {
          * javax.sql.RowSetWriter
          * javax.sql.StatementEvent
          * javax.sql.StatementEventListener
-         * 
+         *
          * javax.sql.rowset.BaseRowSet
          * javax.sql.rowset.CachedRowSet
          * javax.sql.rowset.FilteredRowSet
@@ -596,7 +595,7 @@ public class TranslateExceptions {
          * javax.sql.rowset.RowSetProvider
          * javax.sql.rowset.RowSetWarning
          * javax.sql.rowset.WebRowSet
-         * 
+         *
          * javax.sql.rowset.serial.SerialArray
          * javax.sql.rowset.serial.SerialBlob
          * javax.sql.rowset.serial.SerialClob
@@ -607,7 +606,7 @@ public class TranslateExceptions {
          * javax.sql.rowset.serial.SerialStruct
          * javax.sql.rowset.serial.SQLInputImpl
          * javax.sql.rowset.serial.SQLOutputImpl
-         * 
+         *
          * javax.sql.rowset.spi.SyncFactory
          * javax.sql.rowset.spi.SyncFactoryException
          * javax.sql.rowset.spi.SyncProvider
@@ -625,7 +624,7 @@ public class TranslateExceptions {
 
     /**
      * Instruments methods of cjClazz defined in jdbcClass.
-     * 
+     *
      * @param cjClazz
      *            CtClass to be instrumented.
      * @param jdbcClass
@@ -682,7 +681,6 @@ public class TranslateExceptions {
             }
             sysOutPrintln("");
         }
-
     }
 
     private static void catchRuntimeException(CtClass clazz, CtMethod m, String exceptionInterceptorStr) throws Exception {
@@ -715,7 +713,7 @@ public class TranslateExceptions {
                 return true;
             }
         } else {
-            processed.put(fileName, new LinkedList<CtMethod>());
+            processed.put(fileName, new LinkedList<>());
         }
         return false;
     }

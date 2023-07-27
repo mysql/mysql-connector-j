@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,14 +37,14 @@ public interface Message {
 
     /**
      * Returns the array of bytes this Buffer is using to read from.
-     * 
+     *
      * @return byte array being read from
      */
     byte[] getByteBuffer();
 
     /**
      * Returns the current position to write to/ read from
-     * 
+     *
      * @return the current position to write to/ read from
      */
     int getPosition();

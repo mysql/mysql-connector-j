@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -70,12 +70,14 @@ import com.mysql.cj.util.StringUtils;
  * MySQL 'authentication_ldap_sasl_client' authentication plugin.
  */
 public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<NativePacketPayload> {
+
     public static String PLUGIN_NAME = "authentication_ldap_sasl_client";
 
     private static final String LOGIN_CONFIG_ENTRY = "MySQLConnectorJ";
     private static final String LDAP_SERVICE_NAME = "ldap";
 
     private enum AuthenticationMechanisms {
+
         SCRAM_SHA_1(ScramSha1SaslClient.IANA_MECHANISM_NAME, ScramSha1SaslClient.MECHANISM_NAME), //
         SCRAM_SHA_256(ScramSha256SaslClient.IANA_MECHANISM_NAME, ScramSha256SaslClient.MECHANISM_NAME), //
         GSSAPI("GSSAPI", "GSSAPI");
@@ -104,6 +106,7 @@ public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<
         String getSaslServiceName() {
             return this.saslServiceName;
         }
+
     }
 
     private Protocol<?> protocol = null;
@@ -243,6 +246,7 @@ public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<
                             final String localUser = this.user;
                             final boolean debug = Boolean.getBoolean("sun.security.jgss.debug");
                             loginConfig = new Configuration() {
+
                                 @Override
                                 public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
                                     Map<String, String> options = new HashMap<>();
@@ -253,6 +257,7 @@ public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<
                                     return new AppConfigurationEntry[] { new AppConfigurationEntry("com.sun.security.auth.module.Krb5LoginModule",
                                             AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, options) };
                                 }
+
                             };
                         }
 
@@ -268,7 +273,7 @@ public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<
                                     (PrivilegedExceptionAction<SaslClient>) () -> Sasl.createSaslClient(new String[] { this.authMech.getSaslServiceName() },
                                             null, LDAP_SERVICE_NAME, localLdapServerHostname, null, null));
                         } catch (PrivilegedActionException e) {
-                            // SaslException is the only checked exception that can be thrown. 
+                            // SaslException is the only checked exception that can be thrown.
                             throw (SaslException) e.getException();
                         }
                         break;
@@ -310,4 +315,5 @@ public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<
         }
         return true;
     }
+
 }

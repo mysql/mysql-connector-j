@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -36,13 +36,14 @@ import java.io.OutputStream;
  * An {@link OutputStream} wrapper that allows switching to different underlying {@link OutputStream}s under the same {@link OutputStream} instance.
  */
 public class ReusableOutputStream extends FilterOutputStream {
+
     protected ReusableOutputStream(OutputStream out) {
         super(out);
     }
 
     /**
      * Sets a new underlying {@link OutputStream} in this {@link ReusableOutputStream}.
-     * 
+     *
      * @param newOut
      *            the new {@link OutputStream} to set.
      * @return
@@ -53,4 +54,5 @@ public class ReusableOutputStream extends FilterOutputStream {
         this.out = newOut;
         return previousOut;
     }
+
 }

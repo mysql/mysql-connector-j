@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,6 +41,7 @@ import com.mysql.cj.exceptions.AssertionFailedException;
  * Internally-used object passing index creation parameters to XMessageBuilder.
  */
 public class CreateIndexParams {
+
     public static final String INDEX = "INDEX";
     public static final String SPATIAL = "SPATIAL";
     public static final String GEOJSON = "GEOJSON";
@@ -52,7 +53,7 @@ public class CreateIndexParams {
 
     /**
      * Constructor.
-     * 
+     *
      * @param indexName
      *            index name
      * @param indexDefinition
@@ -64,7 +65,7 @@ public class CreateIndexParams {
 
     /**
      * Constructor.
-     * 
+     *
      * @param indexName
      *            index name
      * @param jsonIndexDefinition
@@ -132,7 +133,7 @@ public class CreateIndexParams {
 
     /**
      * Get index name.
-     * 
+     *
      * @return index name
      */
     public String getIndexName() {
@@ -141,7 +142,7 @@ public class CreateIndexParams {
 
     /**
      * Get index type.
-     * 
+     *
      * @return index type
      */
     public String getIndexType() {
@@ -150,7 +151,7 @@ public class CreateIndexParams {
 
     /**
      * Get index fields.
-     * 
+     *
      * @return List of {@link IndexField} objects
      */
     public List<IndexField> getFields() {
@@ -161,6 +162,7 @@ public class CreateIndexParams {
      * Internally used object parsed from indexDefinition; see {@link Collection#createIndex(String, DbDoc)} description.
      */
     public static class IndexField {
+
         private static final String FIELD = "field";
         private static final String TYPE = "type";
         private static final String REQUIRED = "required";
@@ -192,7 +194,7 @@ public class CreateIndexParams {
 
         /**
          * Constructor.
-         * 
+         *
          * @param indexField
          *            a special JSON document, part of indexDefinition document, consisting of the following fields:
          *            <ul>
@@ -288,7 +290,7 @@ public class CreateIndexParams {
 
         /**
          * Get the full document path to the document member or field to be indexed.
-         * 
+         *
          * @return field string
          */
         public String getField() {
@@ -297,7 +299,7 @@ public class CreateIndexParams {
 
         /**
          * Get column type.
-         * 
+         *
          * @return column type
          */
         public String getType() {
@@ -306,7 +308,7 @@ public class CreateIndexParams {
 
         /**
          * Is the field required to exist in the document?
-         * 
+         *
          * @return true if required
          */
         public Boolean isRequired() {
@@ -315,7 +317,7 @@ public class CreateIndexParams {
 
         /**
          * Get options for decoding GEOJSON data.
-         * 
+         *
          * @return options
          */
         public Integer getOptions() {
@@ -324,7 +326,7 @@ public class CreateIndexParams {
 
         /**
          * Get srid for decoding GEOJSON data.
-         * 
+         *
          * @return srid
          */
         public Integer getSrid() {
@@ -333,11 +335,13 @@ public class CreateIndexParams {
 
         /**
          * Is the field an array?
-         * 
+         *
          * @return true if the field is an array
          */
         public Boolean isArray() {
             return this.array;
         }
+
     }
+
 }

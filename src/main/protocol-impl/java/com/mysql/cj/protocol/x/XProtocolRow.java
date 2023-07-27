@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -41,6 +41,7 @@ import com.mysql.cj.x.protobuf.MysqlxResultset.Row;
  * ProtocolEntity representing an X Protocol result row.
  */
 public class XProtocolRow implements com.mysql.cj.result.Row {
+
     private ColumnDefinition metadata;
     private Row rowMessage;
     private boolean wasNull = false;
@@ -55,6 +56,7 @@ public class XProtocolRow implements com.mysql.cj.result.Row {
         return this;
     }
 
+    @Override
     public <T> T getValue(int columnIndex, ValueFactory<T> vf) {
         if (columnIndex >= this.metadata.getFields().length) {
             throw new DataReadException("Invalid column");
@@ -150,13 +152,16 @@ public class XProtocolRow implements com.mysql.cj.result.Row {
         //}
     }
 
+    @Override
     public boolean getNull(int columnIndex) {
         ByteString byteString = this.rowMessage.getField(columnIndex);
         this.wasNull = byteString.size() == 0;
         return this.wasNull;
     }
 
+    @Override
     public boolean wasNull() {
         return this.wasNull;
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2022, Oracle and/or its affiliates.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -65,26 +65,32 @@ public class ClientPreparedQuery extends AbstractQuery implements PreparedQuery 
         super.closeQuery();
     }
 
+    @Override
     public QueryInfo getQueryInfo() {
         return this.queryInfo;
     }
 
+    @Override
     public void setQueryInfo(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
     }
 
+    @Override
     public String getOriginalSql() {
         return this.originalSql;
     }
 
+    @Override
     public void setOriginalSql(String originalSql) {
         this.originalSql = originalSql;
     }
 
+    @Override
     public int getParameterCount() {
         return this.parameterCount;
     }
 
+    @Override
     public void setParameterCount(int parameterCount) {
         this.parameterCount = parameterCount;
     }
@@ -99,10 +105,12 @@ public class ClientPreparedQuery extends AbstractQuery implements PreparedQuery 
         this.queryBindings = queryBindings;
     }
 
+    @Override
     public int getBatchCommandIndex() {
         return this.batchCommandIndex;
     }
 
+    @Override
     public void setBatchCommandIndex(int batchCommandIndex) {
         this.batchCommandIndex = batchCommandIndex;
     }
@@ -110,11 +118,12 @@ public class ClientPreparedQuery extends AbstractQuery implements PreparedQuery 
     /**
      * Computes the optimum number of batched parameter lists to send
      * without overflowing max_allowed_packet.
-     * 
+     *
      * @param numBatchedArgs
      *            original batch size
      * @return computed batch size
      */
+    @Override
     public int computeBatchSize(int numBatchedArgs) {
         long[] combinedValues = computeMaxParameterSetSizeAndBatchSize(numBatchedArgs);
 
@@ -130,13 +139,14 @@ public class ClientPreparedQuery extends AbstractQuery implements PreparedQuery 
 
     /**
      * Method checkNullOrEmptyQuery.
-     * 
+     *
      * @param sql
      *            the SQL to check
-     * 
+     *
      * @throws WrongArgumentException
      *             if query is null or empty.
      */
+    @Override
     public void checkNullOrEmptyQuery(String sql) {
         if (sql == null) {
             throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("PreparedQuery.0"), this.session.getExceptionInterceptor());
@@ -147,6 +157,7 @@ public class ClientPreparedQuery extends AbstractQuery implements PreparedQuery 
         }
     }
 
+    @Override
     public String asSql() {
         StringBuilder buf = new StringBuilder();
         Object batchArg = null;
@@ -162,7 +173,7 @@ public class ClientPreparedQuery extends AbstractQuery implements PreparedQuery 
                 buf.append((String) batchArg);
                 continue;
             }
-            val = this.batchCommandIndex == -1 ? (this.queryBindings == null ? null : this.queryBindings.getBindValues()[i].getString())
+            val = this.batchCommandIndex == -1 ? this.queryBindings == null ? null : this.queryBindings.getBindValues()[i].getString()
                     : ((QueryBindings) batchArg).getBindValues()[i].getString();
             buf.append(val == null ? "** NOT SPECIFIED **" : val);
         }
@@ -174,7 +185,7 @@ public class ClientPreparedQuery extends AbstractQuery implements PreparedQuery 
     /**
      * Computes the maximum parameter set size, and entire batch size given
      * the number of arguments in the batch.
-     * 
+     *
      * @param numBatchedArgs
      *            number of batched arguments
      * @return new long[] { maxSizeOfParameterSet, sizeOfEntireBatch }
@@ -222,4 +233,5 @@ public class ClientPreparedQuery extends AbstractQuery implements PreparedQuery 
         return (M) this.session.getProtocol().getMessageBuilder().buildComQuery(this.session.getSharedSendPacket(), this.session, this, bindings,
                 this.charEncoding);
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -147,6 +147,7 @@ public class Notice implements ProtocolEntity {
     }
 
     public static class XSessionVariableChanged extends Notice {
+
         private String paramName = null;
         private Scalar value = null;
 
@@ -168,6 +169,7 @@ public class Notice implements ProtocolEntity {
     }
 
     public static class XSessionStateChanged extends Notice {
+
         private Integer paramType = null;
         private List<Scalar> valueList = null;
 
@@ -194,4 +196,5 @@ public class Notice implements ProtocolEntity {
         }
 
     }
+
 }

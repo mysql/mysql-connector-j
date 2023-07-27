@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -34,8 +34,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import java.util.concurrent.Callable;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +44,7 @@ import com.mysql.cj.xdevapi.Collection;
 import com.mysql.cj.xdevapi.XDevAPIError;
 
 public class TransactionTest extends DevApiBaseTestCase {
+
     protected Collection collection;
 
     @BeforeEach
@@ -127,23 +126,17 @@ public class TransactionTest extends DevApiBaseTestCase {
             this.collection.add("{}").execute();
         }
 
-        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", new Callable<Void>() {
-            public Void call() throws Exception {
-                TransactionTest.this.session.setSavepoint(null);
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", () -> {
+            TransactionTest.this.session.setSavepoint(null);
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", new Callable<Void>() {
-            public Void call() throws Exception {
-                TransactionTest.this.session.setSavepoint("");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", () -> {
+            TransactionTest.this.session.setSavepoint("");
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", new Callable<Void>() {
-            public Void call() throws Exception {
-                TransactionTest.this.session.setSavepoint("");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", () -> {
+            TransactionTest.this.session.setSavepoint("");
+            return null;
         });
 
         String sp2 = this.session.setSavepoint("sp2");
@@ -155,23 +148,17 @@ public class TransactionTest extends DevApiBaseTestCase {
 
         assertEquals(4, this.collection.find().execute().count());
 
-        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", new Callable<Void>() {
-            public Void call() throws Exception {
-                TransactionTest.this.session.rollbackTo(null);
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", () -> {
+            TransactionTest.this.session.rollbackTo(null);
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", new Callable<Void>() {
-            public Void call() throws Exception {
-                TransactionTest.this.session.rollbackTo("");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", () -> {
+            TransactionTest.this.session.rollbackTo("");
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", new Callable<Void>() {
-            public Void call() throws Exception {
-                TransactionTest.this.session.rollbackTo("");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", () -> {
+            TransactionTest.this.session.rollbackTo("");
+            return null;
         });
 
         this.session.rollbackTo(sp1);
@@ -214,23 +201,17 @@ public class TransactionTest extends DevApiBaseTestCase {
 
         assertEquals(5, this.collection.find().execute().count());
 
-        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", new Callable<Void>() {
-            public Void call() throws Exception {
-                TransactionTest.this.session.releaseSavepoint(null);
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", () -> {
+            TransactionTest.this.session.releaseSavepoint(null);
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", new Callable<Void>() {
-            public Void call() throws Exception {
-                TransactionTest.this.session.releaseSavepoint("");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", () -> {
+            TransactionTest.this.session.releaseSavepoint("");
+            return null;
         });
-        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", new Callable<Void>() {
-            public Void call() throws Exception {
-                TransactionTest.this.session.releaseSavepoint("");
-                return null;
-            }
+        assertThrows(XDevAPIError.class, "Parameter 'name' must not be null or empty.", () -> {
+            TransactionTest.this.session.releaseSavepoint("");
+            return null;
         });
 
         this.session.releaseSavepoint(sp2);
@@ -250,4 +231,5 @@ public class TransactionTest extends DevApiBaseTestCase {
 
         assertEquals(3, this.collection.find().execute().count());
     }
+
 }

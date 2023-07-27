@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -38,6 +38,7 @@ import com.mysql.cj.protocol.PacketSentTimeHolder;
  * A {@link MessageSender} which tracks the last time a packet was sent.
  */
 public class TimeTrackingPacketSender implements MessageSender<NativePacketPayload>, PacketSentTimeHolder {
+
     private MessageSender<NativePacketPayload> packetSender;
     private long lastPacketSentTime = 0;
     private long previousPacketSentTime = 0;
@@ -46,6 +47,7 @@ public class TimeTrackingPacketSender implements MessageSender<NativePacketPaylo
         this.packetSender = packetSender;
     }
 
+    @Override
     public void send(byte[] packet, int packetLen, byte packetSequence) throws IOException {
         this.packetSender.send(packet, packetLen, packetSequence);
 
@@ -53,6 +55,7 @@ public class TimeTrackingPacketSender implements MessageSender<NativePacketPaylo
         this.lastPacketSentTime = System.currentTimeMillis();
     }
 
+    @Override
     public long getLastPacketSentTime() {
         return this.lastPacketSentTime;
     }
@@ -71,4 +74,5 @@ public class TimeTrackingPacketSender implements MessageSender<NativePacketPaylo
     public MessageSender<NativePacketPayload> undecorate() {
         return this.packetSender;
     }
+
 }

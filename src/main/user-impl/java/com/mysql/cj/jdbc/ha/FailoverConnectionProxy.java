@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2010, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -53,6 +53,7 @@ import com.mysql.cj.util.Util;
  * 'queriesBeforeRetrySource' is met.
  */
 public class FailoverConnectionProxy extends MultiHostConnectionProxy {
+
     private static final String METHOD_SET_READ_ONLY = "setReadOnly";
     private static final String METHOD_SET_AUTO_COMMIT = "setAutoCommit";
     private static final String METHOD_COMMIT = "commit";
@@ -80,6 +81,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * Additionally intercepts query executions and triggers an execution count on the outer class.
      */
     class FailoverJdbcInterfaceProxy extends JdbcInterfaceProxy {
+
         FailoverJdbcInterfaceProxy(Object toInvokeOn) {
             super(toInvokeOn);
         }
@@ -104,6 +106,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
             return result;
         }
+
     }
 
     public static JdbcConnection createProxyInstance(ConnectionUrl connectionUrl) throws SQLException {
@@ -115,7 +118,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Instantiates a new FailoverConnectionProxy for the given list of hosts and connection properties.
-     * 
+     *
      * @param connectionUrl
      *            {@link ConnectionUrl} instance containing the lists of hosts available to switch on.
      * @throws SQLException
@@ -141,7 +144,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Gets locally bound instances of FailoverJdbcInterfaceProxy.
-     * 
+     *
      */
     @Override
     JdbcInterfaceProxy getNewJdbcInterfaceProxy(Object toProxy) {
@@ -153,7 +156,6 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      */
     @Override
     boolean shouldExceptionTriggerConnectionSwitch(Throwable t) {
-
         String sqlState = null;
         if (t instanceof CommunicationsException || t instanceof CJCommunicationsException) {
             return true;
@@ -204,7 +206,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Creates a new connection instance for host pointed out by the given host index.
-     * 
+     *
      * @param hostIndex
      *            The host index in the global hosts list.
      * @return
@@ -218,7 +220,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Connects this dynamic failover connection proxy to the host pointed out by the given host index.
-     * 
+     *
      * @param hostIndex
      *            The host index in the global hosts list.
      * @throws SQLException
@@ -243,7 +245,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Replaces the previous underlying connection by the connection given. State from previous connection, if any, is synchronized with the new one.
-     * 
+     *
      * @param hostIndex
      *            The host index in the global hosts list that matches the given connection.
      * @param connection
@@ -273,7 +275,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Initiates a default failover procedure starting at the current connection host index.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -284,7 +286,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
     /**
      * Initiates a default failover procedure starting at the given host index.
      * This process tries to connect, sequentially, to the next host in the list. The primary host may or may not be excluded from the connection attempts.
-     * 
+     *
      * @param failedHostIdx
      *            The host index where to start from. First connection attempt will be the next one.
      * @throws SQLException
@@ -364,7 +366,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * - not currently connected to any host.
      * - primary host is vouched (usually because connection to all secondary hosts has failed).
      * - conditions to fall back to primary host are met (or they are disabled).
-     * 
+     *
      * @param currHostIdx
      *            Current host index.
      * @param vouchForPrimaryHost
@@ -390,7 +392,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
     /**
      * Checks if at least one of the required conditions to fall back to primary host is met, which is determined by the properties 'queriesBeforeRetrySource'
      * and 'secondsBeforeRetrySource'.
-     * 
+     *
      * @return true if ready
      */
     synchronized boolean readyToFallBackToPrimaryHost() {
@@ -399,7 +401,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Checks if there is a underlying connection for this proxy.
-     * 
+     *
      * @return true if there is a connection
      */
     synchronized boolean isConnected() {
@@ -408,7 +410,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Checks if the given host index points to the primary host.
-     * 
+     *
      * @param hostIndex
      *            The host index in the global hosts list.
      * @return true if so
@@ -419,7 +421,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Checks if this proxy is using the primary host in the underlying connection.
-     * 
+     *
      * @return true if so
      */
     synchronized boolean connectedToPrimaryHost() {
@@ -428,7 +430,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Checks if this proxy is using a secondary host in the underlying connection.
-     * 
+     *
      * @return true if so
      */
     synchronized boolean connectedToSecondaryHost() {
@@ -437,7 +439,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Checks the condition set by the property 'secondsBeforeRetrySource'.
-     * 
+     *
      * @return value
      */
     private synchronized boolean secondsBeforeRetryPrimaryHostIsMet() {
@@ -446,7 +448,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Checks the condition set by the property 'queriesBeforeRetrySource'.
-     * 
+     *
      * @return value
      */
     private synchronized boolean queriesBeforeRetryPrimaryHostIsMet() {
@@ -463,7 +465,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Closes current connection.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -474,7 +476,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Aborts current connection.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -485,7 +487,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
     /**
      * Aborts current connection using the given executor.
-     * 
+     *
      * @throws SQLException
      *             if an error occurs
      */
@@ -518,7 +520,7 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
             } else {
                 String reason = "No operations allowed after connection closed.";
                 if (this.closedReason != null) {
-                    reason += ("  " + this.closedReason);
+                    reason += "  " + this.closedReason;
                 }
                 throw SQLError.createSQLException(reason, MysqlErrorNumbers.SQL_STATE_CONNECTION_NOT_OPEN, null /* no access to a interceptor here... */);
             }
@@ -544,4 +546,5 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
         return result;
     }
+
 }

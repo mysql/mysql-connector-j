@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -51,6 +51,7 @@ import com.mysql.cj.util.StringUtils;
  * A value factory to create {@link OffsetTime} instances.
  */
 public class OffsetTimeValueFactory extends AbstractDateTimeValueFactory<OffsetTime> {
+
     private WarningListener warningListener;
     private TimeZone tz;
 
@@ -122,7 +123,9 @@ public class OffsetTimeValueFactory extends AbstractDateTimeValueFactory<OffsetT
         }
     }
 
+    @Override
     public String getTargetTypeName() {
         return OffsetTime.class.getName();
     }
+
 }

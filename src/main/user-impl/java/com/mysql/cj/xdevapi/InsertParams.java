@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -43,12 +43,13 @@ import com.mysql.cj.x.protobuf.MysqlxCrud.Insert.TypedRow;
  * Helper class for collecting parameters for relational insert command.
  */
 public class InsertParams {
+
     private List<Column> projection;
     private List<TypedRow> rows = new LinkedList<>();
 
     /**
      * Set X Protocol Column objects list for projection.
-     * 
+     *
      * @param projection
      *            projection expressions
      */
@@ -58,7 +59,7 @@ public class InsertParams {
 
     /**
      * Get X Protocol Column objects list for projection.
-     * 
+     *
      * @return X Protocol Column objects list
      */
     public Object getProjection() {
@@ -67,7 +68,7 @@ public class InsertParams {
 
     /**
      * Add new X Protocol row.
-     * 
+     *
      * @param row
      *            field value expressions for this row
      */
@@ -77,7 +78,7 @@ public class InsertParams {
 
     /**
      * Get X Protocol rows list.
-     * 
+     *
      * @return X Protocol rows list
      */
     public Object getRows() {
@@ -86,7 +87,7 @@ public class InsertParams {
 
     /**
      * Fill insert parameters from projection_expression -&gt; value_expression map.
-     * 
+     *
      * @param fieldsAndValues
      *            projection_expression -&gt; value_expression map
      */
@@ -99,4 +100,5 @@ public class InsertParams {
         });
         this.rows.add(rowBuilder.build());
     }
+
 }

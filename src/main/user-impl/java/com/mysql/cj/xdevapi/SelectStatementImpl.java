@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,6 +40,7 @@ import com.mysql.cj.xdevapi.FilterParams.RowLockOptions;
  * {@link SelectStatement} implementation.
  */
 public class SelectStatementImpl extends FilterableStatement<SelectStatement, RowResult> implements SelectStatement {
+
     /* package private */ SelectStatementImpl(MysqlxSession mysqlxSession, String schema, String table, String... projection) {
         super(new TableFilterParams(schema, table));
         this.mysqlxSession = mysqlxSession;
@@ -64,6 +65,7 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
                 new StreamingRowResultBuilder(this.mysqlxSession));
     }
 
+    @Override
     public CompletableFuture<RowResult> executeAsync() {
         return this.mysqlxSession.queryAsync(getMessageBuilder().buildFind(this.filterParams), new RowResultBuilder(this.mysqlxSession));
     }
@@ -75,6 +77,7 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
         return this;
     }
 
+    @Override
     public SelectStatement having(String having) {
         resetPrepareState();
         this.filterParams.setGroupingCriteria(having);
@@ -127,4 +130,5 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
         }
         return this;
     }
+
 }

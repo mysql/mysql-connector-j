@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -43,11 +43,12 @@ import testsuite.BaseTestCase;
  * Testsuite for MiniAdmin functionality.
  */
 public class MiniAdminTest extends BaseTestCase {
+
     /**
      * Tests whether or not you can shutdown the server with MiniAdmin.
-     * 
+     *
      * Only runs if SHUTDOWN_PROP is defined.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -59,7 +60,7 @@ public class MiniAdminTest extends BaseTestCase {
 
     /**
      * Tests whether or not you can construct a MiniAdmin with a JDBC URL.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -69,4 +70,5 @@ public class MiniAdminTest extends BaseTestCase {
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         new MiniAdmin(dbUrl, props);
     }
+
 }

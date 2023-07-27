@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -37,6 +37,7 @@ import com.mysql.cj.result.Row;
 import com.mysql.cj.result.RowList;
 
 public class XProtocolRowInputStream implements RowList {
+
     private ColumnDefinition metadata;
     private XProtocol protocol;
     private boolean isDone = false;
@@ -70,6 +71,7 @@ public class XProtocolRowInputStream implements RowList {
         return r;
     }
 
+    @Override
     public Row next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
@@ -77,6 +79,7 @@ public class XProtocolRowInputStream implements RowList {
         return readRow();
     }
 
+    @Override
     public boolean hasNext() {
         if (this.isDone) {
             return false;
@@ -86,7 +89,9 @@ public class XProtocolRowInputStream implements RowList {
         return this.next != null;
     }
 
+    @Override
     public int getPosition() {
         return this.position;
     }
+
 }

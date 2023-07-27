@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2021, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -40,16 +40,16 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 
 import testsuite.BaseTestCase;
 
 public class StringUtilsTest extends BaseTestCase {
+
     /**
      * Tests StringUtil.indexOfIgnoreCase() methods
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -345,50 +345,34 @@ public class StringUtilsTest extends BaseTestCase {
          * overridingMarkers], Set<SearchMode> searchMode) illegal markers arguments
          */
         assertThrows(IllegalArgumentException.class,
-                "Illegal argument value null for openingMarkers and/or - for closingMarkers. These cannot be null and must have the same length.",
-                new Callable<Void>() {
-                    public Void call() throws Exception {
-                        StringUtils.indexOfIgnoreCase(0, "abc", "abc", null, "-", EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
-                        return null;
-                    }
+                "Illegal argument value null for openingMarkers and/or - for closingMarkers. These cannot be null and must have the same length.", () -> {
+                    StringUtils.indexOfIgnoreCase(0, "abc", "abc", null, "-", EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
+                    return null;
                 });
         assertThrows(IllegalArgumentException.class,
-                "Illegal argument value - for openingMarkers and/or null for closingMarkers. These cannot be null and must have the same length.",
-                new Callable<Void>() {
-                    public Void call() throws Exception {
-                        StringUtils.indexOfIgnoreCase(0, "abc", "abc", "-", null, EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
-                        return null;
-                    }
+                "Illegal argument value - for openingMarkers and/or null for closingMarkers. These cannot be null and must have the same length.", () -> {
+                    StringUtils.indexOfIgnoreCase(0, "abc", "abc", "-", null, EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
+                    return null;
                 });
         assertThrows(IllegalArgumentException.class,
-                "Illegal argument value null for openingMarkers and/or null for closingMarkers. These cannot be null and must have the same length.",
-                new Callable<Void>() {
-                    public Void call() throws Exception {
-                        StringUtils.indexOfIgnoreCase(0, "abc", "abc", null, null, EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
-                        return null;
-                    }
+                "Illegal argument value null for openingMarkers and/or null for closingMarkers. These cannot be null and must have the same length.", () -> {
+                    StringUtils.indexOfIgnoreCase(0, "abc", "abc", null, null, EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
+                    return null;
                 });
         assertThrows(IllegalArgumentException.class,
-                "Illegal argument value - for openingMarkers and/or -! for closingMarkers. These cannot be null and must have the same length.",
-                new Callable<Void>() {
-                    public Void call() throws Exception {
-                        StringUtils.indexOfIgnoreCase(0, "abc", "abc", "-", "-!", EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
-                        return null;
-                    }
+                "Illegal argument value - for openingMarkers and/or -! for closingMarkers. These cannot be null and must have the same length.", () -> {
+                    StringUtils.indexOfIgnoreCase(0, "abc", "abc", "-", "-!", EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
+                    return null;
                 });
         assertThrows(IllegalArgumentException.class,
-                "Illegal argument value null for overridingMarkers. These cannot be null and must be a sub-set of openingMarkers -!.", new Callable<Void>() {
-                    public Void call() throws Exception {
-                        StringUtils.indexOfIgnoreCase(0, "abc", "abc", "-!", "-!", null, EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
-                        return null;
-                    }
+                "Illegal argument value null for overridingMarkers. These cannot be null and must be a sub-set of openingMarkers -!.", () -> {
+                    StringUtils.indexOfIgnoreCase(0, "abc", "abc", "-!", "-!", null, EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
+                    return null;
                 });
         assertThrows(IllegalArgumentException.class,
-                "Illegal argument value ' for overridingMarkers. These cannot be null and must be a sub-set of openingMarkers -!.", new Callable<Void>() {
-                    public Void call() throws Exception {
-                        StringUtils.indexOfIgnoreCase(0, "abc", "abc", "-!", "-!", "'", EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
-                        return null;
-                    }
+                "Illegal argument value ' for overridingMarkers. These cannot be null and must be a sub-set of openingMarkers -!.", () -> {
+                    StringUtils.indexOfIgnoreCase(0, "abc", "abc", "-!", "-!", "'", EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
+                    return null;
                 });
 
         /*
@@ -510,36 +494,24 @@ public class StringUtilsTest extends BaseTestCase {
          * searchMode) illegal markers arguments
          */
         assertThrows(IllegalArgumentException.class,
-                "Illegal argument value null for openingMarkers and/or - for closingMarkers. These cannot be null and must have the same length.",
-                new Callable<Void>() {
-                    public Void call() throws Exception {
-                        StringUtils.indexOfIgnoreCase(0, "abc", new String[] { "abc" }, null, "-", EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
-                        return null;
-                    }
+                "Illegal argument value null for openingMarkers and/or - for closingMarkers. These cannot be null and must have the same length.", () -> {
+                    StringUtils.indexOfIgnoreCase(0, "abc", new String[] { "abc" }, null, "-", EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
+                    return null;
                 });
         assertThrows(IllegalArgumentException.class,
-                "Illegal argument value - for openingMarkers and/or null for closingMarkers. These cannot be null and must have the same length.",
-                new Callable<Void>() {
-                    public Void call() throws Exception {
-                        StringUtils.indexOfIgnoreCase(0, "abc", new String[] { "abc" }, "-", null, EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
-                        return null;
-                    }
+                "Illegal argument value - for openingMarkers and/or null for closingMarkers. These cannot be null and must have the same length.", () -> {
+                    StringUtils.indexOfIgnoreCase(0, "abc", new String[] { "abc" }, "-", null, EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
+                    return null;
                 });
         assertThrows(IllegalArgumentException.class,
-                "Illegal argument value null for openingMarkers and/or null for closingMarkers. These cannot be null and must have the same length.",
-                new Callable<Void>() {
-                    public Void call() throws Exception {
-                        StringUtils.indexOfIgnoreCase(0, "abc", new String[] { "abc" }, null, null, EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
-                        return null;
-                    }
+                "Illegal argument value null for openingMarkers and/or null for closingMarkers. These cannot be null and must have the same length.", () -> {
+                    StringUtils.indexOfIgnoreCase(0, "abc", new String[] { "abc" }, null, null, EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
+                    return null;
                 });
         assertThrows(IllegalArgumentException.class,
-                "Illegal argument value - for openingMarkers and/or -! for closingMarkers. These cannot be null and must have the same length.",
-                new Callable<Void>() {
-                    public Void call() throws Exception {
-                        StringUtils.indexOfIgnoreCase(0, "abc", new String[] { "abc" }, "-", "-!", EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
-                        return null;
-                    }
+                "Illegal argument value - for openingMarkers and/or -! for closingMarkers. These cannot be null and must have the same length.", () -> {
+                    StringUtils.indexOfIgnoreCase(0, "abc", new String[] { "abc" }, "-", "-!", EnumSet.of(SearchMode.SKIP_BETWEEN_MARKERS));
+                    return null;
                 });
     }
 
@@ -560,7 +532,7 @@ public class StringUtilsTest extends BaseTestCase {
 
     /**
      * Tests StringUtil.indexOfQuoteDoubleAware() method
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -593,7 +565,7 @@ public class StringUtilsTest extends BaseTestCase {
 
     /**
      * Tests StringUtil.appendAsHex() methods.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -629,7 +601,7 @@ public class StringUtilsTest extends BaseTestCase {
 
     /**
      * Tests StringUtil.getBytes() methods.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -689,7 +661,7 @@ public class StringUtilsTest extends BaseTestCase {
 
     /**
      * Tests StringUtil.quoteIdentifier() and StringUtil.unQuoteIdentifier() methods using back quote marks.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -780,7 +752,7 @@ public class StringUtilsTest extends BaseTestCase {
 
     /**
      * Tests StringUtil.quoteIdentifier() and StringUtil.unQuoteIdentifier() methods using double quote marks.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -872,7 +844,7 @@ public class StringUtilsTest extends BaseTestCase {
 
     /**
      * Tests StringUtils.wildCompare() method.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1134,7 +1106,7 @@ public class StringUtilsTest extends BaseTestCase {
 
     /**
      * Tests StringUtils.split() methods.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1208,7 +1180,7 @@ public class StringUtilsTest extends BaseTestCase {
 
     /**
      * Tests StringUtils.split() methods for corner cases.
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1349,7 +1321,7 @@ public class StringUtilsTest extends BaseTestCase {
 
     /**
      * Tests StringUtils.joinWithSerialComma().
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1370,7 +1342,7 @@ public class StringUtilsTest extends BaseTestCase {
 
     /**
      * Tests StringUtils.quoteBytes()
-     * 
+     *
      * @throws Exception
      */
     @Test
@@ -1455,4 +1427,5 @@ public class StringUtilsTest extends BaseTestCase {
 
         assertEquals(expected, StringUtils.stripCommentsAndHints(testString, "\"'", "\"'", true));
     }
+
 }

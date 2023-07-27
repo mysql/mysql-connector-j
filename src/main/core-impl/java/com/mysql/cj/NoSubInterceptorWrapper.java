@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2009, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -53,25 +53,30 @@ public class NoSubInterceptorWrapper implements QueryInterceptor {
         this.underlyingInterceptor = underlyingInterceptor;
     }
 
+    @Override
     public void destroy() {
         this.underlyingInterceptor.destroy();
     }
 
+    @Override
     public boolean executeTopLevelOnly() {
         return this.underlyingInterceptor.executeTopLevelOnly();
     }
 
+    @Override
     public QueryInterceptor init(MysqlConnection conn, Properties props, Log log) {
         this.underlyingInterceptor.init(conn, props, log);
         return this;
     }
 
+    @Override
     public <T extends Resultset> T postProcess(Supplier<String> sql, Query interceptedQuery, T originalResultSet, ServerSession serverSession) {
         this.underlyingInterceptor.postProcess(sql, interceptedQuery, originalResultSet, serverSession);
 
         return null; // don't allow result set substitution
     }
 
+    @Override
     public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
         this.underlyingInterceptor.preProcess(sql, interceptedQuery);
 
@@ -95,4 +100,5 @@ public class NoSubInterceptorWrapper implements QueryInterceptor {
     public QueryInterceptor getUnderlyingInterceptor() {
         return this.underlyingInterceptor;
     }
+
 }

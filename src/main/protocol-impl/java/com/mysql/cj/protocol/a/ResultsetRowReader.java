@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -58,7 +58,7 @@ public class ResultsetRowReader implements ProtocolEntityReader<ResultsetRow, Na
      * Retrieve one row from the MySQL server. Note: this method is not
      * thread-safe, but it is only called from methods that are guarded by
      * synchronizing on this object.
-     * 
+     *
      * @param sf
      *            ProtocolEntityFactory
      * @throws IOException

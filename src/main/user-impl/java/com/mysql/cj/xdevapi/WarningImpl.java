@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -35,11 +35,12 @@ import com.mysql.cj.protocol.Warning;
  * {@link com.mysql.cj.xdevapi.Warning} implementation
  */
 public class WarningImpl implements com.mysql.cj.xdevapi.Warning {
+
     private Warning message;
 
     /**
      * Constructor.
-     * 
+     *
      * @param message
      *            {@link Warning} object provided by c/J core.
      */
@@ -47,15 +48,19 @@ public class WarningImpl implements com.mysql.cj.xdevapi.Warning {
         this.message = message;
     }
 
+    @Override
     public int getLevel() {
         return this.message.getLevel();
     }
 
+    @Override
     public long getCode() {
         return this.message.getCode();
     }
 
+    @Override
     public String getMessage() {
         return this.message.getMessage();
     }
+
 }
