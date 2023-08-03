@@ -502,7 +502,7 @@ public class ConnectionTest extends BaseTestCase {
             loadStmt.execute("LOAD DATA LOCAL INFILE 'foo:///' INTO TABLE testLocalInfileWithUrl" + charset);
         } catch (SQLException sqlEx) {
             assertTrue(sqlEx.getMessage() != null);
-            assertTrue(sqlEx.getMessage().indexOf("FileNotFoundException") != -1);
+            assertTrue(sqlEx.getMessage().indexOf(isServerRunningOnWindows() ? "IOException" : "FileNotFoundException") != -1);
         }
     }
 

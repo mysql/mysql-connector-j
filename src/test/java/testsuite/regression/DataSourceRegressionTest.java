@@ -596,6 +596,9 @@ public class DataSourceRegressionTest extends BaseTestCase {
 
             this.rs = testStmt.executeQuery("SELECT DATABASE()");
             assertTrue(this.rs.next());
+            if (isServerRunningOnWindows()) {
+                db = db.toLowerCase();
+            }
             assertEquals(db, this.rs.getString(1));
             assertFalse(this.rs.next());
         }
