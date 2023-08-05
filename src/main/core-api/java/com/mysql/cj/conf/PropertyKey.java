@@ -72,6 +72,7 @@ public enum PropertyKey {
     alwaysSendSetIsolation("alwaysSendSetIsolation", true), //
     authenticationFidoCallbackHandler("authenticationFidoCallbackHandler", true), //
     authenticationPlugins("authenticationPlugins", true), //
+    authenticationWebAuthnCallbackHandler("authenticationWebAuthnCallbackHandler", true), //
     autoClosePStmtStreams("autoClosePStmtStreams", true), //
     autoGenerateTestcaseScript("autoGenerateTestcaseScript", true), //
     autoReconnect("autoReconnect", true), //

@@ -3,6 +3,8 @@
 
 Version 8.2.0
 
+  - WL#15197, Support WebauthN in fido authentication plugin.
+
   - Fix for Bug#107215 (Bug#34139593), ClassCastException: java.time.LocalDateTime cannot be cast to java.sql.Timestamp.
 
   - WL#15747, Remove autoDeserialize feature.

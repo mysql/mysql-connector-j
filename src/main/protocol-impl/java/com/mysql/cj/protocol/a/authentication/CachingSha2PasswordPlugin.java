@@ -50,7 +50,7 @@ public class CachingSha2PasswordPlugin extends Sha256PasswordPlugin {
 
     public static String PLUGIN_NAME = "caching_sha2_password";
 
-    public enum AuthStage {
+    private enum AuthStage {
         FAST_AUTH_SEND_SCRAMBLE, FAST_AUTH_READ_RESULT, FAST_AUTH_COMPLETE, FULL_AUTH;
     }
 

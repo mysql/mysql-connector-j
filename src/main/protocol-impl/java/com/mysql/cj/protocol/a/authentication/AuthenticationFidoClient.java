@@ -137,7 +137,7 @@ public class AuthenticationFidoClient implements AuthenticationPlugin<NativePack
             throw ExceptionFactory.createException(Messages.getString("AuthenticationFidoClientPlugin.InvalidSignature"));
         }
 
-        NativePacketPayload packet = new NativePacketPayload(authenticatorData.length + signature.length + 4); // 2 + 2 Bytes for length encoding.
+        NativePacketPayload packet = new NativePacketPayload(authenticatorData.length + signature.length + 2); // 1 + 1 Bytes for length encoding.
         packet.writeBytes(StringSelfDataType.STRING_LENENC, authenticatorData);
         packet.writeBytes(StringSelfDataType.STRING_LENENC, signature);
         toServer.add(packet);
