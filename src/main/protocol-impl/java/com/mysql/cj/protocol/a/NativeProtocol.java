@@ -906,11 +906,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
      */
     public final <T extends Resultset> T sendQueryString(Query callingQuery, String query, String characterEncoding, int maxRows, boolean streamResults,
             ColumnDefinition cachedMetadata, ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
-        String statementComment = this.queryComment;
-
-        if (this.propertySet.getBooleanProperty(PropertyKey.includeThreadNamesAsStatementComment).getValue()) {
-            statementComment = (statementComment != null ? statementComment + ", " : "") + "java thread: " + Thread.currentThread().getName();
-        }
+        String statementComment = getQueryComment();
 
         // We don't know exactly how many bytes we're going to get from the query. Since we're dealing with UTF-8, the max is 4, so pad it
         // (4 * query) + space for headers
@@ -2017,7 +2013,11 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     @Override
     public String getQueryComment() {
-        return this.queryComment;
+        if (this.propertySet.getBooleanProperty(PropertyKey.includeThreadNamesAsStatementComment).getValue()) {
+            return (this.queryComment != null ? this.queryComment + ", " : "") + "java thread: " + Thread.currentThread().getName();
+        } else {
+            return this.queryComment;
+        }
     }
 
     @Override
