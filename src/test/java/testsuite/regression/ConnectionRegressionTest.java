@@ -11384,7 +11384,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug102404() throws Exception {
-        assumeTrue(versionMeetsMinimum(5, 7, 6), "Session state tracking requires at least MySQL 5.7.6");
+        assumeTrue(versionMeetsMinimum(5, 7, 6), "Session state tracking requires at least MySQL 5.7.6.");
 
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
@@ -11948,7 +11948,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
      */
     @Test
     void testBug35358417() throws Exception {
-        assumeTrue(versionMeetsMinimum(5, 7, 6), "Session state tracking requires at least MySQL 5.7.6");
+        assumeTrue(versionMeetsMinimum(5, 7, 6), "Session state tracking requires at least MySQL 5.7.6.");
+        assumeTrue("ON".equalsIgnoreCase(getMysqlVariable("log_bin")), "This test requires server with binlog enabled.");
 
         String gtidMode = getMysqlVariable("gtid_mode");
         if ("OFF".equalsIgnoreCase(gtidMode)) {
