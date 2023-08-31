@@ -213,6 +213,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     private ValueFactory<ZonedDateTime> defaultZonedDateTimeValueFactory;
 
     protected RuntimeProperty<Boolean> emulateLocators;
+
+    protected boolean treatMysqlDatetimeAsTimestamp = false;
     protected boolean yearIsDateType = true;
 
     /**
@@ -264,6 +266,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         PropertySet pset = this.connection.getPropertySet();
         this.emulateLocators = pset.getBooleanProperty(PropertyKey.emulateLocators);
         this.padCharsWithSpace = pset.getBooleanProperty(PropertyKey.padCharsWithSpace).getValue();
+        this.treatMysqlDatetimeAsTimestamp = pset.getBooleanProperty(PropertyKey.treatMysqlDatetimeAsTimestamp).getValue();
         this.yearIsDateType = pset.getBooleanProperty(PropertyKey.yearIsDateType).getValue();
         this.useUsageAdvisor = pset.getBooleanProperty(PropertyKey.useUsageAdvisor).getValue();
         this.gatherPerfMetrics = pset.getBooleanProperty(PropertyKey.gatherPerfMetrics).getValue();
@@ -1213,7 +1216,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                 return getTimestamp(columnIndex);
 
             case DATETIME:
-                return getLocalDateTime(columnIndex);
+                return this.treatMysqlDatetimeAsTimestamp ? getTimestamp(columnIndex) : getLocalDateTime(columnIndex);
 
             default:
                 return getString(columnIndex);

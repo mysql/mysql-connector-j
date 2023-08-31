@@ -45,8 +45,6 @@ import com.mysql.cj.protocol.InternalTimestamp;
  *
  * @param <T>
  *            value type
- *
- * @since 6.0
  */
 public interface ValueFactory<T> {
 

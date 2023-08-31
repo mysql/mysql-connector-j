@@ -236,6 +236,7 @@ public enum PropertyKey {
     traceProtocol("traceProtocol", true), //
     trackSessionState("trackSessionState", true), //
     transformedBitIsBoolean("transformedBitIsBoolean", true), //
+    treatMysqlDatetimeAsTimestamp("treatMysqlDatetimeAsTimestamp", true), //
     treatUtilDateAsTimestamp("treatUtilDateAsTimestamp", true), //
     trustCertificateKeyStorePassword("trustCertificateKeyStorePassword", true), //
     trustCertificateKeyStoreType("trustCertificateKeyStoreType", true), //

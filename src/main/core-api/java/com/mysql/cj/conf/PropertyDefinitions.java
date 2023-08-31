@@ -552,6 +552,9 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PropertyKey.preserveInstants, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.preserveInstants"), "8.0.23", CATEGORY_DATETIMES, Integer.MIN_VALUE),
 
+                new BooleanPropertyDefinition(PropertyKey.treatMysqlDatetimeAsTimestamp, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.treatMysqlDatetimeAsTimestamp"), "8.2.0", CATEGORY_DATETIMES, Integer.MIN_VALUE),
+
                 new BooleanPropertyDefinition(PropertyKey.treatUtilDateAsTimestamp, DEFAULT_VALUE_TRUE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.treatUtilDateAsTimestamp"), "5.0.5", CATEGORY_DATETIMES, Integer.MIN_VALUE),
 

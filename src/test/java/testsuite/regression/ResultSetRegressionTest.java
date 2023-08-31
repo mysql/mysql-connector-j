@@ -93,6 +93,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.sql.rowset.CachedRowSet;
+import javax.sql.rowset.JdbcRowSet;
+import javax.sql.rowset.RowSetFactory;
+import javax.sql.rowset.RowSetProvider;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -8047,7 +8050,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests for Bug#68608 (Bug#16690898), UpdatableResultSet does not properly handle unsigned primary key.
+     * Tests fix for Bug#68608 (Bug#16690898), UpdatableResultSet does not properly handle unsigned primary key.
      *
      * @throws Exception
      */
@@ -8106,6 +8109,95 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
         this.rs = this.stmt.executeQuery("SELECT * FROM testBug68608");
         assertFalse(this.rs.next());
+    }
+
+    /**
+     * Tests fix for Bug#107215 (Bug#34139593), ClassCastException: java.time.LocalDateTime cannot be cast to java.sql.Timestamp.
+     *
+     * Was failing in CachedRowSet.getDate() and CachedRowSet.getTimestamp() because ResultSet.getObject() returns java.time.LocalDateTime while the code in
+     * CachedRowSetImpl tries to cast the value to java.sql.Timestamp.
+     * See also: http://hg.openjdk.java.net/jdk8/jdk8/jdk/file/687fd7c7986d/src/share/classes/com/sun/rowset/CachedRowSetImpl.java#l2140
+     * See also: http://hg.openjdk.java.net/jdk8/jdk8/jdk/file/687fd7c7986d/src/share/classes/com/sun/rowset/CachedRowSetImpl.java#l619
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug107215() throws Exception {
+        createTable("testBug107215", "(dt DATETIME, ts TIMESTAMP)");
+        this.stmt.execute("INSERT INTO testBug107215 VALUES(NOW(), NOW())");
+
+        final String sql = "SELECT * FROM testBug107215";
+        final String testDbUrl = dbUrl + (dbUrl.contains("?") ? "&" : "?");
+
+        try (Connection testConn = getConnectionWithProps("treatMysqlDatetimeAsTimestamp=false")) {
+            Statement testStmt = testConn.createStatement();
+            this.rs = testStmt.executeQuery(sql);
+            assertTrue(this.rs.next());
+            assertEquals(LocalDateTime.class, this.rs.getObject(1).getClass());
+            assertEquals(Timestamp.class, this.rs.getObject(2).getClass());
+            assertEquals(Date.class, this.rs.getDate(1).getClass());
+            assertEquals(Date.class, this.rs.getDate(2).getClass());
+            assertEquals(Timestamp.class, this.rs.getTimestamp(1).getClass());
+            assertEquals(Timestamp.class, this.rs.getTimestamp(2).getClass());
+
+            RowSetFactory rowSetFact = RowSetProvider.newFactory();
+            JdbcRowSet testRowSet1 = rowSetFact.createJdbcRowSet();
+            testRowSet1.setCommand(sql);
+            testRowSet1.setUrl(testDbUrl + "treatMysqlDatetimeAsTimestamp=false");
+            testRowSet1.execute();
+            assertTrue(testRowSet1.next());
+            assertEquals(LocalDateTime.class, testRowSet1.getObject(1).getClass());
+            assertEquals(Timestamp.class, testRowSet1.getObject(2).getClass());
+            assertEquals(Date.class, testRowSet1.getDate(1).getClass());
+            assertEquals(Date.class, testRowSet1.getDate(2).getClass());
+            assertEquals(Timestamp.class, testRowSet1.getTimestamp(1).getClass());
+            assertEquals(Timestamp.class, testRowSet1.getTimestamp(2).getClass());
+
+            CachedRowSet testRowSet2 = rowSetFact.createCachedRowSet();
+            testRowSet2.populate(testStmt.executeQuery(sql));
+            assertTrue(testRowSet2.next());
+            assertEquals(LocalDateTime.class, testRowSet2.getObject(1).getClass());
+            assertEquals(Timestamp.class, testRowSet2.getObject(2).getClass());
+            assertThrows(ClassCastException.class, () -> testRowSet2.getDate(1).getClass()); // Non-expected behavior.
+            assertEquals(Date.class, testRowSet2.getDate(2).getClass());
+            assertThrows(ClassCastException.class, () -> testRowSet2.getTimestamp(1).getClass()); // Non-expected behavior.
+            assertEquals(Timestamp.class, testRowSet2.getTimestamp(2).getClass());
+        }
+
+        try (Connection testConn = getConnectionWithProps("treatMysqlDatetimeAsTimestamp=true")) {
+            Statement testStmt = testConn.createStatement();
+            this.rs = testStmt.executeQuery(sql);
+            assertTrue(this.rs.next());
+            assertEquals(Timestamp.class, this.rs.getObject(1).getClass());
+            assertEquals(Timestamp.class, this.rs.getObject(2).getClass());
+            assertEquals(Date.class, this.rs.getDate(1).getClass());
+            assertEquals(Date.class, this.rs.getDate(2).getClass());
+            assertEquals(Timestamp.class, this.rs.getTimestamp(1).getClass());
+            assertEquals(Timestamp.class, this.rs.getTimestamp(2).getClass());
+
+            RowSetFactory rowSetFact = RowSetProvider.newFactory();
+            JdbcRowSet testRowSet1 = rowSetFact.createJdbcRowSet();
+            testRowSet1.setCommand(sql);
+            testRowSet1.setUrl(testDbUrl + "treatMysqlDatetimeAsTimestamp=true");
+            testRowSet1.execute();
+            assertTrue(testRowSet1.next());
+            assertEquals(Timestamp.class, testRowSet1.getObject(1).getClass());
+            assertEquals(Timestamp.class, testRowSet1.getObject(2).getClass());
+            assertEquals(Date.class, testRowSet1.getDate(1).getClass());
+            assertEquals(Date.class, testRowSet1.getDate(2).getClass());
+            assertEquals(Timestamp.class, testRowSet1.getTimestamp(1).getClass());
+            assertEquals(Timestamp.class, testRowSet1.getTimestamp(2).getClass());
+
+            CachedRowSet testRowSet2 = rowSetFact.createCachedRowSet();
+            testRowSet2.populate(testStmt.executeQuery(sql));
+            assertTrue(testRowSet2.next());
+            assertEquals(Timestamp.class, testRowSet2.getObject(1).getClass());
+            assertEquals(Timestamp.class, testRowSet2.getObject(2).getClass());
+            assertEquals(Date.class, testRowSet2.getDate(1).getClass()); // Expected behavior.
+            assertEquals(Date.class, testRowSet2.getDate(2).getClass());
+            assertEquals(Timestamp.class, testRowSet2.getTimestamp(1).getClass()); // Expected behavior.
+            assertEquals(Timestamp.class, testRowSet2.getTimestamp(2).getClass());
+        }
     }
 
 }

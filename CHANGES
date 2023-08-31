@@ -3,6 +3,8 @@
 
 Version 8.2.0
 
+  - Fix for Bug#107215 (Bug#34139593), ClassCastException: java.time.LocalDateTime cannot be cast to java.sql.Timestamp.
+
   - WL#15747, Remove autoDeserialize feature.
 
   - Fix for Bug#35358417, MySQL Connector/J is not parsing the sessionStateChanges from the OK_Packet correctly.
