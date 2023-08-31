@@ -4,6 +4,8 @@
 Version 8.3.0
   - Fix for Bug#96582 (Bug#30222032), jdbc.MysqlParameterMetadata#isNullable doesnt check whether to be simple.
 
+  - Fix for Bug#111360 (Bug#35488208), Unexpected list of permitted ciphers.
+
   - Fix for Bug#95796 (Bug#29907618), Parameter metadata inferred incorrectly when procedure or function doesn't exist.
 
   - Fix for Bug#73774 (Bug#19531305), Can't execute a stored procedure if exists function with same name.
