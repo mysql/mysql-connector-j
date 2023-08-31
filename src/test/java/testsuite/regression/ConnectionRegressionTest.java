@@ -11447,10 +11447,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
          * Check SESSION_TRACK_TRANSACTION_STATE, SESSION_TRACK_TRANSACTION_CHARACTERISTICS and SESSION_TRACK_GTIDS.
          * SESSION_TRACK_GTIDS requires the server configured for replication with GTIDs.
          */
-        this.rs = testStmt.executeQuery("SELECT @@gtid_mode, @@log_bin, @@enforce_gtid_consistency");
+        this.rs = testStmt.executeQuery("SELECT @@gtid_mode, @@log_bin");
         this.rs.next();
-        boolean checkGTIDs = "ON".equalsIgnoreCase(this.rs.getString(1)) && "1".equalsIgnoreCase(this.rs.getString(2))
-                && "ON".equalsIgnoreCase(this.rs.getString(3));
+        boolean checkGTIDs = this.rs.getString(1).startsWith("ON") && "1".equalsIgnoreCase(this.rs.getString(2));
         System.out.println("\n=== Test SESSION_TRACK_TRANSACTION_STATE, SESSION_TRACK_TRANSACTION_CHARACTERISTICS and SESSION_TRACK_GTIDS ===");
 
         createTable(testStmt, "testBug102404", "(val varchar(10))");
