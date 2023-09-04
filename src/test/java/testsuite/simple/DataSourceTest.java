@@ -158,27 +158,22 @@ public class DataSourceTest extends BaseTestCase {
         Connection connToMySQL = pooledConnection.getConnection();
         this.rs = connToMySQL.createStatement().executeQuery("SELECT @@character_set_results");
         assertTrue(this.rs.next());
-
         assertNull(this.rs.getString(1));
 
         this.rs = connToMySQL.createStatement().executeQuery("SHOW SESSION VARIABLES LIKE 'character_set_client'");
         assertTrue(this.rs.next());
-
-        // Because of utf8mb4
-        assertTrue(this.rs.getString(2).startsWith("utf8"));
+        assertTrue(this.rs.getString(2).startsWith("utf8")); // Because of utf8mb4.
 
         connToMySQL.close();
 
         connToMySQL = pooledConnection.getConnection();
         this.rs = connToMySQL.createStatement().executeQuery("SELECT @@character_set_results");
         assertTrue(this.rs.next());
-        assertEquals(null, this.rs.getString(1));
+        assertNull(this.rs.getString(1));
 
         this.rs = connToMySQL.createStatement().executeQuery("SHOW SESSION VARIABLES LIKE 'character_set_client'");
         assertTrue(this.rs.next());
-
-        // Because of utf8mb4
-        assertTrue(this.rs.getString(2).startsWith("utf8"));
+        assertTrue(this.rs.getString(2).startsWith("utf8")); // Because of utf8mb4.
 
         pooledConnection.getConnection().close();
     }

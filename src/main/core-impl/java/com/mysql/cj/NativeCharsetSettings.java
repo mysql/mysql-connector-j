@@ -218,10 +218,11 @@ public class NativeCharsetSettings extends CharsetMapping implements CharsetSett
                     && (encoding = this.characterEncoding.getValue()) == null) {
                 // If none of "passwordCharacterEncoding", "connectionCollation" or "characterEncoding" is specified then use UTF-8.
                 // It would be better to use the server default collation here, to avoid unnecessary SET NAMES queries after the handshake if server
-                // default charset if not utf8, but we can not do it until server Bug#32729185 is fixed. Server cuts collation index to lower byte and, for example,
-                // if the server is started with character-set-server=utf8mb4 and collation-server=utf8mb4_is_0900_ai_ci (collation index 257) the Protocol::HandshakeV10
-                // will contain character_set=1, "big5_chinese_ci". This is true not only for MySQL 8.0, where built-in collations with indexes > 255 were first introduced,
-                // but also other server series would be affected when configured with custom collations, for which the reserved collation id range is >= 1024.
+                // default charset if not utf8, but we can not do it until server Bug#32729185 is fixed. Server cuts collation index to lower byte and, for
+                // example, if the server is started with character-set-server=utf8mb4 and collation-server=utf8mb4_is_0900_ai_ci (collation index 257) the
+                // Protocol::HandshakeV10 will contain character_set=1, "big5_chinese_ci". This is true not only for MySQL 8.0, where built-in collations with
+                // indexes > 255 were first introduced, but also other server series would be affected when configured with custom collations, for which the
+                // reserved collation id range is >= 1024.
                 this.sessionCollationIndex = MYSQL_COLLATION_INDEX_utf8mb4_0900_ai_ci;
             }
         }

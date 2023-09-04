@@ -54,13 +54,13 @@ public interface CharsetSettings {
      * </ol>
      * otherwise it will be set to utf8mb4_general_ci or utf8mb4_0900_ai_ci depending on server version.
      * <p>
-     * Since Protocol::HandshakeV10 and Protocol::HandshakeResponse41 has only one byte for the collation it's not possible to use indexes &gt; 255 during the
+     * Since Protocol::HandshakeV10 and Protocol::HandshakeResponse41 use only one byte for the collation it's not possible to use indexes &gt; 255 during the
      * handshake.
      * Also, ucs2, utf16, utf16le and utf32 character sets are impermissible here. Connector/J will try to use utf8mb4 instead.
      * </p>
      *
      * @param reset
-     *            reset the charsets configuration; needed for changeUser call.
+     *            reset the charsets configuration; needed for changeUser and resetServerState call.
      *
      * @return MySQL collation index to be used during the handshake.
      */

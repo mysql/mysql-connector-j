@@ -360,4 +360,10 @@ public class NativeMessageBuilder implements MessageBuilder<NativePacketPayload>
         return packet;
     }
 
+    public NativePacketPayload buildComResetConnection(NativePacketPayload sharedPacket) {
+        NativePacketPayload packet = sharedPacket != null ? sharedPacket : new NativePacketPayload(1);
+        packet.writeInteger(IntegerDataType.INT1, NativeConstants.COM_RESET_CONNECTION);
+        return packet;
+    }
+
 }

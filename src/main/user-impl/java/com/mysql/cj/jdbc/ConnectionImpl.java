@@ -545,9 +545,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             this.password = newPassword;
 
             this.session.getServerSession().getCharsetSettings().configurePostHandshake(true);
-
             this.session.setSessionVariables();
-
+            handleAutoCommitDefaults();
             setupServerForTruncationChecks();
         }
     }
@@ -1749,7 +1748,12 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     @Override
     public void resetServerState() throws SQLException {
         if (!this.propertySet.getBooleanProperty(PropertyKey.paranoid).getValue() && this.session != null) {
-            changeUser(this.user, this.password);
+            this.session.getServerSession().getCharsetSettings().configurePreHandshake(true);
+            this.session.resetSessionState();
+            this.session.getServerSession().getCharsetSettings().configurePostHandshake(true);
+            this.session.setSessionVariables();
+            handleAutoCommitDefaults();
+            setupServerForTruncationChecks();
         }
     }
 

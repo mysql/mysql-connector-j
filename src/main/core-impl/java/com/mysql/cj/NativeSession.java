@@ -827,4 +827,10 @@ public class NativeSession extends CoreSession implements Serializable {
         return this.cancelTimer;
     }
 
+    public void resetSessionState() {
+        checkClosed();
+        NativePacketPayload message = this.commandBuilder.buildComResetConnection(((NativeProtocol) this.protocol).getSharedSendPacket());
+        this.protocol.sendCommand(message, false, 0);
+    }
+
 }

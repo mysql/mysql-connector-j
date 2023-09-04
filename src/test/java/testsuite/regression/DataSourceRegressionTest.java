@@ -577,7 +577,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
      * @throws Exception
      */
     @Test
-    void testBug104954() throws Exception {
+    public void testBug104954() throws Exception {
         createDatabase("testBug104954");
         createDatabase("`testBug104954?bug=104954`");
 
@@ -601,6 +601,44 @@ public class DataSourceRegressionTest extends BaseTestCase {
             }
             assertEquals(db, this.rs.getString(1));
             assertFalse(this.rs.next());
+        }
+    }
+
+    /**
+     * Tests fix for Bug#91351 (Bug#28225464), MysqlConnectionPoolDataSource - autocommit status lost if global autocommit = 0.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug91351() throws Exception {
+        try {
+            createTable("testBug91351", "(txt VARCHAR(100))");
+            this.stmt.executeUpdate("SET GLOBAL autocommit=0"); // Pre-condition: global autocommit=0.
+
+            final String testDbUrl = dbUrl + (dbUrl.contains("?") ? "&" : "?");
+            boolean isParanoid = false;
+            do {
+                MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
+                ds.setUrl(testDbUrl + "paranoid=" + isParanoid);
+                Connection testConn = ds.getPooledConnection().getConnection();
+                testConn.createStatement().execute("SET SESSION wait_timeout=5"); // Otherwise test would hang when tearing down created artifacts.
+
+                PreparedStatement testPstmt = null;
+                String query = "INSERT INTO testBug91351 VALUES (?)";
+                testPstmt = testConn.prepareStatement(query);
+                testPstmt.setString(1, "MySQL Connector/J");
+                testPstmt.executeUpdate();
+
+                testConn.close();
+
+                this.rs = this.stmt.executeQuery("SELECT * FROM testBug91351");
+                assertTrue(this.rs.next());
+                assertEquals("MySQL Connector/J", this.rs.getString(1));
+
+                testConn.close();
+            } while (isParanoid = !isParanoid);
+        } finally {
+            this.stmt.executeUpdate("SET GLOBAL autocommit=1");
         }
     }
 
