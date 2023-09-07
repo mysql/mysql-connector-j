@@ -2292,19 +2292,19 @@ public class ConnectionTest extends BaseTestCase {
 
         // TS.FR.2_1. Create a Connection with the connection property tlsCiphersuites=[valid-cipher-suite]. Assess that the connection is created successfully
         //            and it is using the cipher suite specified.
-        props.setProperty(PropertyKey.tlsCiphersuites.getKeyName(), "TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
+        props.setProperty(PropertyKey.tlsCiphersuites.getKeyName(), "TLS_AES_256_GCM_SHA384");
         con = getConnectionWithProps(props);
         assertTrue(((MysqlConnection) con).getSession().isSSLEstablished());
-        assertSessionStatusEquals(con.createStatement(), "ssl_cipher", "DHE-RSA-AES128-SHA");
+        assertSessionStatusEquals(con.createStatement(), "ssl_cipher", "TLS_AES_256_GCM_SHA384");
         con.close();
 
         // TS.FR.2_2. Create a Connection with the connection property enabledSSLCipherSuites=[valid-cipher-suite] . Assess that the connection is created
         //            successfully and it is using the cipher suite specified.
         props.remove(PropertyKey.tlsCiphersuites.getKeyName());
-        props.setProperty("enabledSSLCipherSuites", "TLS_DHE_RSA_WITH_AES_128_CBC_SHA");
+        props.setProperty("enabledSSLCipherSuites", "TLS_AES_256_GCM_SHA384");
         con = getConnectionWithProps(props);
         assertTrue(((MysqlConnection) con).getSession().isSSLEstablished());
-        assertSessionStatusEquals(con.createStatement(), "ssl_cipher", "DHE-RSA-AES128-SHA");
+        assertSessionStatusEquals(con.createStatement(), "ssl_cipher", "TLS_AES_256_GCM_SHA384");
         con.close();
         props.remove("enabledSSLCipherSuites");
 
