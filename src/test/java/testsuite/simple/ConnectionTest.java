@@ -2267,44 +2267,53 @@ public class ConnectionTest extends BaseTestCase {
         assumeTrue(supportsTestCertificates(this.stmt),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
 
+        String testCipher = "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"; // IANA Cipher name
+        String expectedCipher = "ECDHE-RSA-AES128-GCM-SHA256"; // OpenSSL Cipher name
+        String testTlsVersion = "TLSv1.2";
+        if (versionMeetsMinimum(8, 2)) {
+            testCipher = "TLS_AES_256_GCM_SHA384"; // IANA Cipher name
+            expectedCipher = "TLS_AES_256_GCM_SHA384"; // IANA Cipher name
+            testTlsVersion = "TLSv1.3";
+        }
+
         Connection con = null;
         Properties props = new Properties();
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
-        // TS.FR.1_1. Create a Connection with the connection property tlsVersions=TLSv1.2. Assess that the connection is created successfully and it is using
-        // TLSv1.2.
-        props.setProperty(PropertyKey.tlsVersions.getKeyName(), "TLSv1.2");
+        // TS.FR.1_1. Create a Connection with the connection property tlsVersions=TLSv1.2/TLSv1.3. Assess that the connection is created successfully and it is
+        //            using TLSv1.2/TLSv1.3.
+        props.setProperty(PropertyKey.tlsVersions.getKeyName(), testTlsVersion);
         con = getConnectionWithProps(props);
         assertTrue(((MysqlConnection) con).getSession().isSSLEstablished());
-        assertSessionStatusEquals(con.createStatement(), "ssl_version", "TLSv1.2");
+        assertSessionStatusEquals(con.createStatement(), "ssl_version", testTlsVersion);
         con.close();
 
-        // TS.FR.1_2. Create a Connection with the connection property enabledTLSProtocols=TLSv1.2. Assess that the connection is created successfully and it is
-        //            using TLSv1.2.
+        // TS.FR.1_2. Create a Connection with the connection property enabledTLSProtocols=TLSv1.2/TLSv1.3. Assess that the connection is created successfully
+        //            and it is using TLSv1.2.
         props.remove(PropertyKey.tlsVersions.getKeyName());
-        props.setProperty("enabledTLSProtocols", "TLSv1.2");
+        props.setProperty("enabledTLSProtocols", testTlsVersion);
         con = getConnectionWithProps(props);
         assertTrue(((MysqlConnection) con).getSession().isSSLEstablished());
-        assertSessionStatusEquals(con.createStatement(), "ssl_version", "TLSv1.2");
+        assertSessionStatusEquals(con.createStatement(), "ssl_version", testTlsVersion);
         con.close();
         props.remove("enabledTLSProtocols");
 
         // TS.FR.2_1. Create a Connection with the connection property tlsCiphersuites=[valid-cipher-suite]. Assess that the connection is created successfully
         //            and it is using the cipher suite specified.
-        props.setProperty(PropertyKey.tlsCiphersuites.getKeyName(), "TLS_AES_256_GCM_SHA384");
+        props.setProperty(PropertyKey.tlsCiphersuites.getKeyName(), testCipher);
         con = getConnectionWithProps(props);
         assertTrue(((MysqlConnection) con).getSession().isSSLEstablished());
-        assertSessionStatusEquals(con.createStatement(), "ssl_cipher", "TLS_AES_256_GCM_SHA384");
+        assertSessionStatusEquals(con.createStatement(), "ssl_cipher", expectedCipher);
         con.close();
 
         // TS.FR.2_2. Create a Connection with the connection property enabledSSLCipherSuites=[valid-cipher-suite] . Assess that the connection is created
         //            successfully and it is using the cipher suite specified.
         props.remove(PropertyKey.tlsCiphersuites.getKeyName());
-        props.setProperty("enabledSSLCipherSuites", "TLS_AES_256_GCM_SHA384");
+        props.setProperty("enabledSSLCipherSuites", testCipher);
         con = getConnectionWithProps(props);
         assertTrue(((MysqlConnection) con).getSession().isSSLEstablished());
-        assertSessionStatusEquals(con.createStatement(), "ssl_cipher", "TLS_AES_256_GCM_SHA384");
+        assertSessionStatusEquals(con.createStatement(), "ssl_cipher", expectedCipher);
         con.close();
         props.remove("enabledSSLCipherSuites");
 
