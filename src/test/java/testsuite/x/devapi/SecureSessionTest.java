@@ -952,10 +952,12 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         String testCipher = "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"; // IANA Cipher name
         String expectedCipher = "ECDHE-RSA-AES128-GCM-SHA256"; // OpenSSL Cipher name
         String testTlsVersion = "TLSv1.2";
+        String testCipher2 = "DHE-RSA-AES128-GCM-SHA256";
         if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.2.0"))) {
             testCipher = "TLS_AES_256_GCM_SHA384"; // IANA Cipher name
             expectedCipher = "TLS_AES_256_GCM_SHA384"; // IANA Cipher name
             testTlsVersion = "TLSv1.3";
+            testCipher2 = "TLS_AES_128_GCM_SHA256";
         }
 
         // newer GPL servers, like 8.0.4+, are using OpenSSL and can use RSA encryption, while old ones compiled with yaSSL cannot
@@ -1088,7 +1090,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         //            cipher-suites.
         //            Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable
         //            ssl_cipher for details).
-        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiTlsCiphersuites, testCipher + ",TLS_AES_128_GCM_SHA256"));
+        testSession = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiTlsCiphersuites, testCipher + "," + testCipher2));
         assertSessionStatusEquals(testSession, "mysqlx_ssl_cipher", expectedCipher);
         assertTlsVersion(testSession, testTlsVersion);
         testSession.close();
@@ -1128,7 +1130,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         //            cipher-suites.
         //            Assess that the connection property is initialized with the correct values and that the correct protocol was used (consult status variable
         //            ssl_cipher for details).
-        props.setProperty(PropertyKey.xdevapiTlsCiphersuites.getKeyName(), testCipher + ",TLS_AES_128_GCM_SHA256");
+        props.setProperty(PropertyKey.xdevapiTlsCiphersuites.getKeyName(), testCipher + "," + testCipher2);
         testSession = this.fact.getSession(props);
         assertSessionStatusEquals(testSession, "mysqlx_ssl_cipher", expectedCipher);
         testSession.close();
@@ -1159,7 +1161,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assertTlsVersion(testSession, testTlsVersion);
         testSession.close();
 
-        cli = cf.getClient(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiTlsCiphersuites, testCipher + ",TLS_AES_128_GCM_SHA256"),
+        cli = cf.getClient(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiTlsCiphersuites, testCipher + "," + testCipher2),
                 "{\"pooling\": {\"enabled\": true}}");
         testSession = cli.getSession();
         assertSessionStatusEquals(testSession, "mysqlx_ssl_cipher", expectedCipher);
