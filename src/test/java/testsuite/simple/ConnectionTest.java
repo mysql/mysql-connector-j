@@ -2267,13 +2267,12 @@ public class ConnectionTest extends BaseTestCase {
         assumeTrue(supportsTestCertificates(this.stmt),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
 
-        String testCipher = "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"; // IANA Cipher name
-        String expectedCipher = "ECDHE-RSA-AES128-GCM-SHA256"; // OpenSSL Cipher name
-        String testTlsVersion = "TLSv1.2";
-        if (versionMeetsMinimum(8, 2)) {
-            testCipher = "TLS_AES_256_GCM_SHA384"; // IANA Cipher name
-            expectedCipher = "TLS_AES_256_GCM_SHA384"; // IANA Cipher name
-            testTlsVersion = "TLSv1.3";
+        String testCipher = "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"; // TLSv1.2 IANA Cipher name.
+        String expectedCipher = "ECDHE-RSA-AES128-GCM-SHA256"; // TLSv1.2 OpenSSL Cipher name.
+        String testTlsVersion = getHighestCommonTlsVersion(); // At least TLSv1.2 is expected to be supported.
+        if ("TLSv1.3".equalsIgnoreCase(testTlsVersion)) {
+            testCipher = "TLS_AES_256_GCM_SHA384"; // TLSv1.3 IANA Cipher name.
+            expectedCipher = "TLS_AES_256_GCM_SHA384"; // TLSv1.3 IANA Cipher name.
         }
 
         Connection con = null;

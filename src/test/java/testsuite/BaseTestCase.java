@@ -52,6 +52,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +61,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.Callable;
+
+import javax.net.ssl.SSLContext;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -1292,6 +1295,30 @@ public abstract class BaseTestCase {
         return version.meetsMinimum(new ServerVersion(5, 7, 28))
                 || version.meetsMinimum(new ServerVersion(5, 6, 46)) && !version.meetsMinimum(new ServerVersion(5, 7, 0))
                 || version.meetsMinimum(new ServerVersion(5, 6, 0)) && Util.isEnterpriseEdition(version.toString());
+    }
+
+    protected String getHighestCommonTlsVersion() throws Exception {
+        // Find out which TLS protocol versions are supported by this JVM.
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, null, null);
+        List<String> jvmSupportedProtocols = Arrays.asList(sslContext.createSSLEngine().getSupportedProtocols());
+
+        this.rs = this.stmt.executeQuery("SHOW GLOBAL VARIABLES LIKE 'tls_version'");
+        assertTrue(this.rs.next());
+        String value = this.rs.getString(2);
+
+        List<String> serverSupportedProtocols = Arrays.asList(value.trim().split("\\s*,\\s*"));
+        String highestCommonTlsVersion = "";
+        for (String p : new String[] { "TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1" }) {
+            if (jvmSupportedProtocols.contains(p) && serverSupportedProtocols.contains(p)) {
+                highestCommonTlsVersion = p;
+                break;
+            }
+        }
+        System.out.println("Server supports TLS protocols: " + serverSupportedProtocols);
+        System.out.println("Highest common TLS protocol: " + highestCommonTlsVersion);
+
+        return highestCommonTlsVersion;
     }
 
     protected void assertSessionStatusEquals(Statement st, String statusVariable, String expected) throws Exception {

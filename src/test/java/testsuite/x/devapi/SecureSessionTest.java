@@ -804,21 +804,26 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
     /**
      * Tests fix for Bug#25494338, ENABLEDSSLCIPHERSUITES PARAMETER NOT WORKING AS EXPECTED WITH X-PLUGIN.
+     *
+     * @throws Exception
      */
     @Test
-    public void testBug25494338() {
+    public void testBug25494338() throws Exception {
         assumeTrue(supportsTestCertificates(this.session),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
 
-        String testCipher1 = "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"; // IANA Cipher name
-        String expectedCipher1 = "ECDHE-RSA-AES128-GCM-SHA256"; // OpenSSL Cipher name
-        String testCipher2 = "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"; // IANA Cipher name
-        String expectedCipher2 = "ECDHE-RSA-AES256-GCM-SHA384"; // OpenSSL Cipher name
-        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.2.0"))) {
-            testCipher1 = "TLS_AES_256_GCM_SHA384"; // IANA Cipher name
-            expectedCipher1 = "TLS_AES_256_GCM_SHA384"; // IANA Cipher name
-            testCipher2 = "TLS_AES_128_GCM_SHA256"; // IANA Cipher name
-            expectedCipher2 = "TLS_AES_128_GCM_SHA256"; // IANA Cipher name
+        String testCipher1 = "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"; // TLSv1.2 IANA Cipher name.
+        String expectedCipher1 = "ECDHE-RSA-AES128-GCM-SHA256"; // TLSv1.2 OpenSSL Cipher name.
+        String testCipher2 = "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"; // TLSv1.2 IANA Cipher name.
+        String expectedCipher2 = "ECDHE-RSA-AES256-GCM-SHA384"; // TLSv1.2 OpenSSL Cipher name.
+        Session sess = this.fact.getSession(this.baseUrl);
+        String testTlsVersion = getHighestCommonTlsVersion(sess); // At least TLSv1.2 is expected to be supported.
+        sess.close();
+        if ("TLSv1.3".equalsIgnoreCase(testTlsVersion)) {
+            testCipher1 = "TLS_AES_256_GCM_SHA384"; // TLSv1.3 IANA Cipher name.
+            expectedCipher1 = "TLS_AES_256_GCM_SHA384"; // TLSv1.3 IANA Cipher name.
+            testCipher2 = "TLS_AES_128_GCM_SHA256"; // TLSv1.3 IANA Cipher name.
+            expectedCipher2 = "TLS_AES_128_GCM_SHA256"; // TLSv1.3 IANA Cipher name.
         }
 
         Session testSession = null;
@@ -838,7 +843,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             // 1. Allow only TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256/TLS_AES_256_GCM_SHA384 cipher
             props.setProperty(PropertyKey.tlsCiphersuites.getKeyName(), testCipher1);
-            Session sess = this.fact.getSession(props);
+            sess = this.fact.getSession(props);
             assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", expectedCipher1);
             sess.close();
 
@@ -949,21 +954,17 @@ public class SecureSessionTest extends DevApiBaseTestCase {
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
         assumeTrue(supportsTestCertificates(this.session), "This test requires the server with RSA support.");
 
-        String testCipher = "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"; // IANA Cipher name
-        String expectedCipher = "ECDHE-RSA-AES128-GCM-SHA256"; // OpenSSL Cipher name
-        String testTlsVersion = "TLSv1.2";
+        String testCipher = "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"; // TLSv1.2 IANA Cipher name.
+        String expectedCipher = "ECDHE-RSA-AES128-GCM-SHA256"; // TLSv1.2 OpenSSL Cipher name.
+        Session sess = this.fact.getSession(this.baseUrl);
+        String testTlsVersion = getHighestCommonTlsVersion(sess); // At least TLSv1.2 is expected to be supported.
         String testCipher2 = "DHE-RSA-AES128-GCM-SHA256";
-        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.2.0"))) {
-            testCipher = "TLS_AES_256_GCM_SHA384"; // IANA Cipher name
-            expectedCipher = "TLS_AES_256_GCM_SHA384"; // IANA Cipher name
-            testTlsVersion = "TLSv1.3";
+        sess.close();
+        if ("TLSv1.3".equalsIgnoreCase(testTlsVersion)) {
+            testCipher = "TLS_AES_256_GCM_SHA384"; // TLSv1.3 IANA Cipher name.
+            expectedCipher = "TLS_AES_256_GCM_SHA384"; // TLSv1.3 IANA Cipher name.
             testCipher2 = "TLS_AES_128_GCM_SHA256";
         }
-
-        // newer GPL servers, like 8.0.4+, are using OpenSSL and can use RSA encryption, while old ones compiled with yaSSL cannot
-        Session sess = this.fact.getSession(this.sslFreeBaseUrl);
-        String highestCommonTlsVersion = getHighestCommonTlsVersion(sess);
-        sess.close();
 
         Properties props = new Properties(this.sslFreeTestProperties);
         props.setProperty(PropertyKey.xdevapiSslMode.getKeyName(), PropertyDefinitions.XdevapiSslMode.VERIFY_CA.toString());
@@ -1189,7 +1190,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         //            Assess that the session is created successfully and the connection properties are initialized with the expected values.
         testSession = this.fact.getSession(this.sslFreeBaseUrl);
         assertSecureSession(testSession);
-        assertTlsVersion(testSession, highestCommonTlsVersion);
+        assertTlsVersion(testSession, testTlsVersion);
         testSession.close();
 
         // TS.FR.5_2. Create an X DevAPI session using a connection string with the connection property xdevapi.tls-versions but without
@@ -1216,7 +1217,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         props.remove(PropertyKey.xdevapiTlsCiphersuites.getKeyName());
         testSession = this.fact.getSession(props);
         assertSecureSession(testSession);
-        assertTlsVersion(testSession, highestCommonTlsVersion);
+        assertTlsVersion(testSession, testTlsVersion);
         testSession.close();
 
         // TS.FR.5_5. Create an X DevAPI session using a connection properties map with the connection property xdevapi.tls-versions but without
@@ -1243,7 +1244,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         cli = cf.getClient(this.sslFreeBaseUrl, "{\"pooling\": {\"enabled\": true}}");
         testSession = cli.getSession();
         assertSecureSession(testSession);
-        assertTlsVersion(testSession, highestCommonTlsVersion);
+        assertTlsVersion(testSession, testTlsVersion);
         cli.close();
 
         cli = cf.getClient(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiTlsVersions, testTlsVersion), "{\"pooling\": {\"enabled\": true}}");
@@ -1734,16 +1735,16 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         assumeTrue(supportsTestCertificates(this.session),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
 
-        String testCipher = "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"; // IANA Cipher name
-        String expectedCipher = "ECDHE-RSA-AES128-GCM-SHA256"; // OpenSSL Cipher name
-        String testTlsVersion = "TLSv1.2";
-        if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.2.0"))) {
-            testCipher = "TLS_AES_256_GCM_SHA384"; // IANA Cipher name
-            expectedCipher = "TLS_AES_256_GCM_SHA384"; // IANA Cipher name
-            testTlsVersion = "TLSv1.3";
+        String testCipher = "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"; // TLSv1.2 IANA Cipher name.
+        String expectedCipher = "ECDHE-RSA-AES128-GCM-SHA256"; // TLSv1.2 OpenSSL Cipher name.
+        Session sess = this.fact.getSession(this.baseUrl);
+        String testTlsVersion = getHighestCommonTlsVersion(sess); // At least TLSv1.2 is expected to be supported.
+        sess.close();
+        if ("TLSv1.3".equalsIgnoreCase(testTlsVersion)) {
+            testCipher = "TLS_AES_256_GCM_SHA384"; // TLSv1.3 IANA Cipher name.
+            expectedCipher = "TLS_AES_256_GCM_SHA384"; // TLSv1.3 IANA Cipher name.
         }
 
-        Session sess = null;
         Properties props = new Properties(this.sslFreeTestProperties);
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
