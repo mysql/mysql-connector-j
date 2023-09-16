@@ -322,58 +322,57 @@ public class ConnectionTest extends BaseTestCase {
      */
     @Test
     public void testSavepoint() throws Exception {
-        DatabaseMetaData dbmd = this.conn.getMetaData();
+        assumeTrue(this.conn.getMetaData().supportsSavepoints(), "Savepoints not supported");
 
-        if (dbmd.supportsSavepoints()) {
-            System.out.println("Testing SAVEPOINTs");
+        try {
+            this.conn.setAutoCommit(true);
 
-            try {
-                this.conn.setAutoCommit(true);
+            createTable("testSavepoints", "(field1 int)", "InnoDB");
 
-                createTable("testSavepoints", "(field1 int)", "InnoDB");
+            // Try with named save points
+            this.conn.setAutoCommit(false);
+            this.stmt.executeUpdate("INSERT INTO testSavepoints VALUES (1)");
 
-                // Try with named save points
-                this.conn.setAutoCommit(false);
-                this.stmt.executeUpdate("INSERT INTO testSavepoints VALUES (1)");
+            Savepoint afterInsert = this.conn.setSavepoint("afterInsert");
+            this.stmt.executeUpdate("UPDATE testSavepoints SET field1=2");
 
-                Savepoint afterInsert = this.conn.setSavepoint("afterInsert");
-                this.stmt.executeUpdate("UPDATE testSavepoints SET field1=2");
+            Savepoint afterUpdate = this.conn.setSavepoint("afterUpdate");
+            this.stmt.executeUpdate("DELETE FROM testSavepoints");
 
-                Savepoint afterUpdate = this.conn.setSavepoint("afterUpdate");
-                this.stmt.executeUpdate("DELETE FROM testSavepoints");
+            assertEquals(0, getRowCount("testSavepoints"), "Row count should be 0");
+            this.conn.rollback(afterUpdate);
+            assertEquals(1, getRowCount("testSavepoints"), "Row count should be 1");
+            assertEquals("2", getSingleValue("testSavepoints", "field1", null).toString(), "Value should be 2");
+            this.conn.rollback(afterInsert);
+            assertEquals("1", getSingleValue("testSavepoints", "field1", null).toString(), "Value should be 1");
+            this.conn.rollback();
+            assertEquals(0, getRowCount("testSavepoints"), "Row count should be 0");
 
-                assertTrue(getRowCount("testSavepoints") == 0, "Row count should be 0");
-                this.conn.rollback(afterUpdate);
-                assertTrue(getRowCount("testSavepoints") == 1, "Row count should be 1");
-                assertTrue("2".equals(getSingleValue("testSavepoints", "field1", null).toString()), "Value should be 2");
-                this.conn.rollback(afterInsert);
-                assertTrue("1".equals(getSingleValue("testSavepoints", "field1", null).toString()), "Value should be 1");
-                this.conn.rollback();
-                assertTrue(getRowCount("testSavepoints") == 0, "Row count should be 0");
+            // Try with 'anonymous' save points
+            this.conn.rollback();
 
-                // Try with 'anonymous' save points
-                this.conn.rollback();
+            this.stmt.executeUpdate("INSERT INTO testSavepoints VALUES (1)");
+            afterInsert = this.conn.setSavepoint();
+            this.stmt.executeUpdate("UPDATE testSavepoints SET field1=2");
+            afterUpdate = this.conn.setSavepoint();
+            this.stmt.executeUpdate("DELETE FROM testSavepoints");
 
-                this.stmt.executeUpdate("INSERT INTO testSavepoints VALUES (1)");
-                afterInsert = this.conn.setSavepoint();
-                this.stmt.executeUpdate("UPDATE testSavepoints SET field1=2");
-                afterUpdate = this.conn.setSavepoint();
-                this.stmt.executeUpdate("DELETE FROM testSavepoints");
+            assertEquals(0, getRowCount("testSavepoints"), "Row count should be 0");
+            this.conn.rollback(afterUpdate);
+            assertEquals(1, getRowCount("testSavepoints"), "Row count should be 1");
+            assertEquals("2", getSingleValue("testSavepoints", "field1", null).toString(), "Value should be 2");
+            this.conn.rollback(afterInsert);
+            assertEquals("1", getSingleValue("testSavepoints", "field1", null).toString(), "Value should be 1");
+            this.conn.rollback();
 
-                assertTrue(getRowCount("testSavepoints") == 0, "Row count should be 0");
-                this.conn.rollback(afterUpdate);
-                assertTrue(getRowCount("testSavepoints") == 1, "Row count should be 1");
-                assertTrue("2".equals(getSingleValue("testSavepoints", "field1", null).toString()), "Value should be 2");
-                this.conn.rollback(afterInsert);
-                assertTrue("1".equals(getSingleValue("testSavepoints", "field1", null).toString()), "Value should be 1");
-                this.conn.rollback();
-
-                this.conn.releaseSavepoint(this.conn.setSavepoint());
-            } finally {
-                this.conn.setAutoCommit(true);
-            }
-        } else {
-            System.out.println("MySQL version does not support SAVEPOINTs");
+            Savepoint savepoint = this.conn.setSavepoint();
+            this.conn.releaseSavepoint(savepoint);
+            assertThrows(SQLException.class, "SAVEPOINT .* does not exist", () -> {
+                this.conn.rollback(savepoint);
+                return null;
+            });
+        } finally {
+            this.conn.setAutoCommit(true);
         }
     }
 

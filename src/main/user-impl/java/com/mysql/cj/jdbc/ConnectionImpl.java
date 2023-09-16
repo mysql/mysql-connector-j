@@ -1741,8 +1741,21 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     }
 
     @Override
-    public void releaseSavepoint(Savepoint arg0) throws SQLException {
-        // this is a no-op
+    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+        synchronized (getConnectionMutex()) {
+            checkClosed();
+
+            StringBuilder releaseSavepointQuery = new StringBuilder("RELEASE SAVEPOINT ");
+            releaseSavepointQuery
+                    .append(StringUtils.quoteIdentifier(savepoint.getSavepointName(), this.session.getIdentifierQuoteString(), this.pedantic.getValue()));
+            java.sql.Statement stmt = null;
+            try {
+                stmt = getMetadataSafeStatement();
+                stmt.executeUpdate(releaseSavepointQuery.toString());
+            } finally {
+                closeStatement(stmt);
+            }
+        }
     }
 
     @Override
@@ -1836,25 +1849,18 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 }
 
                 StringBuilder rollbackQuery = new StringBuilder("ROLLBACK TO SAVEPOINT ");
-                rollbackQuery.append('`');
-                rollbackQuery.append(savepoint.getSavepointName());
-                rollbackQuery.append('`');
-
+                rollbackQuery
+                        .append(StringUtils.quoteIdentifier(savepoint.getSavepointName(), this.session.getIdentifierQuoteString(), this.pedantic.getValue()));
                 java.sql.Statement stmt = null;
-
                 try {
                     stmt = getMetadataSafeStatement();
-
                     stmt.executeUpdate(rollbackQuery.toString());
                 } catch (SQLException sqlEx) {
                     int errno = sqlEx.getErrorCode();
-
                     if (errno == 1181) {
                         String msg = sqlEx.getMessage();
-
                         if (msg != null) {
                             int indexOfError153 = msg.indexOf("153");
-
                             if (indexOfError153 != -1) {
                                 throw SQLError.createSQLException(Messages.getString("Connection.22", new Object[] { savepoint.getSavepointName() }),
                                         MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, errno, getExceptionInterceptor());
@@ -2064,10 +2070,6 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
             String quotedId = this.session.getIdentifierQuoteString();
 
-            if (quotedId == null || quotedId.equals(" ")) {
-                quotedId = "";
-            }
-
             StringBuilder query = new StringBuilder("USE ");
             query.append(StringUtils.quoteIdentifier(db, quotedId, this.pedantic.getValue()));
 
@@ -2122,9 +2124,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     @Override
     public java.sql.Savepoint setSavepoint() throws SQLException {
         MysqlSavepoint savepoint = new MysqlSavepoint(getExceptionInterceptor());
-
         setSavepoint(savepoint);
-
         return savepoint;
     }
 
@@ -2133,15 +2133,10 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             checkClosed();
 
             StringBuilder savePointQuery = new StringBuilder("SAVEPOINT ");
-            savePointQuery.append('`');
-            savePointQuery.append(savepoint.getSavepointName());
-            savePointQuery.append('`');
-
+            savePointQuery.append(StringUtils.quoteIdentifier(savepoint.getSavepointName(), this.session.getIdentifierQuoteString(), this.pedantic.getValue()));
             java.sql.Statement stmt = null;
-
             try {
                 stmt = getMetadataSafeStatement();
-
                 stmt.executeUpdate(savePointQuery.toString());
             } finally {
                 closeStatement(stmt);
@@ -2153,9 +2148,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public java.sql.Savepoint setSavepoint(String name) throws SQLException {
         synchronized (getConnectionMutex()) {
             MysqlSavepoint savepoint = new MysqlSavepoint(name, getExceptionInterceptor());
-
             setSavepoint(savepoint);
-
             return savepoint;
         }
     }

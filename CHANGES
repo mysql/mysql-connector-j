@@ -3,6 +3,8 @@
 
 Version 8.2.0
 
+  - Fix for Bug#35811592, Missing implementation for Connection.releaseSavepoint().
+
   - Fix for Bug#91351 (Bug#28225464), MysqlConnectionPoolDataSource - autocommit status lost if global autocommit = 0.
 
   - WL#15197, Support WebauthN in fido authentication plugin.
