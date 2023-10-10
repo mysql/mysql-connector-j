@@ -357,7 +357,7 @@ public class TimeUtil {
     }
 
     public static Boolean hasFractionalSeconds(Time t) {
-        return t.getTime() % 1000 > 0;
+        return t.getTime() % 1000 != 0;
     }
 
     /**
