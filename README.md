@@ -29,7 +29,7 @@ According to how you use MySQL Connector/J, you may also need to install the fol
 
 ### As a Maven Dependency
 
-Alternatively, MySQL Connector/J can be obtained automatically via [Maven's dependency management](https://search.maven.org/search?q=g:%22com.mysql%22%20AND%20a:%22mysql-connector-j%22) by adding the following configuration in the application's Project Object Model (POM) file:
+Alternatively, MySQL Connector/J can be obtained automatically via [Maven's dependency management](https://central.sonatype.com/search?q=g%3Acom.mysql+a%3Amysql-connector-j) by adding the following configuration in the application's Project Object Model (POM) file:
 
 ```xml
 <dependency>
