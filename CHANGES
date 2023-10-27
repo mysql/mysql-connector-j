@@ -3,6 +3,8 @@
 
 Version 8.3.0
 
+  - Fix for Bug#73774 (19531305), Can't execute a stored procedure if exists function with same name.
+
 Version 8.2.0
 
   - Fix for Bug#35811592, Missing implementation for Connection.releaseSavepoint().

@@ -32,7 +32,6 @@ package testsuite.regression;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -176,11 +175,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
-        Connection db2Connection = null;
-        Connection db1Connection = null;
-
-        db2Connection = getConnectionWithProps(props);
-        db1Connection = getConnectionWithProps(props);
+        Connection db2Connection = getConnectionWithProps(props);
+        Connection db1Connection = getConnectionWithProps(props);
 
         Statement db1st = db1Connection.createStatement();
         Statement db2st = db2Connection.createStatement();
@@ -200,74 +196,71 @@ public class CallableStatementRegressionTest extends BaseTestCase {
                         + "\nOUT p_userName VARCHAR(30),\nOUT p_administrador VARCHAR(1))\nBEGIN"
                         + (doASelect ? "\nselect 1;" : "\nSELECT 1 INTO p_administrador;") + "\nEND");
 
-        CallableStatement cstmt = db2Connection.prepareCall("{ call COMPROVAR_USUARI(?, ?, ?, ?, ?, ?) }");
-        cstmt.setString(1, "abc");
-        cstmt.setString(2, "def");
-        cstmt.registerOutParameter(3, java.sql.Types.INTEGER);
-        cstmt.registerOutParameter(4, java.sql.Types.VARCHAR);
-        cstmt.registerOutParameter(5, java.sql.Types.VARCHAR);
+        CallableStatement cstmt1 = db2Connection.prepareCall("{ call COMPROVAR_USUARI(?, ?, ?, ?, ?, ?) }");
+        cstmt1.setString(1, "abc");
+        cstmt1.setString(2, "def");
+        cstmt1.registerOutParameter(3, java.sql.Types.INTEGER);
+        cstmt1.registerOutParameter(4, java.sql.Types.VARCHAR);
+        cstmt1.registerOutParameter(5, java.sql.Types.VARCHAR);
 
-        cstmt.registerOutParameter(6, java.sql.Types.VARCHAR);
+        cstmt1.registerOutParameter(6, java.sql.Types.VARCHAR);
 
-        cstmt.execute();
+        assertThrows(SQLException.class, () -> {
+            cstmt1.registerOutParameter(7, java.sql.Types.VARCHAR);
+            return null;
+        });
+
+        cstmt1.execute();
 
         if (doASelect) {
-            this.rs = cstmt.getResultSet();
+            this.rs = cstmt1.getResultSet();
             assertTrue(this.rs.next());
             assertEquals(2, this.rs.getInt(1));
         } else {
-            assertEquals(2, cstmt.getInt(5));
+            assertEquals(2, cstmt1.getInt(5));
         }
 
-        cstmt = db1Connection.prepareCall("{ call COMPROVAR_USUARI(?, ?, ?, ?, ?, ?) }");
-        cstmt.setString(1, "abc");
-        cstmt.setString(2, "def");
-        cstmt.registerOutParameter(3, java.sql.Types.INTEGER);
-        cstmt.registerOutParameter(4, java.sql.Types.VARCHAR);
-        cstmt.registerOutParameter(5, java.sql.Types.VARCHAR);
+        SQLException e = assertThrows(SQLException.class, () -> {
+            db1Connection.prepareCall("{ call COMPROVAR_USUARI(?, ?, ?, ?, ?, ?) }");
+            return null;
+        });
+        assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, e.getSQLState());
 
-        try {
-            cstmt.registerOutParameter(6, java.sql.Types.VARCHAR);
-            fail("Should've thrown an exception");
-        } catch (SQLException sqlEx) {
-            assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
-        }
+        CallableStatement cstmt3 = db1Connection.prepareCall("{ call COMPROVAR_USUARI(?, ?, ?, ?, ?) }");
+        cstmt3.setString(1, "abc");
+        cstmt3.setString(2, "def");
+        cstmt3.registerOutParameter(3, java.sql.Types.INTEGER);
+        cstmt3.registerOutParameter(4, java.sql.Types.VARCHAR);
+        cstmt3.registerOutParameter(5, java.sql.Types.VARCHAR);
 
-        cstmt = db1Connection.prepareCall("{ call COMPROVAR_USUARI(?, ?, ?, ?, ?) }");
-        cstmt.setString(1, "abc");
-        cstmt.setString(2, "def");
-        cstmt.registerOutParameter(3, java.sql.Types.INTEGER);
-        cstmt.registerOutParameter(4, java.sql.Types.VARCHAR);
-        cstmt.registerOutParameter(5, java.sql.Types.VARCHAR);
-
-        cstmt.execute();
+        cstmt3.execute();
 
         if (doASelect) {
-            this.rs = cstmt.getResultSet();
+            this.rs = cstmt3.getResultSet();
             assertTrue(this.rs.next());
             assertEquals(1, this.rs.getInt(1));
         } else {
-            assertEquals(1, cstmt.getInt(5));
+            assertEquals(1, cstmt3.getInt(5));
         }
 
         String quoteChar = db2Connection.getMetaData().getIdentifierQuoteString();
 
-        cstmt = db2Connection.prepareCall(
+        CallableStatement cstmt4 = db2Connection.prepareCall(
                 "{ call " + quoteChar + db1Connection.getCatalog() + quoteChar + "." + quoteChar + "COMPROVAR_USUARI" + quoteChar + "(?, ?, ?, ?, ?) }");
-        cstmt.setString(1, "abc");
-        cstmt.setString(2, "def");
-        cstmt.registerOutParameter(3, java.sql.Types.INTEGER);
-        cstmt.registerOutParameter(4, java.sql.Types.VARCHAR);
-        cstmt.registerOutParameter(5, java.sql.Types.VARCHAR);
+        cstmt4.setString(1, "abc");
+        cstmt4.setString(2, "def");
+        cstmt4.registerOutParameter(3, java.sql.Types.INTEGER);
+        cstmt4.registerOutParameter(4, java.sql.Types.VARCHAR);
+        cstmt4.registerOutParameter(5, java.sql.Types.VARCHAR);
 
-        cstmt.execute();
+        cstmt4.execute();
 
         if (doASelect) {
-            this.rs = cstmt.getResultSet();
+            this.rs = cstmt4.getResultSet();
             assertTrue(this.rs.next());
             assertEquals(1, this.rs.getInt(1));
         } else {
-            assertEquals(1, cstmt.getInt(5));
+            assertEquals(1, cstmt4.getInt(5));
         }
     }
 
@@ -846,9 +839,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
         try {
             cStmt = this.conn.prepareCall("{CALL /* SOME COMMENT */ testBug27400( /* does this work too? */ ?, ?)} # and a commented ? here too");
-            assertTrue(cStmt.toString().indexOf("/*") != -1); // we don't want
-                                                             // to strip the
-                                                             // comments
+            assertTrue(cStmt.toString().indexOf("/*") != -1); // we don't want to strip the comments
             cStmt.setInt(1, 1);
             cStmt.setString(2, "bleh");
             cStmt.execute();
@@ -1602,21 +1593,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
                 CallableStatement callSt2 = con.prepareCall("{? = CALL testBug19857166f(?,?)}");
                 callSt2.registerOutParameter(1, java.sql.Types.VARCHAR);
-                if (getProcRetFuncs) {
-                    callSt2.setString("a", "abcd");
-                    callSt2.setString("b", "rr");
-                } else {
-                    assertThrows(SQLException.class, "No parameter named 'a'", () -> {
-                        callSt2.setString("a", "abcd");
-                        return null;
-                    });
-                    assertThrows(SQLException.class, "No parameter named 'b'", () -> {
-                        callSt2.setString("b", "rr");
-                        return null;
-                    });
-                    callSt2.setString(2, "abcd");
-                    callSt2.setString(3, "rr");
-                }
+                callSt2.setString("a", "abcd");
+                callSt2.setString("b", "rr");
                 callSt2.execute();
                 assertEquals("abcdrr", callSt2.getString(1), "Data Comparison failed");
                 callSt2.close();
@@ -1652,6 +1630,178 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         cstmt2.execute(); // was failing
         assertEquals(1, cstmt2.getUpdateCount());
         assertEquals(0, cstmt2.getByte(1));
+    }
+
+    /**
+     * Tests fix for Bug#73774 (19531305) - Can't execute a stored procedure if exists function with same name.
+     *
+     * @throws Exception
+     *             if an error occurs.
+     */
+    @Test
+    public void testBug73774() throws Exception {
+        createProcedure("testBug73774_1",
+                "(INOUT p1 VARCHAR(20), IN p2 VARCHAR(20), OUT p3 VARCHAR(20)) BEGIN SELECT CONCAT(p1, p2) INTO p1; SELECT CONCAT(p1, p2) INTO p3;  END");
+        createFunction("testBug73774_1", "(p1 VARCHAR(20), p2 VARCHAR(20)) RETURNS VARCHAR(40) DETERMINISTIC RETURN CONCAT(p1, p2)");
+        createProcedure("testBug73774_2",
+                "(INOUT p1 VARCHAR(20), IN p2 VARCHAR(20), IN pX INT, OUT p3 VARCHAR(20)) BEGIN SELECT CONCAT(p1, p2) INTO p1; SELECT CONCAT(p1, p2) INTO p3;  END");
+        createFunction("testBug73774_2", "(p1 VARCHAR(20), pX INT, p2 VARCHAR(20)) RETURNS VARCHAR(40) DETERMINISTIC RETURN CONCAT(p1, p2)");
+
+        boolean getPRF = false;
+        boolean useSPS = false;
+
+        do {
+            final String testCase = String.format("Case [getPRF: %s, useSPS: %s]", getPRF ? "Y" : "N", useSPS ? "Y" : "N");
+
+            Properties props = new Properties();
+            props.setProperty("getProceduresReturnsFunctions", Boolean.toString(getPRF));
+            props.setProperty("useServerPrepStmts", Boolean.toString(useSPS));
+            Connection testConn = getConnectionWithProps(props);
+
+            // Execute procedure 1
+            final CallableStatement cstmtP1 = testConn.prepareCall("{CALL testBug73774_1 (?, ?, ?)}");
+            assertEquals(3, cstmtP1.getParameterMetaData().getParameterCount(), testCase);
+            cstmtP1.registerOutParameter(1, Types.VARCHAR);
+            assertThrows(testCase, SQLException.class, "Parameter number 2 is not an OUT parameter", () -> {
+                cstmtP1.registerOutParameter(2, Types.VARCHAR);
+                return null;
+            });
+            cstmtP1.registerOutParameter(3, Types.VARCHAR);
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", () -> {
+                cstmtP1.registerOutParameter(4, Types.VARCHAR);
+                return null;
+            });
+            cstmtP1.setString(1, "My");
+            cstmtP1.setString(2, "SQL");
+            cstmtP1.setString(3, "SQL"); // no-op
+            assertThrows(testCase, SQLException.class, "Parameter index out of range \\(4 > number of parameters, which is 3\\)\\.", () -> {
+                cstmtP1.setString(4, "SQL");
+                return null;
+
+            });
+            assertFalse(cstmtP1.execute(), testCase);
+            assertEquals("MySQL", cstmtP1.getString(1), testCase);
+            assertThrows(testCase, SQLException.class, "Parameter 2 is not registered as an output parameter", () -> {
+                cstmtP1.getString(2);
+                return null;
+            });
+            assertEquals("MySQLSQL", cstmtP1.getString(3), testCase);
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", () -> {
+                cstmtP1.getString(4);
+                return null;
+            });
+            cstmtP1.close();
+
+            // Execute procedure 2
+            final CallableStatement cstmtP2 = testConn.prepareCall("{CALL testBug73774_2 (?, ?, 0, ?)}");
+            assertEquals(3, cstmtP2.getParameterMetaData().getParameterCount(), testCase);
+            cstmtP2.registerOutParameter(1, Types.VARCHAR);
+            assertThrows(testCase, SQLException.class, "Parameter number 2 is not an OUT parameter", () -> {
+                cstmtP2.registerOutParameter(2, Types.VARCHAR);
+                return null;
+            });
+            cstmtP2.registerOutParameter(3, Types.VARCHAR);
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", () -> {
+                cstmtP2.registerOutParameter(4, Types.VARCHAR);
+                return null;
+            });
+
+            cstmtP2.setString(1, "My");
+            cstmtP2.setString(2, "SQL");
+            cstmtP2.setString(3, "SQL"); // no-op
+            assertThrows(testCase, SQLException.class, "Parameter index out of range \\(4 > number of parameters, which is 3\\)\\.", () -> {
+                cstmtP2.setString(4, "SQL");
+                return null;
+            });
+
+            assertFalse(cstmtP2.execute(), testCase);
+            assertEquals("MySQL", cstmtP2.getString(1), testCase);
+            assertThrows(testCase, SQLException.class, "Parameter 2 is not registered as an output parameter", () -> {
+                cstmtP2.getString(2);
+                return null;
+            });
+            assertEquals("MySQLSQL", cstmtP2.getString(3), testCase);
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", () -> {
+                cstmtP2.getString(4);
+                return null;
+            });
+            cstmtP2.close();
+            // Execute function 1.
+            final CallableStatement cstmtF1 = testConn.prepareCall("{? = CALL testBug73774_1 (?, ?)}");
+            cstmtF1.registerOutParameter(1, Types.VARCHAR);
+            assertThrows(testCase, SQLException.class, "Parameter number 2 is not an OUT parameter", () -> {
+                cstmtF1.registerOutParameter(2, Types.VARCHAR);
+                return null;
+            });
+            assertThrows(testCase, SQLException.class, "Parameter number 2 is not an OUT parameter", () -> {
+                cstmtF1.registerOutParameter(2, Types.VARCHAR);
+                return null;
+            });
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", () -> {
+                cstmtF1.registerOutParameter(4, Types.VARCHAR);
+                return null;
+            });
+            cstmtF1.setString(2, "My");
+            cstmtF1.setString(3, "SQL");
+            assertThrows(testCase, SQLException.class, "Parameter index out of range \\(4 > number of parameters, which is 3\\)\\.", () -> {
+                cstmtF1.setString(4, "SQL");
+                return null;
+            });
+            assertFalse(cstmtF1.execute(), testCase);
+            assertEquals("MySQL", cstmtF1.getString(1), testCase);
+            assertThrows(testCase, SQLException.class, "Parameter 2 is not registered as an output parameter", () -> {
+                cstmtF1.getString(2);
+                return null;
+            });
+            assertThrows(testCase, SQLException.class, "Parameter 3 is not registered as an output parameter", () -> {
+                cstmtF1.getString(3);
+                return null;
+            });
+
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", () -> {
+                cstmtF1.getString(4);
+                return null;
+            });
+            cstmtF1.close();
+
+            // Execute function 2.
+            final CallableStatement cstmtF2 = testConn.prepareCall("{? = CALL testBug73774_2 (?, 0, ?)}");
+            cstmtF2.registerOutParameter(1, Types.VARCHAR);
+            assertThrows(testCase, SQLException.class, "Parameter number 2 is not an OUT parameter", () -> {
+                cstmtF2.registerOutParameter(2, Types.VARCHAR);
+                return null;
+            });
+            assertThrows(testCase, SQLException.class, "Parameter number 2 is not an OUT parameter", () -> {
+                cstmtF2.registerOutParameter(2, Types.VARCHAR);
+                return null;
+            });
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", () -> {
+                cstmtF2.registerOutParameter(4, Types.VARCHAR);
+                return null;
+            });
+            cstmtF2.setString(2, "My");
+            cstmtF2.setString(3, "SQL");
+            assertThrows(testCase, SQLException.class, "Parameter index out of range \\(4 > number of parameters, which is 3\\)\\.", () -> {
+                cstmtF2.setString(4, "SQL");
+                return null;
+            });
+            assertFalse(cstmtF2.execute(), testCase);
+            assertEquals("MySQL", cstmtF2.getString(1), testCase);
+            assertThrows(testCase, SQLException.class, "Parameter 2 is not registered as an output parameter", () -> {
+                cstmtF2.getString(2);
+                return null;
+            });
+            assertThrows(testCase, SQLException.class, "Parameter 3 is not registered as an output parameter", () -> {
+                cstmtF2.getString(3);
+                return null;
+            });
+            assertThrows(testCase, SQLException.class, "Parameter index of 4 is out of range \\(1, 3\\)", () -> {
+                cstmtF2.getString(4);
+                return null;
+            });
+            cstmtF2.close();
+            testConn.close();
+        } while ((useSPS = !useSPS) || (getPRF = !getPRF));
     }
 
 }

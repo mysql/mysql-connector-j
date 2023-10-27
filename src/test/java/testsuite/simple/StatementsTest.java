@@ -1482,7 +1482,7 @@ public class StatementsTest extends BaseTestCase {
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
-        props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), "5660");
+        props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), "5690");
         props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
         Connection multiConn = null;
 
@@ -1509,8 +1509,8 @@ public class StatementsTest extends BaseTestCase {
             } catch (BatchUpdateException bUpE) {
                 int[] counts = bUpE.getUpdateCounts();
 
-                for (int i = 4059; i < counts.length; i++) {
-                    assertEquals(counts[i], Statement.EXECUTE_FAILED);
+                for (int i = 3530; i < counts.length; i++) {
+                    assertEquals(Statement.EXECUTE_FAILED, counts[i]);
                 }
 
                 // this depends on max_allowed_packet, only a sanity check
@@ -1524,8 +1524,8 @@ public class StatementsTest extends BaseTestCase {
             } catch (BatchUpdateException bUpE) {
                 int[] counts = bUpE.getUpdateCounts();
 
-                for (int i = 4094; i < counts.length; i++) {
-                    assertEquals(counts[i], Statement.EXECUTE_FAILED);
+                for (int i = 4091; i < counts.length; i++) {
+                    assertEquals(Statement.EXECUTE_FAILED, counts[i]);
                 }
 
                 // this depends on max_allowed_packet, only a sanity check
@@ -1536,7 +1536,7 @@ public class StatementsTest extends BaseTestCase {
 
             createProcedure("sp_rewriteErrors", "(param1 INT)\nBEGIN\nINSERT INTO rewriteErrors VALUES (param1);\nEND");
 
-            CallableStatement cStmt = multiConn.prepareCall("{ CALL sp_rewriteErrors(?)}");
+            CallableStatement cStmt = multiConn.prepareCall("{ CALL sp_rewriteErrors(?) }");
 
             for (int i = 0; i < 4096; i++) {
                 cStmt.setInt(1, i);
@@ -1551,13 +1551,15 @@ public class StatementsTest extends BaseTestCase {
             } catch (BatchUpdateException bUpE) {
                 int[] counts = bUpE.getUpdateCounts();
 
-                for (int i = 4093; i < counts.length; i++) {
-                    assertEquals(counts[i], Statement.EXECUTE_FAILED);
+                for (int i = 3950; i < counts.length; i++) {
+                    assertEquals(Statement.EXECUTE_FAILED, counts[i]);
                 }
 
                 // this depends on max_allowed_packet, only a sanity check
                 assertTrue(getRowCount("rewriteErrors") >= 4000);
             }
+
+            this.stmt.execute("TRUNCATE TABLE rewriteErrors");
         }
     }
 
