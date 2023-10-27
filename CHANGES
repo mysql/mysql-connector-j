@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/en/
 
+Version 8.3.0
+
 Version 8.2.0
 
   - Fix for Bug#35811592, Missing implementation for Connection.releaseSavepoint().
