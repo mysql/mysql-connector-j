@@ -1636,7 +1636,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
      * Tests fix for Bug#73774 (19531305) - Can't execute a stored procedure if exists function with same name.
      *
      * @throws Exception
-     *             if an error occurs.
      */
     @Test
     public void testBug73774() throws Exception {
@@ -1802,6 +1801,59 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             cstmtF2.close();
             testConn.close();
         } while ((useSPS = !useSPS) || (getPRF = !getPRF));
+    }
+
+    /**
+     * Tests fix for Bug#95796 (29907618) - Parameter metadata inferred incorrectly when procedure or function doesn't exist.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug95796() throws Exception {
+        createProcedure("testBug95796", "(IN p1 INT, IN p2 INT, IN p3 INT) BEGIN SELECT p1 + p2 + p3; END");
+        createUser("testBug95796", "IDENTIFIED BY 'testBug95796'");
+        this.stmt.executeUpdate("GRANT SELECT ON " + this.dbName + ".* to testBug95796");
+        this.stmt.executeUpdate("FLUSH PRIVILEGES");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "false");
+        Connection testConn = getConnectionWithProps(props);
+        ((JdbcConnection) testConn).changeUser("testBug95796", "testBug95796");
+
+        CallableStatement cstmt;
+        ParameterMetaData pmd;
+
+        cstmt = testConn.prepareCall("{CALL testBug95796 (?, ?, ?)}");
+        pmd = cstmt.getParameterMetaData();
+        assertEquals(3, pmd.getParameterCount());
+        for (int i = 1; i <= pmd.getParameterCount(); i++) {
+            assertEquals(Types.VARCHAR, pmd.getParameterType(i));
+            assertEquals(ParameterMetaData.parameterModeIn, pmd.getParameterMode(i));
+        }
+
+        cstmt = testConn.prepareCall("{CALL testBug95796 (?, 0, ?)}");
+        pmd = cstmt.getParameterMetaData();
+        assertEquals(2, pmd.getParameterCount());
+        for (int i = 1; i <= pmd.getParameterCount(); i++) {
+            assertEquals(Types.VARCHAR, pmd.getParameterType(i));
+            assertEquals(ParameterMetaData.parameterModeIn, pmd.getParameterMode(i));
+        }
+
+        cstmt = testConn.prepareCall("{? = CALL testBug95796 (?, ?, ?)}");
+        pmd = cstmt.getParameterMetaData();
+        assertEquals(4, pmd.getParameterCount());
+        for (int i = 1; i <= pmd.getParameterCount(); i++) {
+            assertEquals(Types.VARCHAR, pmd.getParameterType(i));
+            assertEquals(i == 1 ? ParameterMetaData.parameterModeOut : ParameterMetaData.parameterModeIn, pmd.getParameterMode(i));
+        }
+
+        cstmt = testConn.prepareCall("{? = CALL testBug95796 (?, 0, ?)}");
+        pmd = cstmt.getParameterMetaData();
+        assertEquals(3, pmd.getParameterCount());
+        for (int i = 1; i <= pmd.getParameterCount(); i++) {
+            assertEquals(Types.VARCHAR, pmd.getParameterType(i));
+            assertEquals(i == 1 ? ParameterMetaData.parameterModeOut : ParameterMetaData.parameterModeIn, pmd.getParameterMode(i));
+        }
     }
 
 }

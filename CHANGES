@@ -3,7 +3,9 @@
 
 Version 8.3.0
 
-  - Fix for Bug#73774 (19531305), Can't execute a stored procedure if exists function with same name.
+  - Fix for Bug#95796 (Bug#29907618), Parameter metadata inferred incorrectly when procedure or function doesn't exist.
+
+  - Fix for Bug#73774 (Bug#19531305), Can't execute a stored procedure if exists function with same name.
 
 Version 8.2.0
 

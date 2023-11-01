@@ -136,6 +136,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
         String nativeSql;
 
+        boolean fakeParameters = false;
+
         int numParameters;
 
         List<CallableStatementParam> parameterList;
@@ -164,6 +166,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.nativeSql = ((PreparedQuery) CallableStatement.this.query).getOriginalSql();
             this.dbInUse = CallableStatement.this.getCurrentDatabase();
             this.isFunctionCall = fullParamInfo.isFunctionCall;
+            this.fakeParameters = fullParamInfo.fakeParameters;
             @SuppressWarnings("synthetic-access")
             int[] localParameterMap = CallableStatement.this.placeholderToParameterIndexMap;
             int parameterMapLength = localParameterMap.length;
@@ -509,7 +512,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
             PreparedQuery q = (PreparedQuery) this.query;
 
-            if (this.paramInfo != null && q.getParameterCount() > 0) {
+            if (this.paramInfo != null && !this.paramInfo.fakeParameters && q.getParameterCount() > 0) {
                 this.placeholderToParameterIndexMap = new int[q.getParameterCount()];
 
                 int startIndex = 0;
@@ -736,7 +739,12 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                 row[2] = procNameAsBytes; // PROCEDURE/NAME
                 row[3] = s2b(String.valueOf(i)); // COLUMN_NAME
 
-                row[4] = s2b(String.valueOf(java.sql.DatabaseMetaData.procedureColumnIn));
+                if (this.callingStoredFunction && i == 0) {
+                    // First parameter is function return.
+                    row[4] = s2b(String.valueOf(java.sql.DatabaseMetaData.procedureColumnOut));
+                } else {
+                    row[4] = s2b(String.valueOf(java.sql.DatabaseMetaData.procedureColumnIn));
+                }
 
                 row[5] = s2b(String.valueOf(MysqlType.VARCHAR.getJdbcType())); // DATA_TYPE
                 row[6] = s2b(MysqlType.VARCHAR.getName()); // TYPE_NAME
@@ -756,6 +764,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                     new ResultsetRowsStatic(resultRows, new DefaultColumnDefinition(fields)));
 
             convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);
+            this.paramInfo.fakeParameters = true;
         }
     }
 
