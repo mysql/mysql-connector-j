@@ -5548,4 +5548,34 @@ public class MetaDataRegressionTest extends BaseTestCase {
         } while (useIS = !useIS);
     }
 
+    /**
+     * Tests fix for Bug#96582 (Bug#30222032), jdbc.MysqlParameterMetadata#isNullable doesnt check whether to be simple.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug96582() throws Exception {
+        Properties connectionProps = new Properties();
+        connectionProps.put(PropertyKey.generateSimpleParameterMetadata.getKeyName(), "true");
+        connectionProps.put(PropertyKey.useServerPrepStmts.getKeyName(), "false");
+        Connection con = this.getConnectionWithProps(connectionProps);
+        createTable("testBug96582", "(c1 INT NOT NULL, c2 INT)");
+        this.pstmt = con.prepareStatement("INSERT INTO testBug96582(c1, c2) VALUES(?, ?)");
+        this.pstmt.setInt(1, 1);
+        this.pstmt.setInt(2, 2);
+        assertEquals(ParameterMetaData.parameterNullableUnknown, this.pstmt.getParameterMetaData().isNullable(1));
+        assertEquals(ParameterMetaData.parameterNullableUnknown, this.pstmt.getParameterMetaData().isNullable(2));
+
+        con.close();
+
+        connectionProps.put(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+        con = this.getConnectionWithProps(connectionProps);
+        createTable("testBug96582", "(c1 INT NOT NULL, c2 INT)");
+        this.pstmt = con.prepareStatement("INSERT INTO testBug96582(c1, c2) VALUES(?, ?)");
+        this.pstmt.setInt(1, 1);
+        this.pstmt.setInt(2, 2);
+        assertEquals(ParameterMetaData.parameterNullable, this.pstmt.getParameterMetaData().isNullable(1));
+        assertEquals(ParameterMetaData.parameterNullable, this.pstmt.getParameterMetaData().isNullable(2));
+    }
+
 }
