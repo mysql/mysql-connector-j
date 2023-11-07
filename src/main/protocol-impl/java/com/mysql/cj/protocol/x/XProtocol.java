@@ -148,6 +148,10 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     private Map<Class<? extends GeneratedMessageV3>, ProtocolEntityFactory<? extends ProtocolEntity, XMessage>> messageToProtocolEntityFactory = new HashMap<>();
 
     public XProtocol(HostInfo hostInfo, PropertySet propertySet) {
+        if (hostInfo == null && propertySet == null) {
+            return; // Special instance of Protocol that can be used as poison object.
+        }
+
         String host = hostInfo.getHost();
         if (host == null || StringUtils.isEmptyOrWhitespaceOnly(host)) {
             host = "localhost";

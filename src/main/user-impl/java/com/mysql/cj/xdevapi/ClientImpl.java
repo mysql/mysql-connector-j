@@ -32,16 +32,19 @@ package com.mysql.cj.xdevapi;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -63,24 +66,28 @@ import com.mysql.cj.util.StringUtils;
 
 public class ClientImpl implements Client, ProtocolEventListener {
 
-    boolean isClosed = false;
+    private final PooledXProtocol poisonProtocolMarker = new PooledXProtocol();
+
+    private boolean isClosed = false;
 
     private ConnectionUrl connUrl = null;
 
     private boolean poolingEnabled = true;
     private int maxSize = 25;
-    int maxIdleTime = 0;
+    private int maxIdleTime = 0;
     private int queueTimeout = 0;
 
+    private Set<WeakReference<Session>> nonPooledSessions = null;
+
     private int demotedTimeout = 120_000;
-    Map<HostInfo, Long> demotedHosts = null;
+    private ConcurrentMap<HostInfo, Long> demotedHosts = null;
+    private Set<WeakReference<PooledXProtocol>> activeProtocols = null;
+    private BlockingQueue<PooledXProtocol> idleProtocols = null;
+    private Semaphore availableProtocols;
 
-    BlockingQueue<PooledXProtocol> idleProtocols = null;
-    Set<WeakReference<PooledXProtocol>> activeProtocols = null;
+    private ReadWriteLock clientShutdownLock;
 
-    Set<WeakReference<Session>> nonPooledSessions = null;
-
-    SessionFactory sessionFactory = new SessionFactory();
+    private SessionFactory sessionFactory = new SessionFactory();
 
     public ClientImpl(String url, String clientPropsJson) {
         Properties clientProps = StringUtils.isNullOrEmpty(clientPropsJson) ? new Properties() : clientPropsFromJson(clientPropsJson);
@@ -235,202 +242,307 @@ public class ClientImpl implements Client, ProtocolEventListener {
         validateAndInitializeClientProps(clientProps);
 
         if (this.poolingEnabled) {
-            this.demotedHosts = new HashMap<>();
+            this.demotedHosts = new ConcurrentHashMap<>();
+            this.activeProtocols = new CopyOnWriteArraySet<>();
             this.idleProtocols = new LinkedBlockingQueue<>(this.maxSize);
-            this.activeProtocols = new HashSet<>(this.maxSize);
+            this.availableProtocols = new Semaphore(this.maxSize, true);
         } else {
-            this.nonPooledSessions = new HashSet<>();
+            this.nonPooledSessions = new CopyOnWriteArraySet<>();
         }
+        this.clientShutdownLock = new ReentrantReadWriteLock(true);
     }
 
     @Override
     public Session getSession() {
+        return this.poolingEnabled ? getPooledSession() : getNonPooledSession();
+    }
+
+    private Session getNonPooledSession() {
         if (this.isClosed) {
             throw new XDevAPIError("Client is closed.");
         }
 
-        if (!this.poolingEnabled) {
-            synchronized (this) {
-                // Remove nulled and closed session references from the nonPooledSessions set.
-                List<WeakReference<Session>> obsoletedSessions = new ArrayList<>();
-                for (WeakReference<Session> ws : this.nonPooledSessions) {
-                    if (ws != null) {
-                        Session s = ws.get();
-                        if (s == null || !s.isOpen()) {
-                            obsoletedSessions.add(ws);
-                        }
-                    }
-                }
-                for (WeakReference<Session> ws : obsoletedSessions) {
+        this.clientShutdownLock.readLock().lock();
+        try {
+            // Remove nulled and closed session references from the nonPooledSessions set.
+            for (WeakReference<Session> ws : this.nonPooledSessions) {
+                Session s = ws.get();
+                if (s == null || !s.isOpen()) {
                     this.nonPooledSessions.remove(ws);
                 }
-
-                Session sess = this.sessionFactory.getSession(this.connUrl);
-                this.nonPooledSessions.add(new WeakReference<>(sess));
-                return sess;
             }
-        }
 
-        PooledXProtocol prot = null;
+            Session sess = this.sessionFactory.getSession(this.connUrl);
+            this.nonPooledSessions.add(new WeakReference<>(sess));
+            return sess;
+        } finally {
+            this.clientShutdownLock.readLock().unlock();
+        }
+    }
+
+    private Session getPooledSession() {
+        PooledXProtocol protocol = null;
         List<HostInfo> hostsList = this.connUrl.getHostsList();
 
-        synchronized (this) {
-            // 0. Close and remove idle protocols connected to a host that is not usable anymore.
-            List<PooledXProtocol> toCloseAndRemove = this.idleProtocols.stream().filter(p -> !p.isHostInfoValid(hostsList)).collect(Collectors.toList());
-            toCloseAndRemove.stream().peek(PooledXProtocol::realClose).peek(this.idleProtocols::remove).map(PooledXProtocol::getHostInfo).sequential()
-                    .forEach(this.demotedHosts::remove);
-        }
+        long startTime = System.currentTimeMillis();
+        while (protocol == null) {
+            if (this.isClosed) {
+                throw new XDevAPIError("Client is closed.");
+            }
 
-        long start = System.currentTimeMillis();
-        while (prot == null && (this.queueTimeout == 0 || System.currentTimeMillis() < start + this.queueTimeout)) { // TODO how to avoid endless loop?
-            synchronized (this.idleProtocols) {
-                if (this.idleProtocols.peek() != null) {
-                    // 1. If there are idle Protocols then return one of them.
-                    PooledXProtocol tryProt = this.idleProtocols.poll();
-                    if (tryProt.isOpen()) { // ignore closed Session, try next idle Session
-                        if (tryProt.isIdleTimeoutReached()) {
-                            tryProt.realClose(); // close expired Session, try next idle Session
-                        } else {
-                            try {
-                                tryProt.reset();
-                                prot = tryProt;
-                            } catch (CJCommunicationsException | XProtocolError e) {
-                                // This session is useless, let's try another one.
-                            }
-                        }
-                    }
+            if (this.queueTimeout != 0 && System.currentTimeMillis() > startTime + this.queueTimeout) {
+                // 0. Already waited queueTimeout for an idle Protocol. Check one last time if there are available slots in the pool and, if not, then fail.
+                if (this.availableProtocols.tryAcquire()) {
+                    protocol = newPooledXProtocol(hostsList);
+                }
+                if (protocol == null) {
+                    throw new XDevAPIError("Session can not be obtained within " + this.queueTimeout + " milliseconds.");
+                }
+            }
 
-                } else if (this.idleProtocols.size() + this.activeProtocols.size() < this.maxSize) {
-                    // 2. No idle Protocols but the pool has free space. Adding new Protocol to pool.
-                    CJException latestException = null;
-                    List<HostInfo> hostsToRevisit = new ArrayList<>();
-                    for (HostInfo hi : hostsList) {
-                        if (this.demotedHosts.containsKey(hi)) {
-                            if (start - this.demotedHosts.get(hi) > this.demotedTimeout) {
-                                this.demotedHosts.remove(hi);
-                            } else {
-                                hostsToRevisit.add(hi);
-                                continue;
-                            }
-                        }
-                        try {
-                            prot = newPooledXProtocol(hi);
-                            break;
-                        } catch (CJCommunicationsException e) {
-                            if (e.getCause() == null) {
-                                throw e;
-                            }
-                            latestException = e;
-                            this.demotedHosts.put(hi, System.currentTimeMillis());
-                        }
-                    }
-                    if (prot == null) {
-                        // All non-demoted hosts have failed, let's try the ones that were previously demoted before calling it a failure.
-                        for (HostInfo hi : hostsToRevisit) {
-                            try {
-                                prot = newPooledXProtocol(hi);
-                                // This host is fine now so re-promote it.
-                                this.demotedHosts.remove(hi);
-                                break;
-                            } catch (CJCommunicationsException e) {
-                                if (e.getCause() == null) {
-                                    throw e;
-                                }
-                                latestException = e;
-                                this.demotedHosts.put(hi, System.currentTimeMillis());
-                            }
-                        }
-                    }
-                    if (prot == null && latestException != null) {
-                        throw ExceptionFactory.createException(CJCommunicationsException.class, Messages.getString("Session.Create.Failover.0"),
-                                latestException);
-                    }
+            if ((protocol = this.idleProtocols.poll()) != null) {
+                // 1. If there are idle Protocols then pick one and check if it is usable.
+                protocol = validateAndResetPooledXProtocol(protocol, hostsList);
 
-                } else if (this.queueTimeout > 0) {
-                    // 3. No idle Protocols, no free space in the pool. Waiting queueTimeout milliseconds for idle Protocol.
-                    long currentTimeout = this.queueTimeout - (System.currentTimeMillis() - start);
-                    try {
-                        if (currentTimeout > 0) {
-                            prot = this.idleProtocols.poll(currentTimeout, TimeUnit.MILLISECONDS);
-                        }
-                    } catch (InterruptedException e) {
-                        throw new XDevAPIError("Session can not be obtained within " + this.queueTimeout + " milliseconds.", e);
-                    }
+            } else if (this.availableProtocols.tryAcquire()) {
+                // 2. No idle Protocols but the pool has free space. Create a new Protocol.
+                protocol = newPooledXProtocol(hostsList);
 
-                } else {
-                    // 4. No idle Protocols, no free space in the pool. Waiting indefinitely for idle Protocol.
-                    prot = this.idleProtocols.poll(); // TODO endless lock ?
+            } else if (this.queueTimeout > 0) {
+                // 3. No idle Protocols, no free space in the pool. Waiting up to queueTimeout milliseconds for an idle Protocol.
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                long remainingTime = this.queueTimeout - elapsedTime;
+                try {
+                    if (remainingTime > 0) {
+                        protocol = this.idleProtocols.poll(remainingTime, TimeUnit.MILLISECONDS);
+                        protocol = validateAndResetPooledXProtocol(protocol, hostsList);
+                    }
+                } catch (InterruptedException e) {
+                    throw new XDevAPIError("Session can not be obtained within " + this.queueTimeout + " milliseconds.", e);
+                }
+
+            } else {
+                // 4. No idle Protocols, no free space in the pool, no queue timeout. Waiting indefinitely for an idle Protocol.
+                try {
+                    protocol = this.idleProtocols.take();
+                    validateAndResetPooledXProtocol(protocol, hostsList);
+                } catch (InterruptedException e) {
+                    throw new XDevAPIError("Session can not be obtained.", e);
                 }
             }
         }
-        if (prot == null) {
-            throw new XDevAPIError("Session can not be obtained within " + this.queueTimeout + " milliseconds.");
+
+        this.clientShutdownLock.readLock().lock();
+        try {
+            if (this.isClosed) {
+                throw new XDevAPIError("Client is closed.");
+            }
+            this.activeProtocols.add(new WeakReference<>(protocol));
+        } finally {
+            this.clientShutdownLock.readLock().unlock();
         }
-        synchronized (this) {
-            this.activeProtocols.add(new WeakReference<>(prot));
-        }
-        SessionImpl sess = new SessionImpl(prot);
+
+        SessionImpl sess = new SessionImpl(protocol);
         return sess;
     }
 
+    private PooledXProtocol newPooledXProtocol(List<HostInfo> hostsList) {
+        PooledXProtocol protocol = null;
+        CJException latestException = null;
+        List<HostInfo> hostsToRetryAfterwards = new ArrayList<>();
+
+        for (HostInfo hi : hostsList) {
+            if (this.demotedHosts.containsKey(hi)) {
+                if (System.currentTimeMillis() - this.demotedHosts.get(hi) > this.demotedTimeout) {
+                    this.demotedHosts.remove(hi);
+                } else {
+                    hostsToRetryAfterwards.add(hi);
+                    continue;
+                }
+            }
+            try {
+                protocol = newPooledXProtocol(hi);
+                break;
+            } catch (CJCommunicationsException e) {
+                if (e.getCause() == null) {
+                    this.availableProtocols.release();
+                    throw e;
+                }
+                latestException = e;
+                this.demotedHosts.put(hi, System.currentTimeMillis());
+            }
+        }
+        if (protocol == null) {
+            // All non-demoted hosts have failed, let's try the ones that were previously demoted before calling it a failure.
+            for (HostInfo hi : hostsToRetryAfterwards) {
+                try {
+                    protocol = newPooledXProtocol(hi);
+                    // This host is fine now so let's promote it.
+                    this.demotedHosts.remove(hi);
+                    break;
+                } catch (CJCommunicationsException e) {
+                    if (e.getCause() == null) {
+                        this.availableProtocols.release();
+                        throw e;
+                    }
+                    latestException = e;
+                    this.demotedHosts.put(hi, System.currentTimeMillis());
+                }
+            }
+        }
+        if (protocol == null) {
+            this.availableProtocols.release();
+            if (latestException != null) {
+                throw ExceptionFactory.createException(CJCommunicationsException.class, Messages.getString("Session.Create.Failover.0"), latestException);
+            }
+        }
+
+        return protocol;
+    }
+
     private PooledXProtocol newPooledXProtocol(HostInfo hi) {
-        PooledXProtocol tryProt;
+        PooledXProtocol protocol;
         PropertySet pset = new DefaultPropertySet();
+
         pset.initializeProperties(hi.exposeAsProperties());
-        tryProt = new PooledXProtocol(hi, pset);
-        tryProt.addListener(this);
-        tryProt.connect(hi.getUser(), hi.getPassword(), hi.getDatabase());
-        return tryProt;
+        protocol = new PooledXProtocol(hi, pset, this.maxIdleTime);
+        protocol.addListener(this);
+        protocol.connect(hi.getUser(), hi.getPassword(), hi.getDatabase());
+
+        return protocol;
+    }
+
+    private PooledXProtocol validateAndResetPooledXProtocol(PooledXProtocol protocol, List<HostInfo> hostsList) {
+        if (protocol == null) {
+            return null;
+        }
+        if (protocol == this.poisonProtocolMarker) {
+            this.idleProtocols.add(this.poisonProtocolMarker);
+            throw new XDevAPIError("Session can not be obtained. Client instance is closing.");
+        }
+        if (!protocol.isOpen()) { // If not open, ignore ant try next.
+            this.availableProtocols.release();
+            return null;
+        }
+        if (!protocol.isHostInfoValid(hostsList)) { // Protocol connected to a host that is not usable anymore. Clean up resources and try next.
+            this.availableProtocols.release();
+            this.demotedHosts.remove(protocol.getHostInfo());
+            protocol.realClose();
+            return null;
+        }
+        if (protocol.isIdleTimeoutReached()) { // Protocol expired. Clean up resources and try next.
+            this.availableProtocols.release();
+            protocol.realClose();
+            return null;
+        }
+        try {
+            protocol.reset();
+        } catch (CJCommunicationsException | XProtocolError e) {
+            // This Protocol is useless, let's try next one.
+            this.availableProtocols.release();
+            return null;
+        }
+        return protocol;
     }
 
     @Override
     public void close() {
-        synchronized (this) {
-            if (this.poolingEnabled) {
-                if (!this.isClosed) {
-                    this.isClosed = true;
+        this.clientShutdownLock.writeLock().lock();
+        try {
+            if (!this.isClosed) {
+                this.isClosed = true;
+                if (this.poolingEnabled) {
+                    this.availableProtocols.drainPermits();
                     this.idleProtocols.forEach(PooledXProtocol::realClose);
                     this.idleProtocols.clear();
+                    this.idleProtocols.add(this.poisonProtocolMarker);
                     this.activeProtocols.stream().map(WeakReference::get).filter(Objects::nonNull).forEach(PooledXProtocol::realClose);
                     this.activeProtocols.clear();
+                } else {
+                    this.nonPooledSessions.stream().map(WeakReference::get).filter(Objects::nonNull).filter(Session::isOpen).forEach(Session::close);
                 }
-            } else {
-                this.nonPooledSessions.stream().map(WeakReference::get).filter(Objects::nonNull).filter(Session::isOpen).forEach(Session::close);
+            }
+        } finally {
+            this.clientShutdownLock.writeLock().unlock();
+        }
+    }
+
+    void idleProtocol(PooledXProtocol protocol) {
+        if (!this.isClosed) {
+            for (WeakReference<PooledXProtocol> protocolReference : this.activeProtocols) {
+                PooledXProtocol referencedProtocol = protocolReference.get();
+                if (referencedProtocol == null) {
+                    if (this.activeProtocols.remove(protocolReference)) {
+                        this.availableProtocols.release();
+                    }
+                } else if (referencedProtocol == protocol) {
+                    this.activeProtocols.remove(protocolReference);
+                    this.idleProtocols.add(referencedProtocol);
+                }
             }
         }
     }
 
-    void idleProtocol(PooledXProtocol prot) {
-        synchronized (this) {
-            if (!this.isClosed) {
-                List<WeakReference<PooledXProtocol>> removeThem = new ArrayList<>();
-                for (WeakReference<PooledXProtocol> wps : this.activeProtocols) {
-                    if (wps != null) {
-                        PooledXProtocol as = wps.get();
-                        if (as == null) {
-                            removeThem.add(wps);
-                        } else if (as == prot) {
-                            removeThem.add(wps);
-                            this.idleProtocols.add(as);
-                        }
-                    }
-                }
+    @Override
+    public void handleEvent(EventType type, Object info, Throwable reason) {
+        switch (type) {
+            case SERVER_SHUTDOWN:
+                HostInfo hi = ((PooledXProtocol) info).getHostInfo();
+                this.clientShutdownLock.writeLock().lock();
+                try {
+                    // Close and remove idle protocols connected to a host that is not usable anymore.
+                    List<PooledXProtocol> toCloseAndRemove = this.idleProtocols.stream().filter(p -> p.getHostInfo().equalHostPortPair(hi))
+                            .collect(Collectors.toList());
+                    toCloseAndRemove.stream().peek(PooledXProtocol::realClose).peek(this.idleProtocols::remove).map(PooledXProtocol::getHostInfo).sequential()
+                            .forEach(this.demotedHosts::remove);
 
-                for (WeakReference<PooledXProtocol> wr : removeThem) {
-                    this.activeProtocols.remove(wr);
+                    removeActivePooledXProtocol((PooledXProtocol) info);
+                } finally {
+                    this.clientShutdownLock.writeLock().unlock();
                 }
+                break;
+
+            case SERVER_CLOSED_SESSION:
+                this.clientShutdownLock.writeLock().lock();
+                try {
+                    removeActivePooledXProtocol((PooledXProtocol) info);
+                } finally {
+                    this.clientShutdownLock.writeLock().unlock();
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    private void removeActivePooledXProtocol(PooledXProtocol protocol) {
+        for (WeakReference<PooledXProtocol> protocolReference : this.activeProtocols) {
+            PooledXProtocol referencedProtocol = protocolReference.get();
+            if (referencedProtocol == protocol) {
+                if (this.activeProtocols.remove(protocolReference)) {
+                    this.availableProtocols.release();
+                }
+                protocol.realClose();
+                return;
             }
         }
     }
 
     public class PooledXProtocol extends XProtocol {
 
-        long idleSince = -1;
-        HostInfo hostInfo = null;
+        private int maxIdleTime = -1;
+        private long idleSince = -1;
+        private HostInfo hostInfo = null;
 
-        public PooledXProtocol(HostInfo hostInfo, PropertySet propertySet) {
+        PooledXProtocol() {
+            super(null, null);
+        }
+
+        PooledXProtocol(HostInfo hostInfo, PropertySet propertySet, int maxIdleTime) {
             super(hostInfo, propertySet);
             this.hostInfo = hostInfo;
+            this.maxIdleTime = maxIdleTime;
         }
 
         @Override
@@ -440,12 +552,12 @@ public class ClientImpl implements Client, ProtocolEventListener {
             idleProtocol(this);
         }
 
-        public HostInfo getHostInfo() {
+        HostInfo getHostInfo() {
             return this.hostInfo;
         }
 
         boolean isIdleTimeoutReached() {
-            return ClientImpl.this.maxIdleTime > 0 && this.idleSince > 0 && System.currentTimeMillis() > this.idleSince + ClientImpl.this.maxIdleTime;
+            return this.maxIdleTime > 0 && this.idleSince > 0 && System.currentTimeMillis() > this.idleSince + this.maxIdleTime;
         }
 
         boolean isHostInfoValid(List<HostInfo> hostsList) {
@@ -456,52 +568,11 @@ public class ClientImpl implements Client, ProtocolEventListener {
             try {
                 super.close();
             } catch (IOException e) {
-                // TODO is it really no-op?
+                // There shouldn't be any. Throw anyway.
+                throw new CJCommunicationsException(e);
             }
         }
 
-    }
-
-    @Override
-    public void handleEvent(EventType type, Object info, Throwable reason) {
-        switch (type) {
-            case SERVER_SHUTDOWN:
-                HostInfo hi = ((PooledXProtocol) info).getHostInfo();
-                synchronized (this) {
-                    // Close and remove idle protocols connected to a host that is not usable anymore.
-                    List<PooledXProtocol> toCloseAndRemove = this.idleProtocols.stream().filter(p -> p.getHostInfo().equalHostPortPair(hi))
-                            .collect(Collectors.toList());
-                    toCloseAndRemove.stream().peek(PooledXProtocol::realClose).peek(this.idleProtocols::remove).map(PooledXProtocol::getHostInfo).sequential()
-                            .forEach(this.demotedHosts::remove);
-
-                    removeActivePooledXProtocol((PooledXProtocol) info);
-                }
-                break;
-
-            case SERVER_CLOSED_SESSION:
-                synchronized (this) {
-                    removeActivePooledXProtocol((PooledXProtocol) info);
-                }
-                break;
-
-            default:
-                break;
-        }
-    }
-
-    private void removeActivePooledXProtocol(PooledXProtocol prot) {
-        WeakReference<PooledXProtocol> wprot = null;
-        for (WeakReference<PooledXProtocol> wps : this.activeProtocols) {
-            if (wps != null) {
-                PooledXProtocol as = wps.get();
-                if (as == prot) {
-                    wprot = wps;
-                    break;
-                }
-            }
-        }
-        this.activeProtocols.remove(wprot);
-        prot.realClose();
     }
 
 }

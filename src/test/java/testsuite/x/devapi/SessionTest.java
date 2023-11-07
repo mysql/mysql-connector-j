@@ -844,7 +844,7 @@ public class SessionTest extends DevApiBaseTestCase {
         assertEquals(1, ((Set<WeakReference<PooledXProtocol>>) fActiveSessions.get(cli0)).size());
 
         cli0.close();
-        assertEquals(0, ((BlockingQueue<PooledXProtocol>) fIdleSessions.get(cli0)).size());
+        assertEquals(1, ((BlockingQueue<PooledXProtocol>) fIdleSessions.get(cli0)).size()); // poisonProtocolMarker remains.
         assertEquals(0, ((Set<WeakReference<PooledXProtocol>>) fActiveSessions.get(cli0)).size());
 
         final Session ses = s1;
@@ -899,7 +899,6 @@ public class SessionTest extends DevApiBaseTestCase {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-
         });
 
         long begin = System.currentTimeMillis();

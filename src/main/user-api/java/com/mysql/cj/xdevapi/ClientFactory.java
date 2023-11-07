@@ -58,9 +58,9 @@ public class ClientFactory {
      *            <pre>
      * pooling : {
      *     enabled: true|false,
-     *     maxSize: integer &gt; 0
+     *     maxSize: integer &gt; 0,
      *     maxIdleTime: integer &ge; 0,
-     *     queueTimeOut: integer &ge; 0
+     *     queueTimeout: integer &ge; 0
      * }
      *            </pre>
      *
