@@ -664,6 +664,8 @@ public class StatementImpl implements JdbcStatement {
 
             implicitlyCloseAllOpenResults();
 
+            clearWarnings();
+
             if (sql.charAt(0) == '/') {
                 if (sql.startsWith(PING_MARKER)) {
                     doPingInstead();
@@ -826,6 +828,8 @@ public class StatementImpl implements JdbcStatement {
                 resetCancelledState();
 
                 statementBegins();
+
+                clearWarnings();
 
                 try {
                     this.retrieveGeneratedKeys = true; // The JDBC spec doesn't forbid this, but doesn't provide for it either...we do..
@@ -1116,6 +1120,8 @@ public class StatementImpl implements JdbcStatement {
 
             implicitlyCloseAllOpenResults();
 
+            clearWarnings();
+
             if (sql.charAt(0) == '/') {
                 if (sql.startsWith(PING_MARKER)) {
                     doPingInstead();
@@ -1253,6 +1259,8 @@ public class StatementImpl implements JdbcStatement {
             checkNullOrEmptyQuery(sql);
 
             resetCancelledState();
+
+            clearWarnings();
 
             char firstStatementChar = QueryInfo.firstCharOfStatementUc(sql, this.session.getServerSession().isNoBackslashEscapesSet());
             if (!isNonResultSetProducingQuery(sql)) {

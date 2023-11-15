@@ -13489,4 +13489,36 @@ public class StatementRegressionTest extends BaseTestCase {
         } while (useSPS = !useSPS);
     }
 
+    /**
+     * Tests fix for Bug#112195 (Bug#35749998), getWarnings() of StatementImpl contains all warnings.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug112195() throws Exception {
+        String sql = "DROP TABLE IF NOT EXISTS testBug112195";
+
+        // This creates a single warning.
+        this.stmt.execute(sql);
+
+        SQLWarning warningToLog = this.stmt.getWarnings();
+        int warningCounter = 0;
+        while (warningToLog != null) {
+            warningCounter++;
+            warningToLog = warningToLog.getNextWarning();
+        }
+        assertEquals(1, warningCounter);
+
+        // This must clear the previous warning and generate a new one.
+        this.stmt.execute(sql);
+
+        warningToLog = this.stmt.getWarnings();
+        warningCounter = 0;
+        while (warningToLog != null) {
+            warningCounter++;
+            warningToLog = warningToLog.getNextWarning();
+        }
+        assertEquals(1, warningCounter);
+    }
+
 }

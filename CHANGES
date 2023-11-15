@@ -2,6 +2,8 @@
 # https://dev.mysql.com/doc/relnotes/connector-j/en/
 
 Version 8.3.0
+  - Fix for Bug#112195 (Bug#35749998), getWarnings() of StatementImpl contains all warnings.
+
   - Fix for Bug#96582 (Bug#30222032), jdbc.MysqlParameterMetadata#isNullable doesnt check whether to be simple.
 
   - Fix for Bug#111360 (Bug#35488208), Unexpected list of permitted ciphers.
