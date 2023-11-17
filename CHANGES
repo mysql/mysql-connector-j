@@ -3,6 +3,8 @@
 
 Version 8.3.0
 
+  - WL#16077, Upgrade 3rd party libraries and tools.
+
   - WL#16074, Upgrade Protocol Buffers dependency to protobuf-java-3.25.1.
 
   - Fix for Bug#35929119, Issue with mysql-connector-j 8.0.33 connector (XDEVAPI) - getsession is slow.
