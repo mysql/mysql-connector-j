@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
-  Copyright (c) 2006, 2022, Oracle and/or its affiliates.
+  Copyright (c) 2006, 2023, Oracle and/or its affiliates.
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License, version 2.0, as published by the
@@ -71,7 +71,7 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>3.21.9</version>
+      <version>3.25.1</version>
     </dependency>
 
     <dependency>
