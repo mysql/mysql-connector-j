@@ -30,6 +30,7 @@
 package testsuite.regression;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -13519,6 +13520,26 @@ public class StatementRegressionTest extends BaseTestCase {
             warningToLog = warningToLog.getNextWarning();
         }
         assertEquals(1, warningCounter);
+    }
+
+     * Tests fix for Bug#109546 (Bug#34958912), executeUpdate throws SQLException on queries that are only comments.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug109546() throws Exception {
+        assertDoesNotThrow(() -> {
+            this.stmt.executeUpdate("#comment");
+        });
+        assertDoesNotThrow(() -> {
+            this.stmt.executeUpdate("-- comment");
+        });
+        assertDoesNotThrow(() -> {
+            this.stmt.executeUpdate("/* comment */");
+        });
+        assertDoesNotThrow(() -> {
+            this.stmt.executeUpdate("/* com\nment */");
+        });
     }
 
 }

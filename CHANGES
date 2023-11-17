@@ -8,6 +8,8 @@ Version 8.3.0
 
   - Fix for Bug#111360 (Bug#35488208), Unexpected list of permitted ciphers.
 
+  - Fix for Bug#109546 (Bug#34958912), executeUpdate throws SQLException on queries that are only comments.
+
   - Fix for Bug#95796 (Bug#29907618), Parameter metadata inferred incorrectly when procedure or function doesn't exist.
 
   - Fix for Bug#73774 (Bug#19531305), Can't execute a stored procedure if exists function with same name.
