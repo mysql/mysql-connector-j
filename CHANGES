@@ -2,13 +2,14 @@
 # https://dev.mysql.com/doc/relnotes/connector-j/en/
 
 Version 8.3.0
-  - Fix for Bug#112195 (Bug#35749998), getWarnings() of StatementImpl contains all warnings.
 
-  - Fix for Bug#96582 (Bug#30222032), jdbc.MysqlParameterMetadata#isNullable doesnt check whether to be simple.
+  - Fix for Bug#109546 (Bug#34958912), executeUpdate throws SQLException on queries that are only comments.
+
+  - Fix for Bug#112195 (Bug#35749998), getWarnings() of StatementImpl contains all warnings.
 
   - Fix for Bug#111360 (Bug#35488208), Unexpected list of permitted ciphers.
 
-  - Fix for Bug#109546 (Bug#34958912), executeUpdate throws SQLException on queries that are only comments.
+  - Fix for Bug#96582 (Bug#30222032), jdbc.MysqlParameterMetadata#isNullable doesnt check whether to be simple.
 
   - Fix for Bug#95796 (Bug#29907618), Parameter metadata inferred incorrectly when procedure or function doesn't exist.
 
@@ -73,7 +74,7 @@ Version 8.0.33
 Version 8.0.32
 
   - Fix for Bug#104954 (Bug#33361205), MysqlDataSource fails to URL encode database name when constructing JDBC URL.
-    Thanks to Jared Lundell for his contribution. 
+    Thanks to Jared Lundell for his contribution.
 
   - Fix for Bug#102520 (Bug#32476663), serverSideStatementCache ignores resultSetType.
 
@@ -953,8 +954,8 @@ Version 6.0.6
   - Fix for Bug#80615 (22954007), prepared statement leak when rewriteBatchedStatements=true and useServerPrepStmt.
 
   - Extended X DevAPI with flexible parameter lists.
-  
-  - Added a virtual NodeSession to X DevAPI. 
+
+  - Added a virtual NodeSession to X DevAPI.
 
 09-05-16 - Version 6.0.4
 
@@ -1175,7 +1176,7 @@ Version 6.0.6
 
   - Fix for Bug#71084 (18028319), Wrong java.sql.Date stored if client and server time zones differ.
     Two connection properties added, "noTimezoneConversionForDateType" and "cacheDefaultTimezone", to define if and how time zone conversions are available to
-    DATE data type values. 
+    DATE data type values.
 
   - Fix for Bug#75080 (20217686), NullPointerException during setTimestamp on Fabric connection.
 
@@ -1245,7 +1246,7 @@ Version 6.0.6
   - Fix for Bug#73070 (19034681), Preparing a stored procedure call with Fabric results in an exception
 
   - Fix for Bug#73053 (19022745), Endless loop in MysqlIO.clearInputStream due to Linux kernel bug.
-    In the source of this issue is a Linux kernel bug described in the patch "tcp: fix FIONREAD/SIOCINQ" 
+    In the source of this issue is a Linux kernel bug described in the patch "tcp: fix FIONREAD/SIOCINQ"
     (https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=a3374c4).
 
   - Fix for Bug#18869381, CHANGEUSER() FOR SHA USER RESULTS IN NULLPOINTEREXCEPTION
@@ -1357,7 +1358,7 @@ Version 6.0.6
   - Fix for Bug#70835 (17750877), SQLExceptions thrown because of query interruption (KILL QUERY, query timeout, etc.)
     didn't extend java.sql.SQLNonTransientException for JDBC4+ deployments.
 
-  - Fix for Bug#24344 test case, test fails if it's run with UTC timezone settings. 
+  - Fix for Bug#24344 test case, test fails if it's run with UTC timezone settings.
 
   - Fix for Bug#69777, Setting maxAllowedPacket below 8203 makes blobSendChunkSize negative.
 
@@ -1396,12 +1397,12 @@ Version 6.0.6
   - Added support for multi-master replication topographies in ReplicationDriver.  ReplicationDriver now uses two discrete load-balanced
     connections, one each for master and slave connections.  The same load-balancing options which apply to load-balanced connections
     now also apply to ReplicationConnections.  By default, this means that when a ReplicationConnection uses master connections
-    (because the read-only property of the Connection is false), work may be re-balanced between configured master hosts at transaction 
+    (because the read-only property of the Connection is false), work may be re-balanced between configured master hosts at transaction
     boundaries.  As with load-balanced connections, the ReplicationConnection host list may be managed within the JVM (see
     com.mysql.jdbc.ReplicationConnectionGroupManager) or optionally via JMX (using replicationEnableJMX configuration option; see
     com.mysql.jdbc.jmx.ReplicationGroupManagerMBean).  To specify multi-master replication topographies, define each host "type"
     property using the following format:
- 
+
     address=(host=hostname)(port=3306)(type=[master|slave])
 
     In the absense of explicit type definitions, the driver will assume a single master listed first, with all subsequently-listed
@@ -1447,7 +1448,7 @@ Version 6.0.6
   - Fix for Bug#45757 (11754192), Don't allow updateRow() to be called when updatable cursor is positioned on insert row.
 
   - Fix for Bug#68098 (16224299), Return indexes sorted by NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION in DatabaseMetaData.getIndexInfo.
-  
+
   - Fix for Bug#68307 (16707803), Return correct COLUMN_TYPE from both getProcedureColumns() and getFunctionColumns().
 
   - Fix for Bug#42267, PreparedStatementWrapper doesn't have a toString() implementation
@@ -1463,17 +1464,17 @@ Version 6.0.6
 
   - Fix for Bug#60816, Cannot pass NULL to an INOUT procedure parameter.
 
-  - Added support for Connection Attributes when used with MySQL Server versions (5.6+) which support this feature.  
-    By default, the following standard attributes are sent to the server, where they can be seen in the 
+  - Added support for Connection Attributes when used with MySQL Server versions (5.6+) which support this feature.
+    By default, the following standard attributes are sent to the server, where they can be seen in the
     performance_schema.session_connect_attrs table:
      * _client_version : the version of MySQL Connector Java in use
      * _client_name : "MySQL Connector Java"
      * _runtime_version : the version of the Java runtime environment in which the driver is running
      * _runtime_vendor : the name of company which produced the Java runtime environment
-    Additionally, users may supply their own key/value attributes to be exposed by providing them in 
+    Additionally, users may supply their own key/value attributes to be exposed by providing them in
     "key1:value1,key2:value2" format in the connectionAttributes connection property.
     To avoid sending any connection attributes to the server, set connectionAttributes property to "none".
-    
+
   - Fix for Bug#68763 (16545334), ReplicationConnection.isMasterConnection() returns false always.
 
   - Fix for Bug#68733 (16526938), ReplicationConnection doesn't ping all slaves.
@@ -1545,7 +1546,7 @@ Version 6.0.6
     causes permgen leak with webapp classloader on application redeploy. We no longer store the entire
     stack trace, only the calling class and method, and even then, that only when using the usage advisor
     or when profiling.
-    
+
   - Fix for Bug#11237, useCompression=true and LOAD DATA LOCAL INFILE SQL Command.
 
   - Static charset/collation maps were updated.
@@ -1560,16 +1561,16 @@ Version 6.0.6
   - Fix for Bug#14665141, Diff results returned from ResultSet and CachedRowSet with new password hashing.
     Test suite modified to don't perform comparison of PASSWORD() results if old_passwords=2
     because with SHA-256 password hashing enabled they are nondeterministic.
-    
+
   - The driver now allows the mechanism for caching MySQL server configuration values replaceable at runtime,
     via the "serverConfigCacheFactory" property. The default is an implementation that is a per-VM concurrent
     map, keyed by URL. The driver will invalidate cache entries when SQLExceptions that indicate communications
     errors are thrown (on the assumption that the server has been or is restarting), or if the server version
     that is being connected to, differs from the one that was present when the cached values were populated.
-    
+
     To replace the default implementation, implement CacheAdapterFactory<String, Map<String, String>>, and
     use the fully-qualified class name of this implementation for "serverConfigCacheFactory".
-    
+
   - Connection.setReadOnly() will take advantage of server-side support for read-only transactions
     present in MySQL-5.6 and newer. Calling .isReadOnly() will incur a round-trip if useLocalSessionState
     is not enabled.
@@ -1608,19 +1609,19 @@ Version 6.0.6
 
   - Fix for Bug#36662, TimeUtil.java: MEST mapping n/a.
 
-  - Fix a scalability/memory footprint issue where Object.finalize() was being used on 
-    ConnectionImpl to clean up the low-level network connection to MySQL should a 
+  - Fix a scalability/memory footprint issue where Object.finalize() was being used on
+    ConnectionImpl to clean up the low-level network connection to MySQL should a
     connection be abandoned by the application before being cleanly close()d. We now
     track connections in a phantom reference queue, and have a single thread per-vm
     clean these up when the VM notices the connection is no longer referenced by
     anything else.
-    
+
   - Added the ability to add new client-side prepared statement parse info caches by
     implementing com.mysql.jdbc.CacheAdapterFactory and telling the driver to use it
-    when "cachePrepStmts=true" via the "parseInfoCacheFactory" configuration property. 
-    
+    when "cachePrepStmts=true" via the "parseInfoCacheFactory" configuration property.
+
   - Implemented JDBC-4.1 methods from Java-7:
-  
+
        - Connection.setSchema(String) - no-op, until we support database==schema in the driver
        - Connection.getSchema() - see above
        - Connection.abort(Executor executor)
@@ -1693,23 +1694,23 @@ Version 6.0.6
   - Fix for Bug#61203, noAccessToProcedureBodies does not work anymore.
 
   - Fix for Bug#63811, pointless Socket.bind() when using ephemeral ports and interfaces, which limits scalability on some platforms.
-    
+
   - Connection.changeUser() would not check for closed connections, leading to NPEs when this method was called on a closed connection.
-	
+
   - Fix for Bug#63284, memory leak with Failover proxied Statement/PreparedStatement with DBCP due to improper implementation of equals().
-    
+
   - Prepared statements would needlessly allocate a 4K buffer for converting
     streams when no set*Stream() methods had been used.
-  
+
 10-03-11 - Version 5.1.18
- 
+
   - Fix for Bug#12565726, not putting the space between VALUES() and ON DUPLICATE KEY UPDATE
-	causes C/J a) enter rewriting the query although it has ON UPDATE 
+	causes C/J a) enter rewriting the query although it has ON UPDATE
 	and b) to generate the wrong query with multiple ON DUPLICATE KEY
 
   - Fix for Bug#12784170, "process fork failure" errors while running test suite via ant on Windows.
     Added new ant flag, com.mysql.jdbc.junit.fork, which controls whether JUnit will fork new processes
-    for testing ("on", default and legacy behavior) or not ("off", required for Windows).  
+    for testing ("on", default and legacy behavior) or not ("off", required for Windows).
 
   - Reverting changes made to ConnectionImpl.java,
     private boolean characterSetNamesMatches function.
@@ -1718,10 +1719,10 @@ Version 6.0.6
     using index instead of parsing variables to CharsetMapping.java.
 
   - Completed fix for Bug#61201/12649557, fixed tests failures.
-  
+
   - Fix for Bug#61201/12649557, Can't establish connection when url has
     sessionVariables and characterEncoding. Fix covers only MySQL server 4.1+
-    
+
   - Fix for Bug#61501 - Calling Statement.cancel() on a statement that isn't
     currently executing will cause some later-executed query on the same
     connection to be cancelled unexpectedly. The driver now guards against this
@@ -1729,10 +1730,10 @@ Version 6.0.6
     (which is what the driver uses to implement Statement.cancel()) is rather
     non-deterministic, and thus the use of Statement.cancel() should be avoided
     if possible.
-    
+
   - Fix for Bug#61866/12791594 - Calling Statement.getWarnings() after
     Statement.clearWarnings() has been called, returns the "old" warnings.
-    
+
   - Fix for Bug#13036537 - LRUCache was really a least-recently-added cache.
 
   - Fix for Bug#13036309, Correcting parameter name in maxPerformance.properties.
@@ -1753,10 +1754,10 @@ Version 6.0.6
 
   - Fix for Bug#61105 - Avoid a concurrent bottleneck in Java's character set
     encoding/decoding when converting bytes to/from Strings.
-    
+
 04-21-11 - Version 5.1.16
 
-  - Partial fix for BUG#54135 - setQueryTimeout unsafe across VIP. Fix prevents c/J from 
+  - Partial fix for BUG#54135 - setQueryTimeout unsafe across VIP. Fix prevents c/J from
     killing the right ConnectionID but on wrong server.
 
   - Fix for BUG#57808 - wasNull not set for DATE field with value 0000-00-00
@@ -1764,17 +1765,17 @@ Version 6.0.6
 
   - Fix for Bug#54425 - Bypassing the server protocol bug where DB should be null-terminated
     whether it exists or not. Affects COM_CHANGE_USER.
-	
-  - Fix for Bug#60313 (11890729), bug in 
+
+  - Fix for Bug#60313 (11890729), bug in
     com.mysql.jdbc.ResultSetRow.getTimestampFast().
 
-  - Fix for bug 11782297, DBMD.getTables (so thus getColumns too) fails with 
+  - Fix for bug 11782297, DBMD.getTables (so thus getColumns too) fails with
     table names containing dot (like "junk_[Sp:e,c/ C-h+a=.r]").
-  
-  - Added the ability to determine if the connection is against a server on the 
+
+  - Added the ability to determine if the connection is against a server on the
     same host via the Connection.isServerLocal() method.
-    
-  - Fix for bug 12325877, Setting "autoReconnect=true" and 
+
+  - Fix for bug 12325877, Setting "autoReconnect=true" and
     "cacheServerConfiguration=true" would cause connections created after
     an existing connection fails to have non-existent values for server
     variables which lead to exceeding of max allowed packet exceptions when the
@@ -1782,7 +1783,7 @@ Version 6.0.6
 
 02-08-11 - Version 5.1.15
 
-   - Fix for Bug#38367, parameters metadata did not reflect the fact that NULL is allowed 
+   - Fix for Bug#38367, parameters metadata did not reflect the fact that NULL is allowed
      parameter value. So DatabaseMetaData.getProcedureColumns will set isNullable member to
 	 java.sql.DatabaseMetaData.procedureNullable now.
 
@@ -1792,21 +1793,21 @@ Version 6.0.6
 
    - Fixed an issue where statement comments set via Connection.setStatementComment()
      weren't represented in autoGenerateTestcaseScript=true output.
-     
+
    - Added ability to include the current java thread dump in the exception message
-     given for deadlock/wait lock timeout exceptions, enable with 
+     given for deadlock/wait lock timeout exceptions, enable with
      "includeThreadDumpInDeadlockExceptions=true" in your JDBC url.
 
    - Added ability to include current thread name as a statement comment visible
      in MySQL's "SHOW PROCESSLIST" and Innodb deadlock diagnostics, enable with
      "includeThreadNamesAsStatementComment=true".
-     
-   - Added an SLF4J logging adapter. Enable by adding setting the connection 
+
+   - Added an SLF4J logging adapter. Enable by adding setting the connection
      property "logger" to "Slf4JLogger" and placing the appropriate bridge
      from SLF4J to the logging framework of choice in your CLASSPATH. As with
-     other Connector/J logging adapters, the log category name used by the 
-     driver is "MySQL". See http://www.slf4j.org/manual.html for more details. 
-     
+     other Connector/J logging adapters, the log category name used by the
+     driver is "MySQL". See http://www.slf4j.org/manual.html for more details.
+
 12-06-10 - Version 5.1.14
 
    - Fix for Bug#58728, NPE in com.mysql.jdbc.jdbc2.optional.StatementWrappe.getResultSet()
@@ -1818,23 +1819,23 @@ Version 6.0.6
    - Fix for BUG#58590
    - Testsuite.Simple.DateTest, MetadataTest, NumbersTest and StatementsTest cleaned and fixed.
 
-   - Testsuite.simple, ConenctionTest & DataSourceTest are up to date. Major rework on 
+   - Testsuite.simple, ConenctionTest & DataSourceTest are up to date. Major rework on
      ConnectionTest.testDeadlockDetection (Sveta) and testUseCompress.
-   
+
    - Testsuite.simple, CallableStatementTest & CharsetTests are up to date.
-   
+
    - Testsuite.regression SubqueriesRegressionTest and StringRegressionTest are up to date.
 
    - Testsuite.regression MicroPerformanceRegressionTest, NumbersRegressionTest, PooledConnectionRegressionTest,
      ResultSetRegressionTest are up to date.
 
    - Testsuite.regression.MetaDataRegressionTest up to date.
-   
+
    - Typo in StatementRegressionTest.testLikeWithBackslashes fixed. StatementRegressionTest
      is up to date.
 
    - Fix for Bug#58232 - CallableStatement fails to fetch OUT parameter against 5.5 server
-   
+
    - Testsuite.regression.Connection, tests for BUG#45419 refined by Todd so not to cause failures.
 
    - Testsuite.regression.CallableStatement, tests for BUG#26959 failing against 5.5+ server.
@@ -1848,148 +1849,148 @@ Version 6.0.6
    - Fix for Bug#57850 - Refresh SELECT statement doesn't use correct data type.
      Added Field.valueNeedsQuoting (private final boolean) and protected boolean getvalueNeedsQuoting().
 	 UpdatableResultSet refresher and updater call upon this value now.
-	 
+
    - Removing commented source in fix for Bug#57697
    - Fix for Bug#57697 - Metadata getTables() was not checking for table_name already been quoted.
    - Fix for Bug#57694 - 3byte UTF8 can not be used with 5.5.3+ server.
    - Fix for Bug#57701 - StatementsTest.testBatchRewriteErrors() failing on new servers.
-   
+
    - Fix for Bug#54756 - Cannot retrieve data from ResultSet by column name from a Sphinx daemon.
      We were relying only on "server version string" passed. Now, determining
 	 server version is done via protocol flags too, where applicable.
 
    - Fix for Bug#57022 - cannot execute a store procedure with output parameters,
-     database parameter was ignored in db.sp notation. The fix is to "sanitize" 
+     database parameter was ignored in db.sp notation. The fix is to "sanitize"
 	 db.sp call just like in patch for noAccessToProcedureBodies. BaseTestCase
 	 extended with createDatabase and dropDatabase. Regression test added.
 
    - Fix for Bug#57262 - "useOldUTF8Behavior" behavior was broken since 5.1.3,
      now explicitly sets connection character set to latin1 ("SET NAMES latin1")
      during connection post-handshake process.
-     
-   - Patch for problem where "noAccessToProcedureBodies=true" was causing 
+
+   - Patch for problem where "noAccessToProcedureBodies=true" was causing
      "underprivileged" user not to have access to procedures created by him.
 
-   - Patch for Bug#56305, unhandled NPE in DatabaseMetaData.java when calling 
-     wrong-cased function without access to mysql.proc. Although simple by 
-     itself, some more enhancements were needed for everything to function 
-     properly.  So, along with catching potential NPE due to server bug, a 
-     guard against calling JDBC functions with db_name.proc_name notation was 
+   - Patch for Bug#56305, unhandled NPE in DatabaseMetaData.java when calling
+     wrong-cased function without access to mysql.proc. Although simple by
+     itself, some more enhancements were needed for everything to function
+     properly.  So, along with catching potential NPE due to server bug, a
+     guard against calling JDBC functions with db_name.proc_name notation was
      also added. Necessary changes added to StringUtils.java too.
 
-   - Added ability to load-balance while auto-commit is enabled.  This 
+   - Added ability to load-balance while auto-commit is enabled.  This
      introduces two new properties:
 
-       loadBalanceAutoCommitStatementThreshold defines the number of matching 
-       statements which will trigger the driver to (potentially) swap physical 
-       server connections, 
+       loadBalanceAutoCommitStatementThreshold defines the number of matching
+       statements which will trigger the driver to (potentially) swap physical
+       server connections,
 
-       loadBalanceAutoCommitStatementRegex defines the regular expression 
-       against which statements must match.  The default values (0 and blank, 
-       respectively) retain the previously-established behavior that 
-       connections with auto-commit enabled are never balanced.  Feature 
+       loadBalanceAutoCommitStatementRegex defines the regular expression
+       against which statements must match.  The default values (0 and blank,
+       respectively) retain the previously-established behavior that
+       connections with auto-commit enabled are never balanced.  Feature
        request documented in Bug#55723.
 
-   - Minor fix in getProcedureColumns() DisplaySize for Bug#51712. Fix for 
-     Bug#41269 is not complete without this.  getColumnDisplaySize on a 
-     ResultSet already consisting of metadata is now functional thanks to 
+   - Minor fix in getProcedureColumns() DisplaySize for Bug#51712. Fix for
+     Bug#41269 is not complete without this.  getColumnDisplaySize on a
+     ResultSet already consisting of metadata is now functional thanks to
      Bogdan.
 
    - Minor fix for Bug#55217, return 4 as a result of DataBaseMetadata.getJDBCMajorVersion() as per manual.
 
-   - Added support for hosts specified in the URL of the form: 
+   - Added support for hosts specified in the URL of the form:
      address=(key=value), supported keys are:
-       
+
        (protocol=tcp or pipe (for named pipes on Windows)
        (path=[] for named pipes)
-       (host=[]) for TCP connections 
-       (port=[]) for TCP connections 
-       
+       (host=[]) for TCP connections
+       (port=[]) for TCP connections
+
        An example would be:
-       
+
        jdbc:mysql://address=(protocol=tcp)(host=localhost)(port=3306)(user=test)/db
-       
-      Any other parameters are treated as host-specific properties that follow 
-      the conventions of the JDBC URL properties. This now allows per-host 
-      overrides of any configuration property for multi-host connections 
-      (failover, loadbalance, replication). We do recommend that the overrides 
-      are limited to user, password, network timeouts and statement and 
-      metadata cache sizes. Unexpected behavior may be observed with other 
+
+      Any other parameters are treated as host-specific properties that follow
+      the conventions of the JDBC URL properties. This now allows per-host
+      overrides of any configuration property for multi-host connections
+      (failover, loadbalance, replication). We do recommend that the overrides
+      are limited to user, password, network timeouts and statement and
+      metadata cache sizes. Unexpected behavior may be observed with other
       per-host overrides.
 
-    - Fix for Bug#56099 - Added support for JDBC4-specific functionality when 
+    - Fix for Bug#56099 - Added support for JDBC4-specific functionality when
       using load-balanced connections.
 
-    - Fix for Bug#56200 - Added diagnostic information to SQLException message 
-      thrown when a closed load-balanced connection is reused.  This 
-      information will identify the conditions which caused the connection to 
+    - Fix for Bug#56200 - Added diagnostic information to SQLException message
+      thrown when a closed load-balanced connection is reused.  This
+      information will identify the conditions which caused the connection to
       be closed.
-      
-    - Fix for Bug#56429 - When using Connector/J configured for failover 
-      (jdbc:mysql://host1,host2,... URLs), the non-primary servers re-balance 
+
+    - Fix for Bug#56429 - When using Connector/J configured for failover
+      (jdbc:mysql://host1,host2,... URLs), the non-primary servers re-balance
       and spawned new idle connections when the transactions on the master were
-      committed or rolled-back, eventually exceeding max_connections. It was 
+      committed or rolled-back, eventually exceeding max_connections. It was
       also discovered that session state (autocommit, isolation level, catalog)
-      wasn't  being copied from the primary connection to secondary 
-      connections correctly because of the same changes that caused this bug, 
+      wasn't  being copied from the primary connection to secondary
+      connections correctly because of the same changes that caused this bug,
       and this was fixed as well.
-     
-    - Fix for Bug#56706 - Ensure read-only state is synchronized when new 
+
+    - Fix for Bug#56706 - Ensure read-only state is synchronized when new
       load-balanced connections are selected.
-      
-    - Fixed Bug#56955 - Connection properties "trustCertificateKeyStoreType" 
-      and "clientCertificateKeyStoreType" have invalid defaults, therefore 
-      connections that specify "useSSL" will sometimes fail with exceptions 
-      from JSSE unless "JKS" has been specified for both of these properties. 
-      The default value for these properties is now "JKS", and thus it no 
+
+    - Fixed Bug#56955 - Connection properties "trustCertificateKeyStoreType"
+      and "clientCertificateKeyStoreType" have invalid defaults, therefore
+      connections that specify "useSSL" will sometimes fail with exceptions
+      from JSSE unless "JKS" has been specified for both of these properties.
+      The default value for these properties is now "JKS", and thus it no
       longer has to be specified.
-      
-    - Fixed Bug#56979 - Improper connection closing logic leads to TIME_WAIT 
+
+    - Fixed Bug#56979 - Improper connection closing logic leads to TIME_WAIT
       sockets on server
-      
+
     - Fixed Bug#57380 - DatabaseMetaData.supportsMultipleResultSets() now returns
       true when connected to a 4.1 version or later server.
-      
+
     - Fixed Bug#58706 - Failover connections didn't honor "failOverReadOnly=false", and in some
       situations would not fall back.
-      
-    - Removed logging integrations with log4j and apache-commons-logging due to license 
+
+    - Removed logging integrations with log4j and apache-commons-logging due to license
       incompatibility. Replacing with SLF4J integration in next release.
 
 06-24-10 - Version 5.1.13
 
    - Minor fix in previous patch for Bug#51904. Function ConnectionImpl.setCatalog() was passed quoted argument thus breaking with "...for the right syntax to use near 'test``'"
-	  
+
     - Fix for Bug#51912 - Passing NULL as cat. param to getProcedureColumns with !nullCatalogMeansCurrent
-	
+
     - Fix for Bug#52167 - Can't parse parameter list with special characters inside
-	
+
     - Fix for Bug#51904 - getProcedureColumns() always returns PROCEDURE_CAT result column as NULL
-	
+
     - Fix for Bug#51712 - Display Size is always 0 for columns returned by getProcedureColumns()
 
     - Fix for Bug#51908 - db variable might have end up unassigned when calling
       getProcedureColumns()/Functions(). This is a followup on code changes made
       for Bug#51022.
-    
+
     - Fixed Bug#51266 - jdbc:mysql:loadbalance:// would stick to the first
       host in the list in some cases, especially exacerbated if the host was
       down.
-      
+
     - Replaced URLs of the form jdbc:mysql://host-1,host-2 with a composite of
-      a normal connection and a jdbc:mysql:loadbalance:// connection for more 
+      a normal connection and a jdbc:mysql:loadbalance:// connection for more
       robustness and cleaner code.
-      
-    - Fixed BUG#51643 - Connections using jdbc:mysql:loadbalance:// would 
+
+    - Fixed BUG#51643 - Connections using jdbc:mysql:loadbalance:// would
       have statements (and prepared statements) that did not have their connections
       changed upon commit()/rollback(), and thus applications that held statement
       instances past commit()/rollback() could have data written to or read from
       un-intended connections.
-      
-    - Fixed BUG#51666 - StatementInterceptors were never "un-safed" after connection 
+
+    - Fixed BUG#51666 - StatementInterceptors were never "un-safed" after connection
       establishment, causing interceptors which returned result sets pre/post execution
       would not work.
-      
+
     - Fixed BUG#51783 - Load-balanced connections could throw a SQLException
       incorrectly on commit() or rollback().  This was not caused by failures in commit
       or rollback, but rather by the possibility that the newly-selected physical
@@ -1999,7 +2000,7 @@ Version 6.0.6
       ping the selected host (otherwise, the host is presumed to be up, and will only
       be noticed if auto-commit or transaction isolation state needs to be set and
       fails).
-      
+
     - Added loadBalancePingTimeout property to allow a specific timeout to be set
       for each ping executed against the servers.  This ping is executed when the
       physical connections are rebalanced (commit/rollback or communication exception),
@@ -2009,14 +2010,14 @@ Version 6.0.6
     - Fixed BUG#51776 - Connection.rollback() could swallow exceptions incorrectly.
 
     - Fixed BUG#52231 - Differences in definitions of which SQLExceptions trigger
-      a failover event could result in failure to try more than a single host in 
+      a failover event could result in failure to try more than a single host in
       certain situations.
-      
-    - Fixed BUG#52534 - Performance regression using load-balanced connection.  
+
+    - Fixed BUG#52534 - Performance regression using load-balanced connection.
 
     - More aggressively purge the statement timeout timers after they've been cancelled to
       trade time for memory. This purge only happens if statement timeouts are in use.
-      
+
     - Added management of running load-balanced connections.  Statistics can be obtained,
       and hosts added/dropped via com.mysql.jdbc.ConnectionGroupManager or the JMX
       implementation.  This functionality is enabled by setting the new paramenter,
@@ -2025,13 +2026,13 @@ Version 6.0.6
       regardless of how the application creates them, will be managed together.  To
       enable JMX-based management, set loadBalanceEnableJMX=true and ensure that remote
       JMX is enabled in the JRE (eg, use -Dcom.sun.management.jmxremote).
-      
+
     - Added loadBalanceExceptionChecker property, which takes a fully-qualified class
       name implementing com.mysql.jdbc.LoadBalancedExceptionChecker interface.  This
       allows custom evaluation of SQLExceptions thrown to determine whether they should
       trigger failover to an alternate host in load-balanced deployments.  The default
       is com.mysql.jdbc.StandardLoadBalanceExceptionChecker.
-      
+
     - Added two new properties which allow more flexibility in determining which
       SQLExceptions should trigger failover in a load-balanced deployment.  The new
       loadBalanceSQLStateFailover property takes a comma-delimited list of SQLState
@@ -2040,90 +2041,90 @@ Version 6.0.6
       a comma-delimited list of fully-qualified class/interface names, against
       which the SQLException is checked to determine if it is an instance of any.
       Matches trigger failover to an alternate host.
-      
-    - Fixed Bug#51704 - Re-written batched statements don't honor escape processing 
+
+    - Fixed Bug#51704 - Re-written batched statements don't honor escape processing
       flag of their creator.
-      
-    - Fixed Bug#43576 - Sometimes not able to register OUT parameters for 
+
+    - Fixed Bug#43576 - Sometimes not able to register OUT parameters for
       CallableStatements.
-      
+
     - Fixed Bug#54175 - Driver doesn't support utf8mb4 for servers 5.5.2 and newer. The
       driver now auto-detects servers configured with character_set_server=utf8mb4 or
       treats the Java encoding "utf-8" passed via "characterEncoding=..." as utf8mb4 in
-      the "SET NAMES=" calls it makes when establishing the connection. 
-    
+      the "SET NAMES=" calls it makes when establishing the connection.
+
 02-18-10 - Version 5.1.12
 
-    - NO_INDEX_USED and NO_GOOD_INDEX used were only being set when profileSQL 
+    - NO_INDEX_USED and NO_GOOD_INDEX used were only being set when profileSQL
       was set to "true", and in some cases their values were reversed.
 
-    - Fix for Bug#51022 - conn.getMetaData().getProcedures("schema",null,"%"); 
-      returns all stored procedures from all databases and not only for given 
+    - Fix for Bug#51022 - conn.getMetaData().getProcedures("schema",null,"%");
+      returns all stored procedures from all databases and not only for given
       one.
-	
+
     - Fixed Bug#50538 - ${svn.revno} shows up in DBMD.getDriverVersion().
-    
+
     - Removed usage of timestamp nanoseconds in PreparedStatement.setTimestamp(),
       as long as Bug#50774 exists in the server and there's no real support
-      for nanos/micros in TIMESTAMPs, avoid the performance regression usage of 
+      for nanos/micros in TIMESTAMPs, avoid the performance regression usage of
       them causes.
 
-    
+
 01-20-10 - Version 5.1.11
- 
+
     - Fix for BUG#50288 - NullPointerException possible during invalidateCurrentConnection() for load-balanced
       connections.
- 
-    - Fix for BUG#49745 - deleteRow() for updatable result sets can cause full table scan because escaped hex 
+
+    - Fix for BUG#49745 - deleteRow() for updatable result sets can cause full table scan because escaped hex
       values are used for primary key identifiers.
- 
+
     - Fix for BUG#49607 - Provide Connection context in ExceptionInterceptor.
- 
+
     - Fix for BUG#48605 - Ping leaves closed connections in liveConnections, causing subsequent Exceptions when
       that connection is used.
- 
+
     - Fix for BUG#48442 - Load-balanced Connection object returns inconsistent results for hashCode() and equals()
       dependent upon state of underlying connections.
- 
+
     - Fix for BUG#48172 - Batch rewrite requires space immediately after "VALUES"
-    
+
     - Statement Interceptors didn't completely intercept server-side prepared statements.
-    
+
     - Fix for BUG#48486 Cannot use load balanced connections with MysqlConnectionPoolDataSource.
-    
+
     - Fix for Bug#32525 - "noDatetimeStringSync" doesn't work for server-side prepared statements. Now it does.
 
     - Hooked up exception interceptors so they get called now.
-    
-    - Rev'd the statement interceptor interface to pass on some server flags, warning counts and errors. See 
+
+    - Rev'd the statement interceptor interface to pass on some server flags, warning counts and errors. See
       the com.mysql.jdbc.StatementInteceptorsV2 interface for more details. The driver will create adaptors to
       transparently convert older implementations to the newer interface at runtime.
-      
-    - Statement Interceptors are now enabled at connection instantiation, but 
-      can not return result sets (they will be ignored)  until the connection 
-      has bootstrapped itself. If during the init() method your interceptor 
-      requires access to the connection itself, it should ensure that methods 
-      that might throw exceptions if the connection is closed should handle 
+
+    - Statement Interceptors are now enabled at connection instantiation, but
+      can not return result sets (they will be ignored)  until the connection
+      has bootstrapped itself. If during the init() method your interceptor
+      requires access to the connection itself, it should ensure that methods
+      that might throw exceptions if the connection is closed should handle
       this in a robust manner.
-      
-    - "Replication" connections (those with URLs that start with 
+
+    - "Replication" connections (those with URLs that start with
       jdbc:mysql:replication) now use a jdbc:mysql:loadbalance connection
       under the hood for the slave "pool". This also means that one can set
       load balancing properties such as "loadBalanceBlacklistTimeout" and
       "loadBalanceStrategy" to choose a mechanism for balancing the load and
       failover/fault tolerance strategy for the slave pool. This work was done
       in order to fix Bug#49537.
-      
+
     - Fixed Bug#36565 - permgen leak from java.util.Timer. Unfortunately no great
       fix exists that lets us keep the timer shared amongst connection instances, so
-      instead it's lazily created if need be per-instance, and torn down when the 
+      instead it's lazily created if need be per-instance, and torn down when the
       connection is closed.
-      
+
     - Fixed BUG#49700 - Connections from ConnectionPoolDataSource don't
       maintain any values set with "sesssionVariables=...". This was a bug
       in Connection.changeUser()/resetServerState(), we now resubmit the
       session variables during the execution of these methods.
-    
+
 09-22-09 - Version 5.1.10
 
     - Fix for BUG#47494 - Non standard port numbers in the URL are not honored.
@@ -2132,54 +2133,54 @@ Version 6.0.6
 
     - The driver has been OSGi-ified. The bundle symbolic name is "com.mysql.jdbc", see META-INF/MANIFEST.MF to see
       what interfaces we export.
-      
+
     - Fixed BUG#45040, adding missing tags from SVN import to BZR branch for
       5.1.
-      
+
     - Fix for a variant of Bug#41484 - ResultSet.find*(String) failed when using cached result set
       metadata.
-      
-    - Fixed BUG#46637 - When the driver encounters an error condition that causes it to create a 
-      CommunicationsException, it tries to build a friendly error message that helps diagnose 
-      what is wrong. However, if there has been no network packets received from the server, 
+
+    - Fixed BUG#46637 - When the driver encounters an error condition that causes it to create a
+      CommunicationsException, it tries to build a friendly error message that helps diagnose
+      what is wrong. However, if there has been no network packets received from the server,
       the error message contains bogus information like:
 
-      "The last packet successfully received from the server was 1,249,932,468,916 milliseconds ago.  
+      "The last packet successfully received from the server was 1,249,932,468,916 milliseconds ago.
       The last packet sent successfully to the server was 0 milliseconds ago."
-      
+
       Now the error message states that it has never received any packets from the server in this
       scenario.
-      
+
     - Added a new option, "queryTimeoutKillsConnection", when set to "true" will cause timeouts set
       by Statement.setQueryTimeout() to forcibly kill the connection, not just the query.
-      
-    - Fixed BUG#32216, "PORT" property filled in by Driver.parseURL() not always present. The driver 
-      will now always fill in the "PORT" (using 3306 if not specified) property, and the "HOST" property 
-      (using "localhost" if not specified) when parseURL() is called. The driver also parses a list of hosts 
-      into HOST.n and PORT.n properties as well as adding a property "NUM_HOSTS" for the number of hosts 
-      it has found. If a list of hosts is passed to the driver, "HOST" and "PORT" will be set to the 
+
+    - Fixed BUG#32216, "PORT" property filled in by Driver.parseURL() not always present. The driver
+      will now always fill in the "PORT" (using 3306 if not specified) property, and the "HOST" property
+      (using "localhost" if not specified) when parseURL() is called. The driver also parses a list of hosts
+      into HOST.n and PORT.n properties as well as adding a property "NUM_HOSTS" for the number of hosts
+      it has found. If a list of hosts is passed to the driver, "HOST" and "PORT" will be set to the
       values given by "HOST.1" and "PORT.1" respectively. This change has centralized and cleaned up a large
       swath of code used to generate lists of hosts, both for load-balanced and fault tolerant connections and
       their tests.
-      
+
     - Fixed the ResultSet side of BUG#23584 - Calendar discared when retrieving dates from server-side prepared
       statements. The other cases of this bug were fixed when "useLegacyDatetimeCode=false" became the default.
 
     - Fixed Bug#44324 - Data truncation exceptions did not return the vendor error code from the server. Note that
       the vendor error code is not hard-coded to 1265 as in the bug report, because the server returns different
       error codes for different types of truncations, and we did not want to mask those.
-      
+
     - Fixed Bug#27431 - ResultSet.deleteRow() advances the cursor. The driver now places the cursor on the prior
       row in the result set, or before the start of the result set if the result set is empty after the deletion.
-      
+
     - Fixed Bug#43759 - ResultSet.deleteRow() generates corrupt DELETE statement for primary keys with binary
       data.
-      
+
     - Fixed Bug#46925 - Suspendable XA connections were not pinned to the XID for the global transaction, leading
       to failure when attempting to suspend/resume/commit from different logical XA connections.
-      
+
     - Fixed Bug#44508 - DatabaseMetadata.getSuperTypes() returns result set with incorrect column names.
-      
+
     - Fixed Bug#46788 - Batched prepared statements with ON DUPLICATE KEY UPDATE are rewritten incorrectly when
       when there are parameters as part of the UPDATE clause. Statements of this form can not be rewritten
       as multi-value INSERTs so they are rewritten into multi-statements instead.
@@ -2187,7 +2188,7 @@ Version 6.0.6
 07-16-09 - Version 5.1.8
     - Fixed BUG#44588 - Fixed error message for connection exceptions when
       streaming result sets are used.
-      
+
     - Modified/fixed test cases using UnreliableSocketFactory.
 
     - Fixed BUG#43421 - Made doPing() global blacklist-aware, so that it does not
@@ -2206,35 +2207,35 @@ Version 6.0.6
 
     - Fixed BUG#42055 - ConcurrentModificationException possible when removing items
       from global blacklist.
-      
+
     - Fixed Bug #42309 - Statement.getGeneratedKeys() returns 2 keys when
       using ON DUPLICATE KEY UPDATE
-      
+
     - Fixed some quoting of substituted parameter issues in localized error messages.
-    
+
     - Added a version check around getting the variable 'auto_increment_increment' for
       servers < 5.0.2, which quiets down a warning message that the driver would log
       when connecting to MySQL-4.1 or older.
-      
+
     - The driver will automatically disable elideSetAutoCommit and useLocalTransactionState
       if it detects a MySQL server version older than 6.0.10 with the query cache enabled, due
       to Bug#36326 which can cause the server to report bogus transaction state.
-      
-    - Fixed a performance regression (Bug#41532) in rewritten batched inserts when "ON DUPLICATE KEY" 
+
+    - Fixed a performance regression (Bug#41532) in rewritten batched inserts when "ON DUPLICATE KEY"
       was present.
-      
+
       Fixes include an improvement to token searching in the statement, and the ability for the driver
       to rewrite prepared statements that include "ON DUPLICATE KEY UPDATE" into multi-valued inserts as
-      long as there is no use of LAST_INSERT_ID() in the update clause (as this would render 
+      long as there is no use of LAST_INSERT_ID() in the update clause (as this would render
       getGeneratedKey() values incorrect).
-      
+
     - Fixed Bug#44056 - Statement.getGeneratedKeys() retains result set instances until statement is closed,
       thus causing memory leaks for long-lived statements, or statements used in tight loops.
-      
+
     - Fixed issues with server-side prepared statement batch re-writing caused by the fix to Bug#41532.
       Rewriting of batched statements now works the same between normal prepared statements and server-side
       prepared statements.
-      
+
     - Fixed Bug#44862 - getBestRowIdentifier does not return resultset as per JDBC API specifications
 
     - Fixed Bug#44683 - getVersionColumns does not return resultset as per JDBC API specifications
@@ -2248,18 +2249,18 @@ Version 6.0.6
     - Fixed Bug#44867 - getImportedKeys/exportedKeys/crossReference doesn't have correct type for DEFERRABILITY
 
     - Fixed Bug#41730 - SQL Injection when using U+00A5 and SJIS
-    
+
     - Fixed Bug#43196 - Statement.getGeneratedKeys() doesn't return values for UNSIGNED BIGINTS with values > Long.MAX_VALUE.
-      Unfortunately, because the server doesn't tell clients what TYPE the auto increment value is, the driver can't consistently 
-      return BigIntegers for the result set returned from getGeneratedKeys(), it will only return them if the value is > Long.MAX_VALUE. 
-      If your application needs this consistency, it will need to check the class of the return value from .getObject() on the 
-      ResultSet returned by Statement.getGeneratedKeys() and if it's not a BigInteger, create one based on the java.lang.Long that 
+      Unfortunately, because the server doesn't tell clients what TYPE the auto increment value is, the driver can't consistently
+      return BigIntegers for the result set returned from getGeneratedKeys(), it will only return them if the value is > Long.MAX_VALUE.
+      If your application needs this consistency, it will need to check the class of the return value from .getObject() on the
+      ResultSet returned by Statement.getGeneratedKeys() and if it's not a BigInteger, create one based on the java.lang.Long that
       is returned.
-      
+
     - Fixed Bug#38387 - "functionsNeverReturnBlobs=true" now works for SQL functions that return binary/binary collation VAR_STRINGS.
 
     - Fixed Bug#45171 - Connection.serverPrepareStatement() returns wrong default result set types
-    
+
     - Fixed Bug #43714 - useInformationSchema with
       DatabaseMetaData.getExportedKeys() throws exception
 
@@ -2280,10 +2281,10 @@ Version 6.0.6
 
     - Fixed Bug #39426 - executeBatch passes most recent PreparedStatement params
       to StatementInterceptor
-      
+
     - Support use of INFORMATION_SCHEMA.PARAMETERS when "useInformationSchema" is set "true" and the view exists
       for DatabaseMetaData.getProcedureColumns() and getFunctionColumns().
-      
+
     - When "logSlowQueries" is set to "true", and the driver has made a connection to a server that has suport
       for the SERVER_QUERY_WAS_SLOW flag in the protocol, the query will be logged if the server indicates the
       query has passed the slow query threshold.
@@ -2296,10 +2297,10 @@ Version 6.0.6
 	  implemented in RandomBalanceStrategy and BestResponseTimeBalanceStrategy.
 	  Added new property, "loadBalanceBlacklistTimeout", to control how long a
 	  server lives in the global blacklist.
-	  
+
 	- Fixed BUG#38782 - Possible IndexOutOfBoundsException in random load balancing
 	  strategy.
-	  
+
 	- Fixed BUG#39784 - invalidateCurrentConnection() does not manage global blacklist
 	  when handling connection exceptions.
 
@@ -2309,108 +2310,108 @@ Version 6.0.6
 
 	- Fixed BUG#35170- ResultSet.isAfterLast() doesn't work with for
 	  streaming result sets.
-	  
+
 	- Fixed BUG#35199 - Parse error for metadata in stored function.
-	
+
 	- Fixed BUG#35415 - When result set is from views without access to underlying
 	  columns and is opened with CONCUR_UPDATABLE, don't throw SQLExceptions when
 	  checking updatability due to access permissions, instead return
 	  CONCUR_READONLY from getConcurrency.
-	  
+
 	- Fixed BUG#35666 - NullPointerException when using "logSlowQueries=true" with
 	  server-side prepared statements enabled.
-	  
+
 	- Fixed BUG#35660 - Calling equals() on connections created with "jdbc:mysql:loadbalance:"
 	  URLs did not have the same behavior as "plain" connections. The behavior we use
 	  is the implementation in java.lang.Object, load-balanced connections just happened
-	  to be using a java.lang.reflect.Proxy which required some custom behavior in 
+	  to be using a java.lang.reflect.Proxy which required some custom behavior in
 	  equals() to make it work the same as "plain" connections.
-	  
+
 	  Note that there is no *specified* equals contract for JDBC connections in the
 	  JDBC specification itself, but the test makes sure that our implementation is
 	  at least consistent.
-	    
-	- Fixed BUG#35810 - Properties set in URLs and then passed to DataSources via setUrl() 
+
+	- Fixed BUG#35810 - Properties set in URLs and then passed to DataSources via setUrl()
 	  did not take effect in certain circumstances. This also fixes related bugs BUG#13261 and
 	  BUG#35753.
-	  
+
 	- Fixed BUG#36051 - ResultSet.getTime() won't accept value of '24' for hours component of
 	  a java.sql.Time.
-	  
+
 	- Fixed BUG#36830 - DBMD.getColumns() doesn't return correct COLUMN_SIZE for SET columns. The
 	  logic wasn't accounting for the ","s in the column size.
-	  
+
     - Fixed BUG#35610, BUG#35150- ResultSet.findColumn() and ResultSet.get...(String) doesn't allow
       column names to be used, and isn't congruent with ResultSetMetadata.getColumnName().
-      
+
       By default, we follow the JDBC Specification here, in that the 4.0 behavior
 	  is correct. Calling programs should use ResultSetMetaData.getColumnLabel() to dynamically determine
 	  the correct "name" to pass to ResultSet.findColumn() or ResultSet.get...(String) whether or not the
 	  query specifies an alias via "AS" for the column. ResultSetMetaData.getColumnName() will return the
 	  actual name of the column, if it exists, and this name can *not* be used as input to ResultSet.findColumn()
 	  or ResultSet.get...(String).
-	  
+
 	  The JDBC-3.0 (and earlier) specification has a bug, but you can get the buggy behavior
-	  (allowing column names *and* labels to be used for ResultSet.findColumn() and get...(String)) by setting 
+	  (allowing column names *and* labels to be used for ResultSet.findColumn() and get...(String)) by setting
 	  "useColumnNamesInFindColumn" to "true".
-	
+
 	- Fixed BUG#35489 - Prepared statements from pooled connections cause NPE when closed() under JDBC-4.0.
-	
-	- Added connection property "useLocalTransactionState" which configures if the driver use the in-transaction 
+
+	- Added connection property "useLocalTransactionState" which configures if the driver use the in-transaction
 	  state provided by the MySQL protocol to determine if a commit() or rollback() should actually be sent to the database.
 	  (disabled by default).
-	  
+
 	- Use socket timeouts for JDBC-4.0's Connection.isValid(int timeout) instead of timer tasks, for scalability. As a side effect
 	  internally, any communications with the database can use a timeout different than the configured timeout, but this isn't currently
 	  used.
-	  
-	- The number and position of columns for "SHOW INNODB STATUS" changed in MySQL-5.1, which caused the 
+
+	- The number and position of columns for "SHOW INNODB STATUS" changed in MySQL-5.1, which caused the
 	  "includeInnodbStatusInDeadlockExceptions" feature to not show data about the deadlock.
-	  
+
 	- Implemented support of INFORMATION_SCHEMA for DatabaseMetadata.getTables() (views there are available as "SYSTEM TABLE"), and thus
 	  also made INFORMATION_SCHEMA tables available via DatabaseMetadata.getColumns().
-	  
+
 	- Fixed BUG#39352, "INSERT ... ON DUPLICATE KEY UPDATE" doesn't return "0" for un-affected rows. This requires the driver to not
-	  send the "CLIENT_FOUND_ROWS" flag to the server when it connects if the connection property "useAffectedRows" is set to "true", 
+	  send the "CLIENT_FOUND_ROWS" flag to the server when it connects if the connection property "useAffectedRows" is set to "true",
 	  which breaks JDBC-compliance, but currently there is no other way to get correct return values from the server.
-	  
+
 	- Fixed BUG#38747 - ResultSets in "streaming" mode throw an exception when closed when the connection is set as "read-only".
-	  
-	- Fixed BUG#37570 - Can't use non-latin1 passwords. Added connection property "passwordCharacterEncoding". Leaving this set to 
-	  the default value (null), uses the platform character set, which works for ISO8859_1 (i.e. "latin1") passwords. For passwords 
-	  in other character encodings, the encoding will have to be specified with this property, as it's not possible for the driver to 
+
+	- Fixed BUG#37570 - Can't use non-latin1 passwords. Added connection property "passwordCharacterEncoding". Leaving this set to
+	  the default value (null), uses the platform character set, which works for ISO8859_1 (i.e. "latin1") passwords. For passwords
+	  in other character encodings, the encoding will have to be specified with this property, as it's not possible for the driver to
 	  auto-detect this.
-	  
+
 	- Fixed BUG#39911 - We don't retrieve nanos correctly when -parsing- a string for a TIMESTAMP. MySQL itself doesn't support micros
-	  or nanos in timestamp values, but if they're stored as strings, historically we try and parse the nanos portion as well. 
+	  or nanos in timestamp values, but if they're stored as strings, historically we try and parse the nanos portion as well.
 	  Unfortunately we -interpreted- them as micros. This fix includes correcting that behavior, and setting the milliseconds portion of
 	  such TIMESTAMPs to a correct value as well.
-	  
+
 	- Fixed BUG#39962 - ResultSet.findColumn() is slow for applications that call it too often (we're looking at -you- Hibernate). We're
 	  using TreeMaps to get case-insensitive comparisons (required for JDBC compliance), but they can be slower than hash maps, so using the
 	  approach Alex Burgel points out in this bug seems to help.
-	  
-	- Fixed BUG#39956 - Statement.getGeneratedKeys() doesn't respect the 'auto_increment_increment' value. We now grab the *session-scoped* 
+
+	- Fixed BUG#39956 - Statement.getGeneratedKeys() doesn't respect the 'auto_increment_increment' value. We now grab the *session-scoped*
 	  value, and use that. Beware that using "cacheServerConfig=true" will cause us to cache this value, so new connections won't see changes
 	  that are applied via something like "init-sql".
-	  
+
 	- Fixed BUG#39611 - ReplicationConnection never sends queries to last host in slave list.
-	
-	- Fixed BUG#34185 - Statement.getGeneratedKeys() does not raise exception when statement was not 
+
+	- Fixed BUG#34185 - Statement.getGeneratedKeys() does not raise exception when statement was not
 	  created with Statement.RETURN_GENERATED_KEYS flags.
-	  
+
 	- Using autoGenerateTestcaseScript=true now logs all statements, regardless or not if they cause errors when processed by MySQL.
 	  A "clock" value (millis since epoch) was added in the comment that is pre-pended with the idea that it can then be used
 	  when post-processing output to sequence things correctly for a multi-threaded testcase, or to replay the test case with the
 	  correct think times.
-	
+
 03-06-08 - Version 5.1.6
 
     - JDBC-4.0-ized XAConnections and datasources.
-    
-    - Fixed BUG#31790 MysqlValidConnectionChecker 
+
+    - Fixed BUG#31790 MysqlValidConnectionChecker
       doesn't properly handle ReplicationConnection
-    
+
     - Fixed Bug#20491 - DatabaseMetadata.getColumns() doesn't
       return correct column names if connection character set
       isn't UTF-8. (There was a server-side component of this that
@@ -2418,32 +2419,32 @@ Version 6.0.6
       is the last piece that fixes some loose ends in the JDBC
       driver). This fix touches *all* metadata information coming
       from the MySQL server itself.
-      
+
     - Fixed MysqlIO.nextRowFast() to only attempt to read server
       warning counts and status if talking to a 4.1 or newer server
       (fixes a hang when reading data from 4.0 servers).
-      
+
     - Made profiler event handling extensible via the "profilerEventHandler"
       connection property.
-      
-    - Fixed Bug#31823 - CallableStatement.setNull() on a stored function would 
+
+    - Fixed Bug#31823 - CallableStatement.setNull() on a stored function would
       throw an ArrayIndexOutOfBounds when setting the last parameter to null when calling setNull().
 
-    - Added SSL-related configuration property "verifyServerCertificate". If set to "false", the driver won't verify 
+    - Added SSL-related configuration property "verifyServerCertificate". If set to "false", the driver won't verify
       the server's certificate when "useSSL" is set to "true".
-      
-      When using this feature, the keystore parameters should be specified by the 
+
+      When using this feature, the keystore parameters should be specified by the
       "clientCertificateKeyStore*" properties, rather than system properties, as the JSSE doesn't
       make it straightforward to have a non-verifying trust store and the "default" key store.
-      
+
     - Fixed ResultSetMetadata.getColumnName() for result sets returned from
       Statement.getGeneratedKeys() - it was returning null instead of
       "GENERATED_KEY" as in 5.0.x.
-      
+
     - More applicable fix for the "random" load balance strategy in the face
-      of node non-responsive, it re-tries a *different* random node, rather 
+      of node non-responsive, it re-tries a *different* random node, rather
       than waiting for the node to recover (for BUG#31053)
-      
+
     - Fixed BUG#32577 - no way to store two timestamp/datetime values that happens
       over the DST switchover, as the hours end up being the same when sent as
       the literal that MySQL requires.
@@ -2453,75 +2454,75 @@ Version 6.0.6
       and tell the driver not to use the legacy date/time code by setting
       "useLegacyDatetimeCode" to "false". This will cause the driver to always convert
       to/from the server and client timezone consistently.
-      
+
       This bug fix also fixes BUG#15604, by adding entirely new date/time handling
       code that can be switched on by "useLegacyDatetimeCode" being set to "false" as
       a JDBC configuration property. For Connector/J 5.1.x, the default is "true",
       in trunk and beyond it will be "false" (i.e. the old date/time handling code, warts
       and all will be deprecated).
-      
+
     - Fixed BUG#32877 - Load balancing connection using best response time would incorrectly
       "stick" to hosts that were down when the connection was first created.
-      
+
       We solve this problem with a black list that is used during the picking of new hosts.
       If the black list ends up including all configured hosts, the driver will retry for
       a configurable number of times (the "retriesAllDown" configuration property, with a default
       of 120 times), sleeping 250ms between attempts to pick a new connection.
-      
+
       We've also went ahead and made the balancing strategy extensible. To create a new strategy,
       implement the interface com.mysql.jdbc.BalanceStrategy (which also includes our standard
       "extension" interface), and tell the driver to use it by passing in the
-      class name via the "loadBalanceStrategy" configuration property. 
-      
-    - Fixed BUG#30508 - ResultSet returned by Statement.getGeneratedKeys() is not closed 
+      class name via the "loadBalanceStrategy" configuration property.
+
+    - Fixed BUG#30508 - ResultSet returned by Statement.getGeneratedKeys() is not closed
       automatically when statement that created it is closed.
-      
-    - Added two new connection properties, "selfDestructOnPingSecondsLifetime" and 
+
+    - Added two new connection properties, "selfDestructOnPingSecondsLifetime" and
       "selfDestructOnPingMaxOperations" designed to control overall connection lifetime
-      (useful to reclaim resources on the server side) for connection pools that don't have such a 
-      facility. 
-      
-      The driver will consult the values of these properties when a ping is sent, either through 
-      calling Connection.ping(), issuing the "ping marker" query (any query that starts with 
-      "/* ping */"), or when using JDBC-4.0, calling Connection.isValid(). 
-      
+      (useful to reclaim resources on the server side) for connection pools that don't have such a
+      facility.
+
+      The driver will consult the values of these properties when a ping is sent, either through
+      calling Connection.ping(), issuing the "ping marker" query (any query that starts with
+      "/* ping */"), or when using JDBC-4.0, calling Connection.isValid().
+
       If the connection has issued too many operations, or is too old, the driver will
       throw a SQLException with the SQLState of "08S01" at the time of the ping, which
       will cause the connection to be invalidated with most pools in use today.
-      
-    - Fixed issue where driver could send invalid server-side prepared statement 
+
+    - Fixed issue where driver could send invalid server-side prepared statement
       IDs to the server when the driver was setup to do auto-reconnect as the
       connection could get set up enough to start sending queries on one thread,
       while the thread that "noticed" the connection was down hasn't completed
       re-preparing all of the server-side prepared statements that were open when
       the connection died.
-      
+
       Potentially fixes cause for bug 28934. Potentially fixes other possible race
       conditions where one thread that has created a connection "shares" it with other
       threads if the connection is reconnected due to auto-reconnect functionality.
-      
-    - Fixed BUG#33823 - Public interface ResultSetInternalMethods with reference to 
+
+    - Fixed BUG#33823 - Public interface ResultSetInternalMethods with reference to
       non-public class com.mysql.jdbc.CachedResultSetMetaData.
-      
+
     - For any SQLException caused by another Throwable, besides dumping the message or stack
       trace as a string into the message, set the underlying Throwable as the cause for
-      the SQLException, making it accessible via getCause().  
-     
-    - Fixed BUG#34093 - Statements with batched values do not return correct values for 
-      getGeneratedKeys() when "rewriteBatchedStatements" is set to "true", and the 
+      the SQLException, making it accessible via getCause().
+
+    - Fixed BUG#34093 - Statements with batched values do not return correct values for
+      getGeneratedKeys() when "rewriteBatchedStatements" is set to "true", and the
       statement has an "ON DUPLICATE KEY UPDATE" clause.
 
-    - Fixed BUG#31192 - Encoding Issue retrieving serverVersion in MysqlIO in the 
+    - Fixed BUG#31192 - Encoding Issue retrieving serverVersion in MysqlIO in the
       method doHandshake when encoding doesn't contain ASCII characters in the "standard"
       place (i.e. ebcdic).
-      
+
     - Fixed issue where META-INF in the binary .jar file wasn't packed correctly,
       leading to failure of the JDBC-4.0 SPI mechanism.
-       
+
     - CallableStatements that aren't really stored procedure or stored function calls can
-      now be used, for tools such as Oracle JDeveloper ADF that issue statements such as 
+      now be used, for tools such as Oracle JDeveloper ADF that issue statements such as
       DDL through CallableStatements.
-    
+
     - Fixed BUG#34518 - Statements using cursor fetch leaked internal prepared statements
       until connection was closed. The internal prepared statement is now held open while
       the result set is open, and closed by the result set itself being closed.
@@ -2532,32 +2533,32 @@ Version 6.0.6
       was received from the MySQL server, as well as when the last packet was sent
       to one, in an effort to make it easier to debug communications errors caused
       by network timeouts.
-      
+
     - Reverted a change to DatabaseMetadata.getColumns() from 5.0, where
       getColumns() would report NULL for COLUMN_SIZE for TIME, DATE, DATETIME
-      and TIMESTAMP types. It now reports the column size, in the 
-      DatabaseMetadata implementations that use "SHOW" commands, and the 
+      and TIMESTAMP types. It now reports the column size, in the
+      DatabaseMetadata implementations that use "SHOW" commands, and the
       INFORMATION_SCHEMA.
-      
-    - Fixed Bug#34762 - RowDataStatic does't always set the metadata in 
+
+    - Fixed Bug#34762 - RowDataStatic does't always set the metadata in
       ResultSetRow, which can lead to failures when unpacking DATE,
       TIME, DATETIME and TIMESTAMP types when using absolute, relative,
       and previous result set navigation methods.
-      
+
     - Fixed BUG#34703 - Connection.isValid() invalidates connection after
       timeout, even if connection is actually valid.
-      
+
     - Fixed BUG#34194 - ResultSetMetaData.getColumnTypeName() returns
       "UNKNOWN" for GEOMETRY type.
-      
-    - Fixed BUG#33162 - NullPointerException instead of SQLException 
+
+    - Fixed BUG#33162 - NullPointerException instead of SQLException
       thrown for ResultSet.getTimestamp() when not positioned on a
       row.
 
     - The ConnectionLifecycleInterceptor interface now has callback methods for
-      transaction initiation (transactionBegun()), and completion 
-      (transactionCompleted()), as reported by the *server* (i.e. 
-      calling Connection.setAutoCommit(false) will not trigger 
+      transaction initiation (transactionBegun()), and completion
+      (transactionCompleted()), as reported by the *server* (i.e.
+      calling Connection.setAutoCommit(false) will not trigger
       transactionBegun() being called, however the first statement
       which causes a transaction to start on the server will cause
       transactionBegun() to be called *after* the statement has been processed
@@ -2566,15 +2567,15 @@ Version 6.0.6
     - Fixed Bug#34913 - ResultSet.getTimestamp() returns incorrect
       values for month/day of TIMESTAMPs when using server-side
       prepared statements (not enabled by default).
-      
-    - Fixed BUG#34937 - MysqlConnectionPoolDataSource does not support 
+
+    - Fixed BUG#34937 - MysqlConnectionPoolDataSource does not support
       ReplicationConnection. Notice that we implemented com.mysql.jdbc.Connection
       for ReplicationConnection, however, only accessors from ConnectionProperties
       are implemented (not the mutators), and they return values from the currently
       active connection. All other methods from com.mysql.jdbc.Connection are
       implemented, and operate on the currently active connection, with the exception of
       resetServerState() and changeUser().
-      
+
     - Connections created with jdbc:mysql:replication:// URLs now force
       roundRobinLoadBalance=true on the slaves, and round-robin loadbalancing
       now uses a "random" choice to more evenly distribute load across slave
@@ -2582,23 +2583,23 @@ Version 6.0.6
       with "roundRobinLoadBalance=true" no longer set the failover state,
       as it's assumed that we're not attempting to fall-back to a master
       server. This fixes BUG#34963.
-    
+
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053
       from 5.0.8.
-      
-10-09-07 - Version 5.1.4 
 
-    - Added "autoSlowLog" configuration property, overrides 
+10-09-07 - Version 5.1.4
+
+    - Added "autoSlowLog" configuration property, overrides
       "slowQueryThreshold*" properties, driver determines slow
       queries by those that are slower than 5 * stddev of the mean
       query time (outside the 96% percentile).
-      
-    - Fixed BUG#28256 - When connection is in read-only mode, 
-      queries that are wrapped in parentheses incorrectly identified 
+
+    - Fixed BUG#28256 - When connection is in read-only mode,
+      queries that are wrapped in parentheses incorrectly identified
       as DML.
-       
+
 09-07-07 - Version 5.1.3 RC
 
 	- Setting "useBlobToStoreUTF8OutsideBMP" to "true" tells the
@@ -2649,23 +2650,23 @@ Version 6.0.6
     - Errors encountered during Statement/PreparedStatement/CallableStatement.executeBatch()
       when "rewriteBatchStatements" has been set to "true" now return
       BatchUpdateExceptions according to the setting of "continueBatchOnError".
-      
+
       If "continueBatchOnError" is set to "true", the update counts for the
       "chunk" that were sent as one unit will all be set to EXECUTE_FAILED, but
       the driver will attempt to process the remainder of the batch. You can determine which
       "chunk" failed by looking at the update counts returned in the BatchUpdateException.
-      
+
       If "continueBatchOnError" is set to "false", the update counts returned
-      will contain the failed "chunk", and stop with the failed chunk, with all 
+      will contain the failed "chunk", and stop with the failed chunk, with all
       counts for the failed "chunk" set to EXECUTE_FAILED.
-      
+
       Since MySQL doesn't return multiple error codes for multiple-statements, or
-      for multi-value INSERT/REPLACE, it is the application's responsibility to handle 
+      for multi-value INSERT/REPLACE, it is the application's responsibility to handle
       determining which item(s) in the "chunk" actually failed.
-      
-    - Statement.setQueryTimeout()s now affect the entire batch for batched 
+
+    - Statement.setQueryTimeout()s now affect the entire batch for batched
       statements, rather than the individual statements that make up the batch.
-      
+
 06-29-07 - Version 5.1.2 Beta
 
     - Setting the configuration property "rewriteBatchedStatements"
@@ -2800,52 +2801,52 @@ Version 6.0.6
 nn-nn-07 - Version 5.0.9
 
     - Driver now calls SocketFactory.afterHandshake() at appropriate time.
-    
+
 10-09-07 - Version 5.0.8
 
     - Fixed BUG#30550, executeBatch() would fail with an ArithmeticException
       and/or NullPointerException when the batch had zero members and
       "rewriteBatchedStatements" was set to "true" for the connection.
-    
+
     - Added two configuration parameters (both default to "false")
-    
-            * blobsAreStrings  - Should the driver always treat BLOBs as Strings 
-                                 specifically to work around dubious metadata returned 
+
+            * blobsAreStrings  - Should the driver always treat BLOBs as Strings
+                                 specifically to work around dubious metadata returned
                                  by the server for GROUP BY clauses?
-            
-            * functionsNeverReturnBlobs - Should the driver always treat data from 
-                                          functions returning BLOBs as Strings - 
-                                          specifically to work around dubious metadata 
+
+            * functionsNeverReturnBlobs - Should the driver always treat data from
+                                          functions returning BLOBs as Strings -
+                                          specifically to work around dubious metadata
                                           returned by the server for GROUP BY clauses?
 
     - Fixed BUG#29106 - Connection checker for JBoss didn't use same method parameters
       via reflection, causing connections to always seem "bad".
-      
-    - Fixed BUG#30664 - Note that this fix only works for MySQL server 
-      versions 5.0.25 and newer, since earlier versions didn't consistently 
-      return correct metadata for functions, and thus results from 
-      subqueries and functions were indistinguishable from each other, 
+
+    - Fixed BUG#30664 - Note that this fix only works for MySQL server
+      versions 5.0.25 and newer, since earlier versions didn't consistently
+      return correct metadata for functions, and thus results from
+      subqueries and functions were indistinguishable from each other,
       leading to type-related bugs.
 
     - Fixed BUG#28972 - DatabaseMetaData.getTypeInfo() for the types DECIMAL
       and NUMERIC will return a precision of 254 for server versions older than
       5.0.3, 64 for versions 5.0.3-5.0.5 and 65 for versions newer than 5.0.5.
-    
+
     - Fixed BUG#29852 - Closing a load-balanced connection would cause a
       ClassCastException.
-    
+
     - Fixed BUG#27867 - Schema objects with identifiers other than
-      the connection character aren't retrieved correctly in 
+      the connection character aren't retrieved correctly in
       ResultSetMetadata.
-      
-    - Fixed BUG#28689 - CallableStatement.executeBatch() doesn't work when 
+
+    - Fixed BUG#28689 - CallableStatement.executeBatch() doesn't work when
       connection property "noAccessToProcedureBodies" has been set to "true".
-     
-      The fix involves changing the behavior of "noAccessToProcedureBodies",in 
+
+      The fix involves changing the behavior of "noAccessToProcedureBodies",in
       that the driver will now report all paramters as "IN" paramters
       but allow callers to call registerOutParameter() on them without throwing
       an exception.
-      
+
     - Fixed BUG#27182 - Connection.getServerCharacterEncoding() doesn't work
       for servers with version >= 4.1.
 
@@ -2854,43 +2855,43 @@ nn-nn-07 - Version 5.0.9
 
     - Fixed BUG#30851, NPE with null column values when
       "padCharsWithSpace" is set to "true".
-    
-    - Specifying a "validation query" in your connection pool 
-      that starts with "/* ping */" _exactly_ will cause the driver to 
-      instead send a ping to the server and return a fake result set (much 
-      lighter weight), and when using a ReplicationConnection or a LoadBalancedConnection, 
+
+    - Specifying a "validation query" in your connection pool
+      that starts with "/* ping */" _exactly_ will cause the driver to
+      instead send a ping to the server and return a fake result set (much
+      lighter weight), and when using a ReplicationConnection or a LoadBalancedConnection,
       will send the ping across all active connections.
-      
+
     - Fixed Bug#30892 setObject(int, Object, int, int) delegate in
       PreparedStatmentWrapper delegates to wrong method.
-      
+
     - XAConnections now start in auto-commit mode (as per JDBC-4.0 specification
       clarification).
-     
+
     - Fixed Bug#27412 - cached metadata with PreparedStatement.execute()
       throws NullPointerException.
-      
+
     - Driver will now fall back to sane defaults for max_allowed_packet and
       net_buffer_length if the server reports them incorrectly (and will log
       this situation at WARN level, since it's actually an error condition).
-    
-    - Fixed BUG#27916 - UNSIGNED types not reported via DBMD.getTypeInfo(), and 
-      capitalization of type names is not consistent between DBMD.getColumns(), 
+
+    - Fixed BUG#27916 - UNSIGNED types not reported via DBMD.getTypeInfo(), and
+      capitalization of type names is not consistent between DBMD.getColumns(),
       RSMD.getColumnTypeName() and DBMD.getTypeInfo().
 
       This fix also ensures that the precision of UNSIGNED MEDIUMINT
       and UNSIGNED BIGINT is reported correctly via DBMD.getColumns().
 
     - Fixed BUG#31053 - Connections established using URLs of the form
-      "jdbc:mysql:loadbalance://" weren't doing failover if they tried to 
+      "jdbc:mysql:loadbalance://" weren't doing failover if they tried to
       connect to a MySQL server that was down. The driver now attempts
       connections to the next "best" (depending on the load balance strategy
       in use) server, and continues to attempt connecting to the next "best"
-      server every 250 milliseconds until one is found that is up and running 
+      server every 250 milliseconds until one is found that is up and running
       or 5 minutes has passed.
-      
+
       If the driver gives up, it will throw the last-received SQLException.
-      
+
 07-19-07 - Version 5.0.7
 
     - Setting the configuration parameter "useCursorFetch" to "true" for
