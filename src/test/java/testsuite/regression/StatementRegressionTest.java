@@ -13522,6 +13522,7 @@ public class StatementRegressionTest extends BaseTestCase {
         assertEquals(1, warningCounter);
     }
 
+    /**
      * Tests fix for Bug#109546 (Bug#34958912), executeUpdate throws SQLException on queries that are only comments.
      *
      * @throws Exception
