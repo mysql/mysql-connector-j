@@ -3,6 +3,9 @@
 
 Version 8.3.0
 
+  - Fix for Bug#107107 (Bug#34101635), Redundant "Reset stmt" when setting useServerPrepStmts&cachePrepStmts to true.
+    Thanks to Marcos Albe for his contribution.
+
   - Fix for Bug#19845752, COMMENT PARSING IS NOT PROPER IN CONNECTOR JDBC.
 
   - Fix for Bug#112884 (Bug#36043166), Setting a large timeout leads to errors when executing SQL.

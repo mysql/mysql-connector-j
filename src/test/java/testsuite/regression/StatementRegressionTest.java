@@ -13555,4 +13555,55 @@ public class StatementRegressionTest extends BaseTestCase {
         });
     }
 
+    /**
+     * Tests fix for Bug#107107 (Bug#34101635), Redundant "Reset stmt" when setting useServerPrepStmts&cachePrepStmts to true.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug107107() throws Exception {
+        String prevGeneralLog = this.getMysqlVariable("general_log");
+        String prevLogOutput = this.getMysqlVariable("log_output");
+
+        try {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+            props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), "true");
+            Connection testConn = getConnectionWithProps(props);
+
+            this.stmt.execute("SET GLOBAL general_log = 'OFF'");
+            this.stmt.execute("SET GLOBAL log_output = 'TABLE'");
+            this.stmt.execute("SET GLOBAL general_log = 'ON'");
+
+            createTable("testBug107107", "(id INT)");
+
+            PreparedStatement ps = null;
+            String sql = "INSERT INTO testBug107107 (id) VALUES (?)";
+            for (int i = 1; i <= 3; i++) {
+                ps = testConn.prepareStatement(sql);
+                ps.setInt(1, i);
+                ps.execute();
+                ps.close();
+            }
+
+            boolean foundTestTable = false;
+            this.rs = this.stmt.executeQuery("SELECT command_type, CONVERT(argument USING utf8mb4) FROM mysql.general_log ORDER BY event_time DESC LIMIT 10");
+            while (this.rs.next()) {
+                String commandType = this.rs.getString(1);
+                String argument = this.rs.getString(2);
+                if (!foundTestTable && argument.contains("testBug107107")) {
+                    foundTestTable = true;
+                }
+                assertFalse(commandType.contains("Reset stmt"), "Unexpected Reset stmt command found.");
+            }
+            assertTrue(foundTestTable, "Expected general log events were not recorded in mysql.general_log.");
+
+            testConn.close();
+        } finally {
+            this.stmt.execute("SET GLOBAL general_log = 'OFF'");
+            this.stmt.execute("SET GLOBAL log_output = '" + prevLogOutput + "'");
+            this.stmt.execute("SET GLOBAL general_log = '" + prevGeneralLog + "'");
+        }
+    }
+
 }
