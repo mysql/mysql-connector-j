@@ -13497,7 +13497,7 @@ public class StatementRegressionTest extends BaseTestCase {
      */
     @Test
     void testBug112195() throws Exception {
-        String sql = "DROP TABLE IF NOT EXISTS testBug112195";
+        String sql = "DROP TABLE IF EXISTS testBug112195";
 
         // This creates a single warning.
         this.stmt.execute(sql);
