@@ -512,7 +512,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
             PreparedQuery q = (PreparedQuery) this.query;
 
-            if (this.paramInfo != null && !this.paramInfo.fakeParameters && q.getParameterCount() > 0) {
+            if (this.paramInfo != null && !this.paramInfo.fakeParameters && q.getParameterCount() >= 0) {
                 this.placeholderToParameterIndexMap = new int[q.getParameterCount()];
 
                 int startIndex = 0;

@@ -3,6 +3,8 @@
 
 Version 8.3.0
 
+  - Fix for Bug#111107 (Bug#36023972), CallableStatement::getParameterMetaData reports incorrect parameterCount.
+
   - Fix for Bug#109546 (Bug#34958912), executeUpdate throws SQLException on queries that are only comments.
 
   - Fix for Bug#112195 (Bug#35749998), getWarnings() of StatementImpl contains all warnings.

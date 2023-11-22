@@ -1607,7 +1607,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for Bug#38954 (11749415), DATA TRUNCATION WHILE USING BIT(1) IN STORED PROCEDURE WITH INOUT TYPE.
+     * Tests fix for Bug#38954 (Bug#11749415), DATA TRUNCATION WHILE USING BIT(1) IN STORED PROCEDURE WITH INOUT TYPE.
      *
      * @throws Exception
      */
@@ -1633,7 +1633,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for Bug#73774 (19531305) - Can't execute a stored procedure if exists function with same name.
+     * Tests fix for Bug#73774 (Bug#19531305), Can't execute a stored procedure if exists function with same name.
      *
      * @throws Exception
      */
@@ -1804,7 +1804,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for Bug#95796 (29907618) - Parameter metadata inferred incorrectly when procedure or function doesn't exist.
+     * Tests fix for Bug#95796 (Bug#29907618), Parameter metadata inferred incorrectly when procedure or function doesn't exist.
      *
      * @throws Exception
      */
@@ -1853,6 +1853,28 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         for (int i = 1; i <= pmd.getParameterCount(); i++) {
             assertEquals(Types.VARCHAR, pmd.getParameterType(i));
             assertEquals(i == 1 ? ParameterMetaData.parameterModeOut : ParameterMetaData.parameterModeIn, pmd.getParameterMode(i));
+        }
+    }
+
+    /**
+     * Tests fix for Bug#111107 (Bug#36023972), CallableStatement::getParameterMetaData reports incorrect parameterCount.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug111107() throws Exception {
+        createProcedure("testBug111107", "(a INT, b INT, c INT, d INT) BEGIN SELECT a + b + c + d; END");
+
+        for (int i = 0; i < 16 /* 2^4 */; i++) {
+            String p1 = (i & 0b0001) != 0 ? "?" : "1";
+            String p2 = (i & 0b0010) != 0 ? "?" : "2";
+            String p3 = (i & 0b0100) != 0 ? "?" : "3";
+            String p4 = (i & 0b1000) != 0 ? "?" : "4";
+            String testSql = String.format("{ CALL testBug111107(%s, %s, %s, %s) }", p1, p2, p3, p4);
+            try (CallableStatement testCstmt = this.conn.prepareCall(testSql)) {
+                ParameterMetaData testPmd = testCstmt.getParameterMetaData();
+                assertEquals(Integer.bitCount(i), testPmd.getParameterCount(), "Failed in query " + testSql);
+            }
         }
     }
 
