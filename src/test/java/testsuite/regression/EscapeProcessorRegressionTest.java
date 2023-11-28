@@ -29,13 +29,16 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.TimeZone;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.MysqlConnection;
@@ -121,6 +124,56 @@ public class EscapeProcessorRegressionTest extends BaseTestCase {
 
         String output = this.conn.nativeSQL(input);
         assertEquals(expected, output);
+    }
+
+    /**
+     * Tests fix for Bug#19845752 - COMMENT PARSING IS NOT PROPER IN CONNECTOR JDBC.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug19845752() throws Exception {
+        createProcedure("testBugProc19845752", "(IN param1 VARCHAR(10),INOUT param2 VARCHAR(10)) BEGIN SET param2 = 'data'; END");
+
+        assertDoesNotThrow(() -> {
+            this.conn.prepareCall("{call/* abcd */ Proc2(?, ?) } ");
+        });
+        assertDoesNotThrow(() -> {
+            this.conn.prepareCall("{call /*{*/ Proc2(?, ?) } ");
+        });
+        assertDoesNotThrow(() -> {
+            this.conn.prepareCall("{call Proc2(?, ?) /*}*/} ");
+        });
+        assertDoesNotThrow(() -> {
+            this.conn.prepareCall("{call /* {call} */ Proc2(?, ?) } ");
+        });
+        assertDoesNotThrow(() -> {
+            this.conn.prepareCall("{call /* {ca\rll} */ Proc2(?, ?) } ");
+        });
+        assertDoesNotThrow(() -> {
+            this.conn.prepareCall("{call Proc2(?, ?) } #{call}");
+        });
+        assertDoesNotThrow(() -> {
+            this.conn.prepareCall("{call #{call}\n Proc2(?, ?) }");
+        });
+        assertDoesNotThrow(() -> {
+            this.stmt.executeQuery("select {fn/*Comment*/ abs(-1.5) }");
+        });
+        assertDoesNotThrow(() -> {
+            this.stmt.executeQuery("select {fn#Comment\n abs(-1.5) }");
+        });
+        assertDoesNotThrow(() -> {
+            this.stmt.executeQuery("select {fn-- Comment\n abs(-1.5) }");
+        });
+        Assertions.assertThrows(SQLException.class, () -> {
+            this.stmt.executeQuery("select {fn--Comment abs(-1.5) }");
+        });
+        Assertions.assertThrows(SQLException.class, () -> {
+            this.stmt.executeQuery("select {fn#Co\nmment abs(-1.5) }");
+        });
+        Assertions.assertThrows(SQLException.class, () -> {
+            this.stmt.executeQuery("select {fn/*Comment abs(-1.5) }");
+        });
     }
 
 }

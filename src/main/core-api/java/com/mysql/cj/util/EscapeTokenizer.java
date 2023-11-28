@@ -34,15 +34,19 @@ package com.mysql.cj.util;
  */
 public class EscapeTokenizer {
 
-    private static final char CHR_ESCAPE = '\\';
+    private static final char CHR_BACKSLASH = '\\';
+    private static final char CHR_SLASH = '/';
     private static final char CHR_SGL_QUOTE = '\'';
     private static final char CHR_DBL_QUOTE = '"';
     private static final char CHR_LF = '\n';
     private static final char CHR_CR = '\r';
-    private static final char CHR_COMMENT = '-';
+    private static final char CHR_DASH = '-';
+    private static final char CHR_HASH = '#';
+    private static final char CHR_STAR = '*';
     private static final char CHR_BEGIN_TOKEN = '{';
     private static final char CHR_END_TOKEN = '}';
     private static final char CHR_VARIABLE = '@';
+    private static final char CHR_SPACE = ' ';
 
     private String source = null;
     private int sourceLength = 0;
@@ -94,7 +98,7 @@ public class EscapeTokenizer {
             char c = this.source.charAt(this.pos);
 
             // process escape char: (\)
-            if (c == CHR_ESCAPE) {
+            if (c == CHR_BACKSLASH) {
                 tokenBuf.append(c);
                 backslashEscape = !backslashEscape;
                 continue;
@@ -128,11 +132,42 @@ public class EscapeTokenizer {
             }
 
             if (!this.inQuotes && !backslashEscape) {
-                // process comments: (--)
-                if (c == CHR_COMMENT) {
+                // process slash-star comments: (/* */)
+                if (c == CHR_SLASH) {
                     tokenBuf.append(c);
-                    // look ahead for double hyphen
-                    if (this.pos + 1 < this.sourceLength && this.source.charAt(this.pos + 1) == CHR_COMMENT) {
+                    // look ahead for asterisk
+                    if (this.pos + 1 < this.sourceLength && this.source.charAt(this.pos + 1) == CHR_STAR) {
+                        // consume following chars until end of comment
+                        while (++this.pos < this.sourceLength - 1) {
+                            c = this.source.charAt(this.pos);
+                            tokenBuf.append(c);
+                            if (c == CHR_STAR && this.source.charAt(this.pos + 1) == CHR_SLASH) {
+                                tokenBuf.append(CHR_SLASH);
+                                this.pos++;
+                                break;
+                            }
+                        }
+                    }
+                    continue;
+                }
+
+                // process hash comment char: (#)
+                if (c == CHR_HASH) {
+                    tokenBuf.append(c);
+                    // consume following chars until new line or end of string
+                    while (++this.pos < this.sourceLength && c != CHR_LF && c != CHR_CR) {
+                        c = this.source.charAt(this.pos);
+                        tokenBuf.append(c);
+                    }
+                    this.pos--;
+                    continue;
+                }
+
+                // process comments: (--)
+                if (c == CHR_DASH) {
+                    tokenBuf.append(c);
+                    // look ahead for double hyphen and a space
+                    if (this.pos + 2 < this.sourceLength && this.source.charAt(this.pos + 1) == CHR_DASH && this.source.charAt(this.pos + 2) == CHR_SPACE) {
                         // consume following chars until new line or end of string
                         while (++this.pos < this.sourceLength && c != CHR_LF && c != CHR_CR) {
                             c = this.source.charAt(this.pos);
