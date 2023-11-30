@@ -210,7 +210,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
     }
 
     @Override
-    protected long[] executeBatchSerially(int batchTimeout) throws SQLException {
+    protected long[] executeBatchSerially(long batchTimeout) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             JdbcConnection locallyScopedConn = this.connection;
 

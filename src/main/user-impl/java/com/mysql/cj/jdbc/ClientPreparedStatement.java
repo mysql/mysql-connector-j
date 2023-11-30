@@ -391,7 +391,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
             }
 
             // we timeout the entire batch, not individual statements
-            int batchTimeout = getTimeoutInMillis();
+            long batchTimeout = getTimeoutInMillis();
             setTimeoutInMillis(0);
 
             resetCancelledState();
@@ -432,7 +432,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
      * @throws SQLException
      *             if a database access error occurs or this method is called on a closed PreparedStatement
      */
-    protected long[] executePreparedBatchAsMultiStatement(int batchTimeout) throws SQLException {
+    protected long[] executePreparedBatchAsMultiStatement(long batchTimeout) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             // This is kind of an abuse, but it gets the job done
             if (this.batchedValuesClause == null) {
@@ -618,7 +618,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
      * @throws SQLException
      *             if a database access error occurs or this method is called on a closed PreparedStatement
      */
-    protected long[] executeBatchWithMultiValuesClause(int batchTimeout) throws SQLException {
+    protected long[] executeBatchWithMultiValuesClause(long batchTimeout) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             JdbcConnection locallyScopedConn = this.connection;
 
@@ -746,7 +746,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
      * @throws SQLException
      *             if an error occurs
      */
-    protected long[] executeBatchSerially(int batchTimeout) throws SQLException {
+    protected long[] executeBatchSerially(long batchTimeout) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
             if (this.connection == null) {
                 checkClosed();

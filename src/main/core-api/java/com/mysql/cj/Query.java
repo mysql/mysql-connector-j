@@ -87,9 +87,9 @@ public interface Query {
 
     void setResultType(Resultset.Type resultSetType);
 
-    int getTimeoutInMillis();
+    long getTimeoutInMillis();
 
-    void setTimeoutInMillis(int timeoutInMillis);
+    void setTimeoutInMillis(long timeoutInMillis);
 
     void setExecuteTime(long executeTime);
 
@@ -100,7 +100,7 @@ public interface Query {
      */
     long getExecuteTime();
 
-    CancelQueryTask startQueryTimer(Query stmtToCancel, int timeout);
+    CancelQueryTask startQueryTimer(Query stmtToCancel, long timeout);
 
     AtomicBoolean getStatementExecuting();
 

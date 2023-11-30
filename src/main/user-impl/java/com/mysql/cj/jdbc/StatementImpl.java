@@ -639,7 +639,7 @@ public class StatementImpl implements JdbcStatement {
     }
 
     @Override
-    public CancelQueryTask startQueryTimer(Query stmtToCancel, int timeout) {
+    public CancelQueryTask startQueryTimer(Query stmtToCancel, long timeout) {
         return this.query.startQueryTimer(stmtToCancel, timeout);
     }
 
@@ -820,7 +820,7 @@ public class StatementImpl implements JdbcStatement {
             }
 
             // we timeout the entire batch, not individual statements
-            int individualStatementTimeout = getTimeoutInMillis();
+            long individualStatementTimeout = getTimeoutInMillis();
             setTimeoutInMillis(0);
 
             CancelQueryTask timeoutTask = null;
@@ -952,7 +952,7 @@ public class StatementImpl implements JdbcStatement {
      * @throws SQLException
      *             if a database access error occurs or this method is called on a closed PreparedStatement
      */
-    private long[] executeBatchUsingMultiQueries(boolean multiQueriesEnabled, int nbrCommands, int individualStatementTimeout) throws SQLException {
+    private long[] executeBatchUsingMultiQueries(boolean multiQueriesEnabled, int nbrCommands, long individualStatementTimeout) throws SQLException {
         JdbcConnection locallyScopedConn = checkClosed();
 
         synchronized (locallyScopedConn.getConnectionMutex()) {
@@ -1614,7 +1614,7 @@ public class StatementImpl implements JdbcStatement {
     @Override
     public int getQueryTimeout() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            return getTimeoutInMillis() / 1000;
+            return Math.toIntExact(getTimeoutInMillis() / 1000);
         }
     }
 
@@ -2206,12 +2206,12 @@ public class StatementImpl implements JdbcStatement {
     }
 
     @Override
-    public int getTimeoutInMillis() {
+    public long getTimeoutInMillis() {
         return this.query.getTimeoutInMillis();
     }
 
     @Override
-    public void setTimeoutInMillis(int timeoutInMillis) {
+    public void setTimeoutInMillis(long timeoutInMillis) {
         this.query.setTimeoutInMillis(timeoutInMillis);
     }
 

@@ -13543,4 +13543,16 @@ public class StatementRegressionTest extends BaseTestCase {
         });
     }
 
+    /**
+     * Tests fix for Bug#112884 (Bug#36043166), Setting a large timeout leads to errors when executing SQL.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug112884() throws Exception {
+        assertDoesNotThrow(() -> {
+            this.stmt.setQueryTimeout(Integer.MAX_VALUE / 1000 + 1);
+        });
+    }
+
 }
