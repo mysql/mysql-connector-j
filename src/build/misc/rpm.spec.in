@@ -44,15 +44,13 @@
 # https://en.opensuse.org/openSUSE:Build_Service_cross_distribution_howto
 
 # SuSE will not set "dist", others do
-%if 0%{?suse_version} == 1315
-%global dist       .sles12
-%global sles12     1
-%endif
-
 %if 0%{?suse_version} == 1500
 %global dist       .sl15
 %global sles15     1
 %endif
+
+# Disable "reproducible builds"
+%global source_date_epoch_from_changelog 0
 
 %global legacy_name               @MYSQL_CJ_EXTENDED_LEGACY_PROD_NAME@@MYSQL_CJ_RPM_PACKAGE_SUFFIX@
 
@@ -97,7 +95,7 @@ BuildRequires:     ant
 BuildRequires:     java-devel >= 1:1.8.0
 %endif
 
-%if 0%{?sles12:1} || 0%{?sles15:1}
+%if 0%{?sles15:1}
 Requires:          java-headless >= 1.8.0
 %else
 Requires:          java-headless >= 1:1.8.0
