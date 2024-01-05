@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/en/
 
+Version 8.4.0
+
 Version 8.3.0
 
   - Fix for Bug#107107 (Bug#34101635), Redundant "Reset stmt" when setting useServerPrepStmts&cachePrepStmts to true.

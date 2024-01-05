@@ -4,7 +4,7 @@
 
 MySQL provides connectivity for client applications developed in the Java programming language with MySQL Connector/J, a driver that implements the [Java Database Connectivity (JDBC) API](https://www.oracle.com/technetwork/java/javase/jdbc/) and also [MySQL X DevAPI](https://dev.mysql.com/doc/x-devapi-userguide/en/).
 
-MySQL Connector/J 8.3 is a JDBC Type 4 driver that is compatible with the [JDBC 4.2](https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/) specification. The Type 4 designation means that the driver is a pure Java implementation of the MySQL protocol and does not rely on the MySQL client libraries.
+MySQL Connector/J 8.4 is a JDBC Type 4 driver that is compatible with the [JDBC 4.2](https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/) specification. The Type 4 designation means that the driver is a pure Java implementation of the MySQL protocol and does not rely on the MySQL client libraries.
 
 The driver also contains an implementation of [MySQL X DevAPI](https://dev.mysql.com/doc/x-devapi-userguide/en/), an application programming interface for working with [MySQL as a Document Store](https://dev.mysql.com/doc/refman/en/document-store.html) through CRUD-based, NoSQL operations.
 
@@ -35,7 +35,7 @@ Alternatively, MySQL Connector/J can be obtained automatically via [Maven's depe
 <dependency>
   <groupId>com.mysql</groupId>
   <artifactId>mysql-connector-j</artifactId>
-  <version>8.3.0</version>
+  <version>8.4.0</version>
 </dependency>
 ```
 
@@ -45,7 +45,7 @@ MySQL Connector/J's own Project Object Model (POM) file specifies a transitive d
 <dependency>
   <groupId>com.mysql</groupId>
   <artifactId>mysql-connector-j</artifactId>
-  <version>8.3.0</version>
+  <version>8.4.0</version>
   <exclusions>
     <exclusion>
       <groupId>com.google.protobuf</groupId>
