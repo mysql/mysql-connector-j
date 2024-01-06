@@ -65,7 +65,7 @@ public class UtilCalendarValueEncoder extends AbstractValueEncoder {
             case TIMESTAMP:
                 Timestamp ts = adjustTimestamp(new java.sql.Timestamp(((Calendar) binding.getValue()).getTimeInMillis()), binding.getField(),
                         binding.keepOrigNanos());
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 if (binding.getCalendar() != null) {
                     buf.append(TimeUtil.getSimpleDateFormat("''yyyy-MM-dd HH:mm:ss", binding.getCalendar()).format(x));
                 } else {

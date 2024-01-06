@@ -87,7 +87,7 @@ public class SqlTimeValueEncoder extends AbstractValueEncoder {
                     ts = TimeUtil.truncateFractionalSeconds(ts);
                 }
 
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
                 buf.append(binding.getCalendar() != null ? TimeUtil.getSimpleDateFormat("''yyyy-MM-dd HH:mm:ss", binding.getCalendar()).format(x)
                         : TimeUtil.getSimpleDateFormat(null, "''yyyy-MM-dd HH:mm:ss", this.serverSession.getDefaultTimeZone()).format(x));
                 if (this.serverSession.getCapabilities().serverSupportsFracSecs() && ts.getNanos() > 0) {

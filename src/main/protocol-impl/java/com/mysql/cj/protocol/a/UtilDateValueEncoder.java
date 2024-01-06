@@ -77,7 +77,7 @@ public class UtilDateValueEncoder extends AbstractValueEncoder {
             case TEXT:
             case MEDIUMTEXT:
             case LONGTEXT:
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
 
                 if (binding.getCalendar() != null) {
                     buf.append(TimeUtil.getSimpleDateFormat("''yyyy-MM-dd HH:mm:ss", binding.getCalendar()).format(x));
@@ -161,7 +161,7 @@ public class UtilDateValueEncoder extends AbstractValueEncoder {
             case TEXT:
             case MEDIUMTEXT:
             case LONGTEXT:
-                StringBuffer buf = new StringBuffer();
+                StringBuilder buf = new StringBuilder();
 
                 if (binding.getCalendar() != null) {
                     buf.append(TimeUtil.getSimpleDateFormat("yyyy-MM-dd HH:mm:ss", binding.getCalendar()).format(x));
