@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -55,7 +55,6 @@ import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringLengthDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
-import com.mysql.cj.protocol.a.authentication.AuthenticationFidoClient;
 import com.mysql.cj.protocol.a.authentication.AuthenticationKerberosClient;
 import com.mysql.cj.protocol.a.authentication.AuthenticationLdapSaslClientPlugin;
 import com.mysql.cj.protocol.a.authentication.AuthenticationOciClient;
@@ -260,7 +259,6 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         pluginsToInit.add(new AuthenticationLdapSaslClientPlugin());
         pluginsToInit.add(new AuthenticationKerberosClient());
         pluginsToInit.add(new AuthenticationOciClient());
-        pluginsToInit.add(new AuthenticationFidoClient());
         pluginsToInit.add(new AuthenticationWebAuthnClient());
 
         // plugins from authenticationPluginClasses connection parameter

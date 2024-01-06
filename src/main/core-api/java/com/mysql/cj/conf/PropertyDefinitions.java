@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2015, 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -213,9 +213,6 @@ public class PropertyDefinitions {
 
                 new StringPropertyDefinition(PropertyKey.ociConfigProfile, "DEFAULT", RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.ociConfigProfile"), "8.0.33", CATEGORY_AUTH, Integer.MIN_VALUE + 11),
-
-                new StringPropertyDefinition(PropertyKey.authenticationFidoCallbackHandler, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.authenticationFidoCallbackHandler"), "8.0.29", CATEGORY_AUTH, Integer.MIN_VALUE + 12),
 
                 new StringPropertyDefinition(PropertyKey.authenticationWebAuthnCallbackHandler, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.authenticationWebAuthnCallbackHandler"), "8.2.0", CATEGORY_AUTH, Integer.MIN_VALUE + 13),

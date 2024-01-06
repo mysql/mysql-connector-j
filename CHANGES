@@ -3,6 +3,8 @@
 
 Version 8.4.0
 
+  - WL#16147, Remove support for FIDO authentication.
+
   - Fix for Bug#110286 (Bug#35152855), Only call Messages.getString(...) when it's needed (when the SQLException is thrown).
     Thanks to Janick Reynders for his contribution.
 
