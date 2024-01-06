@@ -456,7 +456,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
         sqlBuf.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME, R.UNIQUE_CONSTRAINT_NAME AS PK_NAME,");
         sqlBuf.append(importedKeyNotDeferrable);
         sqlBuf.append(" AS DEFERRABILITY FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A");
-        sqlBuf.append(" JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B USING (CONSTRAINT_NAME, TABLE_NAME) ");
+        sqlBuf.append(" JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B USING (CONSTRAINT_SCHEMA, CONSTRAINT_NAME, TABLE_NAME) ");
         sqlBuf.append(generateOptionalRefContraintsJoin());
         sqlBuf.append("WHERE B.CONSTRAINT_TYPE = 'FOREIGN KEY'");
         if (db != null) {

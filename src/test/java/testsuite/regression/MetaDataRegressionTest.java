@@ -5548,4 +5548,89 @@ public class MetaDataRegressionTest extends BaseTestCase {
         } while (useIS = !useIS);
     }
 
+    /**
+     * Tests fix for Bug#108088, DatabaseMetaData.getImportedKeys can return foreign keys from wrong schema.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug108088() throws Exception {
+        String databaseName1 = "dbBug108088_1";
+        String databaseName2 = "dbBug108088_2";
+        if (isServerRunningOnWindows()) {
+            databaseName1 = databaseName1.toLowerCase();
+            databaseName2 = databaseName2.toLowerCase();
+        }
+        String tableName1 = "table1";
+        String tableName2 = "table2";
+        String constraintName = "fk_table2_fk_id";
+
+        createDatabase(databaseName1);
+        createTable(databaseName1 + "." + tableName1, "(`ID` bigint unsigned AUTO_INCREMENT PRIMARY KEY)");
+        createTable(databaseName1 + "." + tableName2,
+        "(`ID` bigint unsigned AUTO_INCREMENT PRIMARY KEY, `FK_ID` bigint unsigned NOT NULL,"
+                + "CONSTRAINT `" + constraintName + "` FOREIGN KEY (`FK_ID`) REFERENCES `"
+                + databaseName1 + "`.`" + tableName1 + "` (`ID`) ON DELETE CASCADE)");
+        createDatabase(databaseName2);
+        createTable(databaseName2 + "." + tableName1, "(`ID` bigint unsigned AUTO_INCREMENT PRIMARY KEY)");
+        createTable(databaseName2 + "." + tableName2,
+            "(`ID` bigint unsigned AUTO_INCREMENT PRIMARY KEY, `FK_ID` bigint unsigned NOT NULL,"
+                + "CONSTRAINT `" + constraintName + "` FOREIGN KEY (`FK_ID`) REFERENCES `"
+                + databaseName2 + "`.`" + tableName1 + "` (`ID`) ON DELETE RESTRICT)");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        for (boolean useIS : new boolean[] { false, true }) {
+            for (String databaseTerm : new String[] { "CATALOG", "SCHEMA" }) {
+                props.setProperty(PropertyKey.useInformationSchema.getKeyName(), "" + useIS);
+                props.setProperty(PropertyKey.databaseTerm.getKeyName(), databaseTerm);
+
+                boolean dbTermIsSchema = databaseTerm.equals("SCHEMA");
+
+                String err = "useInformationSchema=" + useIS + ", databaseTerm=" + databaseTerm;
+                Connection con = getConnectionWithProps(props);
+                DatabaseMetaData meta = con.getMetaData();
+
+                this.rs = dbTermIsSchema ? meta.getImportedKeys(null, databaseName1, tableName2) : meta.getImportedKeys(databaseName1, null, tableName2);
+                assertTrue(this.rs.next(), err);
+                assertEquals(dbTermIsSchema ? "def" : databaseName1, this.rs.getString("PKTABLE_CAT"), err);
+                assertEquals(dbTermIsSchema ? databaseName1 : null, this.rs.getString("PKTABLE_SCHEM"), err);
+                assertEquals(dbTermIsSchema ? "def" : databaseName1, this.rs.getString("FKTABLE_CAT"), err);
+                assertEquals(dbTermIsSchema ? databaseName1 : null, this.rs.getString("FKTABLE_SCHEM"), err);
+                assertEquals(tableName1, this.rs.getString("PKTABLE_NAME"), err);
+                assertEquals("ID", this.rs.getString("PKCOLUMN_NAME"), err);
+                assertEquals(tableName2, this.rs.getString("FKTABLE_NAME"), err);
+                assertEquals("FK_ID", this.rs.getString("FKCOLUMN_NAME"), err);
+                assertEquals(1, this.rs.getInt("KEY_SEQ"), err);
+                assertEquals(1, this.rs.getInt("UPDATE_RULE"), err);
+                assertEquals(0, this.rs.getInt("DELETE_RULE"), err);
+                assertEquals(constraintName, this.rs.getString("FK_NAME"), err);
+                assertEquals(useIS ? "PRIMARY" : null, this.rs.getString("PK_NAME"), err);
+                assertEquals(7, this.rs.getInt("DEFERRABILITY"), err);
+                assertFalse(this.rs.next(), err);
+
+                this.rs = dbTermIsSchema ? meta.getImportedKeys(null, databaseName2, tableName2) : meta.getImportedKeys(databaseName2, null, tableName2);
+                assertTrue(this.rs.next(), err);
+                assertEquals(dbTermIsSchema ? "def" : databaseName2, this.rs.getString("PKTABLE_CAT"), err);
+                assertEquals(dbTermIsSchema ? databaseName2 : null, this.rs.getString("PKTABLE_SCHEM"), err);
+                assertEquals(dbTermIsSchema ? "def" : databaseName2, this.rs.getString("FKTABLE_CAT"), err);
+                assertEquals(dbTermIsSchema ? databaseName2 : null, this.rs.getString("FKTABLE_SCHEM"), err);
+                assertEquals(tableName1, this.rs.getString("PKTABLE_NAME"), err);
+                assertEquals("ID", this.rs.getString("PKCOLUMN_NAME"), err);
+                assertEquals(tableName2, this.rs.getString("FKTABLE_NAME"), err);
+                assertEquals("FK_ID", this.rs.getString("FKCOLUMN_NAME"), err);
+                assertEquals(1, this.rs.getInt("KEY_SEQ"), err);
+                assertEquals(1, this.rs.getInt("UPDATE_RULE"), err);
+                assertEquals(1, this.rs.getInt("DELETE_RULE"), err);
+                assertEquals(constraintName, this.rs.getString("FK_NAME"), err);
+                assertEquals(useIS ? "PRIMARY" : null, this.rs.getString("PK_NAME"), err);
+                assertEquals(7, this.rs.getInt("DEFERRABILITY"), err);
+                assertFalse(this.rs.next(), err);
+
+                con.close();
+            }
+        }
+    }
+
 }
