@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -128,6 +128,7 @@ import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -13604,6 +13605,73 @@ public class StatementRegressionTest extends BaseTestCase {
             this.stmt.execute("SET GLOBAL log_output = '" + prevLogOutput + "'");
             this.stmt.execute("SET GLOBAL general_log = '" + prevGeneralLog + "'");
         }
+    }
+
+    /**
+     * Test fix for Bug#77183 (21181501), INSERT..VALUE..lead to invalidation of batch insert.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug77183() throws Exception {
+        createTable("testBug77183", "(c1 INT, c2 INT)");
+
+        boolean useSPS = false;
+        boolean rwBS = false;
+        boolean useRep = false;
+        boolean useValue = false;
+
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), Boolean.toString(rwBS));
+            props.setProperty(PropertyKey.queryInterceptors.getKeyName(), TestBug77183StatementInterceptor.class.getName());
+
+            Connection testConn = getConnectionWithProps(props);
+
+            this.pstmt = testConn.prepareStatement((useRep ? "REPLACE" : "INSERT") + " INTO testBug77183 " + (useValue ? "VALUE" : "VALUES") + " (?, ?)");
+            for (int i = 1; i <= 3; i++) {
+                this.pstmt.setInt(1, i);
+                this.pstmt.setInt(2, i);
+                this.pstmt.addBatch();
+            }
+            this.pstmt.executeBatch();
+
+            testConn.close();
+        } while ((useSPS = !useSPS) || (rwBS = !rwBS) || (useRep = !useRep) || (useValue = !useValue));
+
+        assertEquals(32, TestBug77183StatementInterceptor.countInterceptions);
+    }
+
+    public static class TestBug77183StatementInterceptor extends BaseQueryInterceptor {
+
+        public static int countInterceptions = 0;
+
+        @Override
+        public <T extends Resultset> T preProcess(java.util.function.Supplier<String> sql, Query interceptedQuery) {
+            String query = sql.get();
+            if (query == null && interceptedQuery instanceof JdbcPreparedStatement) {
+                query = interceptedQuery.toString();
+                query = query.substring(query.indexOf(':') + 2);
+            }
+
+            if (interceptedQuery != null) {
+                countInterceptions++;
+
+                PropertySet pset = interceptedQuery.getSession().getPropertySet();
+
+                final boolean useSPS = pset.getBooleanProperty(PropertyKey.useServerPrepStmts).getValue();
+                final boolean rwBS = pset.getBooleanProperty(PropertyKey.rewriteBatchedStatements).getValue();
+                final String testCase = String.format("Case [SPS: %s, RwBS: %s, Query: %s]", useSPS ? "Y" : "N", rwBS ? "Y" : "N", sql);
+                final int numParamSets = query.length() - query.replace("(", "").length();
+                final int numPlaceholders = query.length() - query.replace("?", "").length();
+
+                assertEquals(rwBS ? 3 : 1, numParamSets, testCase);
+                assertEquals(useSPS ? rwBS ? 6 : 2 : 0, numPlaceholders, testCase);
+            }
+            return super.preProcess(sql, interceptedQuery);
+        }
+
     }
 
 }
