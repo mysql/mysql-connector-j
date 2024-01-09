@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -31,6 +31,7 @@ package com.mysql.cj.jdbc.ha;
 
 import java.lang.reflect.InvocationHandler;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -45,13 +46,14 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
     @Override
     public ConnectionImpl pickConnection(InvocationHandler proxy, List<String> configuredHosts, Map<String, JdbcConnection> liveConnections,
             long[] responseTimes, int numRetries) throws SQLException {
+        List<String> allowList = new ArrayList<>(configuredHosts.size());
+        allowList.addAll(configuredHosts);
         Map<String, Long> blockList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlocklist();
+        allowList.removeAll(blockList.keySet());
 
         SQLException ex = null;
-
         for (int attempts = 0; attempts < numRetries;) {
             long minResponseTime = Long.MAX_VALUE;
-
             int bestHostIndex = 0;
 
             // safety
@@ -62,10 +64,9 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
             for (int i = 0; i < responseTimes.length; i++) {
                 long candidateResponseTime = responseTimes[i];
 
-                if (candidateResponseTime < minResponseTime && !blockList.containsKey(configuredHosts.get(i))) {
+                if (candidateResponseTime < minResponseTime && !blockList.containsKey(allowList.get(i))) {
                     if (candidateResponseTime == 0) {
                         bestHostIndex = i;
-
                         break;
                     }
 
@@ -74,10 +75,8 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
                 }
             }
 
-            String bestHost = configuredHosts.get(bestHostIndex);
-
+            String bestHost = allowList.get(bestHostIndex);
             ConnectionImpl conn = (ConnectionImpl) liveConnections.get(bestHost);
-
             if (conn == null) {
                 try {
                     conn = ((LoadBalancedConnectionProxy) proxy).createConnectionForHost(bestHost);

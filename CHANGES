@@ -3,6 +3,8 @@
 
 Version 8.4.0
 
+  - Fix for Bug#23143279, CLIENT HANG WHEN LOADBALANCESTRATEGY IS BESTRESPONSETIME.
+
 Version 8.3.0
 
   - Fix for Bug#107107 (Bug#34101635), Redundant "Reset stmt" when setting useServerPrepStmts&cachePrepStmts to true.

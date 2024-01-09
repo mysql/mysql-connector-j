@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -12015,6 +12015,118 @@ public class ConnectionRegressionTest extends BaseTestCase {
             this.capturedChanges = changes;
         }
 
+    }
+
+    /**
+     * Test fix for Bug#23143279, CLIENT HANG WHEN LOADBALANCESTRATEGY IS BESTRESPONSETIME.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug23143279() throws Exception {
+        testBug23143279RunTest("random");
+        testBug23143279RunTest("bestResponseTime");
+        testBug23143279RunTest("serverAffinity");
+        testBug23143279RunTest(SequentialBalanceStrategy.class.getName());
+    }
+
+    private void testBug23143279RunTest(String lbStrategy) throws Exception {
+        final String defaultHost = getPropertiesFromTestsuiteUrl().getProperty(PropertyKey.HOST.getKeyName());
+        final String defaultPort = getPropertiesFromTestsuiteUrl().getProperty(PropertyKey.PORT.getKeyName());
+
+        final String host1 = "first";
+        final String host2 = "second";
+        final String host3 = "third";
+        final String host4 = "fourth";
+        final String hostPort4 = host4 + ":" + defaultPort;
+
+        final String uniqueId = String.valueOf(lbStrategy.substring(lbStrategy.lastIndexOf('.') + 1, lbStrategy.lastIndexOf('.') + 4)).toUpperCase();
+        final String connGroupName = "testBug23143279" + uniqueId;
+
+        final Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), "DISABLED");
+        props.setProperty(PropertyKey.loadBalanceHostRemovalGracePeriod.getKeyName(), "0");
+        props.setProperty(PropertyKey.loadBalanceConnectionGroup.getKeyName(), connGroupName);
+        props.setProperty(PropertyKey.ha_loadBalanceStrategy.getKeyName(), lbStrategy);
+
+        System.out.println("\n\nTEST: " + lbStrategy);
+        System.out.println("********************************************************************************");
+        System.out.println("\tHosts group:   " + connGroupName);
+
+        final Connection testConn = getUnreliableLoadBalancedConnection(new String[] { host1, host2, host3 }, props,
+                new HashSet<>(Arrays.asList(host2, host3)));
+        UnreliableSocketFactory.mapHost(host4, defaultHost);
+
+        System.out.println("\nStep 1: initial connection");
+        System.out.println("********************************************************************************");
+        System.out.println("\tHosts count:   " + ConnectionGroupManager.getActiveHostCount(connGroupName));
+        System.out.println("\tHosts:         " + ConnectionGroupManager.getActiveHostLists(connGroupName));
+        System.out.println("\tConnected to:  " + ((JdbcConnection) testConn).getHostPortPair());
+        System.out.println("\tConnection id: " + ((MysqlConnection) testConn).getId());
+
+        assertEquals(host1 + ":" + defaultPort, ((JdbcConnection) testConn).getHostPortPair());
+
+        this.stmt.execute("KILL CONNECTION " + ((MysqlConnection) testConn).getId());
+        assertThrows(SQLException.class, () -> testConn.createStatement().executeQuery("SELECT 1"));
+
+        System.out.println("\nStep 2: after killing the active connection and having reconnected");
+        System.out.println("********************************************************************************");
+        System.out.println("\tHosts count:   " + ConnectionGroupManager.getActiveHostCount(connGroupName));
+        System.out.println("\tHosts:         " + ConnectionGroupManager.getActiveHostLists(connGroupName));
+        System.out.println("\tConnected to:  " + ((JdbcConnection) testConn).getHostPortPair());
+        System.out.println("\tConnection id: " + ((MysqlConnection) testConn).getId());
+
+        assertEquals(host1 + ":" + defaultPort, ((JdbcConnection) testConn).getHostPortPair());
+
+        ConnectionGroupManager.addHost(connGroupName, hostPort4, true);
+
+        System.out.println("\nStep 3: after adding a new host");
+        System.out.println("********************************************************************************");
+        System.out.println("\tHosts count:   " + ConnectionGroupManager.getActiveHostCount(connGroupName));
+        System.out.println("\tHosts:         " + ConnectionGroupManager.getActiveHostLists(connGroupName));
+        System.out.println("\tConnected to:  " + ((JdbcConnection) testConn).getHostPortPair());
+        System.out.println("\tConnection id: " + ((MysqlConnection) testConn).getId());
+
+        this.stmt.execute("KILL CONNECTION " + ((MysqlConnection) testConn).getId());
+        assertThrows(SQLException.class, () -> testConn.createStatement().executeQuery("SELECT 1"));
+        // Should be reconnected by now.
+
+        boolean connectedToHost1 = ((JdbcConnection) testConn).getHostPortPair().startsWith(host1);
+        assertEquals((connectedToHost1 ? host1 : host4) + ":" + defaultPort, ((JdbcConnection) testConn).getHostPortPair());
+
+        System.out.println("\nStep 4: after killing the active connection and having reconnected");
+        System.out.println("********************************************************************************");
+        System.out.println("\tHosts count:   " + ConnectionGroupManager.getActiveHostCount(connGroupName));
+        System.out.println("\tHosts:         " + ConnectionGroupManager.getActiveHostLists(connGroupName));
+        System.out.println("\tConnected to:  " + ((JdbcConnection) testConn).getHostPortPair());
+        System.out.println("\tConnection id: " + ((MysqlConnection) testConn).getId());
+
+        final String hostToRemove = ((JdbcConnection) testConn).getHostPortPair();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<?> future = executor.submit(() -> {
+            ConnectionGroupManager.removeHost(connGroupName, hostToRemove, true);
+            return null;
+        });
+
+        try {
+            future.get(10, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            executor.shutdownNow();
+            fail("Failed to remove host and connect to a new one.\n"
+                    + "WARNING: A ConcurrentModificationException on UnreliableSocketFactory can happen from now on.");
+        }
+        executor.shutdownNow();
+
+        System.out.println("\nStep 5: after removing the connected host [" + hostToRemove + "]");
+        System.out.println("********************************************************************************");
+        System.out.println("\tHosts count:   " + ConnectionGroupManager.getActiveHostCount(connGroupName));
+        System.out.println("\tHosts:         " + ConnectionGroupManager.getActiveHostLists(connGroupName));
+        System.out.println("\tConnected to:  " + ((JdbcConnection) testConn).getHostPortPair());
+        System.out.println("\tConnection id: " + ((MysqlConnection) testConn).getId());
+
+        assertEquals((connectedToHost1 ? host4 : host1) + ":" + defaultPort, ((JdbcConnection) testConn).getHostPortPair());
+
+        testConn.close();
     }
 
 }
