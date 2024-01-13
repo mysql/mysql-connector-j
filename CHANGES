@@ -3,6 +3,9 @@
 
 Version 8.4.0
 
+  - Fix for Bug#110286 (Bug#35152855), Only call Messages.getString(...) when it's needed (when the SQLException is thrown).
+    Thanks to Janick Reynders for his contribution.
+
   - Fix for Bug#23143279, CLIENT HANG WHEN LOADBALANCESTRATEGY IS BESTRESPONSETIME.
 
 Version 8.3.0

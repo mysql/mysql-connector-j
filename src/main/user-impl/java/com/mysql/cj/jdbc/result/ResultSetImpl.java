@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -525,26 +525,27 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         checkClosed();
 
         if (!this.onValidRow) {
-            throw SQLError.createSQLException(this.invalidRowReason, MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString(this.invalidRowReasonMessageKey), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                    getExceptionInterceptor());
         }
     }
 
     private boolean onValidRow = false;
-    private String invalidRowReason = null;
+    private String invalidRowReasonMessageKey = null;
 
-    private void setRowPositionValidity() throws SQLException {
+    private void setRowPositionValidity() {
         if (!this.rowData.isDynamic() && this.rowData.size() == 0) {
-            this.invalidRowReason = Messages.getString("ResultSet.Illegal_operation_on_empty_result_set");
+            this.invalidRowReasonMessageKey = "ResultSet.Illegal_operation_on_empty_result_set";
             this.onValidRow = false;
         } else if (this.rowData.isBeforeFirst()) {
-            this.invalidRowReason = Messages.getString("ResultSet.Before_start_of_result_set_146");
+            this.invalidRowReasonMessageKey = "ResultSet.Before_start_of_result_set_146";
             this.onValidRow = false;
         } else if (this.rowData.isAfterLast()) {
-            this.invalidRowReason = Messages.getString("ResultSet.After_end_of_result_set_148");
+            this.invalidRowReasonMessageKey = "ResultSet.After_end_of_result_set_148";
             this.onValidRow = false;
         } else {
             this.onValidRow = true;
-            this.invalidRowReason = null;
+            this.invalidRowReasonMessageKey = null;
         }
     }
 
