@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -8198,6 +8198,53 @@ public class ResultSetRegressionTest extends BaseTestCase {
             assertEquals(Timestamp.class, testRowSet2.getTimestamp(1).getClass()); // Expected behavior.
             assertEquals(Timestamp.class, testRowSet2.getTimestamp(2).getClass());
         }
+    }
+
+    /**
+     * Tests fix for Bug#113129 (Bug#36043145), setting the FetchSize on a Statement object does not affect.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug113129() throws Exception {
+        Statement testStmt = this.conn.createStatement();
+        int fetchSizeToTest1 = 5;
+        int fetchSizeToTest2 = 10;
+
+        // executeQuery returns a different ResultSet when executing a ping query, need to test it too.
+        testStmt.setFetchSize(fetchSizeToTest1);
+        this.rs = testStmt.executeQuery("/* ping */");
+        assertEquals(fetchSizeToTest1, this.rs.getFetchSize());
+        this.rs.setFetchSize(fetchSizeToTest2);
+        assertEquals(fetchSizeToTest2, this.rs.getFetchSize());
+
+        // Static rows.
+        testStmt.setFetchSize(fetchSizeToTest1);
+        this.rs = testStmt.executeQuery("SELECT 1");
+        assertEquals(fetchSizeToTest1, this.rs.getFetchSize());
+        this.rs.setFetchSize(fetchSizeToTest2);
+        assertEquals(fetchSizeToTest2, this.rs.getFetchSize());
+        this.rs.next();
+
+        // Dynamic fetch.
+        testStmt.setFetchSize(Integer.MIN_VALUE);
+        this.rs = testStmt.executeQuery("SELECT 1");
+        this.rs.next();
+        assertEquals(Integer.MIN_VALUE, this.rs.getFetchSize());
+        this.rs.setFetchSize(fetchSizeToTest2);
+        assertEquals(fetchSizeToTest2, this.rs.getFetchSize());
+
+        // Cursor based.
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "True");
+        Connection cursorConn = getConnectionWithProps(props);
+        testStmt = cursorConn.createStatement();
+        testStmt.setFetchSize(fetchSizeToTest1);
+        this.rs = testStmt.executeQuery("SELECT 1");
+        assertEquals(fetchSizeToTest1, this.rs.getFetchSize());
+        this.rs.setFetchSize(fetchSizeToTest2);
+        assertEquals(fetchSizeToTest2, this.rs.getFetchSize());
+        this.rs.next();
     }
 
 }

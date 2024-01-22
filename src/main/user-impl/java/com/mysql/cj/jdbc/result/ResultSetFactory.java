@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2016, 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -43,7 +43,6 @@ import com.mysql.cj.protocol.Resultset.Type;
 import com.mysql.cj.protocol.ResultsetRows;
 import com.mysql.cj.protocol.a.NativePacketPayload;
 import com.mysql.cj.protocol.a.result.OkPacket;
-import com.mysql.cj.protocol.a.result.ResultsetRowsCursor;
 
 public class ResultSetFactory implements ProtocolEntityFactory<ResultSetImpl, NativePacketPayload> {
 
@@ -138,9 +137,10 @@ public class ResultSetFactory implements ProtocolEntityFactory<ResultSetImpl, Na
         rs.setResultSetType(resultSetType);
         rs.setResultSetConcurrency(resultSetConcurrency);
 
-        if (rows instanceof ResultsetRowsCursor && st != null) {
+        if (st != null) {
             rs.setFetchSize(st.getFetchSize());
         }
+
         return rs;
     }
 
