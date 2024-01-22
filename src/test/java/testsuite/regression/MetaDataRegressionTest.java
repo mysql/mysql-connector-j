@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -5576,6 +5576,17 @@ public class MetaDataRegressionTest extends BaseTestCase {
         this.pstmt.setInt(2, 2);
         assertEquals(ParameterMetaData.parameterNullable, this.pstmt.getParameterMetaData().isNullable(1));
         assertEquals(ParameterMetaData.parameterNullable, this.pstmt.getParameterMetaData().isNullable(2));
+    }
+
+    /**
+     * Tests fix for Bug#91550 (Bug#28297874), DatabaseMetaData specifies incorrect extra name characters.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug91550() throws Exception {
+        DatabaseMetaData md = this.conn.getMetaData();
+        assertEquals("$", md.getExtraNameCharacters());
     }
 
 }
