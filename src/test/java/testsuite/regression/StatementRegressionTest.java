@@ -13674,4 +13674,15 @@ public class StatementRegressionTest extends BaseTestCase {
 
     }
 
+    /**
+     * Test fix for Bug#22931632, GETPARAMETERBINDINGS() ON A PS RETURNS NPE WHEN NOT ALL PARAMETERS ARE BOUND.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug22931632() throws Exception {
+        this.pstmt = this.conn.prepareStatement("SELECT ?");
+        assertDoesNotThrow(((JdbcPreparedStatement) this.pstmt)::getParameterBindings);
+    }
+
 }

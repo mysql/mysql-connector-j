@@ -3,6 +3,8 @@
 
 Version 8.4.0
 
+  - Fix for Bug#22931632, GETPARAMETERBINDINGS() ON A PS RETURNS NPE WHEN NOT ALL PARAMETERS ARE BOUND.
+
   - WL#16147, Remove support for FIDO authentication.
 
   - Fix for Bug#110286 (Bug#35152855), Only call Messages.getString(...) when it's needed (when the SQLException is thrown).
