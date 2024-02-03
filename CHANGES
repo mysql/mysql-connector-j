@@ -3,6 +3,9 @@
 
 Version 8.4.0
 
+  - Fix for Bug#113599 (Bug#36171571), Contribution: Replace StringBuffer with StringBuilder in ValueEncoders.
+    Thanks to Henning Pöttker for his contribution.
+
   - Fix for Bug#91550 (Bug#28297874), DatabaseMetaData specifies incorrect extra name characters.
 
   - Fix for Bug#113129 (Bug#36043145), setting the FetchSize on a Statement object does not affect.

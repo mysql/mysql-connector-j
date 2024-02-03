@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2022, 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -75,20 +75,20 @@ public class OffsetDateTimeValueEncoder extends AbstractValueEncoder {
                                 ((OffsetDateTime) binding.getValue()).atZoneSameInstant(this.serverSession.getDefaultTimeZone().toZoneId()).toLocalDateTime()),
                         binding.getField(), binding.keepOrigNanos());
 
-                StringBuffer buf = new StringBuffer();
+                sb = new StringBuilder();
 
-                buf.append(TimeUtil.getSimpleDateFormat(null, "''yyyy-MM-dd HH:mm:ss",
+                sb.append(TimeUtil.getSimpleDateFormat(null, "''yyyy-MM-dd HH:mm:ss",
                         binding.getMysqlType() == MysqlType.TIMESTAMP && this.preserveInstants.getValue() ? this.serverSession.getSessionTimeZone()
                                 : this.serverSession.getDefaultTimeZone())
                         .format(x));
 
                 if (this.serverSession.getCapabilities().serverSupportsFracSecs() && x.getNanos() > 0) {
-                    buf.append('.');
-                    buf.append(TimeUtil.formatNanos(x.getNanos(), 6));
+                    sb.append('.');
+                    sb.append(TimeUtil.formatNanos(x.getNanos(), 6));
                 }
-                buf.append('\'');
+                sb.append('\'');
 
-                return buf.toString();
+                return sb.toString();
 
             case YEAR:
                 return String.valueOf(odt.atZoneSameInstant(this.serverSession.getDefaultTimeZone().toZoneId()).getYear());

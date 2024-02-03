@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2022, 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -87,15 +87,15 @@ public class SqlTimeValueEncoder extends AbstractValueEncoder {
                     ts = TimeUtil.truncateFractionalSeconds(ts);
                 }
 
-                StringBuffer buf = new StringBuffer();
-                buf.append(binding.getCalendar() != null ? TimeUtil.getSimpleDateFormat("''yyyy-MM-dd HH:mm:ss", binding.getCalendar()).format(x)
+                StringBuilder sb = new StringBuilder();
+                sb.append(binding.getCalendar() != null ? TimeUtil.getSimpleDateFormat("''yyyy-MM-dd HH:mm:ss", binding.getCalendar()).format(x)
                         : TimeUtil.getSimpleDateFormat(null, "''yyyy-MM-dd HH:mm:ss", this.serverSession.getDefaultTimeZone()).format(x));
                 if (this.serverSession.getCapabilities().serverSupportsFracSecs() && ts.getNanos() > 0) {
-                    buf.append('.');
-                    buf.append(TimeUtil.formatNanos(ts.getNanos(), 6));
+                    sb.append('.');
+                    sb.append(TimeUtil.formatNanos(ts.getNanos(), 6));
                 }
-                buf.append('\'');
-                return buf.toString();
+                sb.append('\'');
+                return sb.toString();
             case YEAR:
                 Calendar cal = Calendar.getInstance();
                 cal.setTime((java.util.Date) binding.getValue());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2022, 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -75,30 +75,30 @@ public class SqlTimestampValueEncoder extends AbstractValueEncoder {
             case TEXT:
             case MEDIUMTEXT:
             case LONGTEXT:
-                StringBuffer buf = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
 
                 if (binding.getCalendar() != null) {
-                    buf.append(TimeUtil.getSimpleDateFormat("''yyyy-MM-dd HH:mm:ss", binding.getCalendar()).format(x));
+                    sb.append(TimeUtil.getSimpleDateFormat("''yyyy-MM-dd HH:mm:ss", binding.getCalendar()).format(x));
                 } else {
                     this.tsdf = TimeUtil.getSimpleDateFormat(this.tsdf, "''yyyy-MM-dd HH:mm:ss",
                             binding.getMysqlType() == MysqlType.TIMESTAMP && this.preserveInstants.getValue() ? this.serverSession.getSessionTimeZone()
                                     : this.serverSession.getDefaultTimeZone());
-                    buf.append(this.tsdf.format(x));
+                    sb.append(this.tsdf.format(x));
                 }
 
                 if (this.serverSession.getCapabilities().serverSupportsFracSecs() && x.getNanos() > 0) {
-                    buf.append('.');
-                    buf.append(TimeUtil.formatNanos(x.getNanos(), 6));
+                    sb.append('.');
+                    sb.append(TimeUtil.formatNanos(x.getNanos(), 6));
                 }
-                buf.append('\'');
+                sb.append('\'');
 
-                return buf.toString();
+                return sb.toString();
             case YEAR:
                 Calendar cal = Calendar.getInstance();
                 cal.setTime((java.util.Date) binding.getValue());
                 return String.valueOf(cal.get(Calendar.YEAR));
             case TIME:
-                StringBuilder sb = new StringBuilder("'");
+                sb = new StringBuilder("'");
                 sb.append(adjustLocalTime(((Timestamp) binding.getValue()).toLocalDateTime().toLocalTime(), binding.getField())
                         .format(TimeUtil.TIME_FORMATTER_WITH_OPTIONAL_MICROS));
                 sb.append("'");
@@ -157,23 +157,23 @@ public class SqlTimestampValueEncoder extends AbstractValueEncoder {
             case TEXT:
             case MEDIUMTEXT:
             case LONGTEXT:
-                StringBuffer buf = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
 
                 if (binding.getCalendar() != null) {
-                    buf.append(TimeUtil.getSimpleDateFormat("yyyy-MM-dd HH:mm:ss", binding.getCalendar()).format(x));
+                    sb.append(TimeUtil.getSimpleDateFormat("yyyy-MM-dd HH:mm:ss", binding.getCalendar()).format(x));
                 } else {
                     this.tsdf = TimeUtil.getSimpleDateFormat(this.tsdf, "yyyy-MM-dd HH:mm:ss",
                             binding.getMysqlType() == MysqlType.TIMESTAMP && this.preserveInstants.getValue() ? this.serverSession.getSessionTimeZone()
                                     : this.serverSession.getDefaultTimeZone());
-                    buf.append(this.tsdf.format(x));
+                    sb.append(this.tsdf.format(x));
                 }
 
                 if (this.serverSession.getCapabilities().serverSupportsFracSecs() && x.getNanos() > 0) {
-                    buf.append('.');
-                    buf.append(TimeUtil.formatNanos(x.getNanos(), 6));
+                    sb.append('.');
+                    sb.append(TimeUtil.formatNanos(x.getNanos(), 6));
                 }
 
-                intoPacket.writeBytes(StringSelfDataType.STRING_LENENC, StringUtils.getBytes(buf.toString(), this.charEncoding.getValue()));
+                intoPacket.writeBytes(StringSelfDataType.STRING_LENENC, StringUtils.getBytes(sb.toString(), this.charEncoding.getValue()));
                 return;
             default:
                 throw ExceptionFactory.createException(WrongArgumentException.class,

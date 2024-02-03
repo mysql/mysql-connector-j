@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2022, 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -65,21 +65,21 @@ public class UtilCalendarValueEncoder extends AbstractValueEncoder {
             case TIMESTAMP:
                 Timestamp ts = adjustTimestamp(new java.sql.Timestamp(((Calendar) binding.getValue()).getTimeInMillis()), binding.getField(),
                         binding.keepOrigNanos());
-                StringBuffer buf = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 if (binding.getCalendar() != null) {
-                    buf.append(TimeUtil.getSimpleDateFormat("''yyyy-MM-dd HH:mm:ss", binding.getCalendar()).format(x));
+                    sb.append(TimeUtil.getSimpleDateFormat("''yyyy-MM-dd HH:mm:ss", binding.getCalendar()).format(x));
                 } else {
-                    buf.append(TimeUtil.getSimpleDateFormat(null, "''yyyy-MM-dd HH:mm:ss",
+                    sb.append(TimeUtil.getSimpleDateFormat(null, "''yyyy-MM-dd HH:mm:ss",
                             binding.getMysqlType() == MysqlType.TIMESTAMP && this.preserveInstants.getValue() ? this.serverSession.getSessionTimeZone()
                                     : this.serverSession.getDefaultTimeZone())
                             .format(ts));
                 }
                 if (this.serverSession.getCapabilities().serverSupportsFracSecs() && ts.getNanos() > 0) {
-                    buf.append('.');
-                    buf.append(TimeUtil.formatNanos(ts.getNanos(), 6));
+                    sb.append('.');
+                    sb.append(TimeUtil.formatNanos(ts.getNanos(), 6));
                 }
-                buf.append('\'');
-                return buf.toString();
+                sb.append('\'');
+                return sb.toString();
             case DATETIME:
             case CHAR:
             case VARCHAR:
@@ -90,7 +90,7 @@ public class UtilCalendarValueEncoder extends AbstractValueEncoder {
                 ZonedDateTime zdt = ZonedDateTime.ofInstant(x.toInstant(), x.getTimeZone().toZoneId())
                         .withZoneSameInstant(this.serverSession.getDefaultTimeZone().toZoneId());
 
-                StringBuilder sb = new StringBuilder("'");
+                sb = new StringBuilder("'");
                 sb.append(zdt.format(zdt.getNano() > 0 && this.serverSession.getCapabilities().serverSupportsFracSecs() && this.sendFractionalSeconds.getValue()
                         ? TimeUtil.DATETIME_FORMATTER_WITH_MILLIS_NO_OFFSET
                         : TimeUtil.DATETIME_FORMATTER_NO_FRACT_NO_OFFSET));
