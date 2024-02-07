@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2002, 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License, version 2.0, as published by the
@@ -1070,7 +1070,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
         testJsonTypeCheckFunction("SELECT JSON_VALID('{\"a\": 1}')", "1");
     }
 
-    @Test
     private void testJsonTypeCheckFunction(String sql, String expectedResult) throws Exception {
         this.rs = this.stmt.executeQuery(sql);
         assertTrue(this.rs.next());
@@ -1304,7 +1303,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
         }
     }
 
-    @Test
     private void testCreateTablespaceCheckTablespaces(int expectedTsCount) throws Exception {
         if (versionMeetsMinimum(8, 0, 3)) {
             this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_tablespaces WHERE name LIKE 'testTs_'");
@@ -1315,7 +1313,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
         assertEquals(expectedTsCount, this.rs.getInt(1));
     }
 
-    @Test
     private void testCreateTablespaceCheckTables(String tablespace, int expectedTblCount) throws Exception {
         if (versionMeetsMinimum(8, 0, 3)) {
             this.rs = this.stmt.executeQuery("SELECT COUNT(*) FROM information_schema.innodb_tables a, information_schema.innodb_tablespaces b "
@@ -1374,7 +1371,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
         testSetMergeThresholdIndices(tableMergeThreshold, keyMergeThresholds);
     }
 
-    @Test
     private void testSetMergeThresholdIndices(int defaultMergeThreshold, Map<String, Integer> keyMergeThresholds) throws Exception {
         boolean dbMapsToSchema = ((JdbcConnection) this.conn).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm)
                 .getValue() == DatabaseTerm.SCHEMA;

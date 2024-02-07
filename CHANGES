@@ -3,6 +3,9 @@
 
 Version 8.4.0
 
+  - Fix for Bug#111031 (Bug#35392222), Contribution: Update SyntaxRegressionTest.java.
+    Thanks to Abby Palmero for her contribution.
+
   - Fix for Bug#113599 (Bug#36171571), Contribution: Replace StringBuffer with StringBuilder in ValueEncoders.
     Thanks to Henning Pöttker for his contribution.
 
