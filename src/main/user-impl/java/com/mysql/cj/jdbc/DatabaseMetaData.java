@@ -3968,6 +3968,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             case DATETIME:
             case TIMESTAMP:
             case GEOMETRY:
+            case VECTOR:
             case UNKNOWN:
                 rowVal[3] = s2b("'");                                                       // Literal Prefix
                 rowVal[4] = s2b("'");                                                       // Literal Suffix
@@ -4065,6 +4066,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         tuples.add(new ByteArrayRow(getTypeInfo("MEDIUMBLOB"), getExceptionInterceptor()));
         tuples.add(new ByteArrayRow(getTypeInfo("LONGBLOB"), getExceptionInterceptor()));
         tuples.add(new ByteArrayRow(getTypeInfo("BLOB"), getExceptionInterceptor()));
+        tuples.add(new ByteArrayRow(getTypeInfo("VECTOR"), getExceptionInterceptor()));
         // java.sql.Types.VARBINARY = -3
         tuples.add(new ByteArrayRow(getTypeInfo("VARBINARY"), getExceptionInterceptor()));
         tuples.add(new ByteArrayRow(getTypeInfo("TINYBLOB"), getExceptionInterceptor()));

@@ -1977,6 +1977,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
         StringBuilder insertValues = new StringBuilder();
 
         while (this.rs.next()) {
+            if (this.rs.getString("TYPE_NAME").equals("VECTOR") && !versionMeetsMinimum(9, 0)) {
+                continue;
+            }
             String dataType = this.rs.getString("TYPE_NAME").toUpperCase();
 
             boolean wasDateTime = false;
@@ -2003,6 +2006,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
             } else if (dataType.indexOf("DATE") != -1 || dataType.indexOf("TIME") != -1) {
                 insertValues.append("NOW()");
                 wasDateTime = true;
+            } else if (dataType.indexOf("VECTOR") != -1) {
+                insertValues.append("0x00000000");
             } else {
                 insertValues.append("0");
             }

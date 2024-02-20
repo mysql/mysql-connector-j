@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -61,6 +62,7 @@ import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.exceptions.NotUpdatable;
+import com.mysql.cj.util.StringUtils;
 
 import testsuite.BaseTestCase;
 
@@ -1137,6 +1139,30 @@ public class ResultSetTest extends BaseTestCase {
             rsTmp.updateTimestamp("f1", null);
             return null;
         });
+    }
+
+    /**
+     * WL#16174: Support for VECTOR data type
+     *
+     * This test checks that the value of the VECTOR column is retrieved as a byte array by ResultSet.getObject() and that it can also be retrieved as BLOB by
+     * ResultSet.getBlob(). VECTOR support was added in MySQL 9.0.0.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testVectorResultSet() throws Exception {
+        assumeTrue(versionMeetsMinimum(9, 0), "MySQL 9.0.0+ is needed to run this test.");
+        createTable("testVectorResultSet", "(v VECTOR)");
+        // 0xC3F5484014AE0F41 is the HEX representation for the vector [3.14000e+00,8.98000e+00]
+        String vectorHexString = "C3F5484014AE0F41";
+        this.stmt.execute("INSERT INTO testVectorResultSet VALUES(0x" + vectorHexString + ")");
+        this.rs = this.stmt.executeQuery("SELECT v FROM testVectorResultSet");
+        this.rs.next();
+        byte[] vectorObject = this.rs.getObject(1, byte[].class);
+        Blob vectorBlob = this.rs.getBlob(1);
+        byte[] vectorBlobToBytes = vectorBlob.getBytes(1, (int) vectorBlob.length());
+        assertEquals(vectorHexString.toUpperCase(), StringUtils.toHexString(vectorObject, vectorObject.length).toUpperCase());
+        assertEquals(vectorHexString.toUpperCase(), StringUtils.toHexString(vectorBlobToBytes, vectorBlobToBytes.length).toUpperCase());
     }
 
 }

@@ -320,6 +320,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 String typeName = this.rs.getString("TYPE_NAME");
                 //String createParams = this.rs.getString("CREATE_PARAMS");
 
+                if (typeName.equals("VECTOR") && !versionMeetsMinimum(9, 0)) {
+                    continue;
+                }
                 if (typeName.indexOf("BINARY") == -1 && !typeName.equals("LONG VARCHAR")) {
                     if (!alreadyDoneTypes.containsKey(typeName)) {
                         alreadyDoneTypes.put(typeName, null);
@@ -5461,6 +5464,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
         this.rs = dbmd.getTypeInfo();
         while (this.rs.next()) {
+            if (this.rs.getString("TYPE_NAME").equals("VECTOR") && !versionMeetsMinimum(9, 0)) {
+                continue;
+            }
             StringBuilder sb = new StringBuilder("CREATE TEMPORARY TABLE testBug106758 (col ");
             sb.append(this.rs.getString("TYPE_NAME"));
             if (this.rs.getString("CREATE_PARAMS").startsWith("(M)")) {

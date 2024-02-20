@@ -422,6 +422,15 @@ public enum MysqlType implements SQLType {
      */
     GEOMETRY("GEOMETRY", Types.BINARY, null, 0, MysqlType.IS_NOT_DECIMAL, 65535L, ""), // TODO check precision, it isn't well documented, only mentioned that WKB format is represented by BLOB
     /**
+     * VECTOR[(M)]
+     * A VECTOR column with a maximum length of 65,532 (16383 x 4) bytes. An optional length M can be given for this type which indicates the maximum number of
+     * entries in the VECTOR, with maximum of 16383. Each entry is a 4 Byte (single-precision) floating-point value.
+     *
+     * Protocol: FIELD_TYPE_VECTOR = 242
+     */
+    VECTOR("VECTOR", Types.LONGVARBINARY, null, 0, MysqlType.IS_NOT_DECIMAL, 65532L, "[(M)]"),
+
+    /**
      * Fall-back type for those MySQL data types which c/J can't recognize.
      * Handled the same as BLOB.
      *
@@ -607,6 +616,8 @@ public enum MysqlType implements SQLType {
         ) {
             return GEOMETRY; // TODO think about different MysqlTypes for Spatial Data Types
 
+        } else if (StringUtils.indexOfIgnoreCase(typeName, "VECTOR") != -1) {
+            return VECTOR;
         }
 
         return UNKNOWN;
@@ -1009,6 +1020,7 @@ public enum MysqlType implements SQLType {
     public static final int FIELD_TYPE_YEAR = 13;
     public static final int FIELD_TYPE_VARCHAR = 15;
     public static final int FIELD_TYPE_BIT = 16;
+    public static final int FIELD_TYPE_VECTOR = 242;
     public static final int FIELD_TYPE_JSON = 245;
     public static final int FIELD_TYPE_NEWDECIMAL = 246;
     public static final int FIELD_TYPE_ENUM = 247;

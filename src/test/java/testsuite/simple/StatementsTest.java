@@ -1472,7 +1472,7 @@ public class StatementsTest extends BaseTestCase {
         props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
         props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
-        props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), "5690");
+        props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), "5725");
         props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), "true");
         Connection multiConn = null;
 
@@ -1498,8 +1498,7 @@ public class StatementsTest extends BaseTestCase {
                 this.pstmt.executeBatch();
             } catch (BatchUpdateException bUpE) {
                 int[] counts = bUpE.getUpdateCounts();
-
-                for (int i = 3530; i < counts.length; i++) {
+                for (int i = 3555; i < counts.length; i++) {
                     assertEquals(Statement.EXECUTE_FAILED, counts[i]);
                 }
 
@@ -1513,8 +1512,7 @@ public class StatementsTest extends BaseTestCase {
                 multiStmt.executeBatch();
             } catch (BatchUpdateException bUpE) {
                 int[] counts = bUpE.getUpdateCounts();
-
-                for (int i = 4091; i < counts.length; i++) {
+                for (int i = 4095; i < counts.length; i++) {
                     assertEquals(Statement.EXECUTE_FAILED, counts[i]);
                 }
 
@@ -1540,8 +1538,7 @@ public class StatementsTest extends BaseTestCase {
                 cStmt.executeBatch();
             } catch (BatchUpdateException bUpE) {
                 int[] counts = bUpE.getUpdateCounts();
-
-                for (int i = 3950; i < counts.length; i++) {
+                for (int i = 3991; i < counts.length; i++) {
                     assertEquals(Statement.EXECUTE_FAILED, counts[i]);
                 }
 

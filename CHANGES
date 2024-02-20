@@ -3,6 +3,8 @@
 
 Version 8.4.0
 
+  - WL#16174, Support for VECTOR data type.
+
   - Fix for Bug#36380711, Tests failing due to removal of deprecated features.
 
   - Fix for Bug#113600 (Bug#36171575), Contribution: Fix join condition for retrieval of imported primary keys.

@@ -1193,6 +1193,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             case MEDIUMBLOB:
             case LONGBLOB:
             case BLOB:
+            case VECTOR:
                 return getBytes(columnIndex);
 
             case YEAR:

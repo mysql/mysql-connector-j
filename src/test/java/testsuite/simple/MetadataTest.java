@@ -49,6 +49,7 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
+import com.mysql.cj.MysqlType;
 import com.mysql.cj.Query;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyDefinitions;
@@ -1885,6 +1886,42 @@ public class MetadataTest extends BaseTestCase {
         assertEquals(0, rs1.getShort("DECIMAL_DIGITS"));
         assertEquals(DatabaseMetaData.bestRowNotPseudo, rs1.getShort("PSEUDO_COLUMN"));
         assertFalse(rs1.next());
+    }
+
+    /**
+     * WL#16174: Support for VECTOR data type
+     *
+     * This test checks that the type of the VECTOR column is reported back as MysqlType.VECTOR. VECTOR support was added in MySQL 9.0.0.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testVectorColumnType() throws Exception {
+        assumeTrue(versionMeetsMinimum(9, 0), "MySQL 9.0.0+ is needed to run this test.");
+        createTable("testVectorColumnType", "(v VECTOR)");
+        DatabaseMetaData md = this.conn.getMetaData();
+        this.rs = md.getColumns(null, null, "testVectorColumnType", "v");
+        this.rs.next();
+        assertEquals(MysqlType.VECTOR.getName().toUpperCase(), this.rs.getString("TYPE_NAME").toUpperCase());
+    }
+
+    /**
+     * WL#16174: Support for VECTOR data type
+     *
+     * This test checks that the result set metadata reports back the VECTOR column as MysqlType.VECTOR. VECTOR support was added in MySQL 9.0.0.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testVectorResultSetType() throws Exception {
+        assumeTrue(versionMeetsMinimum(9, 0), "MySQL 9.0.0+ is needed to run this test.");
+        createTable("testVectorResultSetType", "(v VECTOR)");
+        // 0xC3F5484014AE0F41 is the HEX representation for the vector [3.14000e+00,8.98000e+00]
+        this.stmt.execute("INSERT INTO testVectorResultSetType VALUES(0xC3F5484014AE0F41)");
+        this.rs = this.stmt.executeQuery("SELECT v FROM testVectorResultSetType");
+        this.rs.next();
+        ResultSetMetaData md = this.rs.getMetaData();
+        assertEquals(MysqlType.VECTOR.getName().toUpperCase(), md.getColumnTypeName(1).toUpperCase());
     }
 
 }

@@ -1619,6 +1619,9 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             case MysqlType.FIELD_TYPE_GEOMETRY:
                 return MysqlType.GEOMETRY;
 
+            case MysqlType.FIELD_TYPE_VECTOR:
+                return MysqlType.VECTOR;
+
             default:
                 return MysqlType.UNKNOWN;
         }
