@@ -10821,7 +10821,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * @SuppressWarnings("javadoc")
      * Test fix for Bug#98445 (30832513), Connection option clientInfoProvider=ClientInfoProviderSP causes NPE.
      *
      * @throws Exception

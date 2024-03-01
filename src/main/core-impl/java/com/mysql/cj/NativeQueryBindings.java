@@ -205,7 +205,7 @@ public class NativeQueryBindings implements QueryBindings {
         binding.setScaleOrLength(bv.getScaleOrLength());
     }
 
-    static Map<Class<?>, MysqlType> DEFAULT_MYSQL_TYPES = new HashMap<>();
+    private static final Map<Class<?>, MysqlType> DEFAULT_MYSQL_TYPES = new HashMap<>();
     static {
         DEFAULT_MYSQL_TYPES.put(BigDecimal.class, MysqlType.DECIMAL);
         DEFAULT_MYSQL_TYPES.put(BigInteger.class, MysqlType.BIGINT);

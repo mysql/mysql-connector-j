@@ -3,6 +3,8 @@
 
 Version 8.4.0
 
+  - WL#15706, Add OpenTelemetry tracing.
+
   - WL#16174, Support for VECTOR data type.
 
   - Fix for Bug#36380711, Tests failing due to removal of deprecated features.

@@ -47,6 +47,7 @@ import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.NativeSession;
+import com.mysql.cj.QueryInfo;
 import com.mysql.cj.conf.PropertyDefinitions.DatabaseTerm;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
@@ -63,6 +64,10 @@ import com.mysql.cj.protocol.a.result.ResultsetRowsStatic;
 import com.mysql.cj.result.DefaultColumnDefinition;
 import com.mysql.cj.result.Field;
 import com.mysql.cj.result.Row;
+import com.mysql.cj.telemetry.TelemetryAttribute;
+import com.mysql.cj.telemetry.TelemetryScope;
+import com.mysql.cj.telemetry.TelemetrySpan;
+import com.mysql.cj.telemetry.TelemetrySpanName;
 import com.mysql.cj.util.SearchMode;
 import com.mysql.cj.util.StringUtils;
 
@@ -4948,16 +4953,33 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      *             if a database access error occurs
      */
     protected java.sql.PreparedStatement prepareMetaDataSafeStatement(String sql) throws SQLException {
-        // Can't use server-side here as we coerce a lot of types to match the spec.
-        java.sql.PreparedStatement pStmt = this.conn.clientPrepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        TelemetrySpan span = this.session.getTelemetryHandler().startSpan(TelemetrySpanName.STMT_PREPARE);
+        try (TelemetryScope scope = span.makeCurrent()) {
+            String dbOperation = QueryInfo.getStatementKeyword(sql, this.session.getServerSession().isNoBackslashEscapesSet());
+            span.setAttribute(TelemetryAttribute.DB_NAME, this.conn.getDatabase());
+            span.setAttribute(TelemetryAttribute.DB_OPERATION, dbOperation);
+            span.setAttribute(TelemetryAttribute.DB_STATEMENT, dbOperation + TelemetryAttribute.STATEMENT_SUFFIX);
+            span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+            span.setAttribute(TelemetryAttribute.DB_USER, this.conn.getUser());
+            span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+            span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-        if (pStmt.getMaxRows() != 0) {
-            pStmt.setMaxRows(0);
+            // Can't use server-side here as we coerce a lot of types to match the spec.
+            java.sql.PreparedStatement pStmt = this.conn.clientPrepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
+            if (pStmt.getMaxRows() != 0) {
+                pStmt.setMaxRows(0);
+            }
+
+            ((com.mysql.cj.jdbc.JdbcStatement) pStmt).setHoldResultsOpenOverClose(true);
+
+            return pStmt;
+        } catch (Throwable t) {
+            span.setError(t);
+            throw t;
+        } finally {
+            span.end();
         }
-
-        ((com.mysql.cj.jdbc.JdbcStatement) pStmt).setHoldResultsOpenOverClose(true);
-
-        return pStmt;
     }
 
     @Override

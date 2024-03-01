@@ -142,6 +142,10 @@ public class PropertyDefinitions {
         PREFERRED, REQUIRED, VERIFY_CA, VERIFY_IDENTITY, DISABLED;
     }
 
+    public enum OpenTelemetry {
+        PREFERRED, REQUIRED, DISABLED;
+    }
+
     public enum XdevapiSslMode {
         REQUIRED, VERIFY_CA, VERIFY_IDENTITY, DISABLED;
     }
@@ -158,14 +162,13 @@ public class PropertyDefinitions {
         CATALOG, SCHEMA;
     }
 
+    private static String STANDARD_LOGGER_NAME = StandardLogger.class.getName();
+
     /**
      * Static unmodifiable {@link PropertyKey} -&gt; {@link PropertyDefinition} map.
      */
     public static final Map<PropertyKey, PropertyDefinition<?>> PROPERTY_KEY_TO_PROPERTY_DEFINITION;
-
     static {
-        String STANDARD_LOGGER_NAME = StandardLogger.class.getName();
-
         PropertyDefinition<?>[] pdefs = new PropertyDefinition<?>[] {
                 //
                 // CATEGORY_AUTHENTICATION
@@ -800,6 +803,9 @@ public class PropertyDefinitions {
 
                 new BooleanPropertyDefinition(PropertyKey.autoGenerateTestcaseScript, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.autoGenerateTestcaseScript"), "3.1.9", CATEGORY_DEBUGING_PROFILING, 18),
+
+                new EnumPropertyDefinition<>(PropertyKey.openTelemetry, OpenTelemetry.PREFERRED, RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.openTelemetry"), "8.1.0", CATEGORY_DEBUGING_PROFILING, 19),
 
                 //
                 // CATEGORY_EXCEPTIONS

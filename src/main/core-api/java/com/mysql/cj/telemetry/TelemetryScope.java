@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2024, Oracle and/or its affiliates.
+ * Copyright (c) 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License, version 2.0, as published by
  * the Free Software Foundation.
@@ -18,22 +18,22 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-package com.mysql.cj;
+package com.mysql.cj.telemetry;
 
-import java.util.List;
+/**
+ * A telemetry context scope wrapper that hides all specific details from the underlying telemetry library.
+ *
+ * A default no-op implementation is provided so that telemetry may be turned off with minimal impact to the driver code.
+ */
+public interface TelemetryScope extends AutoCloseable {
 
-import com.mysql.cj.protocol.Message;
-
-public interface MessageBuilder<M extends Message> {
-
-    M buildSqlStatement(String statement);
-
-    M buildSqlStatement(String statement, List<Object> args);
-
-    M buildClose();
-
-    M buildComQuery(M sharedPacket, Session sess, String query, Query callingQuery, String characterEncoding);
-
-    M buildComQuery(M sharedPacket, Session sess, PreparedQuery preparedQuery, QueryBindings bindings, String characterEncoding);
+    /**
+     * {@link AutoCloseable#close()} that must be used to end this context scope and, thus, make it possible to create new span within try-with-resources
+     * blocks.
+     */
+    @Override
+    default void close() {
+        // Noop.
+    }
 
 }

@@ -37,6 +37,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 import com.mysql.cj.conf.HostInfo;
+import com.mysql.cj.conf.PropertyDefinitions.OpenTelemetry;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.conf.RuntimeProperty;
@@ -50,6 +51,7 @@ import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.OperationCancelledException;
 import com.mysql.cj.interceptors.QueryInterceptor;
 import com.mysql.cj.log.Log;
+import com.mysql.cj.otel.OpenTelemetryHandler;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.NetworkResources;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
@@ -68,6 +70,11 @@ import com.mysql.cj.result.LongValueFactory;
 import com.mysql.cj.result.Row;
 import com.mysql.cj.result.StringValueFactory;
 import com.mysql.cj.result.ValueFactory;
+import com.mysql.cj.telemetry.NoopTelemetryHandler;
+import com.mysql.cj.telemetry.TelemetryAttribute;
+import com.mysql.cj.telemetry.TelemetryScope;
+import com.mysql.cj.telemetry.TelemetrySpan;
+import com.mysql.cj.telemetry.TelemetrySpanName;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.Util;
 
@@ -79,6 +86,9 @@ public class NativeSession extends CoreSession implements Serializable {
 
     /** When did the last query finish? */
     private long lastQueryFinishedTime = 0;
+
+    /** The comment (if any) to prepend to all queries sent to the server (to show up in "SHOW PROCESSLIST") */
+    private String queryComment = null;
 
     /** Does this connection need to be tested? */
     private boolean needsPing = false;
@@ -97,6 +107,24 @@ public class NativeSession extends CoreSession implements Serializable {
 
     public NativeSession(HostInfo hostInfo, PropertySet propSet) {
         super(hostInfo, propSet);
+
+        // Check Telemetry option.
+        RuntimeProperty<OpenTelemetry> openTelemetry = this.propertySet.getEnumProperty(PropertyKey.openTelemetry);
+        if (openTelemetry.getValue() == OpenTelemetry.PREFERRED || openTelemetry.getValue() == OpenTelemetry.REQUIRED) {
+            if (!OpenTelemetryHandler.isOpenTelemetryApiAvailable()) {
+                if (openTelemetry.getValue() == OpenTelemetry.REQUIRED) {
+                    throw ExceptionFactory.createException(Messages.getString("Connection.OtelApiNotFound"));
+                }
+                if (openTelemetry.isExplicitlySet()) {
+                    getLog().logInfo(Messages.getString("Connection.OtelApiNotFound"));
+                }
+                setTelemetryHandler(NoopTelemetryHandler.getInstance());
+            } else {
+                setTelemetryHandler(new OpenTelemetryHandler());
+            }
+        } else {
+            setTelemetryHandler(NoopTelemetryHandler.getInstance());
+        }
     }
 
     public void connect(HostInfo hi, String user, String password, String database, int loginTimeout, TransactionEventHandler transactionManager)
@@ -179,15 +207,47 @@ public class NativeSession extends CoreSession implements Serializable {
     }
 
     public void enableMultiQueries() {
-        this.protocol.sendCommand(this.commandBuilder.buildComSetOption(((NativeProtocol) this.protocol).getSharedSendPacket(), 0), false, 0);
-        // OK_PACKET returned in previous sendCommand() was not processed so keep original transaction state.
-        ((NativeServerSession) getServerSession()).preserveOldTransactionState();
+        TelemetrySpan span = getTelemetryHandler().startSpan(TelemetrySpanName.SET_OPTION_MULTI_STATEMENTS, "on");
+        try (TelemetryScope scope = span.makeCurrent()) {
+            span.setAttribute(TelemetryAttribute.DB_NAME, this.hostInfo.getDatabase());
+            span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_SET);
+            span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_SET + TelemetryAttribute.STATEMENT_SUFFIX);
+            span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+            span.setAttribute(TelemetryAttribute.DB_USER, this.hostInfo.getUser());
+            span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+            span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
+
+            this.protocol.sendCommand(this.commandBuilder.buildComSetOption(((NativeProtocol) this.protocol).getSharedSendPacket(), 0), false, 0);
+            // OK_PACKET returned in previous sendCommand() was not processed so keep original transaction state.
+            ((NativeServerSession) getServerSession()).preserveOldTransactionState();
+        } catch (Throwable t) {
+            span.setError(t);
+            throw t;
+        } finally {
+            span.end();
+        }
     }
 
     public void disableMultiQueries() {
-        this.protocol.sendCommand(this.commandBuilder.buildComSetOption(((NativeProtocol) this.protocol).getSharedSendPacket(), 1), false, 0);
-        // OK_PACKET returned in previous sendCommand() was not processed so keep original transaction state.
-        ((NativeServerSession) getServerSession()).preserveOldTransactionState();
+        TelemetrySpan span = getTelemetryHandler().startSpan(TelemetrySpanName.SET_OPTION_MULTI_STATEMENTS, "off");
+        try (TelemetryScope scope = span.makeCurrent()) {
+            span.setAttribute(TelemetryAttribute.DB_NAME, this.hostInfo.getDatabase());
+            span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_SET);
+            span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_SET + TelemetryAttribute.STATEMENT_SUFFIX);
+            span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+            span.setAttribute(TelemetryAttribute.DB_USER, this.hostInfo.getUser());
+            span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+            span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
+
+            this.protocol.sendCommand(this.commandBuilder.buildComSetOption(((NativeProtocol) this.protocol).getSharedSendPacket(), 1), false, 0);
+            // OK_PACKET returned in previous sendCommand() was not processed so keep original transaction state.
+            ((NativeServerSession) getServerSession()).preserveOldTransactionState();
+        } catch (Throwable t) {
+            span.setError(t);
+            throw t;
+        } finally {
+            span.end();
+        }
     }
 
     @Override
@@ -221,10 +281,26 @@ public class NativeSession extends CoreSession implements Serializable {
      *
      */
     public void shutdownServer() {
-        if (versionMeetsMinimum(5, 7, 9)) {
-            this.protocol.sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), "SHUTDOWN"), false, 0);
-        } else {
-            this.protocol.sendCommand(this.commandBuilder.buildComShutdown(getSharedSendPacket()), false, 0);
+        TelemetrySpan span = getTelemetryHandler().startSpan(TelemetrySpanName.SHUTDOWN);
+        try (TelemetryScope scope = span.makeCurrent()) {
+            span.setAttribute(TelemetryAttribute.DB_NAME, this.hostInfo.getDatabase());
+            span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_SHUTDOWN);
+            span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_SHUTDOWN + TelemetryAttribute.STATEMENT_SUFFIX);
+            span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+            span.setAttribute(TelemetryAttribute.DB_USER, this.hostInfo.getUser());
+            span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+            span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
+
+            if (versionMeetsMinimum(5, 7, 9)) {
+                this.protocol.sendCommand(this.commandBuilder.buildComQuery(getSharedSendPacket(), this, "SHUTDOWN"), false, 0);
+            } else {
+                this.protocol.sendCommand(this.commandBuilder.buildComShutdown(getSharedSendPacket()), false, 0);
+            }
+        } catch (Throwable t) {
+            span.setError(t);
+            throw t;
+        } finally {
+            span.end();
         }
     }
 
@@ -403,66 +479,84 @@ public class NativeSession extends CoreSession implements Serializable {
 
             this.protocol.getServerSession().setServerVariables(new HashMap<>());
 
-            if (versionMeetsMinimum(5, 1, 0)) {
-                StringBuilder queryBuf = new StringBuilder(versionComment).append("SELECT");
-                queryBuf.append("  @@session.auto_increment_increment AS auto_increment_increment");
-                queryBuf.append(", @@character_set_client AS character_set_client");
-                queryBuf.append(", @@character_set_connection AS character_set_connection");
-                queryBuf.append(", @@character_set_results AS character_set_results");
-                queryBuf.append(", @@character_set_server AS character_set_server");
-                queryBuf.append(", @@collation_server AS collation_server");
-                queryBuf.append(", @@collation_connection AS collation_connection");
-                queryBuf.append(", @@init_connect AS init_connect");
-                queryBuf.append(", @@interactive_timeout AS interactive_timeout");
-                if (!versionMeetsMinimum(5, 5, 0)) {
-                    queryBuf.append(", @@language AS language");
-                }
-                queryBuf.append(", @@license AS license");
-                queryBuf.append(", @@lower_case_table_names AS lower_case_table_names");
-                queryBuf.append(", @@max_allowed_packet AS max_allowed_packet");
-                queryBuf.append(", @@net_write_timeout AS net_write_timeout");
-                queryBuf.append(", @@performance_schema AS performance_schema");
-                if (!versionMeetsMinimum(8, 0, 3)) {
-                    queryBuf.append(", @@query_cache_size AS query_cache_size");
-                    queryBuf.append(", @@query_cache_type AS query_cache_type");
-                }
-                queryBuf.append(", @@sql_mode AS sql_mode");
-                queryBuf.append(", @@system_time_zone AS system_time_zone");
-                queryBuf.append(", @@time_zone AS time_zone");
-                if (versionMeetsMinimum(8, 0, 3) || versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0)) {
-                    queryBuf.append(", @@transaction_isolation AS transaction_isolation");
-                } else {
-                    queryBuf.append(", @@tx_isolation AS transaction_isolation");
-                }
-                queryBuf.append(", @@wait_timeout AS wait_timeout");
+            TelemetrySpan span = getTelemetryHandler().startSpan(TelemetrySpanName.LOAD_VARIABLES);
+            try (TelemetryScope scope = span.makeCurrent()) {
+                span.setAttribute(TelemetryAttribute.DB_SYSTEM, "MySQL");
+                span.setAttribute(TelemetryAttribute.DB_NAME, this.hostInfo.getDatabase());
+                span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_SELECT);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_SELECT + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                span.setAttribute(TelemetryAttribute.DB_USER, this.hostInfo.getUser());
+                span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-                NativePacketPayload resultPacket = (NativePacketPayload) this.protocol.sendCommand(this.commandBuilder.buildComQuery(null, queryBuf.toString()),
-                        false, 0);
-                Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null,
-                        new ResultsetFactory(Type.FORWARD_ONLY, null));
-                Field[] f = rs.getColumnDefinition().getFields();
-                if (f.length > 0) {
-                    ValueFactory<String> vf = new StringValueFactory(this.propertySet);
-                    Row r;
-                    if ((r = rs.getRows().next()) != null) {
-                        for (int i = 0; i < f.length; i++) {
-                            String value = r.getValue(i, vf);
-                            this.protocol.getServerSession().getServerVariables().put(f[i].getColumnLabel(), value);
+                if (versionMeetsMinimum(5, 1, 0)) {
+                    StringBuilder queryBuf = new StringBuilder(versionComment).append("SELECT");
+                    queryBuf.append("  @@session.auto_increment_increment AS auto_increment_increment");
+                    queryBuf.append(", @@character_set_client AS character_set_client");
+                    queryBuf.append(", @@character_set_connection AS character_set_connection");
+                    queryBuf.append(", @@character_set_results AS character_set_results");
+                    queryBuf.append(", @@character_set_server AS character_set_server");
+                    queryBuf.append(", @@collation_server AS collation_server");
+                    queryBuf.append(", @@collation_connection AS collation_connection");
+                    queryBuf.append(", @@init_connect AS init_connect");
+                    queryBuf.append(", @@interactive_timeout AS interactive_timeout");
+                    if (!versionMeetsMinimum(5, 5, 0)) {
+                        queryBuf.append(", @@language AS language");
+                    }
+                    queryBuf.append(", @@license AS license");
+                    queryBuf.append(", @@lower_case_table_names AS lower_case_table_names");
+                    queryBuf.append(", @@max_allowed_packet AS max_allowed_packet");
+                    queryBuf.append(", @@net_write_timeout AS net_write_timeout");
+                    queryBuf.append(", @@performance_schema AS performance_schema");
+                    if (!versionMeetsMinimum(8, 0, 3)) {
+                        queryBuf.append(", @@query_cache_size AS query_cache_size");
+                        queryBuf.append(", @@query_cache_type AS query_cache_type");
+                    }
+                    queryBuf.append(", @@sql_mode AS sql_mode");
+                    queryBuf.append(", @@system_time_zone AS system_time_zone");
+                    queryBuf.append(", @@time_zone AS time_zone");
+                    if (versionMeetsMinimum(8, 0, 3) || versionMeetsMinimum(5, 7, 20) && !versionMeetsMinimum(8, 0, 0)) {
+                        queryBuf.append(", @@transaction_isolation AS transaction_isolation");
+                    } else {
+                        queryBuf.append(", @@tx_isolation AS transaction_isolation");
+                    }
+                    queryBuf.append(", @@wait_timeout AS wait_timeout");
+
+                    NativePacketPayload resultPacket = (NativePacketPayload) this.protocol
+                            .sendCommand(this.commandBuilder.buildComQuery(null, this, queryBuf.toString()), false, 0);
+                    Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null,
+                            new ResultsetFactory(Type.FORWARD_ONLY, null));
+                    Field[] f = rs.getColumnDefinition().getFields();
+                    if (f.length > 0) {
+                        ValueFactory<String> vf = new StringValueFactory(this.propertySet);
+                        Row r;
+                        if ((r = rs.getRows().next()) != null) {
+                            for (int i = 0; i < f.length; i++) {
+                                String value = r.getValue(i, vf);
+                                this.protocol.getServerSession().getServerVariables().put(f[i].getColumnLabel(), value);
+                            }
                         }
                     }
-                }
 
-            } else {
-                NativePacketPayload resultPacket = (NativePacketPayload) this.protocol
-                        .sendCommand(this.commandBuilder.buildComQuery(null, versionComment + "SHOW VARIABLES"), false, 0);
-                Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null,
-                        new ResultsetFactory(Type.FORWARD_ONLY, null));
-                ValueFactory<String> vf = new StringValueFactory(this.propertySet);
-                Row r;
-                while ((r = rs.getRows().next()) != null) {
-                    this.protocol.getServerSession().getServerVariables().put(r.getValue(0, vf), r.getValue(1, vf));
+                } else {
+                    NativePacketPayload resultPacket = (NativePacketPayload) this.protocol
+                            .sendCommand(this.commandBuilder.buildComQuery(null, this, versionComment + "SHOW VARIABLES"), false, 0);
+                    Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null,
+                            new ResultsetFactory(Type.FORWARD_ONLY, null));
+                    ValueFactory<String> vf = new StringValueFactory(this.propertySet);
+                    Row r;
+                    while ((r = rs.getRows().next()) != null) {
+                        this.protocol.getServerSession().getServerVariables().put(r.getValue(0, vf), r.getValue(1, vf));
+                    }
                 }
+            } catch (Throwable t) {
+                span.setError(t);
+                throw t;
+            } finally {
+                span.end();
             }
+
         } catch (IOException e) {
             throw ExceptionFactory.createException(e.getMessage(), e);
         }
@@ -484,56 +578,100 @@ public class NativeSession extends CoreSession implements Serializable {
             }
 
             if (!variablesToSet.isEmpty()) {
-                StringBuilder query = new StringBuilder("SET ");
-                String separator = "";
-                for (String variableToSet : variablesToSet) {
-                    if (variableToSet.length() > 0) {
-                        query.append(separator);
-                        if (!variableToSet.startsWith("@")) {
-                            query.append("SESSION ");
+                TelemetrySpan span = getTelemetryHandler().startSpan(TelemetrySpanName.SET_VARIABLES);
+                try (TelemetryScope scope = span.makeCurrent()) {
+                    span.setAttribute(TelemetryAttribute.DB_NAME, this.hostInfo.getDatabase());
+                    span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_SET);
+                    span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_SET + TelemetryAttribute.STATEMENT_SUFFIX);
+                    span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                    span.setAttribute(TelemetryAttribute.DB_USER, this.hostInfo.getUser());
+                    span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                    span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
+
+                    StringBuilder query = new StringBuilder("SET ");
+                    String separator = "";
+                    for (String variableToSet : variablesToSet) {
+                        if (variableToSet.length() > 0) {
+                            query.append(separator);
+                            if (!variableToSet.startsWith("@")) {
+                                query.append("SESSION ");
+                            }
+                            query.append(variableToSet);
+                            separator = ",";
                         }
-                        query.append(variableToSet);
-                        separator = ",";
                     }
+                    this.protocol.sendCommand(this.commandBuilder.buildComQuery(null, this, query.toString()), false, 0);
+                } catch (Throwable t) {
+                    span.setError(t);
+                    throw t;
+                } finally {
+                    span.end();
                 }
-                this.protocol.sendCommand(this.commandBuilder.buildComQuery(null, query.toString()), false, 0);
+
             }
         }
     }
 
     @Override
+    public String getQueryComment() {
+        return this.queryComment;
+    }
+
+    @Override
+    public void setQueryComment(String comment) {
+        this.queryComment = comment;
+    }
+
+    @Override
     public String getProcessHost() {
-        try {
-            long threadId = getThreadId();
-            String processHost = findProcessHost(threadId);
+        TelemetrySpan span = getTelemetryHandler().startSpan(TelemetrySpanName.GET_PROCESS_HOST);
+        try (TelemetryScope scope = span.makeCurrent()) {
+            String dbOperation = TelemetryAttribute.OPERATION_SELECT + "/" + TelemetryAttribute.OPERATION_SHOW;
+            span.setAttribute(TelemetryAttribute.DB_NAME, this.hostInfo.getDatabase());
+            span.setAttribute(TelemetryAttribute.DB_OPERATION, dbOperation);
+            span.setAttribute(TelemetryAttribute.DB_STATEMENT, dbOperation + TelemetryAttribute.STATEMENT_SUFFIX);
+            span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+            span.setAttribute(TelemetryAttribute.DB_USER, this.hostInfo.getUser());
+            span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+            span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-            if (processHost == null) {
-                // http://bugs.mysql.com/bug.php?id=44167 - connection ids on the wire wrap at 4 bytes even though they're 64-bit numbers
-                this.log.logWarn(String.format(
-                        "Connection id %d not found in \"SHOW PROCESSLIST\", assuming 32-bit overflow, using SELECT CONNECTION_ID() instead", threadId));
+            try {
+                long threadId = getThreadId();
+                String processHost = findProcessHost(threadId);
 
-                NativePacketPayload resultPacket = (NativePacketPayload) this.protocol
-                        .sendCommand(this.commandBuilder.buildComQuery(null, "SELECT CONNECTION_ID()"), false, 0);
-                Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null,
-                        new ResultsetFactory(Type.FORWARD_ONLY, null));
+                if (processHost == null) {
+                    // http://bugs.mysql.com/bug.php?id=44167 - connection ids on the wire wrap at 4 bytes even though they're 64-bit numbers
+                    this.log.logWarn(String.format(
+                            "Connection id %d not found in \"SHOW PROCESSLIST\", assuming 32-bit overflow, using SELECT CONNECTION_ID() instead", threadId));
 
-                ValueFactory<Long> lvf = new LongValueFactory(getPropertySet());
-                Row r;
-                if ((r = rs.getRows().next()) != null) {
-                    threadId = r.getValue(0, lvf);
-                    processHost = findProcessHost(threadId);
-                } else {
-                    this.log.logError("No rows returned for statement \"SELECT CONNECTION_ID()\", local connection check will most likely be incorrect");
+                    NativePacketPayload resultPacket = (NativePacketPayload) this.protocol
+                            .sendCommand(this.commandBuilder.buildComQuery(null, this, "SELECT CONNECTION_ID()"), false, 0);
+                    Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null,
+                            new ResultsetFactory(Type.FORWARD_ONLY, null));
+
+                    ValueFactory<Long> lvf = new LongValueFactory(getPropertySet());
+                    Row r;
+                    if ((r = rs.getRows().next()) != null) {
+                        threadId = r.getValue(0, lvf);
+                        processHost = findProcessHost(threadId);
+                    } else {
+                        this.log.logError("No rows returned for statement \"SELECT CONNECTION_ID()\", local connection check will most likely be incorrect");
+                    }
                 }
-            }
 
-            if (processHost == null) {
-                this.log.logWarn(String.format(
-                        "Cannot find process listing for connection %d in SHOW PROCESSLIST output, unable to determine if locally connected", threadId));
+                if (processHost == null) {
+                    this.log.logWarn(String.format(
+                            "Cannot find process listing for connection %d in SHOW PROCESSLIST output, unable to determine if locally connected", threadId));
+                }
+                return processHost;
+            } catch (IOException e) {
+                throw ExceptionFactory.createException(e.getMessage(), e);
             }
-            return processHost;
-        } catch (IOException e) {
-            throw ExceptionFactory.createException(e.getMessage(), e);
+        } catch (Throwable t) {
+            span.setError(t);
+            throw t;
+        } finally {
+            span.end();
         }
     }
 
@@ -543,13 +681,11 @@ public class NativeSession extends CoreSession implements Serializable {
 
             String ps = this.protocol.getServerSession().getServerVariable("performance_schema");
 
-            NativePacketPayload resultPacket = versionMeetsMinimum(5, 6, 0) // performance_schema.threads in MySQL 5.5 does not contain PROCESSLIST_HOST column
-                    && ps != null && ("1".contentEquals(ps) || "ON".contentEquals(ps))
-                            ? (NativePacketPayload) this.protocol.sendCommand(this.commandBuilder.buildComQuery(null,
-                                    "select PROCESSLIST_ID, PROCESSLIST_USER, PROCESSLIST_HOST from performance_schema.threads where PROCESSLIST_ID="
-                                            + threadId),
-                                    false, 0)
-                            : (NativePacketPayload) this.protocol.sendCommand(this.commandBuilder.buildComQuery(null, "SHOW PROCESSLIST"), false, 0);
+            NativePacketPayload resultPacket = ps != null && ("1".contentEquals(ps) || "ON".contentEquals(ps))
+                    ? (NativePacketPayload) this.protocol.sendCommand(this.commandBuilder.buildComQuery(null, this,
+                            "SELECT PROCESSLIST_ID, PROCESSLIST_USER, PROCESSLIST_HOST FROM performance_schema.threads WHERE PROCESSLIST_ID=" + threadId),
+                            false, 0)
+                    : (NativePacketPayload) this.protocol.sendCommand(this.commandBuilder.buildComQuery(null, this, "SHOW PROCESSLIST"), false, 0);
 
             Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
 
@@ -579,25 +715,41 @@ public class NativeSession extends CoreSession implements Serializable {
      * @return server variable value
      */
     public String queryServerVariable(String varName) {
-        try {
+        TelemetrySpan span = getTelemetryHandler().startSpan(TelemetrySpanName.GET_VARIABLE, varName);
+        try (TelemetryScope scope = span.makeCurrent()) {
+            span.setAttribute(TelemetryAttribute.DB_NAME, this.hostInfo.getDatabase());
+            span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_SELECT);
+            span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_SELECT + TelemetryAttribute.STATEMENT_SUFFIX);
+            span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+            span.setAttribute(TelemetryAttribute.DB_USER, this.hostInfo.getUser());
+            span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+            span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-            NativePacketPayload resultPacket = (NativePacketPayload) this.protocol.sendCommand(this.commandBuilder.buildComQuery(null, "SELECT " + varName),
-                    false, 0);
-            Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
+            try {
+                NativePacketPayload resultPacket = (NativePacketPayload) this.protocol
+                        .sendCommand(this.commandBuilder.buildComQuery(null, this, "SELECT " + varName), false, 0);
+                Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null,
+                        new ResultsetFactory(Type.FORWARD_ONLY, null));
 
-            ValueFactory<String> svf = new StringValueFactory(this.propertySet);
-            Row r;
-            if ((r = rs.getRows().next()) != null) {
-                String s = r.getValue(0, svf);
-                if (s != null) {
-                    return s;
+                ValueFactory<String> svf = new StringValueFactory(this.propertySet);
+                Row r;
+                if ((r = rs.getRows().next()) != null) {
+                    String s = r.getValue(0, svf);
+                    if (s != null) {
+                        return s;
+                    }
                 }
+
+                return null;
+
+            } catch (IOException e) {
+                throw ExceptionFactory.createException(e.getMessage(), e);
             }
-
-            return null;
-
-        } catch (IOException e) {
-            throw ExceptionFactory.createException(e.getMessage(), e);
+        } catch (Throwable t) {
+            span.setError(t);
+            throw t;
+        } finally {
+            span.end();
         }
     }
 
@@ -645,10 +797,10 @@ public class NativeSession extends CoreSession implements Serializable {
         }
 
         try {
-            return packet == null
-                    ? ((NativeProtocol) this.protocol).sendQueryString(callingQuery, query, this.characterEncoding.getValue(), maxRows, streamResults,
-                            cachedMetadata, resultSetFactory)
-                    : ((NativeProtocol) this.protocol).sendQueryPacket(callingQuery, packet, maxRows, streamResults, cachedMetadata, resultSetFactory);
+            if (packet == null) {
+                packet = this.commandBuilder.buildComQuery(null, this, query, callingQuery, this.characterEncoding.getValue());
+            }
+            return ((NativeProtocol) this.protocol).sendQueryPacket(callingQuery, packet, maxRows, streamResults, cachedMetadata, resultSetFactory);
 
         } catch (CJException sqlE) {
             if (getPropertySet().getBooleanProperty(PropertyKey.dumpQueriesOnException).getValue()) {
@@ -712,18 +864,34 @@ public class NativeSession extends CoreSession implements Serializable {
             checkClosed();
         }
 
-        long pingMillisLifetime = getPropertySet().getIntegerProperty(PropertyKey.selfDestructOnPingSecondsLifetime).getValue();
-        int pingMaxOperations = getPropertySet().getIntegerProperty(PropertyKey.selfDestructOnPingMaxOperations).getValue();
+        TelemetrySpan span = getTelemetryHandler().startSpan(TelemetrySpanName.PING);
+        try (TelemetryScope scope = span.makeCurrent()) {
+            span.setAttribute(TelemetryAttribute.DB_NAME, this.hostInfo.getDatabase());
+            span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_PING);
+            span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_PING);
+            span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+            span.setAttribute(TelemetryAttribute.DB_USER, this.hostInfo.getUser());
+            span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+            span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-        if (pingMillisLifetime > 0 && System.currentTimeMillis() - this.connectionCreationTimeMillis > pingMillisLifetime
-                || pingMaxOperations > 0 && pingMaxOperations <= getCommandCount()) {
+            long pingMillisLifetime = getPropertySet().getIntegerProperty(PropertyKey.selfDestructOnPingSecondsLifetime).getValue();
+            int pingMaxOperations = getPropertySet().getIntegerProperty(PropertyKey.selfDestructOnPingMaxOperations).getValue();
 
-            invokeNormalCloseListeners();
+            if (pingMillisLifetime > 0 && System.currentTimeMillis() - this.connectionCreationTimeMillis > pingMillisLifetime
+                    || pingMaxOperations > 0 && pingMaxOperations <= getCommandCount()) {
 
-            throw ExceptionFactory.createException(Messages.getString("Connection.exceededConnectionLifetime"),
-                    MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, 0, false, null, this.exceptionInterceptor);
+                invokeNormalCloseListeners();
+
+                throw ExceptionFactory.createException(Messages.getString("Connection.exceededConnectionLifetime"),
+                        MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, 0, false, null, this.exceptionInterceptor);
+            }
+            this.protocol.sendCommand(this.commandBuilder.buildComPing(null), false, timeoutMillis); // it isn't safe to use a shared packet here
+        } catch (Throwable t) {
+            span.setError(t);
+            throw t;
+        } finally {
+            span.end();
         }
-        this.protocol.sendCommand(this.commandBuilder.buildComPing(null), false, timeoutMillis); // it isn't safe to use a shared packet here
     }
 
     public long getConnectionCreationTimeMillis() {

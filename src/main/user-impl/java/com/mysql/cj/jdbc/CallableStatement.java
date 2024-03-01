@@ -64,6 +64,10 @@ import com.mysql.cj.protocol.a.result.ResultsetRowsStatic;
 import com.mysql.cj.result.DefaultColumnDefinition;
 import com.mysql.cj.result.Field;
 import com.mysql.cj.result.Row;
+import com.mysql.cj.telemetry.TelemetryAttribute;
+import com.mysql.cj.telemetry.TelemetryScope;
+import com.mysql.cj.telemetry.TelemetrySpan;
+import com.mysql.cj.telemetry.TelemetrySpanName;
 import com.mysql.cj.util.SearchMode;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.Util;
@@ -784,15 +788,15 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
                 java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
                 if (this.callingStoredFunction) {
-                    paramTypesRs = dbIsSchema ? dbmd.getFunctionColumns(null, useDb ? this.getCurrentDatabase() : tmpDb, procName, "%")
-                            : dbmd.getFunctionColumns(useDb ? this.getCurrentDatabase() : tmpDb, null, procName, "%");
+                    paramTypesRs = dbIsSchema ? dbmd.getFunctionColumns(null, useDb ? getCurrentDatabase() : tmpDb, procName, "%")
+                            : dbmd.getFunctionColumns(useDb ? getCurrentDatabase() : tmpDb, null, procName, "%");
                 } else {
                     RuntimeProperty<Boolean> getProcRetFuncProp = this.session.getPropertySet().getBooleanProperty(PropertyKey.getProceduresReturnsFunctions);
                     Boolean getProcRetFuncsCurrentValue = getProcRetFuncProp.getValue();
                     try {
                         getProcRetFuncProp.setValue(Boolean.FALSE);
-                        paramTypesRs = dbIsSchema ? dbmd.getProcedureColumns(null, useDb ? this.getCurrentDatabase() : tmpDb, procName, "%")
-                                : dbmd.getProcedureColumns(useDb ? this.getCurrentDatabase() : tmpDb, null, procName, "%");
+                        paramTypesRs = dbIsSchema ? dbmd.getProcedureColumns(null, useDb ? getCurrentDatabase() : tmpDb, procName, "%")
+                                : dbmd.getProcedureColumns(useDb ? getCurrentDatabase() : tmpDb, null, procName, "%");
                     } finally {
                         getProcRetFuncProp.setValue(getProcRetFuncsCurrentValue);
                     }
@@ -841,62 +845,95 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
     @Override
     public boolean execute() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            boolean returnVal = false;
+            TelemetrySpan span = getSession().getTelemetryHandler().startSpan(TelemetrySpanName.ROUTINE_EXECUTE);
+            try (TelemetryScope scope = span.makeCurrent()) {
+                String dbOperation = getQueryInfo().getStatementKeyword();
+                span.setAttribute(TelemetryAttribute.DB_NAME, getCurrentDatabase());
+                span.setAttribute(TelemetryAttribute.DB_OPERATION, dbOperation);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, dbOperation + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                span.setAttribute(TelemetryAttribute.DB_USER, this.connection.getUser());
+                span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-            checkStreamability();
+                boolean returnVal = false;
 
-            setInOutParamsOnServer();
-            setOutParams();
+                checkStreamability();
 
-            returnVal = super.execute();
+                setInOutParamsOnServer();
+                setOutParams();
 
-            if (this.callingStoredFunction) {
-                this.functionReturnValueResults = this.results;
-                this.functionReturnValueResults.next();
-                this.results = null;
+                returnVal = super.execute();
+
+                if (this.callingStoredFunction) {
+                    this.functionReturnValueResults = this.results;
+                    this.functionReturnValueResults.next();
+                    this.results = null;
+                }
+
+                // TODO There is something strange here:
+                // From ResultSetRegressionTest.testBug14562():
+                //
+                // $ CREATE  TABLE testBug14562 (row_order INT, signed_field MEDIUMINT, unsigned_field MEDIUMINT UNSIGNED)
+                // $ INSERT INTO testBug14562 VALUES (1, -8388608, 0), (2, 8388607, 16777215)
+                // $ CREATE  PROCEDURE sp_testBug14562_1 (OUT param_1 MEDIUMINT, OUT param_2 MEDIUMINT UNSIGNED)
+                //    BEGIN
+                //     SELECT signed_field, unsigned_field INTO param_1, param_2 FROM testBug14562 WHERE row_order=1;
+                //    END
+                // $ CALL sp_testBug14562_1(@com_mysql_jdbc_outparam_param_1, @com_mysql_jdbc_outparam_param_2)
+                // $ SELECT @com_mysql_jdbc_outparam_param_1,@com_mysql_jdbc_outparam_param_2
+                //
+                // ResultSet metadata returns BIGINT for @com_mysql_jdbc_outparam_param_1 and @com_mysql_jdbc_outparam_param_2
+                // instead of expected MEDIUMINT. I wonder what happens to other types...
+                retrieveOutParams();
+
+                if (!this.callingStoredFunction) {
+                    return returnVal;
+                }
+
+                // Functions can't return results
+                return false;
+            } catch (Throwable t) {
+                span.setError(t);
+                throw t;
+            } finally {
+                span.end();
             }
-
-            // TODO There is something strange here:
-            // From ResultSetRegressionTest.testBug14562():
-            //
-            // $ CREATE  TABLE testBug14562 (row_order INT, signed_field MEDIUMINT, unsigned_field MEDIUMINT UNSIGNED)
-            // $ INSERT INTO testBug14562 VALUES (1, -8388608, 0), (2, 8388607, 16777215)
-            // $ CREATE  PROCEDURE sp_testBug14562_1 (OUT param_1 MEDIUMINT, OUT param_2 MEDIUMINT UNSIGNED)
-            //    BEGIN
-            //     SELECT signed_field, unsigned_field INTO param_1, param_2 FROM testBug14562 WHERE row_order=1;
-            //    END
-            // $ CALL sp_testBug14562_1(@com_mysql_jdbc_outparam_param_1, @com_mysql_jdbc_outparam_param_2)
-            // $ SELECT @com_mysql_jdbc_outparam_param_1,@com_mysql_jdbc_outparam_param_2
-            //
-            // ResultSet metadata returns BIGINT for @com_mysql_jdbc_outparam_param_1 and @com_mysql_jdbc_outparam_param_2
-            // instead of expected MEDIUMINT. I wonder what happens to other types...
-            retrieveOutParams();
-
-            if (!this.callingStoredFunction) {
-                return returnVal;
-            }
-
-            // Functions can't return results
-            return false;
         }
     }
 
     @Override
     public java.sql.ResultSet executeQuery() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
+            TelemetrySpan span = getSession().getTelemetryHandler().startSpan(TelemetrySpanName.ROUTINE_EXECUTE);
+            try (TelemetryScope scope = span.makeCurrent()) {
+                String dbOperation = getQueryInfo().getStatementKeyword();
+                span.setAttribute(TelemetryAttribute.DB_NAME, getCurrentDatabase());
+                span.setAttribute(TelemetryAttribute.DB_OPERATION, dbOperation);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, dbOperation + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                span.setAttribute(TelemetryAttribute.DB_USER, this.connection.getUser());
+                span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-            checkStreamability();
+                checkStreamability();
 
-            java.sql.ResultSet execResults = null;
+                java.sql.ResultSet execResults = null;
 
-            setInOutParamsOnServer();
-            setOutParams();
+                setInOutParamsOnServer();
+                setOutParams();
 
-            execResults = super.executeQuery();
+                execResults = super.executeQuery();
 
-            retrieveOutParams();
+                retrieveOutParams();
 
-            return execResults;
+                return execResults;
+            } catch (Throwable t) {
+                span.setError(t);
+                throw t;
+            } finally {
+                span.end();
+            }
         }
     }
 
@@ -2239,7 +2276,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             try {
                 String procName = extractProcedureName();
 
-                String db = this.getCurrentDatabase();
+                String db = getCurrentDatabase();
 
                 if (procName.indexOf(".") != -1) {
                     db = procName.substring(0, procName.indexOf("."));
@@ -2478,24 +2515,41 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
     @Override
     public long executeLargeUpdate() throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            long returnVal = -1;
+            TelemetrySpan span = getSession().getTelemetryHandler().startSpan(TelemetrySpanName.ROUTINE_EXECUTE);
+            try (TelemetryScope scope = span.makeCurrent()) {
+                String dbOperation = getQueryInfo().getStatementKeyword();
+                span.setAttribute(TelemetryAttribute.DB_NAME, getCurrentDatabase());
+                span.setAttribute(TelemetryAttribute.DB_OPERATION, dbOperation);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, dbOperation + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                span.setAttribute(TelemetryAttribute.DB_USER, this.connection.getUser());
+                span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-            checkStreamability();
+                long returnVal = -1;
 
-            if (this.callingStoredFunction) {
-                execute();
+                checkStreamability();
 
-                return -1;
+                if (this.callingStoredFunction) {
+                    execute();
+
+                    return -1;
+                }
+
+                setInOutParamsOnServer();
+                setOutParams();
+
+                returnVal = super.executeLargeUpdate();
+
+                retrieveOutParams();
+
+                return returnVal;
+            } catch (Throwable t) {
+                span.setError(t);
+                throw t;
+            } finally {
+                span.end();
             }
-
-            setInOutParamsOnServer();
-            setOutParams();
-
-            returnVal = super.executeLargeUpdate();
-
-            retrieveOutParams();
-
-            return returnVal;
         }
     }
 
@@ -2505,8 +2559,23 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             throw SQLError.createSQLException("Can't call executeBatch() on CallableStatement with OUTPUT parameters",
                     MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
+        TelemetrySpan span = getSession().getTelemetryHandler().startSpan(TelemetrySpanName.ROUTINE_EXECUTE_BATCH);
+        try (TelemetryScope scope = span.makeCurrent()) {
+            span.setAttribute(TelemetryAttribute.DB_NAME, getCurrentDatabase());
+            span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_BATCH);
+            span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_BATCH);
+            span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+            span.setAttribute(TelemetryAttribute.DB_USER, this.connection.getUser());
+            span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+            span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-        return super.executeLargeBatch();
+            return super.executeLargeBatch();
+        } catch (Throwable t) {
+            span.setError(t);
+            throw t;
+        } finally {
+            span.end();
+        }
     }
 
 }

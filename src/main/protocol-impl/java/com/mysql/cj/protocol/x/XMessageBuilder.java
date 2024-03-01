@@ -40,6 +40,7 @@ import com.google.protobuf.ByteString;
 import com.mysql.cj.MessageBuilder;
 import com.mysql.cj.Messages;
 import com.mysql.cj.PreparedQuery;
+import com.mysql.cj.Query;
 import com.mysql.cj.QueryBindings;
 import com.mysql.cj.Session;
 import com.mysql.cj.exceptions.CJOperationNotSupportedException;
@@ -145,7 +146,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
     }
 
     /**
-     * Initialize a {@link Insert.Builder} for table data model with common data for prepared and non-prepared executions.
+     * Initialize a {@link com.mysql.cj.x.protobuf.MysqlxCrud.Insert.Builder} for table data model with common data for prepared and non-prepared executions.
      *
      * @param schemaName
      *            the schema name
@@ -154,7 +155,7 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
      * @param insertParams
      *            the parameters to insert
      * @return
-     *         an initialized {@link Insert.Builder} instance
+     *         an initialized {@link com.mysql.cj.x.protobuf.MysqlxCrud.Insert.Builder} instance
      */
     @SuppressWarnings("unchecked")
     private Insert.Builder commonRowInsertBuilder(String schemaName, String tableName, InsertParams insertParams) {
@@ -185,14 +186,15 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
     }
 
     /**
-     * Initialize an {@link Update.Builder} for collection data model with common data for prepared and non-prepared executions.
+     * Initialize an {@link com.mysql.cj.x.protobuf.MysqlxCrud.Update.Builder} for collection data model with common data for prepared and non-prepared
+     * executions.
      *
      * @param filterParams
      *            the filter parameters
      * @param updates
      *            the updates specifications to perform
      * @return
-     *         an initialized {@link Update.Builder} instance
+     *         an initialized {@link com.mysql.cj.x.protobuf.MysqlxCrud.Update.Builder} instance
      */
     private Update.Builder commonDocUpdateBuilder(FilterParams filterParams, List<UpdateSpec> updates) {
         Update.Builder builder = Update.newBuilder().setCollection((Collection) filterParams.getCollection());
@@ -246,14 +248,14 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
     }
 
     /**
-     * Initialize an {@link Update.Builder} for table data model with common data for prepared and non-prepared executions.
+     * Initialize an {@link com.mysql.cj.x.protobuf.MysqlxCrud.Update.Builder} for table data model with common data for prepared and non-prepared executions.
      *
      * @param filterParams
      *            the filter parameters
      * @param updateParams
      *            the update parameters
      * @return
-     *         an initialized {@link Update.Builder} instance
+     *         an initialized {@link com.mysql.cj.x.protobuf.MysqlxCrud.Update.Builder} instance
      */
     @SuppressWarnings("unchecked")
     private Update.Builder commonRowUpdateBuilder(FilterParams filterParams, UpdateParams updateParams) {
@@ -302,12 +304,12 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
     }
 
     /**
-     * Initialize a {@link Find.Builder} for collection data model with common data for prepared and non-prepared executions.
+     * Initialize a {@link com.mysql.cj.x.protobuf.MysqlxCrud.Find.Builder} for collection data model with common data for prepared and non-prepared executions.
      *
      * @param filterParams
      *            the filter parameters
      * @return
-     *         an initialized {@link Find.Builder} instance
+     *         an initialized {@link com.mysql.cj.x.protobuf.MysqlxCrud.Find.Builder} instance
      */
     @SuppressWarnings("unchecked")
     private Find.Builder commonFindBuilder(FilterParams filterParams) {
@@ -365,12 +367,12 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
     }
 
     /**
-     * Initialize a {@link Delete.Builder} with common data for prepared and non-prepared executions.
+     * Initialize a {@link com.mysql.cj.x.protobuf.MysqlxCrud.Delete.Builder} with common data for prepared and non-prepared executions.
      *
      * @param filterParams
      *            the filter parameters
      * @return
-     *         an initialized {@link Delete.Builder} instance
+     *         an initialized {@link com.mysql.cj.x.protobuf.MysqlxCrud.Delete.Builder} instance
      */
     private Delete.Builder commonDeleteBuilder(FilterParams filterParams) {
         Delete.Builder builder = Delete.newBuilder().setCollection((Collection) filterParams.getCollection());
@@ -411,12 +413,12 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
     }
 
     /**
-     * Initialize a {@link StmtExecute.Builder} with common data for prepared and non-prepared executions.
+     * Initialize a {@link com.mysql.cj.x.protobuf.MysqlxSql.StmtExecute.Builder} with common data for prepared and non-prepared executions.
      *
      * @param statement
      *            the SQL statement
      * @return
-     *         an initialized {@link StmtExecute.Builder} instance
+     *         an initialized {@link com.mysql.cj.x.protobuf.MysqlxSql.StmtExecute.Builder} instance
      */
     private StmtExecute.Builder commonSqlStatementBuilder(String statement) {
         StmtExecute.Builder builder = StmtExecute.newBuilder();
@@ -990,6 +992,11 @@ public class XMessageBuilder implements MessageBuilder<XMessage> {
     public XMessage buildExpectOpen() {
         return new XMessage(MysqlxExpect.Open.newBuilder().addCond(MysqlxExpect.Open.Condition.newBuilder()
                 .setConditionKey(MysqlxExpect.Open.Condition.Key.EXPECT_FIELD_EXIST_VALUE).setConditionValue(ByteString.copyFromUtf8("6.1"))).build());
+    }
+
+    @Override
+    public XMessage buildComQuery(XMessage sharedPacket, Session sess, String query, Query callingQuery, String characterEncoding) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }
 
     @Override

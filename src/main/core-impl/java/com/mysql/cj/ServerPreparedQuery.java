@@ -45,6 +45,10 @@ import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
 import com.mysql.cj.protocol.a.NativeMessageBuilder;
 import com.mysql.cj.protocol.a.NativePacketPayload;
 import com.mysql.cj.result.Field;
+import com.mysql.cj.telemetry.TelemetryAttribute;
+import com.mysql.cj.telemetry.TelemetryScope;
+import com.mysql.cj.telemetry.TelemetrySpan;
+import com.mysql.cj.telemetry.TelemetrySpanName;
 import com.mysql.cj.util.StringUtils;
 
 // TODO should not be protocol-specific
@@ -381,36 +385,53 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
      */
     private void serverLongData(int parameterIndex, BindValue binding) {
         synchronized (this) {
-            NativePacketPayload packet = this.session.getSharedSendPacket();
-            Object value = binding.getValue();
-            if (value instanceof byte[]) {
-                this.session.getProtocol()
-                        .sendCommand(this.commandBuilder.buildComStmtSendLongData(packet, this.serverStatementId, parameterIndex, (byte[]) value), true, 0);
-            } else if (value instanceof InputStream) {
-                storeStreamOrReader(parameterIndex, packet, (InputStream) value);
-            } else if (value instanceof java.sql.Blob) {
-                try {
-                    storeStreamOrReader(parameterIndex, packet, ((java.sql.Blob) value).getBinaryStream());
-                } catch (Throwable t) {
-                    throw ExceptionFactory.createException(t.getMessage(), this.session.getExceptionInterceptor());
+            TelemetrySpan span = this.session.getTelemetryHandler().startSpan(TelemetrySpanName.STMT_SEND_LONG_DATA);
+            try (TelemetryScope scope = span.makeCurrent()) {
+                String dbOperation = getQueryInfo().getStatementKeyword();
+                span.setAttribute(TelemetryAttribute.DB_NAME, getCurrentDatabase());
+                span.setAttribute(TelemetryAttribute.DB_OPERATION, dbOperation);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, dbOperation + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                span.setAttribute(TelemetryAttribute.DB_USER, this.session.getHostInfo().getUser());
+                span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
+
+                NativePacketPayload packet = this.session.getSharedSendPacket();
+                Object value = binding.getValue();
+                if (value instanceof byte[]) {
+                    this.session.getProtocol()
+                            .sendCommand(this.commandBuilder.buildComStmtSendLongData(packet, this.serverStatementId, parameterIndex, (byte[]) value), true, 0);
+                } else if (value instanceof InputStream) {
+                    storeStreamOrReader(parameterIndex, packet, (InputStream) value);
+                } else if (value instanceof java.sql.Blob) {
+                    try {
+                        storeStreamOrReader(parameterIndex, packet, ((java.sql.Blob) value).getBinaryStream());
+                    } catch (Throwable t) {
+                        throw ExceptionFactory.createException(t.getMessage(), this.session.getExceptionInterceptor());
+                    }
+                } else if (value instanceof Reader) {
+                    if (binding.isNational() && !this.charEncoding.equalsIgnoreCase("UTF-8") && !this.charEncoding.equalsIgnoreCase("utf8")) {
+                        throw ExceptionFactory.createException(Messages.getString("ServerPreparedStatement.31"), this.session.getExceptionInterceptor());
+                    }
+                    storeStreamOrReader(parameterIndex, packet, (Reader) value);
+                } else if (value instanceof Clob) {
+                    if (binding.isNational() && !this.charEncoding.equalsIgnoreCase("UTF-8") && !this.charEncoding.equalsIgnoreCase("utf8")) {
+                        throw ExceptionFactory.createException(Messages.getString("ServerPreparedStatement.31"), this.session.getExceptionInterceptor());
+                    }
+                    try {
+                        storeStreamOrReader(parameterIndex, packet, ((Clob) value).getCharacterStream());
+                    } catch (Throwable t) {
+                        throw ExceptionFactory.createException(t.getMessage(), t);
+                    }
+                } else {
+                    throw ExceptionFactory.createException(WrongArgumentException.class,
+                            Messages.getString("ServerPreparedStatement.18") + value.getClass().getName() + "'", this.session.getExceptionInterceptor());
                 }
-            } else if (value instanceof Reader) {
-                if (binding.isNational() && !this.charEncoding.equalsIgnoreCase("UTF-8") && !this.charEncoding.equalsIgnoreCase("utf8")) {
-                    throw ExceptionFactory.createException(Messages.getString("ServerPreparedStatement.31"), this.session.getExceptionInterceptor());
-                }
-                storeStreamOrReader(parameterIndex, packet, (Reader) value);
-            } else if (value instanceof Clob) {
-                if (binding.isNational() && !this.charEncoding.equalsIgnoreCase("UTF-8") && !this.charEncoding.equalsIgnoreCase("utf8")) {
-                    throw ExceptionFactory.createException(Messages.getString("ServerPreparedStatement.31"), this.session.getExceptionInterceptor());
-                }
-                try {
-                    storeStreamOrReader(parameterIndex, packet, ((Clob) value).getCharacterStream());
-                } catch (Throwable t) {
-                    throw ExceptionFactory.createException(t.getMessage(), t);
-                }
-            } else {
-                throw ExceptionFactory.createException(WrongArgumentException.class,
-                        Messages.getString("ServerPreparedStatement.18") + value.getClass().getName() + "'", this.session.getExceptionInterceptor());
+            } catch (Throwable t) {
+                span.setError(t);
+                throw t;
+            } finally {
+                span.end();
             }
         }
     }
@@ -550,16 +571,33 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
     public void serverResetStatement() {
         this.session.checkClosed();
         synchronized (this.session) {
-            try {
-                this.session.getProtocol().sendCommand(this.commandBuilder.buildComStmtReset(this.session.getSharedSendPacket(), this.serverStatementId), false,
-                        0);
+            TelemetrySpan span = this.session.getTelemetryHandler().startSpan(TelemetrySpanName.STMT_RESET_PREPARED);
+            try (TelemetryScope scope = span.makeCurrent()) {
+                String dbOperation = getQueryInfo().getStatementKeyword();
+                span.setAttribute(TelemetryAttribute.DB_NAME, getCurrentDatabase());
+                span.setAttribute(TelemetryAttribute.DB_OPERATION, dbOperation);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, dbOperation + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                span.setAttribute(TelemetryAttribute.DB_USER, this.session.getHostInfo().getUser());
+                span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
+
+                try {
+                    this.session.getProtocol().sendCommand(this.commandBuilder.buildComStmtReset(this.session.getSharedSendPacket(), this.serverStatementId),
+                            false, 0);
+                } finally {
+                    // OK_PACKET returned in previous sendCommand() was not processed so keep original transaction state.
+                    this.session.getProtocol().getServerSession().preserveOldTransactionState();
+                    this.session.clearInputStream();
+                }
+                // Nothing to be detected after a reset...
+                this.queryBindings.setLongParameterSwitchDetected(false);
+            } catch (Throwable t) {
+                span.setError(t);
+                throw t;
             } finally {
-                // OK_PACKET returned in previous sendCommand() was not processed so keep original transaction state.
-                this.session.getProtocol().getServerSession().preserveOldTransactionState();
-                this.session.clearInputStream();
+                span.end();
             }
-            // Nothing to be detected after a reset...
-            this.queryBindings.setLongParameterSwitchDetected(false);
         }
     }
 

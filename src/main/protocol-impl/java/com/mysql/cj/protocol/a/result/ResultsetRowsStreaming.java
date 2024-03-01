@@ -21,6 +21,7 @@
 package com.mysql.cj.protocol.a.result;
 
 import com.mysql.cj.Messages;
+import com.mysql.cj.Session;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
@@ -39,6 +40,10 @@ import com.mysql.cj.protocol.a.NativePacketPayload;
 import com.mysql.cj.protocol.a.NativeProtocol;
 import com.mysql.cj.protocol.a.TextRowFactory;
 import com.mysql.cj.result.Row;
+import com.mysql.cj.telemetry.TelemetryAttribute;
+import com.mysql.cj.telemetry.TelemetryScope;
+import com.mysql.cj.telemetry.TelemetrySpan;
+import com.mysql.cj.telemetry.TelemetrySpanName;
 import com.mysql.cj.util.Util;
 
 /**
@@ -114,15 +119,34 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
 
             if (!this.protocol.getPropertySet().getBooleanProperty(PropertyKey.clobberStreamingResults).getValue()
                     && this.protocol.getPropertySet().getIntegerProperty(PropertyKey.netTimeoutForStreamingResults).getValue() > 0) {
-                int oldValue = this.protocol.getServerSession().getServerVariable("net_write_timeout", 60);
+                Session session = this.owner.getSession();
+                TelemetrySpan span = session.getTelemetryHandler().startSpan(TelemetrySpanName.SET_VARIABLE, "net_write_timeout");
+                try (TelemetryScope scope = span.makeCurrent()) {
+                    span.setAttribute(TelemetryAttribute.DB_NAME, session.getHostInfo().getDatabase());
+                    span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_SET);
+                    span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_SET + TelemetryAttribute.STATEMENT_SUFFIX);
+                    span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                    span.setAttribute(TelemetryAttribute.DB_USER, session.getHostInfo().getUser());
+                    span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                    span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-                this.protocol.clearInputStream();
+                    int oldValue = this.protocol.getServerSession().getServerVariable("net_write_timeout", 60);
 
-                try {
-                    this.protocol.sendCommand(this.commandBuilder.buildComQuery(this.protocol.getSharedSendPacket(), "SET net_write_timeout=" + oldValue,
-                            this.protocol.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue()), false, 0);
-                } catch (Exception ex) {
-                    throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
+                    this.protocol.clearInputStream();
+
+                    try {
+                        this.protocol.sendCommand(
+                                this.commandBuilder.buildComQuery(this.protocol.getSharedSendPacket(), session, "SET net_write_timeout=" + oldValue,
+                                        this.protocol.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue()),
+                                false, 0);
+                    } catch (Exception ex) {
+                        throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
+                    }
+                } catch (Throwable t) {
+                    span.setError(t);
+                    throw t;
+                } finally {
+                    span.end();
                 }
             }
 

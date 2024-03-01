@@ -71,16 +71,13 @@ import java.util.Optional;
 import java.util.TimeZone;
 import java.util.function.Supplier;
 
-import com.mysql.cj.BindValue;
 import com.mysql.cj.CharsetMapping;
-import com.mysql.cj.Constants;
 import com.mysql.cj.MessageBuilder;
 import com.mysql.cj.Messages;
 import com.mysql.cj.MysqlType;
 import com.mysql.cj.NativeCharsetSettings;
 import com.mysql.cj.NativeSession;
 import com.mysql.cj.Query;
-import com.mysql.cj.QueryAttributesBindings;
 import com.mysql.cj.QueryResult;
 import com.mysql.cj.ServerPreparedQuery;
 import com.mysql.cj.ServerVersion;
@@ -139,6 +136,10 @@ import com.mysql.cj.result.IntegerValueFactory;
 import com.mysql.cj.result.Row;
 import com.mysql.cj.result.StringValueFactory;
 import com.mysql.cj.result.ValueFactory;
+import com.mysql.cj.telemetry.TelemetryAttribute;
+import com.mysql.cj.telemetry.TelemetryScope;
+import com.mysql.cj.telemetry.TelemetrySpan;
+import com.mysql.cj.telemetry.TelemetrySpanName;
 import com.mysql.cj.util.LazyString;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.TestUtils;
@@ -162,14 +163,13 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     /** Track this to manually shut down. */
     protected CompressedPacketSender compressedPacketSender;
 
-    //private PacketPayload sendPacket = null;
     protected NativePacketPayload sharedSendPacket = null;
+
     /** Use this when reading in rows to avoid thousands of new() calls, because the byte arrays just get copied out of the packet anyway */
     protected NativePacketPayload reusablePacket = null;
 
     /**
      * Packet used for 'LOAD DATA LOCAL INFILE'
-     *
      * We use a SoftReference, so that we don't penalize intermittent use of this feature
      */
     private SoftReference<NativePacketPayload> loadFileBufRef;
@@ -182,7 +182,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     private boolean autoGenerateTestcaseScript;
 
-    /** Does the server support long column info? */
     private boolean logSlowQueries = false;
     private boolean useAutoSlowLog;
 
@@ -240,13 +239,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         DEFAULT_ENCODERS.put(ZonedDateTime.class, ZonedDateTimeValueEncoder::new);
     }
 
-    /**
-     * The comment (if any) that we'll prepend to all queries
-     * sent to the server (to show up in "SHOW PROCESSLIST")
-     */
-    private String queryComment = null;
-
-    private NativeMessageBuilder commandBuilder = null;
+    private NativeMessageBuilder nativeMessageBuilder = null;
 
     public static NativeProtocol getInstance(Session session, SocketConnection socketConnection, PropertySet propertySet, Log log,
             TransactionEventHandler transactionManager) {
@@ -302,9 +295,13 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         this.PROTOCOL_ENTITY_CLASS_TO_BINARY_READER = Collections.unmodifiableMap(protocolEntityClassToBinaryReader);
     }
 
+    public Session getSession() {
+        return this.session;
+    }
+
     @Override
     public MessageBuilder<NativePacketPayload> getMessageBuilder() {
-        return getCommandBuilder();
+        return getNativeMessageBuilder();
     }
 
     public MessageSender<NativePacketPayload> getPacketSender() {
@@ -315,11 +312,11 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         return this.packetReader;
     }
 
-    private NativeMessageBuilder getCommandBuilder() {
-        if (this.commandBuilder != null) {
-            return this.commandBuilder;
+    private NativeMessageBuilder getNativeMessageBuilder() {
+        if (this.nativeMessageBuilder != null) {
+            return this.nativeMessageBuilder;
         }
-        return this.commandBuilder = new NativeMessageBuilder(this.serverSession.supportsQueryAttributes());
+        return this.nativeMessageBuilder = new NativeMessageBuilder(this.serverSession.supportsQueryAttributes());
     }
 
     @Override
@@ -339,8 +336,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     /**
-     * Negotiates the SSL communications channel used when connecting
-     * to a MySQL server that understands SSL.
+     * Negotiates the SSL communications channel used when connecting to a MySQL server that understands SSL.
      */
     @Override
     public void negotiateSSLConnection() {
@@ -460,11 +456,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             case maintainTimeStats:
             case traceProtocol:
             case enablePacketDebug:
-
                 applyPacketDecorators(this.packetSender.undecorateAll(), this.packetReader.undecorateAll());
-
                 break;
-
             default:
                 break;
         }
@@ -546,18 +539,49 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             return;
         }
 
-        try {
-            sendCommand(getCommandBuilder().buildComInitDb(getSharedSendPacket(), database), false, 0);
-        } catch (CJException ex) {
-            if (this.getPropertySet().getBooleanProperty(PropertyKey.createDatabaseIfNotExist).getValue()) {
-                sendCommand(getCommandBuilder().buildComQuery(getSharedSendPacket(),
-                        "CREATE DATABASE IF NOT EXISTS " + StringUtils.quoteIdentifier(database, true)), false, 0);
+        TelemetrySpan span1 = this.session.getTelemetryHandler().startSpan(TelemetrySpanName.CHANGE_DATABASE);
+        try (TelemetryScope scope1 = span1.makeCurrent()) {
+            span1.setAttribute(TelemetryAttribute.DB_NAME, database);
+            span1.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_INIT_DB);
+            span1.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_INIT_DB + TelemetryAttribute.STATEMENT_SUFFIX);
+            span1.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+            span1.setAttribute(TelemetryAttribute.DB_USER, this.session.getHostInfo().getUser());
+            span1.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+            span1.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-                sendCommand(getCommandBuilder().buildComInitDb(getSharedSendPacket(), database), false, 0);
-            } else {
-                throw ExceptionFactory.createCommunicationsException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder(),
-                        this.getPacketReceivedTimeHolder(), ex, getExceptionInterceptor());
+            try {
+                sendCommand(getNativeMessageBuilder().buildComInitDb(getSharedSendPacket(), database), false, 0);
+            } catch (CJException ex) {
+                if (this.getPropertySet().getBooleanProperty(PropertyKey.createDatabaseIfNotExist).getValue()) {
+                    TelemetrySpan span2 = this.session.getTelemetryHandler().startSpan(TelemetrySpanName.CREATE_DATABASE);
+                    try (TelemetryScope scope2 = span2.makeCurrent()) {
+                        span2.setAttribute(TelemetryAttribute.DB_NAME, database);
+                        span2.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_CREATE);
+                        span2.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_CREATE + TelemetryAttribute.STATEMENT_SUFFIX);
+                        span2.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                        span2.setAttribute(TelemetryAttribute.DB_USER, this.session.getHostInfo().getUser());
+                        span2.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                        span2.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
+
+                        sendCommand(getNativeMessageBuilder().buildComQuery(getSharedSendPacket(), this.session,
+                                "CREATE DATABASE IF NOT EXISTS " + StringUtils.quoteIdentifier(database, true)), false, 0);
+                    } catch (Throwable t) {
+                        span2.setError(t);
+                        throw t;
+                    } finally {
+                        span2.end();
+                    }
+                    sendCommand(getNativeMessageBuilder().buildComInitDb(getSharedSendPacket(), database), false, 0);
+                } else {
+                    throw ExceptionFactory.createCommunicationsException(this.getPropertySet(), this.serverSession, this.getPacketSentTimeHolder(),
+                            this.getPacketReceivedTimeHolder(), ex, getExceptionInterceptor());
+                }
             }
+        } catch (Throwable t) {
+            span1.setError(t);
+            throw t;
+        } finally {
+            span1.end();
         }
     }
 
@@ -610,9 +634,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             this.packetSequence++;
             this.packetSender.send(packet.getByteBuffer(), packetLen, this.packetSequence);
 
-            //
             // Don't hold on to large packets
-            //
             if (packet == this.sharedSendPacket) {
                 reclaimLargeSharedSendPacket();
             }
@@ -869,123 +891,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         if (this.reusablePacket != null && this.reusablePacket.getCapacity() > 1048576) {
             this.reusablePacket = new NativePacketPayload(INITIAL_PACKET_SIZE);
         }
-    }
-
-    /**
-     * Build a query packet from the given string and send it to the server.
-     *
-     * @param <T>
-     *            extends {@link Resultset}
-     * @param callingQuery
-     *            {@link Query}
-     * @param query
-     *            query string
-     * @param characterEncoding
-     *            Java encoding name
-     * @param maxRows
-     *            rows limit
-     * @param streamResults
-     *            whether a stream result should be created
-     * @param cachedMetadata
-     *            use this metadata instead of the one provided on wire
-     * @param resultSetFactory
-     *            {@link ProtocolEntityFactory}
-     * @return T instance
-     * @throws IOException
-     *             if an i/o error occurs
-     */
-    public final <T extends Resultset> T sendQueryString(Query callingQuery, String query, String characterEncoding, int maxRows, boolean streamResults,
-            ColumnDefinition cachedMetadata, ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) throws IOException {
-        String statementComment = this.queryComment;
-
-        if (this.propertySet.getBooleanProperty(PropertyKey.includeThreadNamesAsStatementComment).getValue()) {
-            statementComment = (statementComment != null ? statementComment + ", " : "") + "java thread: " + Thread.currentThread().getName();
-        }
-
-        // We don't know exactly how many bytes we're going to get from the query. Since we're dealing with UTF-8, the max is 4, so pad it
-        // (4 * query) + space for headers
-        int packLength = 1 /* com_query */ + query.length() * 4 + 2;
-
-        byte[] commentAsBytes = null;
-
-        if (statementComment != null) {
-            commentAsBytes = StringUtils.getBytes(statementComment, characterEncoding);
-
-            packLength += commentAsBytes.length;
-            packLength += 6; // for /*[space] [space]*/
-        }
-
-        boolean supportsQueryAttributes = this.serverSession.supportsQueryAttributes();
-        QueryAttributesBindings queryAttributes = null;
-
-        if (!supportsQueryAttributes && callingQuery != null && callingQuery.getQueryAttributesBindings().getCount() > 0) {
-            this.log.logWarn(Messages.getString("QueryAttributes.SetButNotSupported"));
-        }
-
-        if (supportsQueryAttributes) {
-            if (callingQuery != null) {
-                queryAttributes = callingQuery.getQueryAttributesBindings();
-            }
-
-            if (queryAttributes != null && queryAttributes.getCount() > 0) {
-                packLength += 9 /* parameter_count */ + 1 /* parameter_set_count */;
-                packLength += (queryAttributes.getCount() + 7) / 8 /* null_bitmap */ + 1 /* new_params_bind_flag */;
-                for (int i = 0; i < queryAttributes.getCount(); i++) {
-                    BindValue queryAttribute = queryAttributes.getAttributeValue(i);
-                    packLength += 2 /* parameter_type */ + queryAttribute.getName().length() /* parameter_name */ + queryAttribute.getBinaryLength();
-                }
-            } else {
-                packLength += 1 /* parameter_count */ + 1 /* parameter_set_count */;
-            }
-        }
-
-        // TODO decide how to safely use the shared this.sendPacket
-        NativePacketPayload sendPacket = new NativePacketPayload(packLength);
-
-        sendPacket.setPosition(0);
-        sendPacket.writeInteger(IntegerDataType.INT1, NativeConstants.COM_QUERY);
-
-        if (supportsQueryAttributes) {
-            if (queryAttributes != null && queryAttributes.getCount() > 0) {
-                sendPacket.writeInteger(IntegerDataType.INT_LENENC, queryAttributes.getCount());
-                sendPacket.writeInteger(IntegerDataType.INT_LENENC, 1); // parameter_set_count (always 1)
-                byte[] nullBitsBuffer = new byte[(queryAttributes.getCount() + 7) / 8];
-                for (int i = 0; i < queryAttributes.getCount(); i++) {
-                    if (queryAttributes.getAttributeValue(i).isNull()) {
-                        nullBitsBuffer[i >>> 3] |= 1 << (i & 7);
-                    }
-                }
-                sendPacket.writeBytes(StringLengthDataType.STRING_VAR, nullBitsBuffer);
-                sendPacket.writeInteger(IntegerDataType.INT1, 1); // new_params_bind_flag (always 1)
-                queryAttributes.runThroughAll(a -> {
-                    sendPacket.writeInteger(IntegerDataType.INT2, a.getFieldType());
-                    sendPacket.writeBytes(StringSelfDataType.STRING_LENENC, a.getName().getBytes());
-                });
-                queryAttributes.runThroughAll(a -> {
-                    if (!a.isNull()) {
-                        a.writeAsQueryAttribute(sendPacket);
-                    }
-                });
-            } else {
-                sendPacket.writeInteger(IntegerDataType.INT_LENENC, 0);
-                sendPacket.writeInteger(IntegerDataType.INT_LENENC, 1); // parameter_set_count (always 1)
-            }
-        }
-        sendPacket.setTag("QUERY");
-
-        if (commentAsBytes != null) {
-            sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, Constants.SLASH_STAR_SPACE_AS_BYTES);
-            sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, commentAsBytes);
-            sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
-        }
-
-        if (!this.session.getServerSession().getCharsetSettings().doesPlatformDbCharsetMatches() && StringUtils.startsWithIgnoreCaseAndWs(query, "LOAD DATA")) {
-            sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(query));
-        } else {
-            sendPacket.writeBytes(StringLengthDataType.STRING_FIXED, StringUtils.getBytes(query, characterEncoding));
-        }
-
-        return sendQueryPacket(callingQuery, sendPacket, maxRows, streamResults, cachedMetadata, resultSetFactory);
     }
 
     /**
@@ -1257,23 +1162,39 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         if (StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT)
                 || versionMeetsMinimum(5, 6, 3) && StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT_EXTENSION) != -1) {
 
-            try {
-                NativePacketPayload resultPacket = sendCommand(getCommandBuilder().buildComQuery(getSharedSendPacket(), "EXPLAIN " + query), false, 0);
+            TelemetrySpan span = this.session.getTelemetryHandler().startSpan(TelemetrySpanName.EXPLAIN_QUERY);
+            try (TelemetryScope scope = span.makeCurrent()) {
+                span.setAttribute(TelemetryAttribute.DB_NAME, this.session.getHostInfo().getDatabase());
+                span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_EXPLAIN);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_EXPLAIN + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                span.setAttribute(TelemetryAttribute.DB_USER, this.session.getHostInfo().getUser());
+                span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
+                try {
+                    NativePacketPayload resultPacket = sendCommand(
+                            getNativeMessageBuilder().buildComQuery(getSharedSendPacket(), this.session, "EXPLAIN " + query), false, 0);
 
-                Resultset rs = readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
+                    Resultset rs = readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
 
-                StringBuilder explainResults = new StringBuilder(Messages.getString("Protocol.6"));
-                explainResults.append(truncatedQuery);
-                explainResults.append(Messages.getString("Protocol.7"));
+                    StringBuilder explainResults = new StringBuilder(Messages.getString("Protocol.6"));
+                    explainResults.append(truncatedQuery);
+                    explainResults.append(Messages.getString("Protocol.7"));
 
-                appendResultSetSlashGStyle(explainResults, rs);
+                    appendResultSetSlashGStyle(explainResults, rs);
 
-                this.log.logWarn(explainResults.toString());
-            } catch (CJException sqlEx) {
-                throw sqlEx;
+                    this.log.logWarn(explainResults.toString());
+                } catch (CJException sqlEx) {
+                    throw sqlEx;
 
-            } catch (Exception ex) {
-                throw ExceptionFactory.createException(ex.getMessage(), ex, getExceptionInterceptor());
+                } catch (Exception ex) {
+                    throw ExceptionFactory.createException(ex.getMessage(), ex, getExceptionInterceptor());
+                }
+            } catch (Throwable t) {
+                span.setError(t);
+                throw t;
+            } finally {
+                span.end();
             }
         }
     }
@@ -1317,7 +1238,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
             this.packetSequence = -1;
             NativePacketPayload packet = new NativePacketPayload(1);
-            send(getCommandBuilder().buildComQuit(packet), packet.getPosition());
+            send(getNativeMessageBuilder().buildComQuit(packet), packet.getPosition());
         } finally {
             this.socketConnection.forceClose();
             this.localInfileInputStream = null;
@@ -2009,45 +1930,52 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         return this.metricsHolder;
     }
 
-    @Override
-    public String getQueryComment() {
-        return this.queryComment;
-    }
-
-    @Override
-    public void setQueryComment(String comment) {
-        this.queryComment = comment;
-    }
-
     private void appendDeadlockStatusInformation(Session sess, String xOpen, StringBuilder errorBuf) {
         if (sess.getPropertySet().getBooleanProperty(PropertyKey.includeInnodbStatusInDeadlockExceptions).getValue() && xOpen != null
                 && (xOpen.startsWith("40") || xOpen.startsWith("41")) && getStreamingData() == null) {
 
-            try {
-                NativePacketPayload resultPacket = sendCommand(getCommandBuilder().buildComQuery(getSharedSendPacket(), "SHOW ENGINE INNODB STATUS"), false, 0);
+            TelemetrySpan span = this.session.getTelemetryHandler().startSpan(TelemetrySpanName.STMT_EXECUTE);
+            try (TelemetryScope scope = span.makeCurrent()) {
+                span.setAttribute(TelemetryAttribute.DB_NAME, this.session.getHostInfo().getDatabase());
+                span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_SHOW);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_SHOW + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                span.setAttribute(TelemetryAttribute.DB_USER, this.session.getHostInfo().getUser());
+                span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-                Resultset rs = readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
+                try {
+                    NativePacketPayload resultPacket = sendCommand(
+                            getNativeMessageBuilder().buildComQuery(getSharedSendPacket(), this.session, "SHOW ENGINE INNODB STATUS"), false, 0);
 
-                int colIndex = 0;
-                Field f = null;
-                for (int i = 0; i < rs.getColumnDefinition().getFields().length; i++) {
-                    f = rs.getColumnDefinition().getFields()[i];
-                    if ("Status".equals(f.getName())) {
-                        colIndex = i;
-                        break;
+                    Resultset rs = readAllResults(-1, false, resultPacket, false, null, new ResultsetFactory(Type.FORWARD_ONLY, null));
+
+                    int colIndex = 0;
+                    Field f = null;
+                    for (int i = 0; i < rs.getColumnDefinition().getFields().length; i++) {
+                        f = rs.getColumnDefinition().getFields()[i];
+                        if ("Status".equals(f.getName())) {
+                            colIndex = i;
+                            break;
+                        }
                     }
-                }
 
-                ValueFactory<String> vf = new StringValueFactory(this.propertySet);
+                    ValueFactory<String> vf = new StringValueFactory(this.propertySet);
 
-                Row r;
-                if ((r = rs.getRows().next()) != null) {
-                    errorBuf.append("\n\n").append(r.getValue(colIndex, vf));
-                } else {
-                    errorBuf.append("\n\n").append(Messages.getString("MysqlIO.NoInnoDBStatusFound"));
+                    Row r;
+                    if ((r = rs.getRows().next()) != null) {
+                        errorBuf.append("\n\n").append(r.getValue(colIndex, vf));
+                    } else {
+                        errorBuf.append("\n\n").append(Messages.getString("MysqlIO.NoInnoDBStatusFound"));
+                    }
+                } catch (IOException | CJException ex) {
+                    errorBuf.append("\n\n").append(Messages.getString("MysqlIO.InnoDBStatusFailed")).append("\n\n").append(Util.stackTraceToString(ex));
                 }
-            } catch (IOException | CJException ex) {
-                errorBuf.append("\n\n").append(Messages.getString("MysqlIO.InnoDBStatusFailed")).append("\n\n").append(Util.stackTraceToString(ex));
+            } catch (Throwable t) {
+                span.setError(t);
+                throw t;
+            } finally {
+                span.end();
             }
         }
 
@@ -2153,65 +2081,75 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         SQLWarning currentWarning = null;
         ResultsetRows rows = null;
 
-        try {
-            /*
-             * +---------+------+---------------------------------------------+
-             * | Level ..| Code | Message ....................................|
-             * +---------+------+---------------------------------------------+
-             * | Warning | 1265 | Data truncated for column 'field1' at row 1 |
-             * +---------+------+---------------------------------------------+
-             */
-            NativePacketPayload resultPacket = sendCommand(getCommandBuilder().buildComQuery(getSharedSendPacket(), "SHOW WARNINGS"), false, 0);
+        TelemetrySpan span = this.session.getTelemetryHandler().startSpan(TelemetrySpanName.SHOW_WARNINGS);
+        try (TelemetryScope scope = span.makeCurrent()) {
+            span.setAttribute(TelemetryAttribute.DB_NAME, this.session.getHostInfo().getDatabase());
+            span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_SHOW);
+            span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_SHOW + TelemetryAttribute.STATEMENT_SUFFIX);
+            span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+            span.setAttribute(TelemetryAttribute.DB_USER, this.session.getHostInfo().getUser());
+            span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+            span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-            Resultset warnRs = readAllResults(-1, this.warningCount > 99 /* stream large warning counts */, resultPacket, false, null,
-                    new ResultsetFactory(Type.FORWARD_ONLY, Concurrency.READ_ONLY));
+            try {
+                NativePacketPayload resultPacket = sendCommand(getNativeMessageBuilder().buildComQuery(getSharedSendPacket(), this.session, "SHOW WARNINGS"),
+                        false, 0);
 
-            int codeFieldIndex = warnRs.getColumnDefinition().findColumn("Code", false, 1) - 1;
-            int messageFieldIndex = warnRs.getColumnDefinition().findColumn("Message", false, 1) - 1;
+                Resultset warnRs = readAllResults(-1, this.warningCount > 99 /* stream large warning counts */, resultPacket, false, null,
+                        new ResultsetFactory(Type.FORWARD_ONLY, Concurrency.READ_ONLY));
 
-            ValueFactory<String> svf = new StringValueFactory(this.propertySet);
-            ValueFactory<Integer> ivf = new IntegerValueFactory(this.propertySet);
+                int codeFieldIndex = warnRs.getColumnDefinition().findColumn("Code", false, 1) - 1;
+                int messageFieldIndex = warnRs.getColumnDefinition().findColumn("Message", false, 1) - 1;
 
-            rows = warnRs.getRows();
-            Row r;
-            while ((r = rows.next()) != null) {
+                ValueFactory<String> svf = new StringValueFactory(this.propertySet);
+                ValueFactory<Integer> ivf = new IntegerValueFactory(this.propertySet);
 
-                int code = r.getValue(codeFieldIndex, ivf);
+                rows = warnRs.getRows();
+                Row r;
+                while ((r = rows.next()) != null) {
 
-                if (forTruncationOnly) {
-                    if (code == MysqlErrorNumbers.ER_WARN_DATA_TRUNCATED || code == MysqlErrorNumbers.ER_WARN_DATA_OUT_OF_RANGE) {
-                        DataTruncation newTruncation = new MysqlDataTruncation(r.getValue(messageFieldIndex, svf), 0, false, false, 0, 0, code);
+                    int code = r.getValue(codeFieldIndex, ivf);
 
+                    if (forTruncationOnly) {
+                        if (code == MysqlErrorNumbers.ER_WARN_DATA_TRUNCATED || code == MysqlErrorNumbers.ER_WARN_DATA_OUT_OF_RANGE) {
+                            DataTruncation newTruncation = new MysqlDataTruncation(r.getValue(messageFieldIndex, svf), 0, false, false, 0, 0, code);
+
+                            if (currentWarning == null) {
+                                currentWarning = newTruncation;
+                            } else {
+                                currentWarning.setNextWarning(newTruncation);
+                            }
+                        }
+                    } else {
+                        //String level = warnRs.getString("Level");
+                        String message = r.getValue(messageFieldIndex, svf);
+
+                        SQLWarning newWarning = new SQLWarning(message, MysqlErrorNumbers.mysqlToSqlState(code), code);
                         if (currentWarning == null) {
-                            currentWarning = newTruncation;
+                            currentWarning = newWarning;
                         } else {
-                            currentWarning.setNextWarning(newTruncation);
+                            currentWarning.setNextWarning(newWarning);
                         }
                     }
-                } else {
-                    //String level = warnRs.getString("Level");
-                    String message = r.getValue(messageFieldIndex, svf);
+                }
 
-                    SQLWarning newWarning = new SQLWarning(message, MysqlErrorNumbers.mysqlToSqlState(code), code);
-                    if (currentWarning == null) {
-                        currentWarning = newWarning;
-                    } else {
-                        currentWarning.setNextWarning(newWarning);
-                    }
+                if (forTruncationOnly && currentWarning != null) {
+                    throw ExceptionFactory.createException(currentWarning.getMessage(), currentWarning);
+                }
+
+                return currentWarning;
+            } catch (IOException ex) {
+                throw ExceptionFactory.createException(ex.getMessage(), ex);
+            } finally {
+                if (rows != null) {
+                    rows.close();
                 }
             }
-
-            if (forTruncationOnly && currentWarning != null) {
-                throw ExceptionFactory.createException(currentWarning.getMessage(), currentWarning);
-            }
-
-            return currentWarning;
-        } catch (IOException ex) {
-            throw ExceptionFactory.createException(ex.getMessage(), ex);
+        } catch (Throwable t) {
+            span.setError(t);
+            throw t;
         } finally {
-            if (rows != null) {
-                rows.close();
-            }
+            span.end();
         }
     }
 
@@ -2254,20 +2192,36 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         if (getPropertySet().getBooleanProperty(PropertyKey.forceConnectionTimeZoneToSession).getValue()) {
             // TODO don't send 'SET SESSION time_zone' if time_zone is already equal to the selectedTz (but it requires time zone detection)
 
-            StringBuilder query = new StringBuilder("SET SESSION time_zone='");
+            TelemetrySpan span = this.session.getTelemetryHandler().startSpan(TelemetrySpanName.SET_VARIABLE, "time_zone");
+            try (TelemetryScope scope = span.makeCurrent()) {
+                span.setAttribute(TelemetryAttribute.DB_NAME, this.session.getHostInfo().getDatabase());
+                span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_SET);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_SET + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                span.setAttribute(TelemetryAttribute.DB_USER, this.session.getHostInfo().getUser());
+                span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-            ZoneId zid = selectedTz.toZoneId().normalized();
-            if (zid instanceof ZoneOffset) {
-                String offsetStr = ((ZoneOffset) zid).getId().replace("Z", "+00:00");
-                query.append(offsetStr);
-                this.serverSession.getServerVariables().put("time_zone", offsetStr);
-            } else {
-                query.append(selectedTz.getID());
-                this.serverSession.getServerVariables().put("time_zone", selectedTz.getID());
+                StringBuilder query = new StringBuilder("SET SESSION time_zone='");
+
+                ZoneId zid = selectedTz.toZoneId().normalized();
+                if (zid instanceof ZoneOffset) {
+                    String offsetStr = ((ZoneOffset) zid).getId().replace("Z", "+00:00");
+                    query.append(offsetStr);
+                    this.serverSession.getServerVariables().put("time_zone", offsetStr);
+                } else {
+                    query.append(selectedTz.getID());
+                    this.serverSession.getServerVariables().put("time_zone", selectedTz.getID());
+                }
+
+                query.append("'");
+                sendCommand(getNativeMessageBuilder().buildComQuery(null, this.session, query.toString()), false, 0);
+            } catch (Throwable t) {
+                span.setError(t);
+                throw t;
+            } finally {
+                span.end();
             }
-
-            query.append("'");
-            sendCommand(getCommandBuilder().buildComQuery(null, query.toString()), false, 0);
         }
     }
 

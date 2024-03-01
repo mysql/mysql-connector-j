@@ -163,11 +163,11 @@ public enum PropertyKey {
     nullDatabaseMeansCurrent("nullDatabaseMeansCurrent", "nullCatalogMeansCurrent", true), //
     ociConfigFile("ociConfigFile", true), //
     ociConfigProfile("ociConfigProfile", true), //
+    openTelemetry("openTelemetry", true), //
     overrideSupportsIntegrityEnhancementFacility("overrideSupportsIntegrityEnhancementFacility", true), //
     packetDebugBufferSize("packetDebugBufferSize", true), //
     padCharsWithSpace("padCharsWithSpace", true), //
     paranoid("paranoid", false), //
-    queryInfoCacheFactory("queryInfoCacheFactory", "parseInfoCacheFactory", true), //
     password1("password1", true), //
     password2("password2", true), //
     password3("password3", true), //
@@ -183,6 +183,7 @@ public enum PropertyKey {
     profileSQL("profileSQL", true), //
     propertiesTransform("propertiesTransform", true), //
     queriesBeforeRetrySource("queriesBeforeRetrySource", "queriesBeforeRetryMaster", true), //
+    queryInfoCacheFactory("queryInfoCacheFactory", "parseInfoCacheFactory", true), //
     queryInterceptors("queryInterceptors", true), //
     queryTimeoutKillsConnection("queryTimeoutKillsConnection", true), //
     readFromSourceWhenNoReplicas("readFromSourceWhenNoReplicas", "readFromMasterWhenNoSlaves", true), //

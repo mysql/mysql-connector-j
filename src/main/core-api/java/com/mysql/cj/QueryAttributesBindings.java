@@ -34,11 +34,18 @@ public interface QueryAttributesBindings {
      *
      * @param name
      *            the query attribute name.
-     *
      * @param value
      *            the query attribute value.
      */
     void setAttribute(String name, Object value);
+
+    /**
+     * Removes the specified query attribute from the list of query attributes.
+     *
+     * @param name
+     *            the query attribute name.
+     */
+    void removeAttribute(String name);
 
     /**
      * Get the count of query attributes in the list.
@@ -67,6 +74,16 @@ public interface QueryAttributesBindings {
      *            A {@link Consumer} for each one of the single query attributes.
      */
     void runThroughAll(Consumer<BindValue> bindAttribute);
+
+    /**
+     * Checks if there's already an attribute with the specified name.
+     *
+     * @param name
+     *            the query attribute name.
+     * @return
+     *         <code>true</code> if the specified attribute name already exists.
+     */
+    boolean containsAttribute(String name);
 
     /**
      * Removes all query attributes from the query attributes list.

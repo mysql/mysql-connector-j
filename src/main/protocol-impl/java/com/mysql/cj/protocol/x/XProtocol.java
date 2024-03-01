@@ -1023,16 +1023,6 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     }
 
     @Override
-    public String getQueryComment() {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
-    public void setQueryComment(String comment) {
-        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
-    }
-
-    @Override
     public Supplier<ValueEncoder> getValueEncoderSupplier(Object obj) {
         throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
     }

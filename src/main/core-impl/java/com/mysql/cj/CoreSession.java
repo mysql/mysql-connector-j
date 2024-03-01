@@ -36,6 +36,7 @@ import com.mysql.cj.log.ProfilerEventHandler;
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.Protocol;
 import com.mysql.cj.protocol.ServerSession;
+import com.mysql.cj.telemetry.TelemetryHandler;
 import com.mysql.cj.util.Util;
 
 public abstract class CoreSession implements Session {
@@ -69,6 +70,9 @@ public abstract class CoreSession implements Session {
 
     /** The event sink to use for profiling */
     private ProfilerEventHandler eventSink;
+
+    /** The Telemetry handler to process telemetry operations */
+    private TelemetryHandler telemetryHandler = null;
 
     public CoreSession(HostInfo hostInfo, PropertySet propSet) {
         this.connectionCreationTimeMillis = System.currentTimeMillis();
@@ -173,6 +177,26 @@ public abstract class CoreSession implements Session {
             }
         }
         return this.eventSink;
+    }
+
+    @Override
+    public String getQueryComment() {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
+
+    @Override
+    public void setQueryComment(String comment) {
+        throw ExceptionFactory.createException(CJOperationNotSupportedException.class, "Not supported");
+    }
+
+    @Override
+    public void setTelemetryHandler(TelemetryHandler telemetryHandler) {
+        this.telemetryHandler = telemetryHandler;
+    }
+
+    @Override
+    public TelemetryHandler getTelemetryHandler() {
+        return this.telemetryHandler;
     }
 
     @Override

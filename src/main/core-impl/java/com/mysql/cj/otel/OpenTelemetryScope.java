@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2024, Oracle and/or its affiliates.
+ * Copyright (c) 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License, version 2.0, as published by
  * the Free Software Foundation.
@@ -18,22 +18,23 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-package com.mysql.cj;
+package com.mysql.cj.otel;
 
-import java.util.List;
+import com.mysql.cj.telemetry.TelemetryScope;
 
-import com.mysql.cj.protocol.Message;
+import io.opentelemetry.context.Scope;
 
-public interface MessageBuilder<M extends Message> {
+public class OpenTelemetryScope implements TelemetryScope {
 
-    M buildSqlStatement(String statement);
+    private Scope scope = null;
 
-    M buildSqlStatement(String statement, List<Object> args);
+    public OpenTelemetryScope(Scope scope) {
+        this.scope = scope;
+    }
 
-    M buildClose();
-
-    M buildComQuery(M sharedPacket, Session sess, String query, Query callingQuery, String characterEncoding);
-
-    M buildComQuery(M sharedPacket, Session sess, PreparedQuery preparedQuery, QueryBindings bindings, String characterEncoding);
+    @Override
+    public void close() {
+        this.scope.close();
+    }
 
 }

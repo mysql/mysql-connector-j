@@ -276,7 +276,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     </propertyset>
 
     <!-- Java compiler arguments to widen warnings detection and fail on warnings. -->
-    <condition property="javac.compilerarg" value="-Xlint:all,-path -Werror" else="">
+    <condition property="javac.compilerarg" value="-Xlint:all,-path,-try -Werror" else="">
         <istrue value="${com.mysql.cj.build.failOnWarnings}" />
     </condition>
 

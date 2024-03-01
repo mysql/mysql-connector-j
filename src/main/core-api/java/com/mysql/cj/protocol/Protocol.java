@@ -231,24 +231,6 @@ public interface Protocol<M extends Message> {
     InputStream getLocalInfileInputStream();
 
     /**
-     * Returns the comment that will be prepended to all statements
-     * sent to the server.
-     *
-     * @return query comment string
-     */
-    String getQueryComment();
-
-    /**
-     * Sets the comment that will be prepended to all statements
-     * sent to the server. Do not use slash-star or star-slash tokens
-     * in the comment as these will be added by the driver itself.
-     *
-     * @param comment
-     *            query comment string
-     */
-    void setQueryComment(String comment);
-
-    /**
      * Read messages from server and deliver them to resultBuilder.
      *
      * @param resultBuilder

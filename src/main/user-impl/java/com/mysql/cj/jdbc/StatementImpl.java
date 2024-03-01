@@ -79,6 +79,10 @@ import com.mysql.cj.protocol.a.result.ResultsetRowsStatic;
 import com.mysql.cj.result.DefaultColumnDefinition;
 import com.mysql.cj.result.Field;
 import com.mysql.cj.result.Row;
+import com.mysql.cj.telemetry.TelemetryAttribute;
+import com.mysql.cj.telemetry.TelemetryScope;
+import com.mysql.cj.telemetry.TelemetrySpan;
+import com.mysql.cj.telemetry.TelemetrySpanName;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.Util;
 
@@ -290,20 +294,37 @@ public class StatementImpl implements JdbcStatement {
                 String user = hostInfo.getUser();
                 String password = hostInfo.getPassword();
                 newSession = new NativeSession(this.session.getHostInfo(), this.session.getPropertySet());
-                newSession.connect(hostInfo, user, password, database, 30000, new TransactionEventHandler() {
 
-                    @Override
-                    public void transactionCompleted() {
-                    }
+                TelemetrySpan span = newSession.getTelemetryHandler().startSpan(TelemetrySpanName.CANCEL_QUERY);
+                try (TelemetryScope scope = span.makeCurrent()) {
+                    span.setAttribute(TelemetryAttribute.DB_NAME, database);
+                    span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_KILL);
+                    span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_KILL + TelemetryAttribute.STATEMENT_SUFFIX);
+                    span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                    span.setAttribute(TelemetryAttribute.DB_USER, user);
+                    span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                    span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-                    @Override
-                    public void transactionBegun() {
-                    }
+                    newSession.connect(hostInfo, user, password, database, 30000, new TransactionEventHandler() {
 
-                });
-                newSession.getProtocol().sendCommand(new NativeMessageBuilder(newSession.getServerSession().supportsQueryAttributes())
-                        .buildComQuery(newSession.getSharedSendPacket(), "KILL QUERY " + this.session.getThreadId()), false, 0);
-                setCancelStatus(CancelStatus.CANCELED_BY_USER);
+                        @Override
+                        public void transactionCompleted() {
+                        }
+
+                        @Override
+                        public void transactionBegun() {
+                        }
+
+                    });
+                    newSession.getProtocol().sendCommand(new NativeMessageBuilder(newSession.getServerSession().supportsQueryAttributes())
+                            .buildComQuery(newSession.getSharedSendPacket(), newSession, "KILL QUERY " + this.session.getThreadId()), false, 0);
+                    setCancelStatus(CancelStatus.CANCELED_BY_USER);
+                } catch (Throwable t) {
+                    span.setError(t);
+                    throw t;
+                } finally {
+                    span.end();
+                }
             } catch (IOException e) {
                 throw SQLExceptionsMapping.translateException(e, this.exceptionInterceptor);
             } finally {
@@ -625,7 +646,23 @@ public class StatementImpl implements JdbcStatement {
         int netTimeoutForStreamingResults = this.session.getPropertySet().getIntegerProperty(PropertyKey.netTimeoutForStreamingResults).getValue();
 
         if (createStreamingResultSet() && netTimeoutForStreamingResults > 0) {
-            executeSimpleNonQuery(con, "SET net_write_timeout=" + netTimeoutForStreamingResults);
+            TelemetrySpan span = this.session.getTelemetryHandler().startSpan(TelemetrySpanName.SET_VARIABLE, "net_write_timeout");
+            try (TelemetryScope scope = span.makeCurrent()) {
+                span.setAttribute(TelemetryAttribute.DB_NAME, this.getCurrentDatabase());
+                span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_SET);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_SET + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                span.setAttribute(TelemetryAttribute.DB_USER, this.connection.getUser());
+                span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
+
+                executeSimpleNonQuery(con, "SET net_write_timeout=" + netTimeoutForStreamingResults);
+            } catch (Throwable t) {
+                span.setError(t);
+                throw t;
+            } finally {
+                span.end();
+            }
         }
     }
 
@@ -644,119 +681,150 @@ public class StatementImpl implements JdbcStatement {
         return executeInternal(sql, false);
     }
 
+    @Override
+    public boolean execute(String sql, int returnGeneratedKeys) throws SQLException {
+        return executeInternal(sql, returnGeneratedKeys == java.sql.Statement.RETURN_GENERATED_KEYS);
+    }
+
+    @Override
+    public boolean execute(String sql, int[] generatedKeyIndices) throws SQLException {
+        return executeInternal(sql, generatedKeyIndices != null && generatedKeyIndices.length > 0);
+    }
+
+    @Override
+    public boolean execute(String sql, String[] generatedKeyNames) throws SQLException {
+        return executeInternal(sql, generatedKeyNames != null && generatedKeyNames.length > 0);
+    }
+
     private boolean executeInternal(String sql, boolean returnGeneratedKeys) throws SQLException {
         JdbcConnection locallyScopedConn = checkClosed();
 
         synchronized (locallyScopedConn.getConnectionMutex()) {
             checkClosed();
 
-            checkNullOrEmptyQuery(sql);
+            TelemetrySpan span = getSession().getTelemetryHandler().startSpan(TelemetrySpanName.STMT_EXECUTE);
+            try (TelemetryScope scope = span.makeCurrent()) {
+                String dbOperation = QueryInfo.getStatementKeyword(sql, this.session.getServerSession().isNoBackslashEscapesSet());
+                span.setAttribute(TelemetryAttribute.DB_NAME, getCurrentDatabase());
+                span.setAttribute(TelemetryAttribute.DB_OPERATION, dbOperation);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, dbOperation + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                span.setAttribute(TelemetryAttribute.DB_USER, this.connection.getUser());
+                span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
+                checkNullOrEmptyQuery(sql);
 
-            resetCancelledState();
+                resetCancelledState();
 
-            implicitlyCloseAllOpenResults();
+                implicitlyCloseAllOpenResults();
 
-            clearWarnings();
+                clearWarnings();
 
-            if (sql.charAt(0) == '/') {
-                if (sql.startsWith(PING_MARKER)) {
-                    doPingInstead();
+                if (sql.charAt(0) == '/') {
+                    if (sql.startsWith(PING_MARKER)) {
+                        doPingInstead();
 
-                    return true;
-                }
-            }
-
-            this.retrieveGeneratedKeys = returnGeneratedKeys;
-
-            this.lastQueryIsOnDupKeyUpdate = returnGeneratedKeys
-                    && QueryInfo.firstCharOfStatementUc(sql, this.session.getServerSession().isNoBackslashEscapesSet()) == 'I'
-                    && containsOnDuplicateKeyInString(sql);
-
-            if (!QueryInfo.isReadOnlySafeQuery(sql, this.session.getServerSession().isNoBackslashEscapesSet()) && locallyScopedConn.isReadOnly()) {
-                throw SQLError.createSQLException(Messages.getString("Statement.27") + Messages.getString("Statement.28"),
-                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-            }
-
-            try {
-                setupStreamingTimeout(locallyScopedConn);
-
-                if (this.doEscapeProcessing) {
-                    Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getSessionTimeZone(),
-                            this.session.getServerSession().getCapabilities().serverSupportsFracSecs(),
-                            this.session.getServerSession().isServerTruncatesFracSecs(), getExceptionInterceptor());
-                    sql = escapedSqlResult instanceof String ? (String) escapedSqlResult : ((EscapeProcessorResult) escapedSqlResult).escapedSql;
-                }
-
-                CachedResultSetMetaData cachedMetaData = null;
-
-                ResultSetInternalMethods rs = null;
-
-                this.batchedGeneratedKeys = null;
-
-                if (useServerFetch()) {
-                    rs = createResultSetUsingServerFetch(sql);
-                } else {
-                    CancelQueryTask timeoutTask = null;
-
-                    String oldDb = null;
-
-                    try {
-                        timeoutTask = startQueryTimer(this, getTimeoutInMillis());
-
-                        if (!locallyScopedConn.getDatabase().equals(getCurrentDatabase())) {
-                            oldDb = locallyScopedConn.getDatabase();
-                            locallyScopedConn.setDatabase(getCurrentDatabase());
-                        }
-
-                        // Check if we have cached metadata for this query...
-                        if (locallyScopedConn.getPropertySet().getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue()) {
-                            cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
-                        }
-
-                        // Only apply max_rows to selects
-                        locallyScopedConn.setSessionMaxRows(isResultSetProducingQuery(sql) ? this.maxRows : -1);
-
-                        statementBegins();
-
-                        rs = ((NativeSession) locallyScopedConn.getSession()).execSQL(this, sql, this.maxRows, null, createStreamingResultSet(),
-                                getResultSetFactory(), cachedMetaData, false);
-
-                        if (timeoutTask != null) {
-                            stopQueryTimer(timeoutTask, true, true);
-                            timeoutTask = null;
-                        }
-
-                    } catch (CJTimeoutException | OperationCancelledException e) {
-                        throw SQLExceptionsMapping.translateException(e, this.exceptionInterceptor);
-
-                    } finally {
-                        stopQueryTimer(timeoutTask, false, false);
-
-                        if (oldDb != null) {
-                            locallyScopedConn.setDatabase(oldDb);
-                        }
+                        return true;
                     }
                 }
 
-                if (rs != null) {
-                    this.lastInsertId = rs.getUpdateID();
+                this.retrieveGeneratedKeys = returnGeneratedKeys;
 
-                    this.results = rs;
+                this.lastQueryIsOnDupKeyUpdate = returnGeneratedKeys
+                        && QueryInfo.firstCharOfStatementUc(sql, this.session.getServerSession().isNoBackslashEscapesSet()) == 'I'
+                        && containsOnDuplicateKeyInString(sql);
 
-                    rs.setFirstCharOfQuery(QueryInfo.firstCharOfStatementUc(sql, this.session.getServerSession().isNoBackslashEscapesSet()));
-
-                    if (rs.hasRows()) {
-                        if (cachedMetaData != null) {
-                            locallyScopedConn.initializeResultsMetadataFromCache(sql, cachedMetaData, this.results);
-                        } else if (this.session.getPropertySet().getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue()) {
-                            locallyScopedConn.initializeResultsMetadataFromCache(sql, null /* will be created */, this.results);
-                        }
-                    }
+                if (!QueryInfo.isReadOnlySafeQuery(sql, this.session.getServerSession().isNoBackslashEscapesSet()) && locallyScopedConn.isReadOnly()) {
+                    throw SQLError.createSQLException(Messages.getString("Statement.27") + Messages.getString("Statement.28"),
+                            MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                 }
 
-                return rs != null && rs.hasRows();
+                try {
+                    setupStreamingTimeout(locallyScopedConn);
+
+                    if (this.doEscapeProcessing) {
+                        Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getSessionTimeZone(),
+                                this.session.getServerSession().getCapabilities().serverSupportsFracSecs(),
+                                this.session.getServerSession().isServerTruncatesFracSecs(), getExceptionInterceptor());
+                        sql = escapedSqlResult instanceof String ? (String) escapedSqlResult : ((EscapeProcessorResult) escapedSqlResult).escapedSql;
+                    }
+
+                    CachedResultSetMetaData cachedMetaData = null;
+
+                    ResultSetInternalMethods rs = null;
+
+                    this.batchedGeneratedKeys = null;
+
+                    if (useServerFetch()) {
+                        rs = createResultSetUsingServerFetch(sql);
+                    } else {
+                        CancelQueryTask timeoutTask = null;
+
+                        String oldDb = null;
+
+                        try {
+                            timeoutTask = startQueryTimer(this, getTimeoutInMillis());
+
+                            if (!locallyScopedConn.getDatabase().equals(getCurrentDatabase())) {
+                                oldDb = locallyScopedConn.getDatabase();
+                                locallyScopedConn.setDatabase(getCurrentDatabase());
+                            }
+
+                            // Check if we have cached metadata for this query...
+                            if (locallyScopedConn.getPropertySet().getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue()) {
+                                cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
+                            }
+
+                            // Only apply max_rows to selects
+                            locallyScopedConn.setSessionMaxRows(isResultSetProducingQuery(sql) ? this.maxRows : -1);
+
+                            statementBegins();
+
+                            rs = ((NativeSession) locallyScopedConn.getSession()).execSQL(this, sql, this.maxRows, null, createStreamingResultSet(),
+                                    getResultSetFactory(), cachedMetaData, false);
+
+                            if (timeoutTask != null) {
+                                stopQueryTimer(timeoutTask, true, true);
+                                timeoutTask = null;
+                            }
+
+                        } catch (CJTimeoutException | OperationCancelledException e) {
+                            throw SQLExceptionsMapping.translateException(e, this.exceptionInterceptor);
+
+                        } finally {
+                            stopQueryTimer(timeoutTask, false, false);
+
+                            if (oldDb != null) {
+                                locallyScopedConn.setDatabase(oldDb);
+                            }
+                        }
+                    }
+
+                    if (rs != null) {
+                        this.lastInsertId = rs.getUpdateID();
+
+                        this.results = rs;
+
+                        rs.setFirstCharOfQuery(QueryInfo.firstCharOfStatementUc(sql, this.session.getServerSession().isNoBackslashEscapesSet()));
+
+                        if (rs.hasRows()) {
+                            if (cachedMetaData != null) {
+                                locallyScopedConn.initializeResultsMetadataFromCache(sql, cachedMetaData, this.results);
+                            } else if (this.session.getPropertySet().getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue()) {
+                                locallyScopedConn.initializeResultsMetadataFromCache(sql, null /* will be created */, this.results);
+                            }
+                        }
+                    }
+
+                    return rs != null && rs.hasRows();
+                } finally {
+                    this.query.getStatementExecuting().set(false);
+                }
+            } catch (Throwable t) {
+                span.setError(t);
+                throw t;
             } finally {
-                this.query.getStatementExecuting().set(false);
+                span.end();
             }
         }
     }
@@ -774,21 +842,6 @@ public class StatementImpl implements JdbcStatement {
     }
 
     @Override
-    public boolean execute(String sql, int returnGeneratedKeys) throws SQLException {
-        return executeInternal(sql, returnGeneratedKeys == java.sql.Statement.RETURN_GENERATED_KEYS);
-    }
-
-    @Override
-    public boolean execute(String sql, int[] generatedKeyIndices) throws SQLException {
-        return executeInternal(sql, generatedKeyIndices != null && generatedKeyIndices.length > 0);
-    }
-
-    @Override
-    public boolean execute(String sql, String[] generatedKeyNames) throws SQLException {
-        return executeInternal(sql, generatedKeyNames != null && generatedKeyNames.length > 0);
-    }
-
-    @Override
     public int[] executeBatch() throws SQLException {
         return Util.truncateAndConvertToInt(executeBatchInternal());
     }
@@ -797,118 +850,134 @@ public class StatementImpl implements JdbcStatement {
         JdbcConnection locallyScopedConn = checkClosed();
 
         synchronized (locallyScopedConn.getConnectionMutex()) {
-            if (locallyScopedConn.isReadOnly()) {
-                throw SQLError.createSQLException(Messages.getString("Statement.34") + Messages.getString("Statement.35"),
-                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-            }
+            TelemetrySpan span = getSession().getTelemetryHandler().startSpan(TelemetrySpanName.STMT_EXECUTE_BATCH);
+            try (TelemetryScope scope = span.makeCurrent()) {
+                span.setAttribute(TelemetryAttribute.DB_NAME, getCurrentDatabase());
+                span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_BATCH);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_BATCH);
+                span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                span.setAttribute(TelemetryAttribute.DB_USER, this.connection.getUser());
+                span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-            implicitlyCloseAllOpenResults();
+                if (locallyScopedConn.isReadOnly()) {
+                    throw SQLError.createSQLException(Messages.getString("Statement.34") + Messages.getString("Statement.35"),
+                            MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                }
 
-            List<Object> batchedArgs = this.query.getBatchedArgs();
+                implicitlyCloseAllOpenResults();
 
-            if (batchedArgs == null || batchedArgs.size() == 0) {
-                return new long[0];
-            }
+                List<Object> batchedArgs = this.query.getBatchedArgs();
 
-            // we timeout the entire batch, not individual statements
-            long individualStatementTimeout = getTimeoutInMillis();
-            setTimeoutInMillis(0);
+                if (batchedArgs == null || batchedArgs.size() == 0) {
+                    return new long[0];
+                }
 
-            CancelQueryTask timeoutTask = null;
+                // we timeout the entire batch, not individual statements
+                long individualStatementTimeout = getTimeoutInMillis();
+                setTimeoutInMillis(0);
 
-            try {
-                resetCancelledState();
-
-                statementBegins();
-
-                clearWarnings();
+                CancelQueryTask timeoutTask = null;
 
                 try {
-                    this.retrieveGeneratedKeys = true; // The JDBC spec doesn't forbid this, but doesn't provide for it either...we do..
+                    resetCancelledState();
 
-                    long[] updateCounts = null;
+                    statementBegins();
 
-                    if (batchedArgs != null) {
-                        int nbrCommands = batchedArgs.size();
+                    clearWarnings();
 
-                        this.batchedGeneratedKeys = new ArrayList<>(batchedArgs.size());
+                    try {
+                        this.retrieveGeneratedKeys = true; // The JDBC spec doesn't forbid this, but doesn't provide for it either...we do..
 
-                        boolean multiQueriesEnabled = locallyScopedConn.getPropertySet().getBooleanProperty(PropertyKey.allowMultiQueries).getValue();
+                        long[] updateCounts = null;
 
-                        if (multiQueriesEnabled || this.rewriteBatchedStatements.getValue() && nbrCommands > 4) {
-                            return executeBatchUsingMultiQueries(multiQueriesEnabled, nbrCommands, individualStatementTimeout);
-                        }
+                        if (batchedArgs != null) {
+                            int nbrCommands = batchedArgs.size();
 
-                        timeoutTask = startQueryTimer(this, individualStatementTimeout);
+                            this.batchedGeneratedKeys = new ArrayList<>(batchedArgs.size());
 
-                        updateCounts = new long[nbrCommands];
+                            boolean multiQueriesEnabled = locallyScopedConn.getPropertySet().getBooleanProperty(PropertyKey.allowMultiQueries).getValue();
 
-                        for (int i = 0; i < nbrCommands; i++) {
-                            updateCounts[i] = -3;
-                        }
+                            if (multiQueriesEnabled || this.rewriteBatchedStatements.getValue() && nbrCommands > 4) {
+                                return executeBatchUsingMultiQueries(multiQueriesEnabled, nbrCommands, individualStatementTimeout);
+                            }
 
-                        SQLException sqlEx = null;
+                            timeoutTask = startQueryTimer(this, individualStatementTimeout);
 
-                        int commandIndex = 0;
+                            updateCounts = new long[nbrCommands];
 
-                        for (commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
-                            try {
-                                String sql = (String) batchedArgs.get(commandIndex);
-                                updateCounts[commandIndex] = executeUpdateInternal(sql, true, true);
+                            for (int i = 0; i < nbrCommands; i++) {
+                                updateCounts[i] = -3;
+                            }
 
-                                if (timeoutTask != null) {
-                                    // we need to check the cancel state on each iteration to generate timeout exception if needed
-                                    checkCancelTimeout();
-                                }
+                            SQLException sqlEx = null;
 
-                                // limit one generated key per OnDuplicateKey statement
-                                getBatchedGeneratedKeys(this.results.getFirstCharOfQuery() == 'I' && containsOnDuplicateKeyInString(sql) ? 1 : 0);
-                            } catch (SQLException ex) {
-                                updateCounts[commandIndex] = EXECUTE_FAILED;
+                            int commandIndex = 0;
 
-                                if (this.continueBatchOnError && !(ex instanceof MySQLTimeoutException) && !(ex instanceof MySQLStatementCancelledException)
-                                        && !hasDeadlockOrTimeoutRolledBackTx(ex)) {
-                                    sqlEx = ex;
-                                } else {
-                                    long[] newUpdateCounts = new long[commandIndex];
+                            for (commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
+                                try {
+                                    String sql = (String) batchedArgs.get(commandIndex);
+                                    updateCounts[commandIndex] = executeUpdateInternal(sql, true, true);
 
-                                    if (hasDeadlockOrTimeoutRolledBackTx(ex)) {
-                                        for (int i = 0; i < newUpdateCounts.length; i++) {
-                                            newUpdateCounts[i] = java.sql.Statement.EXECUTE_FAILED;
-                                        }
-                                    } else {
-                                        System.arraycopy(updateCounts, 0, newUpdateCounts, 0, commandIndex);
+                                    if (timeoutTask != null) {
+                                        // we need to check the cancel state on each iteration to generate timeout exception if needed
+                                        checkCancelTimeout();
                                     }
 
-                                    sqlEx = ex;
-                                    break;
-                                    //throw SQLError.createBatchUpdateException(ex, newUpdateCounts, getExceptionInterceptor());
+                                    // limit one generated key per OnDuplicateKey statement
+                                    getBatchedGeneratedKeys(this.results.getFirstCharOfQuery() == 'I' && containsOnDuplicateKeyInString(sql) ? 1 : 0);
+                                } catch (SQLException ex) {
+                                    updateCounts[commandIndex] = EXECUTE_FAILED;
+
+                                    if (this.continueBatchOnError && !(ex instanceof MySQLTimeoutException) && !(ex instanceof MySQLStatementCancelledException)
+                                            && !hasDeadlockOrTimeoutRolledBackTx(ex)) {
+                                        sqlEx = ex;
+                                    } else {
+                                        long[] newUpdateCounts = new long[commandIndex];
+
+                                        if (hasDeadlockOrTimeoutRolledBackTx(ex)) {
+                                            for (int i = 0; i < newUpdateCounts.length; i++) {
+                                                newUpdateCounts[i] = java.sql.Statement.EXECUTE_FAILED;
+                                            }
+                                        } else {
+                                            System.arraycopy(updateCounts, 0, newUpdateCounts, 0, commandIndex);
+                                        }
+
+                                        sqlEx = ex;
+                                        break;
+                                        //throw SQLError.createBatchUpdateException(ex, newUpdateCounts, getExceptionInterceptor());
+                                    }
                                 }
+                            }
+
+                            if (sqlEx != null) {
+                                throw SQLError.createBatchUpdateException(sqlEx, updateCounts, getExceptionInterceptor());
                             }
                         }
 
-                        if (sqlEx != null) {
-                            throw SQLError.createBatchUpdateException(sqlEx, updateCounts, getExceptionInterceptor());
+                        if (timeoutTask != null) {
+                            stopQueryTimer(timeoutTask, true, true);
+                            timeoutTask = null;
                         }
-                    }
 
-                    if (timeoutTask != null) {
-                        stopQueryTimer(timeoutTask, true, true);
-                        timeoutTask = null;
+                        return updateCounts != null ? updateCounts : new long[0];
+                    } finally {
+                        this.query.getStatementExecuting().set(false);
                     }
-
-                    return updateCounts != null ? updateCounts : new long[0];
                 } finally {
-                    this.query.getStatementExecuting().set(false);
+
+                    stopQueryTimer(timeoutTask, false, false);
+                    resetCancelledState();
+
+                    setTimeoutInMillis(individualStatementTimeout);
+
+                    clearBatch();
                 }
+            } catch (Throwable t) {
+                span.setError(t);
+                throw t;
             } finally {
-
-                stopQueryTimer(timeoutTask, false, false);
-                resetCancelledState();
-
-                setTimeoutInMillis(individualStatementTimeout);
-
-                clearBatch();
+                span.end();
             }
         }
     }
@@ -1102,97 +1171,115 @@ public class StatementImpl implements JdbcStatement {
     @Override
     public java.sql.ResultSet executeQuery(String sql) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            JdbcConnection locallyScopedConn = this.connection;
+            TelemetrySpan span = getSession().getTelemetryHandler().startSpan(TelemetrySpanName.STMT_EXECUTE);
+            try (TelemetryScope scope = span.makeCurrent()) {
+                String dbOperation = QueryInfo.getStatementKeyword(sql, this.session.getServerSession().isNoBackslashEscapesSet());
+                span.setAttribute(TelemetryAttribute.DB_NAME, getCurrentDatabase());
+                span.setAttribute(TelemetryAttribute.DB_OPERATION, dbOperation);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, dbOperation + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                span.setAttribute(TelemetryAttribute.DB_USER, this.connection.getUser());
+                span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-            this.retrieveGeneratedKeys = false;
+                JdbcConnection locallyScopedConn = this.connection;
 
-            checkNullOrEmptyQuery(sql);
+                this.retrieveGeneratedKeys = false;
 
-            resetCancelledState();
+                checkNullOrEmptyQuery(sql);
 
-            implicitlyCloseAllOpenResults();
+                resetCancelledState();
 
-            clearWarnings();
+                implicitlyCloseAllOpenResults();
 
-            if (sql.charAt(0) == '/') {
-                if (sql.startsWith(PING_MARKER)) {
-                    doPingInstead();
+                clearWarnings();
+
+                if (sql.charAt(0) == '/') {
+                    if (sql.startsWith(PING_MARKER)) {
+                        doPingInstead();
+
+                        return this.results;
+                    }
+                }
+
+                setupStreamingTimeout(locallyScopedConn);
+
+                if (this.doEscapeProcessing) {
+                    Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getSessionTimeZone(),
+                            this.session.getServerSession().getCapabilities().serverSupportsFracSecs(),
+                            this.session.getServerSession().isServerTruncatesFracSecs(), getExceptionInterceptor());
+                    sql = escapedSqlResult instanceof String ? (String) escapedSqlResult : ((EscapeProcessorResult) escapedSqlResult).escapedSql;
+                }
+
+                if (!isResultSetProducingQuery(sql)) {
+                    throw SQLError.createSQLException(Messages.getString("Statement.57"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                            getExceptionInterceptor());
+                }
+
+                CachedResultSetMetaData cachedMetaData = null;
+
+                if (useServerFetch()) {
+                    this.results = createResultSetUsingServerFetch(sql);
 
                     return this.results;
                 }
-            }
 
-            setupStreamingTimeout(locallyScopedConn);
+                CancelQueryTask timeoutTask = null;
 
-            if (this.doEscapeProcessing) {
-                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getSessionTimeZone(),
-                        this.session.getServerSession().getCapabilities().serverSupportsFracSecs(), this.session.getServerSession().isServerTruncatesFracSecs(),
-                        getExceptionInterceptor());
-                sql = escapedSqlResult instanceof String ? (String) escapedSqlResult : ((EscapeProcessorResult) escapedSqlResult).escapedSql;
-            }
+                String oldDb = null;
 
-            if (!isResultSetProducingQuery(sql)) {
-                throw SQLError.createSQLException(Messages.getString("Statement.57"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-            }
+                try {
+                    timeoutTask = startQueryTimer(this, getTimeoutInMillis());
 
-            CachedResultSetMetaData cachedMetaData = null;
+                    if (!locallyScopedConn.getDatabase().equals(getCurrentDatabase())) {
+                        oldDb = locallyScopedConn.getDatabase();
+                        locallyScopedConn.setDatabase(getCurrentDatabase());
+                    }
 
-            if (useServerFetch()) {
-                this.results = createResultSetUsingServerFetch(sql);
+                    //
+                    // Check if we have cached metadata for this query...
+                    //
+                    if (locallyScopedConn.getPropertySet().getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue()) {
+                        cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
+                    }
 
-                return this.results;
-            }
+                    locallyScopedConn.setSessionMaxRows(this.maxRows);
 
-            CancelQueryTask timeoutTask = null;
+                    statementBegins();
 
-            String oldDb = null;
+                    this.results = ((NativeSession) locallyScopedConn.getSession()).execSQL(this, sql, this.maxRows, null, createStreamingResultSet(),
+                            getResultSetFactory(), cachedMetaData, false);
 
-            try {
-                timeoutTask = startQueryTimer(this, getTimeoutInMillis());
+                    if (timeoutTask != null) {
+                        stopQueryTimer(timeoutTask, true, true);
+                        timeoutTask = null;
+                    }
 
-                if (!locallyScopedConn.getDatabase().equals(getCurrentDatabase())) {
-                    oldDb = locallyScopedConn.getDatabase();
-                    locallyScopedConn.setDatabase(getCurrentDatabase());
+                } catch (CJTimeoutException | OperationCancelledException e) {
+                    throw SQLExceptionsMapping.translateException(e, this.exceptionInterceptor);
+
+                } finally {
+                    this.query.getStatementExecuting().set(false);
+
+                    stopQueryTimer(timeoutTask, false, false);
+
+                    if (oldDb != null) {
+                        locallyScopedConn.setDatabase(oldDb);
+                    }
                 }
 
-                //
-                // Check if we have cached metadata for this query...
-                //
-                if (locallyScopedConn.getPropertySet().getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue()) {
-                    cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
+                this.lastInsertId = this.results.getUpdateID();
+
+                if (cachedMetaData != null) {
+                    locallyScopedConn.initializeResultsMetadataFromCache(sql, cachedMetaData, this.results);
+                } else if (this.connection.getPropertySet().getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue()) {
+                    locallyScopedConn.initializeResultsMetadataFromCache(sql, null /* will be created */, this.results);
                 }
-
-                locallyScopedConn.setSessionMaxRows(this.maxRows);
-
-                statementBegins();
-
-                this.results = ((NativeSession) locallyScopedConn.getSession()).execSQL(this, sql, this.maxRows, null, createStreamingResultSet(),
-                        getResultSetFactory(), cachedMetaData, false);
-
-                if (timeoutTask != null) {
-                    stopQueryTimer(timeoutTask, true, true);
-                    timeoutTask = null;
-                }
-
-            } catch (CJTimeoutException | OperationCancelledException e) {
-                throw SQLExceptionsMapping.translateException(e, this.exceptionInterceptor);
-
+            } catch (Throwable t) {
+                span.setError(t);
+                throw t;
             } finally {
-                this.query.getStatementExecuting().set(false);
-
-                stopQueryTimer(timeoutTask, false, false);
-
-                if (oldDb != null) {
-                    locallyScopedConn.setDatabase(oldDb);
-                }
-            }
-
-            this.lastInsertId = this.results.getUpdateID();
-
-            if (cachedMetaData != null) {
-                locallyScopedConn.initializeResultsMetadataFromCache(sql, cachedMetaData, this.results);
-            } else if (this.connection.getPropertySet().getBooleanProperty(PropertyKey.cacheResultSetMetadata).getValue()) {
-                locallyScopedConn.initializeResultsMetadataFromCache(sql, null /* will be created */, this.results);
+                span.end();
             }
 
             return this.results;
@@ -1244,97 +1331,6 @@ public class StatementImpl implements JdbcStatement {
         return Util.truncateAndConvertToInt(executeLargeUpdate(sql));
     }
 
-    protected long executeUpdateInternal(String sql, boolean isBatch, boolean returnGeneratedKeys) throws SQLException {
-        synchronized (checkClosed().getConnectionMutex()) {
-            JdbcConnection locallyScopedConn = this.connection;
-
-            checkNullOrEmptyQuery(sql);
-
-            resetCancelledState();
-
-            clearWarnings();
-
-            char firstStatementChar = QueryInfo.firstCharOfStatementUc(sql, this.session.getServerSession().isNoBackslashEscapesSet());
-            if (!isNonResultSetProducingQuery(sql)) {
-                throw SQLError.createSQLException(Messages.getString("Statement.46"), "01S03", getExceptionInterceptor());
-            }
-
-            this.retrieveGeneratedKeys = returnGeneratedKeys;
-
-            this.lastQueryIsOnDupKeyUpdate = returnGeneratedKeys && firstStatementChar == 'I' && containsOnDuplicateKeyInString(sql);
-
-            ResultSetInternalMethods rs = null;
-
-            if (this.doEscapeProcessing) {
-                Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getSessionTimeZone(),
-                        this.session.getServerSession().getCapabilities().serverSupportsFracSecs(), this.session.getServerSession().isServerTruncatesFracSecs(),
-                        getExceptionInterceptor());
-                sql = escapedSqlResult instanceof String ? (String) escapedSqlResult : ((EscapeProcessorResult) escapedSqlResult).escapedSql;
-            }
-
-            if (locallyScopedConn.isReadOnly(false)) {
-                throw SQLError.createSQLException(Messages.getString("Statement.42") + Messages.getString("Statement.43"),
-                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-            }
-
-            implicitlyCloseAllOpenResults();
-
-            // The checking and changing of databases must happen in sequence, so synchronize on the same mutex that _conn is using
-
-            CancelQueryTask timeoutTask = null;
-
-            String oldDb = null;
-
-            try {
-                timeoutTask = startQueryTimer(this, getTimeoutInMillis());
-
-                if (!locallyScopedConn.getDatabase().equals(getCurrentDatabase())) {
-                    oldDb = locallyScopedConn.getDatabase();
-                    locallyScopedConn.setDatabase(getCurrentDatabase());
-                }
-
-                //
-                // Only apply max_rows to selects
-                //
-                locallyScopedConn.setSessionMaxRows(-1);
-
-                statementBegins();
-
-                // null database: force read of field info on DML
-                rs = ((NativeSession) locallyScopedConn.getSession()).execSQL(this, sql, -1, null, false, getResultSetFactory(), null, isBatch);
-
-                if (timeoutTask != null) {
-                    stopQueryTimer(timeoutTask, true, true);
-                    timeoutTask = null;
-                }
-
-            } catch (CJTimeoutException | OperationCancelledException e) {
-                throw SQLExceptionsMapping.translateException(e, this.exceptionInterceptor);
-
-            } finally {
-                stopQueryTimer(timeoutTask, false, false);
-
-                if (oldDb != null) {
-                    locallyScopedConn.setDatabase(oldDb);
-                }
-
-                if (!isBatch) {
-                    this.query.getStatementExecuting().set(false);
-                }
-            }
-
-            this.results = rs;
-
-            rs.setFirstCharOfQuery(firstStatementChar);
-
-            this.updateCount = rs.getUpdateCount();
-
-            this.lastInsertId = rs.getUpdateID();
-
-            return this.updateCount;
-        }
-    }
-
     @Override
     public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
         return Util.truncateAndConvertToInt(executeLargeUpdate(sql, autoGeneratedKeys));
@@ -1348,6 +1344,114 @@ public class StatementImpl implements JdbcStatement {
     @Override
     public int executeUpdate(String sql, String[] columnNames) throws SQLException {
         return Util.truncateAndConvertToInt(executeLargeUpdate(sql, columnNames));
+    }
+
+    protected long executeUpdateInternal(String sql, boolean isBatch, boolean returnGeneratedKeys) throws SQLException {
+        synchronized (checkClosed().getConnectionMutex()) {
+            TelemetrySpan span = getSession().getTelemetryHandler().startSpan(TelemetrySpanName.STMT_EXECUTE);
+            try (TelemetryScope scope = span.makeCurrent()) {
+                String dbOperation = QueryInfo.getStatementKeyword(sql, this.session.getServerSession().isNoBackslashEscapesSet());
+                span.setAttribute(TelemetryAttribute.DB_NAME, getCurrentDatabase());
+                span.setAttribute(TelemetryAttribute.DB_OPERATION, dbOperation);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, dbOperation + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                span.setAttribute(TelemetryAttribute.DB_USER, this.connection.getUser());
+                span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
+
+                JdbcConnection locallyScopedConn = this.connection;
+
+                checkNullOrEmptyQuery(sql);
+
+                resetCancelledState();
+
+                clearWarnings();
+
+                char firstStatementChar = QueryInfo.firstCharOfStatementUc(sql, this.session.getServerSession().isNoBackslashEscapesSet());
+                if (!isNonResultSetProducingQuery(sql)) {
+                    throw SQLError.createSQLException(Messages.getString("Statement.46"), "01S03", getExceptionInterceptor());
+                }
+
+                this.retrieveGeneratedKeys = returnGeneratedKeys;
+
+                this.lastQueryIsOnDupKeyUpdate = returnGeneratedKeys && firstStatementChar == 'I' && containsOnDuplicateKeyInString(sql);
+
+                ResultSetInternalMethods rs = null;
+
+                if (this.doEscapeProcessing) {
+                    Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getSessionTimeZone(),
+                            this.session.getServerSession().getCapabilities().serverSupportsFracSecs(),
+                            this.session.getServerSession().isServerTruncatesFracSecs(), getExceptionInterceptor());
+                    sql = escapedSqlResult instanceof String ? (String) escapedSqlResult : ((EscapeProcessorResult) escapedSqlResult).escapedSql;
+                }
+
+                if (locallyScopedConn.isReadOnly(false)) {
+                    throw SQLError.createSQLException(Messages.getString("Statement.42") + Messages.getString("Statement.43"),
+                            MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                }
+
+                implicitlyCloseAllOpenResults();
+
+                // The checking and changing of databases must happen in sequence, so synchronize on the same mutex that _conn is using
+
+                CancelQueryTask timeoutTask = null;
+
+                String oldDb = null;
+
+                try {
+                    timeoutTask = startQueryTimer(this, getTimeoutInMillis());
+
+                    if (!locallyScopedConn.getDatabase().equals(getCurrentDatabase())) {
+                        oldDb = locallyScopedConn.getDatabase();
+                        locallyScopedConn.setDatabase(getCurrentDatabase());
+                    }
+
+                    //
+                    // Only apply max_rows to selects
+                    //
+                    locallyScopedConn.setSessionMaxRows(-1);
+
+                    statementBegins();
+
+                    // null database: force read of field info on DML
+                    rs = ((NativeSession) locallyScopedConn.getSession()).execSQL(this, sql, -1, null, false, getResultSetFactory(), null, isBatch);
+
+                    if (timeoutTask != null) {
+                        stopQueryTimer(timeoutTask, true, true);
+                        timeoutTask = null;
+                    }
+
+                } catch (CJTimeoutException | OperationCancelledException e) {
+                    throw SQLExceptionsMapping.translateException(e, this.exceptionInterceptor);
+
+                } finally {
+                    stopQueryTimer(timeoutTask, false, false);
+
+                    if (oldDb != null) {
+                        locallyScopedConn.setDatabase(oldDb);
+                    }
+
+                    if (!isBatch) {
+                        this.query.getStatementExecuting().set(false);
+                    }
+                }
+
+                this.results = rs;
+
+                rs.setFirstCharOfQuery(firstStatementChar);
+
+                this.updateCount = rs.getUpdateCount();
+
+                this.lastInsertId = rs.getUpdateID();
+            } catch (Throwable t) {
+                span.setError(t);
+                throw t;
+            } finally {
+                span.end();
+            }
+
+            return this.updateCount;
+        }
     }
 
     @Override

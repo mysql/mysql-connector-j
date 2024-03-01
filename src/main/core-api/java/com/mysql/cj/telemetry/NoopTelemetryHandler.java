@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2024, Oracle and/or its affiliates.
+ * Copyright (c) 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License, version 2.0, as published by
  * the Free Software Foundation.
@@ -18,22 +18,25 @@
  * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-package com.mysql.cj;
+package com.mysql.cj.telemetry;
 
-import java.util.List;
+/**
+ * No-op implementation of {@link TelemetryHandler}.
+ */
+public class NoopTelemetryHandler implements TelemetryHandler {
 
-import com.mysql.cj.protocol.Message;
+    private static NoopTelemetryHandler INSTANCE = new NoopTelemetryHandler();
 
-public interface MessageBuilder<M extends Message> {
+    public static NoopTelemetryHandler getInstance() {
+        return INSTANCE;
+    }
 
-    M buildSqlStatement(String statement);
+    private NoopTelemetryHandler() {
+    }
 
-    M buildSqlStatement(String statement, List<Object> args);
-
-    M buildClose();
-
-    M buildComQuery(M sharedPacket, Session sess, String query, Query callingQuery, String characterEncoding);
-
-    M buildComQuery(M sharedPacket, Session sess, PreparedQuery preparedQuery, QueryBindings bindings, String characterEncoding);
+    @Override
+    public TelemetrySpan startSpan(TelemetrySpanName spanName, Object... args) {
+        return NoopTelemetrySpan.getInstance();
+    }
 
 }

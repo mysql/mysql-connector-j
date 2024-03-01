@@ -27,6 +27,10 @@ import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.OperationCancelledException;
 import com.mysql.cj.protocol.a.NativeMessageBuilder;
+import com.mysql.cj.telemetry.TelemetryAttribute;
+import com.mysql.cj.telemetry.TelemetryScope;
+import com.mysql.cj.telemetry.TelemetrySpan;
+import com.mysql.cj.telemetry.TelemetrySpanName;
 
 //TODO should not be protocol-specific
 
@@ -84,19 +88,36 @@ public class CancelQueryTaskImpl extends TimerTask implements CancelQueryTask {
                             NativeSession newSession = null;
                             try {
                                 newSession = new NativeSession(hostInfo, session.getPropertySet());
-                                newSession.connect(hostInfo, user, password, database, 30000, new TransactionEventHandler() {
 
-                                    @Override
-                                    public void transactionCompleted() {
-                                    }
+                                TelemetrySpan span = newSession.getTelemetryHandler().startSpan(TelemetrySpanName.CANCEL_QUERY);
+                                try (TelemetryScope scope = span.makeCurrent()) {
+                                    span.setAttribute(TelemetryAttribute.DB_NAME, database);
+                                    span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_KILL);
+                                    span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_KILL + TelemetryAttribute.STATEMENT_SUFFIX);
+                                    span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
+                                    span.setAttribute(TelemetryAttribute.DB_USER, user);
+                                    span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
+                                    span.setAttribute(TelemetryAttribute.THREAD_NAME, Thread.currentThread().getName());
 
-                                    @Override
-                                    public void transactionBegun() {
-                                    }
+                                    newSession.connect(hostInfo, user, password, database, 30000, new TransactionEventHandler() {
 
-                                });
-                                newSession.getProtocol().sendCommand(new NativeMessageBuilder(newSession.getServerSession().supportsQueryAttributes())
-                                        .buildComQuery(newSession.getSharedSendPacket(), "KILL QUERY " + origConnId), false, 0);
+                                        @Override
+                                        public void transactionCompleted() {
+                                        }
+
+                                        @Override
+                                        public void transactionBegun() {
+                                        }
+
+                                    });
+                                    newSession.getProtocol().sendCommand(new NativeMessageBuilder(newSession.getServerSession().supportsQueryAttributes())
+                                            .buildComQuery(newSession.getSharedSendPacket(), newSession, "KILL QUERY " + origConnId), false, 0);
+                                } catch (Throwable t) {
+                                    span.setError(t);
+                                    throw t;
+                                } finally {
+                                    span.end();
+                                }
                             } finally {
                                 try {
                                     newSession.forceClose();

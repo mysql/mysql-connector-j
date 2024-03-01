@@ -280,9 +280,10 @@ public class NativeQueryBindValue implements BindValue {
             case TINYINT:
             case TINYINT_UNSIGNED:
                 return MysqlType.FIELD_TYPE_TINY;
+            case CHAR:
+                return MysqlType.FIELD_TYPE_STRING;
             case BINARY:
             case VARBINARY:
-            case CHAR:
             case VARCHAR:
                 return MysqlType.FIELD_TYPE_VAR_STRING;
             case FLOAT:

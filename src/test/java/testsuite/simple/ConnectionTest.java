@@ -1139,10 +1139,10 @@ public class ConnectionTest extends BaseTestCase {
 
         // space is important here, we don't want to count occurrences in stack traces
         while (rollbackPos != -1) {
-            rollbackPos = searchIn.indexOf(" rollback", rollbackPos);
+            rollbackPos = searchIn.indexOf(" ROLLBACK", rollbackPos);
 
             if (rollbackPos != -1) {
-                rollbackPos += "rollback".length();
+                rollbackPos += "ROLLBACK".length();
                 rollbackCount++;
             }
         }
@@ -1154,10 +1154,10 @@ public class ConnectionTest extends BaseTestCase {
 
         // space is important here, we don't want to count "autocommit" nor occurrences in stack traces
         while (commitPos != -1) {
-            commitPos = searchIn.indexOf(" commit", commitPos);
+            commitPos = searchIn.indexOf(" COMMIT", commitPos);
 
             if (commitPos != -1) {
-                commitPos += " commit".length();
+                commitPos += " COMMIT".length();
                 commitCount++;
             }
         }
@@ -1449,16 +1449,16 @@ public class ConnectionTest extends BaseTestCase {
             for (int i = 0; i < 2; i++) {
                 BufferingLogger.startLoggingToBuffer();
                 notLocalState.setReadOnly(true);
-                assertTrue(BufferingLogger.getBuffer().toString().indexOf("set session transaction read only") != -1);
-                notLocalState.createStatement().execute("set session transaction read write");
+                assertTrue(BufferingLogger.getBuffer().toString().indexOf("SET SESSION TRANSACTION READ ONLY") != -1);
+                notLocalState.createStatement().execute("SET SESSION TRANSACTION READ WRITE");
                 assertFalse(notLocalState.isReadOnly());
             }
 
             for (int i = 0; i < 2; i++) {
                 BufferingLogger.startLoggingToBuffer();
                 notLocalState.setReadOnly(false);
-                assertTrue(BufferingLogger.getBuffer().toString().indexOf("set session transaction read write") != -1);
-                notLocalState.createStatement().execute("set session transaction read only");
+                assertTrue(BufferingLogger.getBuffer().toString().indexOf("SET SESSION TRANSACTION READ WRITE") != -1);
+                notLocalState.createStatement().execute("SET SESSION TRANSACTION READ ONLY");
                 assertTrue(notLocalState.isReadOnly());
             }
 
@@ -1471,9 +1471,9 @@ public class ConnectionTest extends BaseTestCase {
                 BufferingLogger.startLoggingToBuffer();
                 localState.setReadOnly(true);
                 if (i == 0) {
-                    assertTrue(BufferingLogger.getBuffer().toString().indexOf("set session transaction read only") != -1);
+                    assertTrue(BufferingLogger.getBuffer().toString().indexOf("SET SESSION TRANSACTION READ ONLY") != -1);
                 } else {
-                    assertTrue(BufferingLogger.getBuffer().toString().indexOf("set session transaction read only") == -1);
+                    assertTrue(BufferingLogger.getBuffer().toString().indexOf("SET SESSION TRANSACTION READ ONLY") == -1);
                 }
                 BufferingLogger.startLoggingToBuffer();
                 localState.isReadOnly();
@@ -1487,7 +1487,7 @@ public class ConnectionTest extends BaseTestCase {
             for (int i = 0; i < 2; i++) {
                 BufferingLogger.startLoggingToBuffer();
                 noOptimization.setReadOnly(true);
-                assertTrue(BufferingLogger.getBuffer().toString().indexOf("set session transaction read only") == -1);
+                assertTrue(BufferingLogger.getBuffer().toString().indexOf("SET SESSION TRANSACTION READ ONLY") == -1);
                 BufferingLogger.startLoggingToBuffer();
                 noOptimization.isReadOnly();
                 assertTrue(BufferingLogger.getBuffer().toString().indexOf("select @@session." + s) == -1);

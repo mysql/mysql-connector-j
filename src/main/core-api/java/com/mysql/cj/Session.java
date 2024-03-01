@@ -38,6 +38,7 @@ import com.mysql.cj.protocol.Protocol;
 import com.mysql.cj.protocol.ResultBuilder;
 import com.mysql.cj.protocol.ServerSession;
 import com.mysql.cj.result.Row;
+import com.mysql.cj.telemetry.TelemetryHandler;
 
 /**
  * {@link Session} exposes logical level which user API uses internally to call {@link Protocol} methods.
@@ -110,6 +111,26 @@ public interface Session {
      * @return the {@link ProfilerEventHandler} object.
      */
     ProfilerEventHandler getProfilerEventHandler();
+
+    /**
+     * Returns the comment that will be prepended to all statements sent to the server.
+     *
+     * @return query comment string
+     */
+    String getQueryComment();
+
+    /**
+     * Sets the comment that will be prepended to all statements sent to the server. Do not use slash-star or star-slash tokens in the comment as these will be
+     * added by the driver itself.
+     *
+     * @param comment
+     *            query comment string
+     */
+    void setQueryComment(String comment);
+
+    void setTelemetryHandler(TelemetryHandler telemetryHandler);
+
+    TelemetryHandler getTelemetryHandler();
 
     HostInfo getHostInfo();
 

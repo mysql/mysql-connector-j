@@ -31,6 +31,7 @@ import com.mysql.cj.protocol.ServerCapabilities;
 import com.mysql.cj.protocol.ServerSession;
 
 public class XServerSession implements ServerSession {
+
     XServerCapabilities serverCapabilities = null;
 
     private TimeZone defaultTimeZone = TimeZone.getDefault();
