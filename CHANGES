@@ -3,6 +3,8 @@
 
 Version 8.4.0
 
+  - WL#16196, GPL License Exception Update.
+
   - Fix for Bug#111031 (Bug#35392222), Contribution: Update SyntaxRegressionTest.java.
     Thanks to Abby Palmero for her contribution.
 
