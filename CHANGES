@@ -3,6 +3,9 @@
 
 Version 8.4.0
 
+  - Fix for Bug#113600 (Bug#36171575), Contribution: Fix join condition for retrieval of imported primary keys.
+    Thanks to Henning Pöttker for his contribution.
+
   - WL#16196, GPL License Exception Update.
 
   - Fix for Bug#111031 (Bug#35392222), Contribution: Update SyntaxRegressionTest.java.
