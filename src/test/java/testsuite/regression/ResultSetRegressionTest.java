@@ -8243,4 +8243,49 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.rs.next();
     }
 
+    /**
+     * Tests fix for Bug#108830 (Bug#34721173), LIMIT clause, setMaxRows and cursor combined returns wrong number or rows.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug108830() throws Exception {
+        boolean useLIMIT = false;
+        boolean useCursor = false;
+        boolean maxRowsLargerThanLIMIT = false;
+        createTable("testBug108830", "(id INT)");
+        int rowsCnt = 20;
+        int limit = 10;
+        int fetchSize = 3;
+        for (int i = 0; i < rowsCnt; i++) {
+            this.stmt.executeUpdate("INSERT INTO testBug108830 VALUES(" + i + ")");
+        }
+        do {
+            Properties props = new Properties();
+            if (useCursor) {
+                props.setProperty(PropertyKey.useCursorFetch.getKeyName(), "True");
+            }
+            try (Connection testConn = getConnectionWithProps(props)) {
+                this.pstmt = testConn.prepareStatement("SELECT * FROM testBug108830" + (useLIMIT ? " LIMIT " + limit : ""));
+                int maxRows = useLIMIT && maxRowsLargerThanLIMIT ? 15 : 8;
+                this.pstmt.setMaxRows(maxRows);
+                this.pstmt.setFetchSize(fetchSize);
+                this.rs = this.pstmt.executeQuery();
+                int i = 0;
+                final String testCase = String.format("Case: [useLIMIT: %s, useCursor: %s, maxRowsLargerThanLIMIT: %s]", useLIMIT ? "Y" : "N",
+                        useCursor ? "Y" : "N", maxRowsLargerThanLIMIT ? "Y" : "N");
+
+                assertEquals(0, this.rs.getRow(), testCase);
+                while (this.rs.next()) {
+                    i++;
+                    assertEquals(i, this.rs.getRow(), testCase);
+                }
+                assertEquals(useLIMIT && maxRowsLargerThanLIMIT ? limit : maxRows, i, testCase);
+
+                assertEquals(0, this.rs.getRow(), testCase);
+                this.rs.getRow();
+            }
+        } while ((useLIMIT = !useLIMIT) || (useCursor = !useCursor) || (maxRowsLargerThanLIMIT = !maxRowsLargerThanLIMIT));
+    }
+
 }

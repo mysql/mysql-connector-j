@@ -92,7 +92,8 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
 
     @Override
     public boolean isAfterLast() {
-        return this.lastRowFetched && this.currentPositionInFetchedRows > this.fetchedRows.size();
+        return this.lastRowFetched && this.currentPositionInFetchedRows + 1 > this.fetchedRows.size()
+                || this.getOwner().getOwningStatementMaxRows() >= 0 && this.currentPositionInEntireResult + 1 > this.getOwner().getOwningStatementMaxRows();
     }
 
     @Override
@@ -135,7 +136,9 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
         if (this.owner != null) {
             int maxRows = this.owner.getOwningStatementMaxRows();
 
-            if (maxRows != -1 && this.currentPositionInEntireResult + 1 > maxRows) {
+            if (maxRows != -1 && this.currentPositionInEntireResult + 1 >= maxRows) {
+                this.currentPositionInFetchedRows++;
+                this.currentPositionInEntireResult++;
                 return false;
             }
         }

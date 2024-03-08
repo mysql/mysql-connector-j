@@ -1524,7 +1524,6 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         int currentRowNumber = this.rowData.getPosition();
         int row = 0;
 
-        // Non-dynamic result sets can be interrogated for this information
         if (!this.rowData.isDynamic()) {
             if (currentRowNumber < 0 || this.rowData.isAfterLast() || this.rowData.isEmpty()) {
                 row = 0;
@@ -1532,8 +1531,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                 row = currentRowNumber + 1;
             }
         } else {
-            // dynamic (streaming) can not
-            row = currentRowNumber + 1;
+            if (this.rowData.isBeforeFirst() || this.rowData.isAfterLast() || this.rowData.isEmpty()) {
+                row = 0;
+            } else {
+                row = currentRowNumber;
+            }
         }
 
         return row;
