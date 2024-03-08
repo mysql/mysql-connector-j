@@ -31,6 +31,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import com.mysql.cj.ServerVersion;
 import com.mysql.cj.xdevapi.DbDoc;
 import com.mysql.cj.xdevapi.DbDocImpl;
 import com.mysql.cj.xdevapi.InsertResult;
@@ -266,9 +267,7 @@ public class TableInsertTest extends BaseTableTestCase {
         InsertResult res = null;
         try {
             sqlUpdate("drop table if exists qatable1");
-            sqlUpdate("drop table if exists qatable2");
             sqlUpdate("create table qatable1 (x bigint auto_increment primary key,y double)");
-            sqlUpdate("create table qatable2 (x double auto_increment primary key,y bigint)");
 
             table = this.schema.getTable("qatable1", true);
             res = table.insert("y").values(101.1).execute();
@@ -303,31 +302,37 @@ public class TableInsertTest extends BaseTableTestCase {
             assertEquals(9223372036854775803L, (long) res.getAutoIncrementValue());
             assertEquals(1L, res.getAffectedItemsCount());
 
-            table = this.schema.getTable("qatable2");
-            res = table.insert("y").values(101.1).execute();
-            assertEquals(1L, (long) res.getAutoIncrementValue());
-            assertEquals(1L, res.getAffectedItemsCount());
+            if (!mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.4.0"))) {
+                // AUTO_INCREMENT for DOUBLE removed in MySQL 8.4.0.
+                sqlUpdate("drop table if exists qatable2");
+                sqlUpdate("create table qatable2 (x double auto_increment primary key,y bigint)");
 
-            res = table.insert("y").values(102.1).values(103.1).values(104.1).execute();
-            assertEquals(2L, (long) res.getAutoIncrementValue());
-            assertEquals(3L, res.getAffectedItemsCount());
+                table = this.schema.getTable("qatable2");
+                res = table.insert("y").values(101.1).execute();
+                assertEquals(1L, (long) res.getAutoIncrementValue());
+                assertEquals(1L, res.getAffectedItemsCount());
 
-            row = new HashMap<>();
-            row.put("y", expr("concat('1','05.1')"));
+                res = table.insert("y").values(102.1).values(103.1).values(104.1).execute();
+                assertEquals(2L, (long) res.getAutoIncrementValue());
+                assertEquals(3L, res.getAffectedItemsCount());
 
-            res = table.insert(row).execute();
-            assertEquals(5L, (long) res.getAutoIncrementValue());
-            assertEquals(1L, res.getAffectedItemsCount());
+                row = new HashMap<>();
+                row.put("y", expr("concat('1','05.1')"));
 
-            this.session.sql("ALTER TABLE qatable2 AUTO_INCREMENT = 4294967299000000").execute();
-            res = table.insert("y").values(102.1).values(103.1).values(104.1).execute();
-            assertEquals(4294967299000000L, (long) res.getAutoIncrementValue());
-            assertEquals(3L, res.getAffectedItemsCount());
+                res = table.insert(row).execute();
+                assertEquals(5L, (long) res.getAutoIncrementValue());
+                assertEquals(1L, res.getAffectedItemsCount());
 
-            this.session.sql("ALTER TABLE qatable2 AUTO_INCREMENT = 4294967299000000").execute();
-            res = table.insert(row).execute();
-            assertEquals(4294967299000003L, (long) res.getAutoIncrementValue());
-            assertEquals(1L, res.getAffectedItemsCount());
+                this.session.sql("ALTER TABLE qatable2 AUTO_INCREMENT = 4294967299000000").execute();
+                res = table.insert("y").values(102.1).values(103.1).values(104.1).execute();
+                assertEquals(4294967299000000L, (long) res.getAutoIncrementValue());
+                assertEquals(3L, res.getAffectedItemsCount());
+
+                this.session.sql("ALTER TABLE qatable2 AUTO_INCREMENT = 4294967299000000").execute();
+                res = table.insert(row).execute();
+                assertEquals(4294967299000003L, (long) res.getAutoIncrementValue());
+                assertEquals(1L, res.getAffectedItemsCount());
+            }
         } finally {
             sqlUpdate("drop table if exists qatable1");
             sqlUpdate("drop table if exists qatable2");

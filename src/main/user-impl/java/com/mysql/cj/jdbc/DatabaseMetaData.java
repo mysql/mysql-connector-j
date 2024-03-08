@@ -3986,10 +3986,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             case BIGINT:
             case BIGINT_UNSIGNED:
             case BOOLEAN:
-            case DOUBLE:
-            case DOUBLE_UNSIGNED:
-            case FLOAT:
-            case FLOAT_UNSIGNED:
             case INT:
             case INT_UNSIGNED:
             case MEDIUMINT:

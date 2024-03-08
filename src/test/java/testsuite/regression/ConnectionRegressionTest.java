@@ -6751,10 +6751,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         JdbcConnection testConn = (JdbcConnection) getConnectionWithProps(dbUrl, props);
         Statement testStmt = testConn.createStatement();
 
-        this.rs = testStmt.executeQuery("SELECT @@GLOBAL.HAVE_SSL = 'YES' AS have_ssl");
-        final boolean sslEnabled = this.rs.next() && this.rs.getBoolean(1);
+        this.rs = testStmt.executeQuery("SHOW STATUS LIKE 'Ssl_version'");
+        final boolean sslEnabled = this.rs.next() && !this.rs.getString(1).isEmpty();
 
-        this.rs = testStmt.executeQuery("SHOW STATUS LIKE '%Rsa_public_key%'");
+        this.rs = testStmt.executeQuery("SHOW STATUS LIKE 'Rsa_public_key'");
         final boolean rsaEnabled = this.rs.next() && this.rs.getString(1).length() > 0;
 
         System.out.println();

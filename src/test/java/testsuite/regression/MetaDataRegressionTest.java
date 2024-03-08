@@ -1048,9 +1048,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
      */
     @Test
     public void testBug11781() throws Exception {
-        createTable("`app tab`", "( C1 int(11) NULL, C2 int(11) NULL, INDEX NEWINX (C1), INDEX NEWINX2 (C1, C2))", "InnoDB");
+        createTable("`app tab`", "(C1 INT(11) NOT NULL PRIMARY KEY, C2 INT(11) NULL, INDEX NEWINX1 (C1), INDEX NEWINX2 (C1, C2))", "InnoDB");
 
-        this.stmt.executeUpdate("ALTER TABLE `app tab` ADD CONSTRAINT APPFK FOREIGN KEY (C1) REFERENCES `app tab` (C1)");
+        this.stmt.executeUpdate("ALTER TABLE `app tab` ADD CONSTRAINT APPFK FOREIGN KEY (C2) REFERENCES `app tab` (C1)");
 
         /*
          * this.rs = this.conn.getMetaData().getCrossReference(
@@ -1074,7 +1074,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
                 this.rs = ((com.mysql.cj.jdbc.DatabaseMetaData) con.getMetaData()).extractForeignKeyFromCreateTable(db, "app tab");
                 assertTrue(this.rs.next(), "must return a row");
 
-                assertEquals(("comment; APPFK(`C1`) REFER `" + db + "`/ `app tab` (`C1`)").toUpperCase(), this.rs.getString(3).toUpperCase());
+                assertEquals(("comment; APPFK(`C2`) REFER `" + db + "`/ `app tab` (`C1`)").toUpperCase(), this.rs.getString(3).toUpperCase());
 
                 this.rs.close();
 
@@ -3266,7 +3266,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
                     + (((JdbcConnection) st1.getConnection()).getPropertySet().<DatabaseTerm>getEnumProperty(PropertyKey.databaseTerm)
                             .getValue() == DatabaseTerm.SCHEMA ? this.conn.getSchema() : this.conn.getCatalog())
                     + ".testbug65871_foreign(cpd_foreign_1_id, cpd_foreign_2_id),  CONSTRAINT `APPFK` FOREIGN KEY (`C\"1`) REFERENCES " + quotedDbName + "."
-                    + quotedTableName + " (`C\"1`)) ENGINE=InnoDB";
+                    + quotedTableName + " (\"`B`EST`\")) ENGINE=InnoDB";
+
             st1.executeUpdate(sql);
 
             // 1. Create table
