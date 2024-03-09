@@ -4002,6 +4002,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             case TINYINT_UNSIGNED:
                 rowVal[11] = s2b("true");                                                   // Auto Increment
                 break;
+            case DOUBLE:
+            case DOUBLE_UNSIGNED:
+            case FLOAT:
+            case FLOAT_UNSIGNED:
+                boolean supportsAutoIncrement = !this.session.versionMeetsMinimum(8, 4, 0);
+                rowVal[11] = supportsAutoIncrement ? s2b("true") : s2b("false");            // Auto Increment
+                break;
             default:
                 rowVal[11] = s2b("false");                                                  // Auto Increment
                 break;
