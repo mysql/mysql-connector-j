@@ -23,7 +23,7 @@ package com.mysql.cj.telemetry;
 /**
  * A telemetry span wrapper that hides all specific details from the underlying telemetry library.
  *
- * A default no-op implementation is provided so that telemetry may be turned off with minimal impact to the driver code.
+ * A default no-op implementation is provided so that telemetry may be turned off with minimal impact on the driver code.
  */
 public interface TelemetrySpan extends AutoCloseable {
 
@@ -77,7 +77,7 @@ public interface TelemetrySpan extends AutoCloseable {
     }
 
     /**
-     * {@link AutoCloseable#close()} that can be used to end this span and, thus, make it possible to create new span within try-with-resources blocks.
+     * {@link AutoCloseable#close()} that can be used to end this span and, making it possible to create new span within the try-with-resources blocks.
      */
     @Override
     default void close() {

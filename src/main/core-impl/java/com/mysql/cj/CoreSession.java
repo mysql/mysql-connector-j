@@ -71,7 +71,7 @@ public abstract class CoreSession implements Session {
     /** The event sink to use for profiling */
     private ProfilerEventHandler eventSink;
 
-    /** The Telemetry handler to process telemetry operations */
+    /** The telemetry handler to process telemetry operations */
     private TelemetryHandler telemetryHandler = null;
 
     public CoreSession(HostInfo hostInfo, PropertySet propSet) {

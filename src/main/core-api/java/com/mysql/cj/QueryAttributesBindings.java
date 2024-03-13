@@ -76,7 +76,7 @@ public interface QueryAttributesBindings {
     void runThroughAll(Consumer<BindValue> bindAttribute);
 
     /**
-     * Checks if there's already an attribute with the specified name.
+     * Checks if there is already an attribute with the specified name.
      *
      * @param name
      *            the query attribute name.

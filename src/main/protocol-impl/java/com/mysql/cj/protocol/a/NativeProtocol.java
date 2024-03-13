@@ -336,7 +336,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
     }
 
     /**
-     * Negotiates the SSL communications channel used when connecting to a MySQL server that understands SSL.
+     * Negotiates the SSL communication channel used when connecting to a MySQL server that has SSL enabled.
      */
     @Override
     public void negotiateSSLConnection() {

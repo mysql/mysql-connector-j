@@ -21,7 +21,7 @@
 package com.mysql.cj.telemetry;
 
 /**
- * List of most common telemetry span names.
+ * List of telemetry span names.
  */
 public enum TelemetrySpanName {
 

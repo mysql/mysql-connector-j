@@ -423,15 +423,15 @@ public enum MysqlType implements SQLType {
     GEOMETRY("GEOMETRY", Types.BINARY, null, 0, MysqlType.IS_NOT_DECIMAL, 65535L, ""), // TODO check precision, it isn't well documented, only mentioned that WKB format is represented by BLOB
     /**
      * VECTOR[(M)]
-     * A VECTOR column with a maximum length of 65,532 (16383 x 4) bytes. An optional length M can be given for this type which indicates the maximum number of
-     * entries in the VECTOR, with maximum of 16383. Each entry is a 4 Byte (single-precision) floating-point value.
+     * A VECTOR column with a maximum length of 65,532 (16383 x 4) bytes. An optional length M can be given for this type to indicate the maximum number of
+     * entries in a VECTOR. M cannot exceed 16383. Each entry is a 4 Byte (single-precision) floating-point value.
      *
      * Protocol: FIELD_TYPE_VECTOR = 242
      */
     VECTOR("VECTOR", Types.LONGVARBINARY, null, 0, MysqlType.IS_NOT_DECIMAL, 65532L, "[(M)]"),
 
     /**
-     * Fall-back type for those MySQL data types which c/J can't recognize.
+     * Fall-back type for those MySQL data types which Connector/J cannot recognize.
      * Handled the same as BLOB.
      *
      * Has no protocol ID.

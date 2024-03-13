@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 
 public class NativeQueryAttributesBindings implements QueryAttributesBindings {
 
-    // Query attributes use a different type mapping than other parameters bindings.
+    // Query attributes use a different type mapping than other parameter bindings.
     private static final Map<Class<?>, MysqlType> DEFAULT_MYSQL_TYPES = new HashMap<>();
     static {
         DEFAULT_MYSQL_TYPES.put(String.class, MysqlType.CHAR);

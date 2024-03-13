@@ -30,7 +30,7 @@ import java.util.function.BiConsumer;
 public interface TelemetryHandler {
 
     /**
-     * Start a telemetry span. Additionally, the returned {@link TelemetrySpan} object returned must be made current so that it gets recorded by the telemetry
+     * Start a telemetry span. Additionally, the returned {@link TelemetrySpan} object must be made current so that it gets recorded by the telemetry
      * tracer.
      * A {@link TelemetrySpan} object must be closed in a finally block after being made current, e.g.:
      *
@@ -48,7 +48,7 @@ public interface TelemetryHandler {
      * @param args
      *            arguments used for interpolating the specified span name via {@link String#format(String, Object...)}
      * @return
-     *         the newly created span object
+     *         the newly-created span object
      */
     TelemetrySpan startSpan(TelemetrySpanName spanName, Object... args);
 
