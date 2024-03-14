@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/en/
 
+Version 9.0.0
+
 Version 8.4.0
 
   - WL#15706, Add OpenTelemetry tracing.
