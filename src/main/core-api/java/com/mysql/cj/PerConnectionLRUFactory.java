@@ -21,27 +21,28 @@
 package com.mysql.cj;
 
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
 
 import com.mysql.cj.util.LRUCache;
 
 public class PerConnectionLRUFactory implements CacheAdapterFactory<String, QueryInfo> {
 
     @Override
-    public CacheAdapter<String, QueryInfo> getInstance(Object syncMutex, String url, int cacheMaxSize, int maxKeySize) {
-        return new PerConnectionLRU(syncMutex, cacheMaxSize, maxKeySize);
+    public CacheAdapter<String, QueryInfo> getInstance(Lock lock, String url, int cacheMaxSize, int maxKeySize) {
+        return new PerConnectionLRU(lock, cacheMaxSize, maxKeySize);
     }
 
     class PerConnectionLRU implements CacheAdapter<String, QueryInfo> {
 
         private final int cacheSqlLimit;
         private final LRUCache<String, QueryInfo> cache;
-        private final Object syncMutex;
+        private final Lock lock;
 
-        protected PerConnectionLRU(Object syncMutex, int cacheMaxSize, int maxKeySize) {
+        protected PerConnectionLRU(Lock lock, int cacheMaxSize, int maxKeySize) {
             final int cacheSize = cacheMaxSize;
             this.cacheSqlLimit = maxKeySize;
             this.cache = new LRUCache<>(cacheSize);
-            this.syncMutex = syncMutex;
+            this.lock = lock;
         }
 
         @Override
@@ -50,8 +51,11 @@ public class PerConnectionLRUFactory implements CacheAdapterFactory<String, Quer
                 return null;
             }
 
-            synchronized (this.syncMutex) {
+            this.lock.lock();
+            try {
                 return this.cache.get(key);
+            } finally {
+                this.lock.unlock();
             }
         }
 
@@ -61,31 +65,43 @@ public class PerConnectionLRUFactory implements CacheAdapterFactory<String, Quer
                 return;
             }
 
-            synchronized (this.syncMutex) {
+            this.lock.lock();
+            try {
                 this.cache.put(key, value);
+            } finally {
+                this.lock.unlock();
             }
         }
 
         @Override
         public void invalidate(String key) {
-            synchronized (this.syncMutex) {
+            this.lock.lock();
+            try {
                 this.cache.remove(key);
+            } finally {
+                this.lock.unlock();
             }
         }
 
         @Override
         public void invalidateAll(Set<String> keys) {
-            synchronized (this.syncMutex) {
+            this.lock.lock();
+            try {
                 for (String key : keys) {
                     this.cache.remove(key);
                 }
+            } finally {
+                this.lock.unlock();
             }
         }
 
         @Override
         public void invalidateAll() {
-            synchronized (this.syncMutex) {
+            this.lock.lock();
+            try {
                 this.cache.clear();
+            } finally {
+                this.lock.unlock();
             }
         }
 

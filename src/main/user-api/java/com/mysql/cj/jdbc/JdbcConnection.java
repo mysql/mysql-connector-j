@@ -22,6 +22,7 @@ package com.mysql.cj.jdbc;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.ServerVersion;
@@ -37,6 +38,8 @@ import com.mysql.cj.jdbc.result.ResultSetInternalMethods;
  * (which is why there are still references to ConnectionImpl throughout the code).
  */
 public interface JdbcConnection extends java.sql.Connection, MysqlConnection, TransactionEventHandler {
+
+    Lock getLock();
 
     @Override
     public JdbcPropertySet getPropertySet();
@@ -475,8 +478,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     /**
      * Returns cached metadata (or null if not cached) for the given query, which must match _exactly_.
      *
-     * This method is synchronized by the caller on getMutex(), so if calling this method from internal code
-     * in the driver, make sure it's synchronized on the mutex that guards communication with the server.
+     * Calls to this method must be guarded by the Connection object lock that can be obtained by {@link MysqlConnection#getConnectionLock()}.
      *
      * @param sql
      *            the query that is the key to the cache
@@ -499,8 +501,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     /**
      * Caches CachedResultSetMetaData that has been placed in the cache using the given SQL as a key.
      *
-     * This method is synchronized by the caller on getMutex(), so if calling this method from internal code
-     * in the driver, make sure it's synchronized on the mutex that guards communication with the server.
+     * Calls to this method must be guarded by the Connection object lock that can be obtained by {@link MysqlConnection#getConnectionLock()}.
      *
      * @param sql
      *            the query that the metadata pertains too.

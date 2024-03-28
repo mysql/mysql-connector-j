@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
- * Group of connection objects which can be configured as a group. This is used for promotion/demotion of replicas and sources in a replication configuration,
+ * Group of connection objects that can be configured as a group. This is used for promotion/demotion of replicas and sources in a replication configuration,
  * and for exposing metrics around replication-aware connections.
  */
 public class ReplicationConnectionGroup {
@@ -158,8 +158,7 @@ public class ReplicationConnectionGroup {
      * We can safely assume that if this host was removed from the replicas list, then it must be removed from each one of the replication connections from this
      * group as well.
      * Unnecessary calls to {@link ReplicationConnection#removeReplica(String, boolean)} could result in undesirable locking issues, assuming that this method
-     * is
-     * synchronized by nature.
+     * is synchronized by nature.
      *
      * This is a no-op if the group doesn't have this host in a replica role.
      *
@@ -201,9 +200,9 @@ public class ReplicationConnectionGroup {
      *
      * We can safely assume that if this host was removed from the replicas list or added to the sources list, then the same host promotion must happen in each
      * one of the replication connections from this group as well.
+     *
      * Unnecessary calls to {@link ReplicationConnection#promoteReplicaToSource(String)} could result in undesirable locking issues, assuming that this method
-     * is
-     * synchronized by nature.
+     * is synchronized by nature.
      *
      * This is a no-op if the group already has this host in a source role and not in replica role.
      *

@@ -404,7 +404,7 @@ public class NativeQueryBindings implements QueryBindings {
     }
 
     @Override
-    public synchronized void setNull(int parameterIndex) {
+    public void setNull(int parameterIndex) {
         BindValue binding = getBinding(parameterIndex, false);
         binding.setBinding(null, MysqlType.NULL, this.numberOfExecutions, this.sendTypesToServer);
     }

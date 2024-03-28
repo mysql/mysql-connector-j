@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.HostInfo;
@@ -76,6 +78,12 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     // exception is caught in every proxy instance belonging to the same call stack.
     protected Throwable lastExceptionDealtWith = null;
 
+    private final Lock lock = new ReentrantLock();
+
+    public Lock getLock() {
+        return this.lock;
+    }
+
     /**
      * Proxy class to intercept and deal with errors that may occur in any object bound to the current connection.
      */
@@ -94,7 +102,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
                 return args[0].equals(this);
             }
 
-            synchronized (MultiHostConnectionProxy.this) {
+            getLock().lock();
+            try {
                 Object result = null;
 
                 try {
@@ -105,6 +114,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
                 }
 
                 return result;
+            } finally {
+                getLock().unlock();
             }
         }
 
@@ -308,8 +319,13 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * @throws SQLException
      *             if an error occurs
      */
-    synchronized void invalidateCurrentConnection() throws SQLException {
-        invalidateConnection(this.currentConnection);
+    void invalidateCurrentConnection() throws SQLException {
+        this.lock.lock();
+        try {
+            invalidateConnection(this.currentConnection);
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     /**
@@ -320,13 +336,16 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * @throws SQLException
      *             if an error occurs
      */
-    synchronized void invalidateConnection(JdbcConnection conn) throws SQLException {
+    void invalidateConnection(JdbcConnection conn) throws SQLException {
+        this.lock.lock();
         try {
             if (conn != null && !conn.isClosed()) {
                 conn.realClose(true, !conn.getAutoCommit(), true, null);
             }
         } catch (SQLException e) {
             // swallow this exception, current connection should be useless anyway.
+        } finally {
+            this.lock.unlock();
         }
     }
 
@@ -348,14 +367,19 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
      * @throws SQLException
      *             if an error occurs
      */
-    synchronized ConnectionImpl createConnectionForHost(HostInfo hostInfo) throws SQLException {
-        ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(hostInfo);
-        JdbcConnection topmostProxy = getProxy();
-        if (topmostProxy != this.thisAsConnection) {
-            conn.setProxy(this.thisAsConnection); // First call sets this connection as underlying connection parent proxy (its creator).
+    ConnectionImpl createConnectionForHost(HostInfo hostInfo) throws SQLException {
+        this.lock.lock();
+        try {
+            ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(hostInfo);
+            JdbcConnection topmostProxy = getProxy();
+            if (topmostProxy != this.thisAsConnection) {
+                conn.setProxy(this.thisAsConnection); // First call sets this connection as underlying connection parent proxy (its creator).
+            }
+            conn.setProxy(topmostProxy); // Set the topmost proxy in the underlying connection.
+            return conn;
+        } finally {
+            this.lock.unlock();
         }
-        conn.setProxy(topmostProxy); // Set the topmost proxy in the underlying connection.
-        return conn;
     }
 
     /**
@@ -477,7 +501,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
             return method.invoke(this, args);
         }
 
-        synchronized (this) {
+        this.lock.lock();
+        try {
             if (METHOD_CLOSE.equals(methodName)) {
                 doClose();
                 this.isClosed = true;
@@ -519,6 +544,8 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
                 }
                 throw new IllegalStateException(e.getMessage(), e);
             }
+        } finally {
+            this.lock.unlock();
         }
     }
 

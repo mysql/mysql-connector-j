@@ -501,18 +501,14 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         // do it after other decorators to have trace and debug applied to individual packets
         messageReader = new MultiPacketReader(messageReader);
 
-        // atomic replacement of currently used objects
-        synchronized (this.packetReader) {
-            this.packetReader = messageReader;
-            this.packetDebugRingBuffer = debugRingBuffer;
-            setPacketSentTimeHolder(ttSender != null ? ttSender : new PacketSentTimeHolder() {
-            });
-        }
-        synchronized (this.packetSender) {
-            this.packetSender = sender;
-            setPacketReceivedTimeHolder(ttReader != null ? ttReader : new PacketReceivedTimeHolder() {
-            });
-        }
+        this.packetReader = messageReader;
+        this.packetDebugRingBuffer = debugRingBuffer;
+        setPacketSentTimeHolder(ttSender != null ? ttSender : new PacketSentTimeHolder() {
+        });
+
+        this.packetSender = sender;
+        setPacketReceivedTimeHolder(ttReader != null ? ttReader : new PacketReceivedTimeHolder() {
+        });
     }
 
     @Override

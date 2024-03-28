@@ -32,6 +32,8 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.sql.SQLException;
 import java.sql.SQLXML;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -68,6 +70,8 @@ import com.mysql.cj.jdbc.exceptions.SQLError;
 import com.mysql.cj.jdbc.result.ResultSetInternalMethods;
 
 public class MysqlSQLXML implements SQLXML {
+
+    private final Lock lock = new ReentrantLock();
 
     private XMLInputFactory inputFactory;
 
@@ -110,143 +114,195 @@ public class MysqlSQLXML implements SQLXML {
     }
 
     @Override
-    public synchronized void free() throws SQLException {
-        this.stringRep = null;
-        this.asDOMResult = null;
-        this.asSAXResult = null;
-        this.inputFactory = null;
-        this.outputFactory = null;
-        this.owningResultSet = null;
-        this.workingWithResult = false;
-        this.isClosed = true;
-    }
-
-    @Override
-    public synchronized String getString() throws SQLException {
-        checkClosed();
-        checkWorkingWithResult();
-
-        if (this.fromResultSet) {
-            return this.owningResultSet.getString(this.columnIndexOfXml);
-        }
-
-        return this.stringRep;
-    }
-
-    private synchronized void checkClosed() throws SQLException {
-        if (this.isClosed) {
-            throw SQLError.createSQLException(Messages.getString("MysqlSQLXML.0"), this.exceptionInterceptor);
-        }
-    }
-
-    private synchronized void checkWorkingWithResult() throws SQLException {
-        if (this.workingWithResult) {
-            throw SQLError.createSQLException(Messages.getString("MysqlSQLXML.1"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+    public void free() throws SQLException {
+        this.lock.lock();
+        try {
+            this.stringRep = null;
+            this.asDOMResult = null;
+            this.asSAXResult = null;
+            this.inputFactory = null;
+            this.outputFactory = null;
+            this.owningResultSet = null;
+            this.workingWithResult = false;
+            this.isClosed = true;
+        } finally {
+            this.lock.unlock();
         }
     }
 
     @Override
-    public synchronized void setString(String str) throws SQLException {
-        checkClosed();
-        checkWorkingWithResult();
+    public String getString() throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+            checkWorkingWithResult();
 
-        this.stringRep = str;
-        this.fromResultSet = false;
-    }
+            if (this.fromResultSet) {
+                return this.owningResultSet.getString(this.columnIndexOfXml);
+            }
 
-    public synchronized boolean isEmpty() throws SQLException {
-        checkClosed();
-        checkWorkingWithResult();
-
-        if (!this.fromResultSet) {
-            return this.stringRep == null || this.stringRep.length() == 0;
+            return this.stringRep;
+        } finally {
+            this.lock.unlock();
         }
+    }
 
-        return false;
+    private void checkClosed() throws SQLException {
+        this.lock.lock();
+        try {
+            if (this.isClosed) {
+                throw SQLError.createSQLException(Messages.getString("MysqlSQLXML.0"), this.exceptionInterceptor);
+            }
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    private void checkWorkingWithResult() throws SQLException {
+        this.lock.lock();
+        try {
+            if (this.workingWithResult) {
+                throw SQLError.createSQLException(Messages.getString("MysqlSQLXML.1"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            }
+
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     @Override
-    public synchronized InputStream getBinaryStream() throws SQLException {
-        checkClosed();
-        checkWorkingWithResult();
+    public void setString(String str) throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+            checkWorkingWithResult();
 
-        return this.owningResultSet.getBinaryStream(this.columnIndexOfXml);
+            this.stringRep = str;
+            this.fromResultSet = false;
+
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    public boolean isEmpty() throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+            checkWorkingWithResult();
+
+            if (!this.fromResultSet) {
+                return this.stringRep == null || this.stringRep.length() == 0;
+            }
+
+            return false;
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     @Override
-    public synchronized Reader getCharacterStream() throws SQLException {
-        checkClosed();
-        checkWorkingWithResult();
+    public InputStream getBinaryStream() throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+            checkWorkingWithResult();
 
-        return this.owningResultSet.getCharacterStream(this.columnIndexOfXml);
+            return this.owningResultSet.getBinaryStream(this.columnIndexOfXml);
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    @Override
+    public Reader getCharacterStream() throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+            checkWorkingWithResult();
+
+            return this.owningResultSet.getCharacterStream(this.columnIndexOfXml);
+
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <T extends Source> T getSource(Class<T> clazz) throws SQLException {
-        checkClosed();
-        checkWorkingWithResult();
+        this.lock.lock();
+        try {
+            checkClosed();
+            checkWorkingWithResult();
 
-        // Note that we try and use streams here wherever possible for the day that the server actually supports streaming from server -> client
-        // (futureproofing)
+            // Note that we try and use streams here wherever possible for the day that the server actually supports streaming from server -> client
+            // (futureproofing)
 
-        if (clazz == null || clazz.equals(SAXSource.class)) {
+            if (clazz == null || clazz.equals(SAXSource.class)) {
 
-            try {
-                XMLReader reader = XMLReaderFactory.createXMLReader();
-                // According to https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html
-                reader.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-                setFeature(reader, "http://apache.org/xml/features/disallow-doctype-decl", true);
-                setFeature(reader, "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-                setFeature(reader, "http://xml.org/sax/features/external-general-entities", false);
-                setFeature(reader, "http://xml.org/sax/features/external-parameter-entities", false);
+                try {
+                    XMLReader reader = XMLReaderFactory.createXMLReader();
+                    // According to https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html
+                    reader.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+                    setFeature(reader, "http://apache.org/xml/features/disallow-doctype-decl", true);
+                    setFeature(reader, "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+                    setFeature(reader, "http://xml.org/sax/features/external-general-entities", false);
+                    setFeature(reader, "http://xml.org/sax/features/external-parameter-entities", false);
 
-                return (T) new SAXSource(reader, this.fromResultSet ? new InputSource(this.owningResultSet.getCharacterStream(this.columnIndexOfXml))
-                        : new InputSource(new StringReader(this.stringRep)));
-            } catch (SAXException ex) {
-                SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex, this.exceptionInterceptor);
-                throw sqlEx;
+                    return (T) new SAXSource(reader, this.fromResultSet ? new InputSource(this.owningResultSet.getCharacterStream(this.columnIndexOfXml))
+                            : new InputSource(new StringReader(this.stringRep)));
+                } catch (SAXException ex) {
+                    SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex,
+                            this.exceptionInterceptor);
+                    throw sqlEx;
+                }
+
+            } else if (clazz.equals(DOMSource.class)) {
+                try {
+                    DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+                    builderFactory.setNamespaceAware(true);
+
+                    // According to https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html
+                    setFeature(builderFactory, XMLConstants.FEATURE_SECURE_PROCESSING, true);
+                    setFeature(builderFactory, "http://apache.org/xml/features/disallow-doctype-decl", true);
+                    setFeature(builderFactory, "http://xml.org/sax/features/external-general-entities", false);
+                    setFeature(builderFactory, "http://xml.org/sax/features/external-parameter-entities", false);
+                    setFeature(builderFactory, "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+                    builderFactory.setXIncludeAware(false);
+                    builderFactory.setExpandEntityReferences(false);
+
+                    builderFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+
+                    DocumentBuilder builder = builderFactory.newDocumentBuilder();
+
+                    return (T) new DOMSource(builder.parse(this.fromResultSet ? new InputSource(this.owningResultSet.getCharacterStream(this.columnIndexOfXml))
+                            : new InputSource(new StringReader(this.stringRep))));
+                } catch (Throwable t) {
+                    SQLException sqlEx = SQLError.createSQLException(t.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, t,
+                            this.exceptionInterceptor);
+                    throw sqlEx;
+                }
+
+            } else if (clazz.equals(StreamSource.class)) {
+                return (T) new StreamSource(
+                        this.fromResultSet ? this.owningResultSet.getCharacterStream(this.columnIndexOfXml) : new StringReader(this.stringRep));
+
+            } else if (clazz.equals(StAXSource.class)) {
+                try {
+                    return (T) new StAXSource(this.inputFactory.createXMLStreamReader(
+                            this.fromResultSet ? this.owningResultSet.getCharacterStream(this.columnIndexOfXml) : new StringReader(this.stringRep)));
+                } catch (XMLStreamException ex) {
+                    SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex,
+                            this.exceptionInterceptor);
+                    throw sqlEx;
+                }
+            } else {
+                throw SQLError.createSQLException(Messages.getString("MysqlSQLXML.2", new Object[] { clazz.toString() }),
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
-
-        } else if (clazz.equals(DOMSource.class)) {
-            try {
-                DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-                builderFactory.setNamespaceAware(true);
-
-                // According to https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html
-                setFeature(builderFactory, XMLConstants.FEATURE_SECURE_PROCESSING, true);
-                setFeature(builderFactory, "http://apache.org/xml/features/disallow-doctype-decl", true);
-                setFeature(builderFactory, "http://xml.org/sax/features/external-general-entities", false);
-                setFeature(builderFactory, "http://xml.org/sax/features/external-parameter-entities", false);
-                setFeature(builderFactory, "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-                builderFactory.setXIncludeAware(false);
-                builderFactory.setExpandEntityReferences(false);
-
-                builderFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-
-                DocumentBuilder builder = builderFactory.newDocumentBuilder();
-
-                return (T) new DOMSource(builder.parse(this.fromResultSet ? new InputSource(this.owningResultSet.getCharacterStream(this.columnIndexOfXml))
-                        : new InputSource(new StringReader(this.stringRep))));
-            } catch (Throwable t) {
-                SQLException sqlEx = SQLError.createSQLException(t.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, t, this.exceptionInterceptor);
-                throw sqlEx;
-            }
-
-        } else if (clazz.equals(StreamSource.class)) {
-            return (T) new StreamSource(this.fromResultSet ? this.owningResultSet.getCharacterStream(this.columnIndexOfXml) : new StringReader(this.stringRep));
-
-        } else if (clazz.equals(StAXSource.class)) {
-            try {
-                return (T) new StAXSource(this.inputFactory.createXMLStreamReader(
-                        this.fromResultSet ? this.owningResultSet.getCharacterStream(this.columnIndexOfXml) : new StringReader(this.stringRep)));
-            } catch (XMLStreamException ex) {
-                SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex, this.exceptionInterceptor);
-                throw sqlEx;
-            }
-        } else {
-            throw SQLError.createSQLException(Messages.getString("MysqlSQLXML.2", new Object[] { clazz.toString() }),
-                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+        } finally {
+            this.lock.unlock();
         }
     }
 
@@ -263,78 +319,104 @@ public class MysqlSQLXML implements SQLXML {
     }
 
     @Override
-    public synchronized OutputStream setBinaryStream() throws SQLException {
-        checkClosed();
-        checkWorkingWithResult();
+    public OutputStream setBinaryStream() throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+            checkWorkingWithResult();
 
-        this.workingWithResult = true;
+            this.workingWithResult = true;
 
-        return setBinaryStreamInternal();
+            return setBinaryStreamInternal();
+        } finally {
+            this.lock.unlock();
+        }
     }
 
-    private synchronized OutputStream setBinaryStreamInternal() throws SQLException {
-        this.asByteArrayOutputStream = new ByteArrayOutputStream();
+    private OutputStream setBinaryStreamInternal() throws SQLException {
+        this.lock.lock();
+        try {
+            this.asByteArrayOutputStream = new ByteArrayOutputStream();
 
-        return this.asByteArrayOutputStream;
+            return this.asByteArrayOutputStream;
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     @Override
-    public synchronized Writer setCharacterStream() throws SQLException {
-        checkClosed();
-        checkWorkingWithResult();
+    public Writer setCharacterStream() throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+            checkWorkingWithResult();
 
-        this.workingWithResult = true;
+            this.workingWithResult = true;
 
-        return setCharacterStreamInternal();
+            return setCharacterStreamInternal();
+        } finally {
+            this.lock.unlock();
+        }
     }
 
-    private synchronized Writer setCharacterStreamInternal() throws SQLException {
-        this.asStringWriter = new StringWriter();
+    private Writer setCharacterStreamInternal() throws SQLException {
+        this.lock.lock();
+        try {
+            this.asStringWriter = new StringWriter();
 
-        return this.asStringWriter;
+            return this.asStringWriter;
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public synchronized <T extends Result> T setResult(Class<T> clazz) throws SQLException {
-        checkClosed();
-        checkWorkingWithResult();
+    public <T extends Result> T setResult(Class<T> clazz) throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+            checkWorkingWithResult();
 
-        this.workingWithResult = true;
-        this.asDOMResult = null;
-        this.asSAXResult = null;
-        this.saxToReaderConverter = null;
-        this.stringRep = null;
-        this.asStringWriter = null;
-        this.asByteArrayOutputStream = null;
+            this.workingWithResult = true;
+            this.asDOMResult = null;
+            this.asSAXResult = null;
+            this.saxToReaderConverter = null;
+            this.stringRep = null;
+            this.asStringWriter = null;
+            this.asByteArrayOutputStream = null;
 
-        if (clazz == null || clazz.equals(SAXResult.class)) {
-            this.saxToReaderConverter = new SimpleSaxToReader();
+            if (clazz == null || clazz.equals(SAXResult.class)) {
+                this.saxToReaderConverter = new SimpleSaxToReader();
 
-            this.asSAXResult = new SAXResult(this.saxToReaderConverter);
+                this.asSAXResult = new SAXResult(this.saxToReaderConverter);
 
-            return (T) this.asSAXResult;
-        } else if (clazz.equals(DOMResult.class)) {
+                return (T) this.asSAXResult;
+            } else if (clazz.equals(DOMResult.class)) {
 
-            this.asDOMResult = new DOMResult();
-            return (T) this.asDOMResult;
+                this.asDOMResult = new DOMResult();
+                return (T) this.asDOMResult;
 
-        } else if (clazz.equals(StreamResult.class)) {
-            return (T) new StreamResult(setCharacterStreamInternal());
-        } else if (clazz.equals(StAXResult.class)) {
-            try {
-                if (this.outputFactory == null) {
-                    this.outputFactory = XMLOutputFactory.newInstance();
+            } else if (clazz.equals(StreamResult.class)) {
+                return (T) new StreamResult(setCharacterStreamInternal());
+            } else if (clazz.equals(StAXResult.class)) {
+                try {
+                    if (this.outputFactory == null) {
+                        this.outputFactory = XMLOutputFactory.newInstance();
+                    }
+
+                    return (T) new StAXResult(this.outputFactory.createXMLEventWriter(setCharacterStreamInternal()));
+                } catch (XMLStreamException ex) {
+                    SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex,
+                            this.exceptionInterceptor);
+                    throw sqlEx;
                 }
-
-                return (T) new StAXResult(this.outputFactory.createXMLEventWriter(setCharacterStreamInternal()));
-            } catch (XMLStreamException ex) {
-                SQLException sqlEx = SQLError.createSQLException(ex.getMessage(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex, this.exceptionInterceptor);
-                throw sqlEx;
+            } else {
+                throw SQLError.createSQLException(Messages.getString("MysqlSQLXML.3", new Object[] { clazz.toString() }),
+                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
-        } else {
-            throw SQLError.createSQLException(Messages.getString("MysqlSQLXML.3", new Object[] { clazz.toString() }),
-                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+        } finally {
+            this.lock.unlock();
         }
     }
 
@@ -391,32 +473,37 @@ public class MysqlSQLXML implements SQLXML {
         return buf.toString();
     }
 
-    protected synchronized Reader serializeAsCharacterStream() throws SQLException {
-        checkClosed();
-        if (this.workingWithResult || this.owningResultSet == null) {
-            // figure out what kind of result
-            if (this.stringRep != null) {
-                return new StringReader(this.stringRep);
+    protected Reader serializeAsCharacterStream() throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+            if (this.workingWithResult || this.owningResultSet == null) {
+                // figure out what kind of result
+                if (this.stringRep != null) {
+                    return new StringReader(this.stringRep);
+                }
+
+                if (this.asDOMResult != null) {
+                    return new StringReader(domSourceToString());
+                }
+
+                if (this.asStringWriter != null) { // stax result
+                    return new StringReader(this.asStringWriter.toString());
+                }
+
+                if (this.asSAXResult != null) {
+                    return this.saxToReaderConverter.toReader();
+                }
+
+                if (this.asByteArrayOutputStream != null) {
+                    return binaryInputStreamStreamToReader(this.asByteArrayOutputStream);
+                }
             }
 
-            if (this.asDOMResult != null) {
-                return new StringReader(domSourceToString());
-            }
-
-            if (this.asStringWriter != null) { // stax result
-                return new StringReader(this.asStringWriter.toString());
-            }
-
-            if (this.asSAXResult != null) {
-                return this.saxToReaderConverter.toReader();
-            }
-
-            if (this.asByteArrayOutputStream != null) {
-                return binaryInputStreamStreamToReader(this.asByteArrayOutputStream);
-            }
+            return this.owningResultSet.getCharacterStream(this.columnIndexOfXml);
+        } finally {
+            this.lock.unlock();
         }
-
-        return this.owningResultSet.getCharacterStream(this.columnIndexOfXml);
     }
 
     protected String domSourceToString() throws SQLException {
@@ -434,32 +521,37 @@ public class MysqlSQLXML implements SQLXML {
         }
     }
 
-    protected synchronized String serializeAsString() throws SQLException {
-        checkClosed();
-        if (this.workingWithResult) {
-            // figure out what kind of result
-            if (this.stringRep != null) {
-                return this.stringRep;
+    protected String serializeAsString() throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+            if (this.workingWithResult) {
+                // figure out what kind of result
+                if (this.stringRep != null) {
+                    return this.stringRep;
+                }
+
+                if (this.asDOMResult != null) {
+                    return domSourceToString();
+                }
+
+                if (this.asStringWriter != null) { // stax result
+                    return this.asStringWriter.toString();
+                }
+
+                if (this.asSAXResult != null) {
+                    return readerToString(this.saxToReaderConverter.toReader());
+                }
+
+                if (this.asByteArrayOutputStream != null) {
+                    return readerToString(binaryInputStreamStreamToReader(this.asByteArrayOutputStream));
+                }
             }
 
-            if (this.asDOMResult != null) {
-                return domSourceToString();
-            }
-
-            if (this.asStringWriter != null) { // stax result
-                return this.asStringWriter.toString();
-            }
-
-            if (this.asSAXResult != null) {
-                return readerToString(this.saxToReaderConverter.toReader());
-            }
-
-            if (this.asByteArrayOutputStream != null) {
-                return readerToString(binaryInputStreamStreamToReader(this.asByteArrayOutputStream));
-            }
+            return this.owningResultSet.getString(this.columnIndexOfXml);
+        } finally {
+            this.lock.unlock();
         }
-
-        return this.owningResultSet.getString(this.columnIndexOfXml);
     }
 
     /*
@@ -591,13 +683,11 @@ public class MysqlSQLXML implements SQLXML {
                     break;
 
                 case '"':
-
                     if (!isAttributeData) {
                         this.buf.append("\"");
                     } else {
                         this.buf.append("&quot;");
                     }
-
                     break;
 
                 case '\r':
@@ -605,7 +695,6 @@ public class MysqlSQLXML implements SQLXML {
                     break;
 
                 default:
-
                     if (c >= 0x01 && c <= 0x1F && c != 0x09 && c != 0x0A || c >= 0x7F && c <= 0x9F || c == 0x2028
                             || isAttributeData && (c == 0x09 || c == 0x0A)) {
                         this.buf.append("&#x");

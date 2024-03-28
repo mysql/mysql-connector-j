@@ -78,7 +78,8 @@ public class CancelQueryTaskImpl extends TimerTask implements CancelQueryTask {
                         localQueryToCancel.setCancelStatus(CancelStatus.CANCELED_BY_TIMEOUT);
                         session.invokeCleanupListeners(new OperationCancelledException(Messages.getString("Statement.ConnectionKilledDueToTimeout")));
                     } else {
-                        synchronized (localQueryToCancel.getCancelTimeoutMutex()) {
+                        localQueryToCancel.getCancelTimeoutLock().lock();
+                        try {
                             long origConnId = session.getThreadId();
                             HostInfo hostInfo = session.getHostInfo();
                             String database = hostInfo.getDatabase();
@@ -126,6 +127,8 @@ public class CancelQueryTaskImpl extends TimerTask implements CancelQueryTask {
                                 }
                             }
                             localQueryToCancel.setCancelStatus(CancelStatus.CANCELED_BY_TIMEOUT);
+                        } finally {
+                            localQueryToCancel.getCancelTimeoutLock().unlock();
                         }
                     }
                     // } catch (NullPointerException npe) {

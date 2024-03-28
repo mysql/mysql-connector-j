@@ -23,6 +23,8 @@ package com.mysql.cj.jdbc;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.sql.XAConnection;
 import javax.transaction.xa.XAException;
@@ -32,6 +34,10 @@ import javax.transaction.xa.Xid;
 import com.mysql.cj.conf.PropertyKey;
 
 public class SuspendableXAConnection extends MysqlPooledConnection implements XAConnection, XAResource {
+
+    private static final Lock LOCK = new ReentrantLock();
+
+    private final Lock lock = new ReentrantLock();
 
     protected static SuspendableXAConnection getInstance(JdbcConnection mysqlConnection) throws SQLException {
         return new SuspendableXAConnection(mysqlConnection);
@@ -51,39 +57,54 @@ public class SuspendableXAConnection extends MysqlPooledConnection implements XA
 
     private JdbcConnection underlyingConnection;
 
-    private static synchronized XAConnection findConnectionForXid(JdbcConnection connectionToWrap, Xid xid) throws SQLException {
-        // TODO: check for same GTRID, but different BQUALs...MySQL doesn't allow this yet
-
-        // Note, we don't need to check for XIDs here, because MySQL itself will complain with a XAER_NOTA if need be.
-
-        XAConnection conn = XIDS_TO_PHYSICAL_CONNECTIONS.get(xid);
-
-        if (conn == null) {
-            conn = new MysqlXAConnection(connectionToWrap, connectionToWrap.getPropertySet().getBooleanProperty(PropertyKey.logXaCommands).getValue());
-            XIDS_TO_PHYSICAL_CONNECTIONS.put(xid, conn);
-        }
-
-        return conn;
-    }
-
-    private static synchronized void removeXAConnectionMapping(Xid xid) {
-        XIDS_TO_PHYSICAL_CONNECTIONS.remove(xid);
-    }
-
-    private synchronized void switchToXid(Xid xid) throws XAException {
-        if (xid == null) {
-            throw new XAException();
-        }
-
+    private static XAConnection findConnectionForXid(JdbcConnection connectionToWrap, Xid xid) throws SQLException {
+        LOCK.lock();
         try {
-            if (!xid.equals(this.currentXid)) {
-                XAConnection toSwitchTo = findConnectionForXid(this.underlyingConnection, xid);
-                this.currentXAConnection = toSwitchTo;
-                this.currentXid = xid;
-                this.currentXAResource = toSwitchTo.getXAResource();
+            // TODO: check for same GTRID, but different BQUALs...MySQL doesn't allow this yet
+
+            // Note, we don't need to check for XIDs here, because MySQL itself will complain with a XAER_NOTA if need be.
+
+            XAConnection conn = XIDS_TO_PHYSICAL_CONNECTIONS.get(xid);
+
+            if (conn == null) {
+                conn = new MysqlXAConnection(connectionToWrap, connectionToWrap.getPropertySet().getBooleanProperty(PropertyKey.logXaCommands).getValue());
+                XIDS_TO_PHYSICAL_CONNECTIONS.put(xid, conn);
             }
-        } catch (SQLException sqlEx) {
-            throw new XAException();
+
+            return conn;
+        } finally {
+            LOCK.unlock();
+        }
+    }
+
+    private static void removeXAConnectionMapping(Xid xid) {
+        LOCK.lock();
+        try {
+            XIDS_TO_PHYSICAL_CONNECTIONS.remove(xid);
+        } finally {
+            LOCK.unlock();
+        }
+    }
+
+    private void switchToXid(Xid xid) throws XAException {
+        this.lock.lock();
+        try {
+            if (xid == null) {
+                throw new XAException();
+            }
+
+            try {
+                if (!xid.equals(this.currentXid)) {
+                    XAConnection toSwitchTo = findConnectionForXid(this.underlyingConnection, xid);
+                    this.currentXAConnection = toSwitchTo;
+                    this.currentXid = xid;
+                    this.currentXAResource = toSwitchTo.getXAResource();
+                }
+            } catch (SQLException sqlEx) {
+                throw new XAException();
+            }
+        } finally {
+            this.lock.unlock();
         }
     }
 
@@ -164,12 +185,17 @@ public class SuspendableXAConnection extends MysqlPooledConnection implements XA
     }
 
     @Override
-    public synchronized java.sql.Connection getConnection() throws SQLException {
-        if (this.currentXAConnection == null) {
-            return getConnection(false, true);
-        }
+    public java.sql.Connection getConnection() throws SQLException {
+        this.lock.lock();
+        try {
+            if (this.currentXAConnection == null) {
+                return getConnection(false, true);
+            }
 
-        return this.currentXAConnection.getConnection();
+            return this.currentXAConnection.getConnection();
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     @Override

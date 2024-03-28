@@ -20,8 +20,10 @@
 
 package com.mysql.cj;
 
+import java.util.concurrent.locks.Lock;
+
 public interface CacheAdapterFactory<K, V> {
 
-    CacheAdapter<K, V> getInstance(Object syncMutex, String url, int cacheMaxSize, int maxKeySize);
+    CacheAdapter<K, V> getInstance(Lock lock, String url, int cacheMaxSize, int maxKeySize);
 
 }

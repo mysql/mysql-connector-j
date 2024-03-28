@@ -20,6 +20,9 @@
 
 package com.mysql.cj.protocol.a.result;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import com.mysql.cj.Messages;
 import com.mysql.cj.Session;
 import com.mysql.cj.conf.PropertyKey;
@@ -74,6 +77,7 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
     private ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory;
 
     private NativeMessageBuilder commandBuilder = null;
+    private final Lock lock = new ReentrantLock();
 
     /**
      * Creates a new RowDataDynamic object.
@@ -101,12 +105,12 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
 
     @Override
     public void close() {
-        Object mutex = this.owner != null && this.owner.getSyncMutex() != null ? this.owner.getSyncMutex() : this;
-
         boolean hadMore = false;
         int howMuchMore = 0;
 
-        synchronized (mutex) {
+        Lock localLock = this.owner != null && this.owner.getLock() != null ? this.owner.getLock() : this.lock;
+        localLock.lock();
+        try {
             // drain the rest of the records.
             while (next() != null) {
                 hadMore = true;
@@ -157,6 +161,8 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
                             Messages.getString("RowDataDynamic.1", new String[] { String.valueOf(howMuchMore), this.owner.getPointOfOrigin() }));
                 }
             }
+        } finally {
+            localLock.unlock();
         }
 
         this.metadata = null;

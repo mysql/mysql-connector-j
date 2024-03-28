@@ -22,6 +22,8 @@ package com.mysql.cj.jdbc;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.sql.ConnectionPoolDataSource;
 import javax.sql.PooledConnection;
@@ -34,20 +36,32 @@ public class MysqlConnectionPoolDataSource extends MysqlDataSource implements Co
 
     static final long serialVersionUID = -7767325445592304961L;
 
-    @Override
-    public synchronized PooledConnection getPooledConnection() throws SQLException {
-        Connection connection = getConnection();
-        MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance((JdbcConnection) connection);
+    private final Lock lock = new ReentrantLock();
 
-        return mysqlPooledConnection;
+    @Override
+    public PooledConnection getPooledConnection() throws SQLException {
+        this.lock.lock();
+        try {
+            Connection connection = getConnection();
+            MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance((JdbcConnection) connection);
+
+            return mysqlPooledConnection;
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     @Override
-    public synchronized PooledConnection getPooledConnection(String u, String p) throws SQLException {
-        Connection connection = getConnection(u, p);
-        MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance((JdbcConnection) connection);
+    public PooledConnection getPooledConnection(String u, String p) throws SQLException {
+        this.lock.lock();
+        try {
+            Connection connection = getConnection(u, p);
+            MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance((JdbcConnection) connection);
 
-        return mysqlPooledConnection;
+            return mysqlPooledConnection;
+        } finally {
+            this.lock.unlock();
+        }
     }
 
 }

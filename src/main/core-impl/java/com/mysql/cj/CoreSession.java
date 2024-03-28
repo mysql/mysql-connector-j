@@ -21,6 +21,8 @@
 package com.mysql.cj;
 
 import java.net.SocketAddress;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyKey;
@@ -71,6 +73,8 @@ public abstract class CoreSession implements Session {
     /** The event sink to use for profiling */
     private ProfilerEventHandler eventSink;
 
+    private final Lock lock = new ReentrantLock();
+
     /** The telemetry handler to process telemetry operations */
     private TelemetryHandler telemetryHandler = null;
 
@@ -88,6 +92,11 @@ public abstract class CoreSession implements Session {
         this.maintainTimeStats = getPropertySet().getBooleanProperty(PropertyKey.maintainTimeStats);
 
         this.log = LogFactory.getLogger(getPropertySet().getStringProperty(PropertyKey.logger).getStringValue(), Log.LOGGER_INSTANCE_NAME);
+    }
+
+    @Override
+    public Lock getSessionLock() {
+        return this.lock;
     }
 
     @Override
@@ -168,12 +177,15 @@ public abstract class CoreSession implements Session {
     @Override
     public ProfilerEventHandler getProfilerEventHandler() {
         if (this.eventSink == null) {
-            synchronized (this) {
+            getSessionLock().lock();
+            try {
                 if (this.eventSink == null) { // check again to ensure that other thread didn't set it already
                     this.eventSink = Util.getInstance(ProfilerEventHandler.class,
                             this.propertySet.getStringProperty(PropertyKey.profilerEventHandler).getStringValue(), null, null, this.exceptionInterceptor);
                     this.eventSink.init(this.log);
                 }
+            } finally {
+                getSessionLock().unlock();
             }
         }
         return this.eventSink;

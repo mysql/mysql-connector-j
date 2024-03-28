@@ -22,6 +22,7 @@ package com.mysql.cj;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 
 import com.mysql.cj.protocol.Message;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
@@ -48,7 +49,7 @@ public interface Query {
 
     Session getSession();
 
-    Object getCancelTimeoutMutex();
+    Lock getCancelTimeoutLock();
 
     void resetCancelledState();
 

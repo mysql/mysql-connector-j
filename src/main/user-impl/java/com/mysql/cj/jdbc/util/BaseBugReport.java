@@ -23,6 +23,8 @@ package com.mysql.cj.jdbc.util;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.jdbc.Driver;
 
@@ -76,6 +78,7 @@ public abstract class BaseBugReport {
     private Connection conn;
 
     private Driver driver;
+    private final Lock lock = new ReentrantLock();
 
     /**
      * Constructor for this BugReport, sets up JDBC driver used to create
@@ -187,12 +190,17 @@ public abstract class BaseBugReport {
      * @throws SQLException
      *             if an error is caused while creating the connection.
      */
-    public final synchronized Connection getConnection() throws SQLException {
-        if (this.conn == null || this.conn.isClosed()) {
-            this.conn = getNewConnection();
-        }
+    public final Connection getConnection() throws SQLException {
+        this.lock.lock();
+        try {
+            if (this.conn == null || this.conn.isClosed()) {
+                this.conn = getNewConnection();
+            }
 
-        return this.conn;
+            return this.conn;
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     /**
@@ -204,8 +212,13 @@ public abstract class BaseBugReport {
      * @throws SQLException
      *             if an error is caused while creating the connection.
      */
-    public final synchronized Connection getNewConnection() throws SQLException {
-        return getConnection(getUrl());
+    public final Connection getNewConnection() throws SQLException {
+        this.lock.lock();
+        try {
+            return getConnection(getUrl());
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     /**
@@ -217,8 +230,13 @@ public abstract class BaseBugReport {
      * @throws SQLException
      *             if an error occurs getting the connection.
      */
-    public final synchronized Connection getConnection(String url) throws SQLException {
-        return getConnection(url, null);
+    public final Connection getConnection(String url) throws SQLException {
+        this.lock.lock();
+        try {
+            return getConnection(url, null);
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     /**
@@ -232,11 +250,15 @@ public abstract class BaseBugReport {
      * @throws SQLException
      *             if an error occurs getting the connection.
      */
-    public final synchronized Connection getConnection(String url, Properties props) throws SQLException {
-        // Don't follow this example in your own code
-        // This is to bypass the java.sql.DriverManager
-
-        return this.driver.connect(url, props);
+    public final Connection getConnection(String url, Properties props) throws SQLException {
+        this.lock.lock();
+        try {
+            // Don't follow this example in your own code.
+            // This is to bypass the java.sql.DriverManager.
+            return this.driver.connect(url, props);
+        } finally {
+            this.lock.unlock();
+        }
     }
 
 }

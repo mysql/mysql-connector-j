@@ -25,6 +25,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
@@ -65,6 +67,8 @@ public class MysqlPooledConnection implements PooledConnection {
     private ExceptionInterceptor exceptionInterceptor;
 
     private final Map<StatementEventListener, StatementEventListener> statementEventListeners = new HashMap<>();
+    private final Lock statementEventListenersLock = new ReentrantLock();
+    protected final Lock lock = new ReentrantLock();
 
     /**
      * Construct a new MysqlPooledConnection and set instance variables
@@ -79,52 +83,76 @@ public class MysqlPooledConnection implements PooledConnection {
         this.exceptionInterceptor = this.physicalConn.getExceptionInterceptor();
     }
 
-    @Override
-    public synchronized void addConnectionEventListener(ConnectionEventListener connectioneventlistener) {
-        if (this.connectionEventListeners != null) {
-            this.connectionEventListeners.put(connectioneventlistener, connectioneventlistener);
-        }
+    public Lock getLock() {
+        return this.lock;
     }
 
     @Override
-    public synchronized void removeConnectionEventListener(ConnectionEventListener connectioneventlistener) {
-        if (this.connectionEventListeners != null) {
-            this.connectionEventListeners.remove(connectioneventlistener);
-        }
-    }
-
-    @Override
-    public synchronized Connection getConnection() throws SQLException {
-        return getConnection(true, false);
-    }
-
-    protected synchronized Connection getConnection(boolean resetServerState, boolean forXa) throws SQLException {
-        if (this.physicalConn == null) {
-
-            SQLException sqlException = SQLError.createSQLException(Messages.getString("MysqlPooledConnection.0"), this.exceptionInterceptor);
-            callConnectionEventListeners(CONNECTION_ERROR_EVENT, sqlException);
-
-            throw sqlException;
-        }
-
+    public void addConnectionEventListener(ConnectionEventListener connectioneventlistener) {
+        this.lock.lock();
         try {
-
-            if (this.logicalHandle != null) {
-                ((ConnectionWrapper) this.logicalHandle).close(false);
+            if (this.connectionEventListeners != null) {
+                this.connectionEventListeners.put(connectioneventlistener, connectioneventlistener);
             }
-
-            if (resetServerState) {
-                this.physicalConn.resetServerState();
-            }
-
-            this.logicalHandle = ConnectionWrapper.getInstance(this, this.physicalConn, forXa);
-        } catch (SQLException sqlException) {
-            callConnectionEventListeners(CONNECTION_ERROR_EVENT, sqlException);
-
-            throw sqlException;
+        } finally {
+            this.lock.unlock();
         }
+    }
 
-        return this.logicalHandle;
+    @Override
+    public void removeConnectionEventListener(ConnectionEventListener connectioneventlistener) {
+        this.lock.lock();
+        try {
+            if (this.connectionEventListeners != null) {
+                this.connectionEventListeners.remove(connectioneventlistener);
+            }
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    @Override
+    public Connection getConnection() throws SQLException {
+        this.lock.lock();
+        try {
+            return getConnection(true, false);
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    protected Connection getConnection(boolean resetServerState, boolean forXa) throws SQLException {
+        this.lock.lock();
+        try {
+            if (this.physicalConn == null) {
+
+                SQLException sqlException = SQLError.createSQLException(Messages.getString("MysqlPooledConnection.0"), this.exceptionInterceptor);
+                callConnectionEventListeners(CONNECTION_ERROR_EVENT, sqlException);
+
+                throw sqlException;
+            }
+
+            try {
+
+                if (this.logicalHandle != null) {
+                    ((ConnectionWrapper) this.logicalHandle).close(false);
+                }
+
+                if (resetServerState) {
+                    this.physicalConn.resetServerState();
+                }
+
+                this.logicalHandle = ConnectionWrapper.getInstance(this, this.physicalConn, forXa);
+            } catch (SQLException sqlException) {
+                callConnectionEventListeners(CONNECTION_ERROR_EVENT, sqlException);
+
+                throw sqlException;
+            }
+
+            return this.logicalHandle;
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     /**
@@ -133,20 +161,25 @@ public class MysqlPooledConnection implements PooledConnection {
      * connectionEventListener receives a connectionErrorOccurred event.
      */
     @Override
-    public synchronized void close() throws SQLException {
-        if (this.physicalConn != null) {
-            this.physicalConn.close();
+    public void close() throws SQLException {
+        this.lock.lock();
+        try {
+            if (this.physicalConn != null) {
+                this.physicalConn.close();
 
-            this.physicalConn = null;
+                this.physicalConn = null;
+            }
+
+            if (this.connectionEventListeners != null) {
+                this.connectionEventListeners.clear();
+
+                this.connectionEventListeners = null;
+            }
+
+            this.statementEventListeners.clear();
+        } finally {
+            this.lock.unlock();
         }
-
-        if (this.connectionEventListeners != null) {
-            this.connectionEventListeners.clear();
-
-            this.connectionEventListeners = null;
-        }
-
-        this.statementEventListeners.clear();
     }
 
     /**
@@ -161,25 +194,30 @@ public class MysqlPooledConnection implements PooledConnection {
      * @param sqlException
      *            the exception being thrown
      */
-    protected synchronized void callConnectionEventListeners(int eventType, SQLException sqlException) {
-        if (this.connectionEventListeners == null) {
+    protected void callConnectionEventListeners(int eventType, SQLException sqlException) {
+        this.lock.lock();
+        try {
+            if (this.connectionEventListeners == null) {
 
-            return;
-        }
-
-        Iterator<Map.Entry<ConnectionEventListener, ConnectionEventListener>> iterator = this.connectionEventListeners.entrySet().iterator();
-
-        ConnectionEvent connectionevent = new ConnectionEvent(this, sqlException);
-
-        while (iterator.hasNext()) {
-
-            ConnectionEventListener connectioneventlistener = iterator.next().getValue();
-
-            if (eventType == CONNECTION_CLOSED_EVENT) {
-                connectioneventlistener.connectionClosed(connectionevent);
-            } else if (eventType == CONNECTION_ERROR_EVENT) {
-                connectioneventlistener.connectionErrorOccurred(connectionevent);
+                return;
             }
+
+            Iterator<Map.Entry<ConnectionEventListener, ConnectionEventListener>> iterator = this.connectionEventListeners.entrySet().iterator();
+
+            ConnectionEvent connectionevent = new ConnectionEvent(this, sqlException);
+
+            while (iterator.hasNext()) {
+
+                ConnectionEventListener connectioneventlistener = iterator.next().getValue();
+
+                if (eventType == CONNECTION_CLOSED_EVENT) {
+                    connectioneventlistener.connectionClosed(connectionevent);
+                } else if (eventType == CONNECTION_ERROR_EVENT) {
+                    connectioneventlistener.connectionErrorOccurred(connectionevent);
+                }
+            }
+        } finally {
+            this.lock.unlock();
         }
     }
 
@@ -189,23 +227,32 @@ public class MysqlPooledConnection implements PooledConnection {
 
     @Override
     public void addStatementEventListener(StatementEventListener listener) {
-        synchronized (this.statementEventListeners) {
+        this.statementEventListenersLock.lock();
+        try {
             this.statementEventListeners.put(listener, listener);
+        } finally {
+            this.statementEventListenersLock.unlock();
         }
     }
 
     @Override
     public void removeStatementEventListener(StatementEventListener listener) {
-        synchronized (this.statementEventListeners) {
+        this.statementEventListenersLock.lock();
+        try {
             this.statementEventListeners.remove(listener);
+        } finally {
+            this.statementEventListenersLock.unlock();
         }
     }
 
     void fireStatementEvent(StatementEvent event) throws SQLException {
-        synchronized (this.statementEventListeners) {
+        this.statementEventListenersLock.lock();
+        try {
             for (StatementEventListener listener : this.statementEventListeners.keySet()) {
                 listener.statementClosed(event);
             }
+        } finally {
+            this.statementEventListenersLock.unlock();
         }
     }
 

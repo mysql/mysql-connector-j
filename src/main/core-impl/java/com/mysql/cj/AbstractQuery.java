@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
@@ -51,8 +53,8 @@ public abstract class AbstractQuery implements Query {
     /** The character encoding to use (if available) */
     protected String charEncoding = null;
 
-    /** Mutex to prevent race between returning query results and noticing that query has been timed-out or cancelled. */
-    protected Object cancelTimeoutMutex = new Object();
+    /** Lock to prevent race between returning query results and noticing that query has been timed-out or cancelled. */
+    protected Lock cancelTimeoutLock = new ReentrantLock();
 
     private CancelStatus cancelStatus = CancelStatus.NOT_CANCELED;
 
@@ -82,6 +84,8 @@ public abstract class AbstractQuery implements Query {
 
     /** Query attributes bindings */
     protected QueryAttributesBindings queryAttributesBindings;
+
+    protected final Lock lock = new ReentrantLock();
 
     public AbstractQuery(NativeSession sess) {
         statementCounter++;
@@ -113,25 +117,30 @@ public abstract class AbstractQuery implements Query {
 
     @Override
     public void checkCancelTimeout() {
-        synchronized (this.cancelTimeoutMutex) {
+        this.cancelTimeoutLock.lock();
+        try {
             if (this.cancelStatus != CancelStatus.NOT_CANCELED) {
                 CJException cause = this.cancelStatus == CancelStatus.CANCELED_BY_TIMEOUT ? new CJTimeoutException() : new OperationCancelledException();
                 resetCancelledState();
                 throw cause;
             }
+        } finally {
+            this.cancelTimeoutLock.unlock();
         }
     }
 
     @Override
     public void resetCancelledState() {
-        synchronized (this.cancelTimeoutMutex) {
+        this.cancelTimeoutLock.lock();
+        try {
             this.cancelStatus = CancelStatus.NOT_CANCELED;
+        } finally {
+            this.cancelTimeoutLock.unlock();
         }
     }
 
     @Override
     public <T extends Resultset, M extends Message> ProtocolEntityFactory<T, M> getResultSetFactory() {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -141,8 +150,8 @@ public abstract class AbstractQuery implements Query {
     }
 
     @Override
-    public Object getCancelTimeoutMutex() {
-        return this.cancelTimeoutMutex;
+    public Lock getCancelTimeoutLock() {
+        return this.cancelTimeoutLock;
     }
 
     @Override

@@ -178,20 +178,25 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * Local implementation for the new connection picker.
      */
     @Override
-    synchronized void pickNewConnection() throws SQLException {
-        if (this.isClosed && this.closedExplicitly) {
-            return;
-        }
-
-        if (!isConnected() || readyToFallBackToPrimaryHost()) {
-            try {
-                connectTo(this.primaryHostIndex);
-            } catch (SQLException e) {
-                resetAutoFallBackCounters();
-                failOver(this.primaryHostIndex);
+    void pickNewConnection() throws SQLException {
+        getLock().lock();
+        try {
+            if (this.isClosed && this.closedExplicitly) {
+                return;
             }
-        } else {
-            failOver();
+
+            if (!isConnected() || readyToFallBackToPrimaryHost()) {
+                try {
+                    connectTo(this.primaryHostIndex);
+                } catch (SQLException e) {
+                    resetAutoFallBackCounters();
+                    failOver(this.primaryHostIndex);
+                }
+            } else {
+                failOver();
+            }
+        } finally {
+            getLock().unlock();
         }
     }
 
@@ -205,8 +210,13 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * @throws SQLException
      *             if an error occurs
      */
-    synchronized ConnectionImpl createConnectionForHostIndex(int hostIndex) throws SQLException {
-        return createConnectionForHost(this.hostsList.get(hostIndex));
+    ConnectionImpl createConnectionForHostIndex(int hostIndex) throws SQLException {
+        getLock().lock();
+        try {
+            return createConnectionForHost(this.hostsList.get(hostIndex));
+        } finally {
+            getLock().unlock();
+        }
     }
 
     /**
@@ -217,7 +227,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * @throws SQLException
      *             if an error occurs
      */
-    private synchronized void connectTo(int hostIndex) throws SQLException {
+    private void connectTo(int hostIndex) throws SQLException {
+        getLock().lock();
         try {
             switchCurrentConnectionTo(hostIndex, createConnectionForHostIndex(hostIndex));
         } catch (SQLException e) {
@@ -231,6 +242,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
                 }
             }
             throw e;
+        } finally {
+            getLock().unlock();
         }
     }
 
@@ -244,24 +257,29 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * @throws SQLException
      *             if an error occurs
      */
-    private synchronized void switchCurrentConnectionTo(int hostIndex, JdbcConnection connection) throws SQLException {
-        invalidateCurrentConnection();
+    private void switchCurrentConnectionTo(int hostIndex, JdbcConnection connection) throws SQLException {
+        getLock().lock();
+        try {
+            invalidateCurrentConnection();
 
-        boolean readOnly;
-        if (isPrimaryHostIndex(hostIndex)) {
-            readOnly = this.explicitlyReadOnly == null ? false : this.explicitlyReadOnly;
-        } else if (this.failoverReadOnly) {
-            readOnly = true;
-        } else if (this.explicitlyReadOnly != null) {
-            readOnly = this.explicitlyReadOnly;
-        } else if (this.currentConnection != null) {
-            readOnly = this.currentConnection.isReadOnly();
-        } else {
-            readOnly = false;
+            boolean readOnly;
+            if (isPrimaryHostIndex(hostIndex)) {
+                readOnly = this.explicitlyReadOnly == null ? false : this.explicitlyReadOnly;
+            } else if (this.failoverReadOnly) {
+                readOnly = true;
+            } else if (this.explicitlyReadOnly != null) {
+                readOnly = this.explicitlyReadOnly;
+            } else if (this.currentConnection != null) {
+                readOnly = this.currentConnection.isReadOnly();
+            } else {
+                readOnly = false;
+            }
+            syncSessionState(this.currentConnection, connection, readOnly);
+            this.currentConnection = connection;
+            this.currentHostIndex = hostIndex;
+        } finally {
+            getLock().unlock();
         }
-        syncSessionState(this.currentConnection, connection, readOnly);
-        this.currentConnection = connection;
-        this.currentHostIndex = hostIndex;
     }
 
     /**
@@ -270,8 +288,13 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * @throws SQLException
      *             if an error occurs
      */
-    private synchronized void failOver() throws SQLException {
-        failOver(this.currentHostIndex);
+    private void failOver() throws SQLException {
+        getLock().lock();
+        try {
+            failOver(this.currentHostIndex);
+        } finally {
+            getLock().unlock();
+        }
     }
 
     /**
@@ -283,58 +306,64 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      * @throws SQLException
      *             if an error occurs
      */
-    private synchronized void failOver(int failedHostIdx) throws SQLException {
-        int prevHostIndex = this.currentHostIndex;
-        int nextHostIndex = nextHost(failedHostIdx, false);
-        int firstHostIndexTried = nextHostIndex;
+    private void failOver(int failedHostIdx) throws SQLException {
+        getLock().lock();
+        try {
+            int prevHostIndex = this.currentHostIndex;
+            int nextHostIndex = nextHost(failedHostIdx, false);
+            int firstHostIndexTried = nextHostIndex;
 
-        SQLException lastExceptionCaught = null;
-        int attempts = 0;
-        boolean gotConnection = false;
-        boolean firstConnOrPassedByPrimaryHost = prevHostIndex == NO_CONNECTION_INDEX || isPrimaryHostIndex(prevHostIndex);
-        do {
-            try {
-                firstConnOrPassedByPrimaryHost = firstConnOrPassedByPrimaryHost || isPrimaryHostIndex(nextHostIndex);
+            SQLException lastExceptionCaught = null;
+            int attempts = 0;
+            boolean gotConnection = false;
+            boolean firstConnOrPassedByPrimaryHost = prevHostIndex == NO_CONNECTION_INDEX || isPrimaryHostIndex(prevHostIndex);
+            do {
+                try {
+                    firstConnOrPassedByPrimaryHost = firstConnOrPassedByPrimaryHost || isPrimaryHostIndex(nextHostIndex);
 
-                connectTo(nextHostIndex);
+                    connectTo(nextHostIndex);
 
-                if (firstConnOrPassedByPrimaryHost && connectedToSecondaryHost()) {
-                    resetAutoFallBackCounters();
-                }
-                gotConnection = true;
-
-            } catch (SQLException e) {
-                lastExceptionCaught = e;
-
-                if (shouldExceptionTriggerConnectionSwitch(e)) {
-                    int newNextHostIndex = nextHost(nextHostIndex, attempts > 0);
-
-                    if (newNextHostIndex == firstHostIndexTried && newNextHostIndex == (newNextHostIndex = nextHost(nextHostIndex, true))) { // Full turn
-                        attempts++;
-
-                        try {
-                            Thread.sleep(250);
-                        } catch (InterruptedException ie) {
-                        }
+                    if (firstConnOrPassedByPrimaryHost && connectedToSecondaryHost()) {
+                        resetAutoFallBackCounters();
                     }
+                    gotConnection = true;
 
-                    nextHostIndex = newNextHostIndex;
+                } catch (SQLException e) {
+                    lastExceptionCaught = e;
 
-                } else {
-                    throw e;
+                    if (shouldExceptionTriggerConnectionSwitch(e)) {
+                        int newNextHostIndex = nextHost(nextHostIndex, attempts > 0);
+
+                        if (newNextHostIndex == firstHostIndexTried && newNextHostIndex == (newNextHostIndex = nextHost(nextHostIndex, true))) { // Full turn
+                            attempts++;
+
+                            try {
+                                Thread.sleep(250);
+                            } catch (InterruptedException ie) {
+                            }
+                        }
+
+                        nextHostIndex = newNextHostIndex;
+
+                    } else {
+                        throw e;
+                    }
                 }
-            }
-        } while (attempts < this.retriesAllDown && !gotConnection);
+            } while (attempts < this.retriesAllDown && !gotConnection);
 
-        if (!gotConnection) {
-            throw lastExceptionCaught;
+            if (!gotConnection) {
+                throw lastExceptionCaught;
+            }
+        } finally {
+            getLock().unlock();
         }
     }
 
     /**
      * Falls back to primary host or keep current connection if primary not available.
      */
-    synchronized void fallBackToPrimaryIfAvailable() {
+    void fallBackToPrimaryIfAvailable() {
+        getLock().lock();
         JdbcConnection connection = null;
         try {
             connection = createConnectionForHostIndex(this.primaryHostIndex);
@@ -348,6 +377,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
             }
             // Keep current connection and reset counters
             resetAutoFallBackCounters();
+        } finally {
+            getLock().unlock();
         }
     }
 
@@ -376,8 +407,13 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
     /**
      * Increments counter for query executions.
      */
-    synchronized void incrementQueriesIssuedSinceFailover() {
-        this.queriesIssuedSinceFailover++;
+    void incrementQueriesIssuedSinceFailover() {
+        getLock().lock();
+        try {
+            this.queriesIssuedSinceFailover++;
+        } finally {
+            getLock().unlock();
+        }
     }
 
     /**
@@ -386,8 +422,14 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      *
      * @return true if ready
      */
-    synchronized boolean readyToFallBackToPrimaryHost() {
-        return this.enableFallBackToPrimaryHost && connectedToSecondaryHost() && (secondsBeforeRetryPrimaryHostIsMet() || queriesBeforeRetryPrimaryHostIsMet());
+    boolean readyToFallBackToPrimaryHost() {
+        getLock().lock();
+        try {
+            return this.enableFallBackToPrimaryHost && connectedToSecondaryHost()
+                    && (secondsBeforeRetryPrimaryHostIsMet() || queriesBeforeRetryPrimaryHostIsMet());
+        } finally {
+            getLock().unlock();
+        }
     }
 
     /**
@@ -395,8 +437,13 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      *
      * @return true if there is a connection
      */
-    synchronized boolean isConnected() {
-        return this.currentHostIndex != NO_CONNECTION_INDEX;
+    boolean isConnected() {
+        getLock().lock();
+        try {
+            return this.currentHostIndex != NO_CONNECTION_INDEX;
+        } finally {
+            getLock().unlock();
+        }
     }
 
     /**
@@ -406,8 +453,13 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      *            The host index in the global hosts list.
      * @return true if so
      */
-    synchronized boolean isPrimaryHostIndex(int hostIndex) {
-        return hostIndex == this.primaryHostIndex;
+    boolean isPrimaryHostIndex(int hostIndex) {
+        getLock().lock();
+        try {
+            return hostIndex == this.primaryHostIndex;
+        } finally {
+            getLock().unlock();
+        }
     }
 
     /**
@@ -415,8 +467,13 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      *
      * @return true if so
      */
-    synchronized boolean connectedToPrimaryHost() {
-        return isPrimaryHostIndex(this.currentHostIndex);
+    boolean connectedToPrimaryHost() {
+        getLock().lock();
+        try {
+            return isPrimaryHostIndex(this.currentHostIndex);
+        } finally {
+            getLock().unlock();
+        }
     }
 
     /**
@@ -424,8 +481,13 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      *
      * @return true if so
      */
-    synchronized boolean connectedToSecondaryHost() {
-        return this.currentHostIndex >= 0 && !isPrimaryHostIndex(this.currentHostIndex);
+    boolean connectedToSecondaryHost() {
+        getLock().lock();
+        try {
+            return this.currentHostIndex >= 0 && !isPrimaryHostIndex(this.currentHostIndex);
+        } finally {
+            getLock().unlock();
+        }
     }
 
     /**
@@ -433,8 +495,13 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      *
      * @return value
      */
-    private synchronized boolean secondsBeforeRetryPrimaryHostIsMet() {
-        return this.secondsBeforeRetryPrimaryHost > 0 && Util.secondsSinceMillis(this.primaryHostFailTimeMillis) >= this.secondsBeforeRetryPrimaryHost;
+    private boolean secondsBeforeRetryPrimaryHostIsMet() {
+        getLock().lock();
+        try {
+            return this.secondsBeforeRetryPrimaryHost > 0 && Util.secondsSinceMillis(this.primaryHostFailTimeMillis) >= this.secondsBeforeRetryPrimaryHost;
+        } finally {
+            getLock().unlock();
+        }
     }
 
     /**
@@ -442,16 +509,26 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      *
      * @return value
      */
-    private synchronized boolean queriesBeforeRetryPrimaryHostIsMet() {
-        return this.queriesBeforeRetryPrimaryHost > 0 && this.queriesIssuedSinceFailover >= this.queriesBeforeRetryPrimaryHost;
+    private boolean queriesBeforeRetryPrimaryHostIsMet() {
+        getLock().lock();
+        try {
+            return this.queriesBeforeRetryPrimaryHost > 0 && this.queriesIssuedSinceFailover >= this.queriesBeforeRetryPrimaryHost;
+        } finally {
+            getLock().unlock();
+        }
     }
 
     /**
      * Resets auto-fall back counters.
      */
-    private synchronized void resetAutoFallBackCounters() {
-        this.primaryHostFailTimeMillis = System.currentTimeMillis();
-        this.queriesIssuedSinceFailover = 0;
+    private void resetAutoFallBackCounters() {
+        getLock().lock();
+        try {
+            this.primaryHostFailTimeMillis = System.currentTimeMillis();
+            this.queriesIssuedSinceFailover = 0;
+        } finally {
+            getLock().unlock();
+        }
     }
 
     /**
@@ -461,8 +538,13 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      *             if an error occurs
      */
     @Override
-    synchronized void doClose() throws SQLException {
-        this.currentConnection.close();
+    void doClose() throws SQLException {
+        getLock().lock();
+        try {
+            this.currentConnection.close();
+        } finally {
+            getLock().unlock();
+        }
     }
 
     /**
@@ -472,8 +554,13 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      *             if an error occurs
      */
     @Override
-    synchronized void doAbortInternal() throws SQLException {
-        this.currentConnection.abortInternal();
+    void doAbortInternal() throws SQLException {
+        getLock().lock();
+        try {
+            this.currentConnection.abortInternal();
+        } finally {
+            getLock().unlock();
+        }
     }
 
     /**
@@ -483,8 +570,13 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
      *             if an error occurs
      */
     @Override
-    synchronized void doAbort(Executor executor) throws SQLException {
-        this.currentConnection.abort(executor);
+    void doAbort(Executor executor) throws SQLException {
+        getLock().lock();
+        try {
+            this.currentConnection.abort(executor);
+        } finally {
+            getLock().unlock();
+        }
     }
 
     /*

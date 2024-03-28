@@ -23,6 +23,8 @@ package com.mysql.cj.protocol;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.log.Log;
 
@@ -34,34 +36,25 @@ public class ReadAheadInputStream extends InputStream {
     private final static int DEFAULT_BUFFER_SIZE = 4096;
 
     private InputStream underlyingStream;
-
     private byte buf[];
-
     protected int endOfCurrentData;
-
     protected int currentPosition;
-
     protected boolean doDebug = false;
-
     protected Log log;
+    private final Lock lock = new ReentrantLock();
 
     private void fill(int readAtLeastTheseManyBytes) throws IOException {
         checkClosed();
 
         this.currentPosition = 0; /* no mark: throw away the buffer */
-
         this.endOfCurrentData = this.currentPosition;
 
         // Read at least as many bytes as the caller wants, but don't block to fill the whole buffer (like java.io.BufferdInputStream does)
-
         int bytesToRead = Math.min(this.buf.length - this.currentPosition, readAtLeastTheseManyBytes);
-
         int bytesAvailable = this.underlyingStream.available();
 
         if (bytesAvailable > bytesToRead) {
-
             // Great, there's more available, let's grab those bytes too! (read-ahead)
-
             bytesToRead = Math.min(this.buf.length - this.currentPosition, bytesAvailable);
         }
 
@@ -96,7 +89,6 @@ public class ReadAheadInputStream extends InputStream {
         }
 
         int n = this.underlyingStream.read(this.buf, this.currentPosition, bytesToRead);
-
         if (n > 0) {
             this.endOfCurrentData = n + this.currentPosition;
         }
@@ -119,7 +111,6 @@ public class ReadAheadInputStream extends InputStream {
 
             if (avail <= 0) {
                 debugBuf.append(" not all data available in buffer, must read from stream");
-
                 if (len >= this.buf.length) {
                     debugBuf.append(", amount requested > buffer, returning direct read() from stream");
                 }
@@ -133,68 +124,64 @@ public class ReadAheadInputStream extends InputStream {
         }
 
         if (avail <= 0) {
-
             if (len >= this.buf.length) {
                 return this.underlyingStream.read(b, off, len);
             }
-
             fill(len);
-
             avail = this.endOfCurrentData - this.currentPosition;
-
             if (avail <= 0) {
                 return -1;
             }
         }
 
         int bytesActuallyRead = avail < len ? avail : len;
-
         System.arraycopy(this.buf, this.currentPosition, b, off, bytesActuallyRead);
-
         this.currentPosition += bytesActuallyRead;
 
         return bytesActuallyRead;
     }
 
     @Override
-    public synchronized int read(byte b[], int off, int len) throws IOException {
-        checkClosed(); // Check for closed stream
-        if ((off | len | off + len | b.length - (off + len)) < 0) {
-            throw new IndexOutOfBoundsException();
-        } else if (len == 0) {
-            return 0;
-        }
+    public int read(byte b[], int off, int len) throws IOException {
+        this.lock.lock();
+        try {
+            checkClosed(); // Check for closed stream
+            if ((off | len | off + len | b.length - (off + len)) < 0) {
+                throw new IndexOutOfBoundsException();
+            } else if (len == 0) {
+                return 0;
+            }
 
-        int totalBytesRead = 0;
+            int totalBytesRead = 0;
+            while (true) {
+                int bytesReadThisRound = readFromUnderlyingStreamIfNecessary(b, off + totalBytesRead, len - totalBytesRead);
 
-        while (true) {
-            int bytesReadThisRound = readFromUnderlyingStreamIfNecessary(b, off + totalBytesRead, len - totalBytesRead);
-
-            // end-of-stream?
-            if (bytesReadThisRound <= 0) {
-                if (totalBytesRead == 0) {
-                    totalBytesRead = bytesReadThisRound;
+                // end-of-stream?
+                if (bytesReadThisRound <= 0) {
+                    if (totalBytesRead == 0) {
+                        totalBytesRead = bytesReadThisRound;
+                    }
+                    break;
                 }
 
-                break;
+                totalBytesRead += bytesReadThisRound;
+
+                // Read _at_least_ enough bytes
+                // Nothing to read?
+                if (totalBytesRead >= len || this.underlyingStream.available() <= 0) {
+                    break;
+                }
             }
 
-            totalBytesRead += bytesReadThisRound;
-
-            // Read _at_least_ enough bytes
-            // Nothing to read?
-            if (totalBytesRead >= len || this.underlyingStream.available() <= 0) {
-                break;
-            }
+            return totalBytesRead;
+        } finally {
+            this.lock.unlock();
         }
-
-        return totalBytesRead;
     }
 
     @Override
     public int read() throws IOException {
         checkClosed();
-
         if (this.currentPosition >= this.endOfCurrentData) {
             fill(1);
             if (this.currentPosition >= this.endOfCurrentData) {
@@ -208,7 +195,6 @@ public class ReadAheadInputStream extends InputStream {
     @Override
     public int available() throws IOException {
         checkClosed();
-
         return this.underlyingStream.available() + this.endOfCurrentData - this.currentPosition;
     }
 
@@ -255,9 +241,7 @@ public class ReadAheadInputStream extends InputStream {
         }
 
         long bytesAvailInBuffer = this.endOfCurrentData - this.currentPosition;
-
         if (bytesAvailInBuffer <= 0) {
-
             fill((int) n);
             bytesAvailInBuffer = this.endOfCurrentData - this.currentPosition;
             if (bytesAvailInBuffer <= 0) {

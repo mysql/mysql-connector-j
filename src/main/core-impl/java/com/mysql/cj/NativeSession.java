@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 
 import com.mysql.cj.conf.HostInfo;
@@ -170,11 +171,14 @@ public class NativeSession extends CoreSession implements Serializable {
             }
 
         }
-        synchronized (this) {
+        getSessionLock().lock();
+        try {
             if (this.cancelTimer != null) {
                 this.cancelTimer.cancel();
                 this.cancelTimer = null;
             }
+        } finally {
+            getSessionLock().unlock();
         }
         this.isClosed = true;
         super.quit();
@@ -196,11 +200,14 @@ public class NativeSession extends CoreSession implements Serializable {
             }
             //this.protocol = null; // TODO actually we shouldn't remove protocol instance because some it's methods can be called after closing socket
         }
-        synchronized (this) {
+        getSessionLock().lock();
+        try {
             if (this.cancelTimer != null) {
                 this.cancelTimer.cancel();
                 this.cancelTimer = null;
             }
+        } finally {
+            getSessionLock().unlock();
         }
         this.isClosed = true;
         super.forceClose();
@@ -316,7 +323,6 @@ public class NativeSession extends CoreSession implements Serializable {
 
     /**
      * Returns the packet used for sending data (used by PreparedStatement) with position set to 0.
-     * Guarded by external synchronization on a mutex.
      *
      * @return A packet to send data with
      */
@@ -386,8 +392,9 @@ public class NativeSession extends CoreSession implements Serializable {
         this.protocol.setLocalInfileInputStream(stream);
     }
 
-    private void createConfigCacheIfNeeded(Object syncMutex) {
-        synchronized (syncMutex) {
+    private void createConfigCacheIfNeeded(Lock lock) {
+        lock.lock();
+        try {
             if (this.serverConfigCache != null) {
                 return;
             }
@@ -397,7 +404,7 @@ public class NativeSession extends CoreSession implements Serializable {
             @SuppressWarnings("unchecked")
             CacheAdapterFactory<String, Map<String, String>> cacheFactory = Util.getInstance(CacheAdapterFactory.class, serverConfigCacheFactory, null, null,
                     getExceptionInterceptor());
-            this.serverConfigCache = cacheFactory.getInstance(syncMutex, this.hostInfo.getDatabaseUrl(), Integer.MAX_VALUE, Integer.MAX_VALUE);
+            this.serverConfigCache = cacheFactory.getInstance(lock, this.hostInfo.getDatabaseUrl(), Integer.MAX_VALUE, Integer.MAX_VALUE);
 
             ExceptionInterceptor evictOnCommsError = new ExceptionInterceptor() {
 
@@ -427,6 +434,8 @@ public class NativeSession extends CoreSession implements Serializable {
             } else {
                 ((ExceptionInterceptorChain) this.exceptionInterceptor).addRingZero(evictOnCommsError);
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -434,17 +443,16 @@ public class NativeSession extends CoreSession implements Serializable {
     private final static String SERVER_VERSION_STRING_VAR_NAME = "server_version_string";
 
     /**
-     * Loads the result of 'SHOW VARIABLES' into the serverVariables field so
-     * that the driver can configure itself.
+     * Loads pertinent server variables so that the driver can configure itself.
      *
-     * @param syncMutex
-     *            synchronization mutex
+     * @param lock
+     *            synchronization lock
      * @param version
      *            driver version string
      */
-    public void loadServerVariables(Object syncMutex, String version) {
+    public void loadServerVariables(Lock lock, String version) {
         if (this.cacheServerConfiguration.getValue()) {
-            createConfigCacheIfNeeded(syncMutex);
+            createConfigCacheIfNeeded(lock);
 
             Map<String, String> cachedVariableMap = this.serverConfigCache.get(this.hostInfo.getDatabaseUrl());
 
@@ -755,8 +763,7 @@ public class NativeSession extends CoreSession implements Serializable {
 
     /**
      * Send a query to the server. Returns one of the ResultSet objects.
-     * To ensure that Statement's queries are serialized, calls to this method
-     * should be enclosed in a connection mutex synchronized block.
+     * To ensure that Statement's queries are serialized, calls to this method should be enclosed in a connection locked block.
      *
      * @param <T>
      *            extends {@link Resultset}
@@ -979,11 +986,16 @@ public class NativeSession extends CoreSession implements Serializable {
         return this.protocol != null && this.protocol.getServerSession().useAnsiQuotedIdentifiers() ? "\"" : "`";
     }
 
-    public synchronized Timer getCancelTimer() {
-        if (this.cancelTimer == null) {
-            this.cancelTimer = new Timer("MySQL Statement Cancellation Timer", Boolean.TRUE);
+    public Timer getCancelTimer() {
+        getSessionLock().lock();
+        try {
+            if (this.cancelTimer == null) {
+                this.cancelTimer = new Timer("MySQL Statement Cancellation Timer", Boolean.TRUE);
+            }
+            return this.cancelTimer;
+        } finally {
+            getSessionLock().unlock();
         }
-        return this.cancelTimer;
     }
 
     public void resetSessionState() {

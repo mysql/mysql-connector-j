@@ -24,6 +24,8 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.conf.PropertyKey;
@@ -42,10 +44,11 @@ import com.mysql.cj.protocol.InternalTimestamp;
 public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Timestamp> {
 
     // cached per instance to avoid re-creation on every create*() call
-    private Calendar cal;
+    private final Calendar cal;
 
-    private TimeZone defaultTimeZone;
-    private TimeZone connectionTimeZone;
+    private final TimeZone defaultTimeZone;
+    private final Lock defaultTimeZoneLock = new ReentrantLock();
+    private final TimeZone connectionTimeZone;
 
     /**
      * @param pset
@@ -75,7 +78,8 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
             throw new DataReadException(Messages.getString("ResultSet.InvalidZeroDate"));
         }
 
-        synchronized (this.defaultTimeZone) {
+        this.defaultTimeZoneLock.lock();
+        try {
             Calendar c;
 
             if (this.cal != null) {
@@ -93,6 +97,8 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
             } catch (IllegalArgumentException e) {
                 throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
             }
+        } finally {
+            this.defaultTimeZoneLock.unlock();
         }
     }
 
@@ -107,7 +113,8 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
             throw new DataReadException(Messages.getString("ResultSet.InvalidTimeValue", new Object[] { it.toString() }));
         }
 
-        synchronized (this.defaultTimeZone) {
+        this.defaultTimeZoneLock.lock();
+        try {
             Calendar c;
 
             if (this.cal != null) {
@@ -126,6 +133,8 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
             } catch (IllegalArgumentException e) {
                 throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
             }
+        } finally {
+            this.defaultTimeZoneLock.unlock();
         }
     }
 
@@ -135,7 +144,8 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
             throw new DataReadException(Messages.getString("ResultSet.InvalidZeroDate"));
         }
 
-        synchronized (this.defaultTimeZone) {
+        this.defaultTimeZoneLock.lock();
+        try {
             Calendar c;
 
             if (this.cal != null) {
@@ -156,6 +166,8 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
             } catch (IllegalArgumentException e) {
                 throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
             }
+        } finally {
+            this.defaultTimeZoneLock.unlock();
         }
     }
 
@@ -165,7 +177,8 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
             throw new DataReadException(Messages.getString("ResultSet.InvalidZeroDate"));
         }
 
-        synchronized (this.defaultTimeZone) {
+        this.defaultTimeZoneLock.lock();
+        try {
             Calendar c;
 
             if (this.cal != null) {
@@ -186,6 +199,8 @@ public class SqlTimestampValueFactory extends AbstractDateTimeValueFactory<Times
             } catch (IllegalArgumentException e) {
                 throw ExceptionFactory.createException(WrongArgumentException.class, e.getMessage(), e);
             }
+        } finally {
+            this.defaultTimeZoneLock.unlock();
         }
     }
 

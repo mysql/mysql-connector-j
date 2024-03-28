@@ -20,6 +20,8 @@
 
 package com.mysql.cj.protocol;
 
+import java.util.concurrent.locks.Lock;
+
 import com.mysql.cj.MysqlConnection;
 import com.mysql.cj.Query;
 import com.mysql.cj.Session;
@@ -32,7 +34,7 @@ public interface ResultsetRowsOwner {
 
     Session getSession();
 
-    Object getSyncMutex();
+    Lock getLock();
 
     /**
      * StackTrace generated where ResultSet was created... used when profiling

@@ -29,6 +29,8 @@ import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.Session;
@@ -52,6 +54,7 @@ public class NamedPipeSocketFactory implements SocketFactory {
         private boolean isClosed = false;
 
         private RandomAccessFile namedPipeFile;
+        private final Lock lock = new ReentrantLock();
 
         NamedPipeSocket(String filePath, int timeout) throws IOException {
             if (filePath == null || filePath.length() == 0) {
@@ -85,9 +88,14 @@ public class NamedPipeSocketFactory implements SocketFactory {
          * @see java.net.Socket#close()
          */
         @Override
-        public synchronized void close() throws IOException {
-            this.namedPipeFile.close();
-            this.isClosed = true;
+        public void close() throws IOException {
+            this.lock.lock();
+            try {
+                this.namedPipeFile.close();
+                this.isClosed = true;
+            } finally {
+                this.lock.unlock();
+            }
         }
 
         /**

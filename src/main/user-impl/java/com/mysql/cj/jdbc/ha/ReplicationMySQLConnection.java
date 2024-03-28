@@ -46,8 +46,13 @@ public class ReplicationMySQLConnection extends MultiHostMySQLConnection impleme
     }
 
     @Override
-    public synchronized JdbcConnection getCurrentConnection() {
-        return getThisAsProxy().getCurrentConnection();
+    public JdbcConnection getCurrentConnection() {
+        getLock().lock();
+        try {
+            return getThisAsProxy().getCurrentConnection();
+        } finally {
+            getLock().unlock();
+        }
     }
 
     @Override
@@ -56,8 +61,13 @@ public class ReplicationMySQLConnection extends MultiHostMySQLConnection impleme
     }
 
     @Override
-    public synchronized JdbcConnection getSourceConnection() {
-        return getThisAsProxy().getSourceConnection();
+    public JdbcConnection getSourceConnection() {
+        getLock().lock();
+        try {
+            return getThisAsProxy().getSourceConnection();
+        } finally {
+            getLock().unlock();
+        }
     }
 
     private JdbcConnection getValidatedSourceConnection() {
@@ -90,8 +100,13 @@ public class ReplicationMySQLConnection extends MultiHostMySQLConnection impleme
     }
 
     @Override
-    public synchronized JdbcConnection getReplicaConnection() {
-        return getThisAsProxy().getReplicasConnection();
+    public JdbcConnection getReplicaConnection() {
+        getLock().lock();
+        try {
+            return getThisAsProxy().getReplicasConnection();
+        } finally {
+            getLock().unlock();
+        }
     }
 
     private JdbcConnection getValidatedReplicasConnection() {
@@ -134,47 +149,62 @@ public class ReplicationMySQLConnection extends MultiHostMySQLConnection impleme
     }
 
     @Override
-    public synchronized void ping() throws SQLException {
-        JdbcConnection conn;
+    public void ping() throws SQLException {
+        getLock().lock();
         try {
+            JdbcConnection conn;
+            try {
+                if ((conn = getValidatedSourceConnection()) != null) {
+                    conn.ping();
+                }
+            } catch (SQLException e) {
+                if (isSourceConnection()) {
+                    throw e;
+                }
+            }
+            try {
+                if ((conn = getValidatedReplicasConnection()) != null) {
+                    conn.ping();
+                }
+            } catch (SQLException e) {
+                if (!isSourceConnection()) {
+                    throw e;
+                }
+            }
+        } finally {
+            getLock().unlock();
+        }
+    }
+
+    @Override
+    public void changeUser(String userName, String newPassword) throws SQLException {
+        getLock().lock();
+        try {
+            JdbcConnection conn;
             if ((conn = getValidatedSourceConnection()) != null) {
-                conn.ping();
+                conn.changeUser(userName, newPassword);
             }
-        } catch (SQLException e) {
-            if (isSourceConnection()) {
-                throw e;
-            }
-        }
-        try {
             if ((conn = getValidatedReplicasConnection()) != null) {
-                conn.ping();
+                conn.changeUser(userName, newPassword);
             }
-        } catch (SQLException e) {
-            if (!isSourceConnection()) {
-                throw e;
-            }
+        } finally {
+            getLock().unlock();
         }
     }
 
     @Override
-    public synchronized void changeUser(String userName, String newPassword) throws SQLException {
-        JdbcConnection conn;
-        if ((conn = getValidatedSourceConnection()) != null) {
-            conn.changeUser(userName, newPassword);
-        }
-        if ((conn = getValidatedReplicasConnection()) != null) {
-            conn.changeUser(userName, newPassword);
-        }
-    }
-
-    @Override
-    public synchronized void setStatementComment(String comment) {
-        JdbcConnection conn;
-        if ((conn = getValidatedSourceConnection()) != null) {
-            conn.setStatementComment(comment);
-        }
-        if ((conn = getValidatedReplicasConnection()) != null) {
-            conn.setStatementComment(comment);
+    public void setStatementComment(String comment) {
+        getLock().lock();
+        try {
+            JdbcConnection conn;
+            if ((conn = getValidatedSourceConnection()) != null) {
+                conn.setStatementComment(comment);
+            }
+            if ((conn = getValidatedReplicasConnection()) != null) {
+                conn.setStatementComment(comment);
+            }
+        } finally {
+            getLock().unlock();
         }
     }
 
@@ -236,9 +266,14 @@ public class ReplicationMySQLConnection extends MultiHostMySQLConnection impleme
 
     @Deprecated
     @Override
-    public synchronized void clearHasTriedMaster() {
-        getThisAsProxy().sourceConnection.clearHasTriedMaster();
-        getThisAsProxy().replicasConnection.clearHasTriedMaster();
+    public void clearHasTriedMaster() {
+        getLock().lock();
+        try {
+            getThisAsProxy().sourceConnection.clearHasTriedMaster();
+            getThisAsProxy().replicasConnection.clearHasTriedMaster();
+        } finally {
+            getLock().unlock();
+        }
     }
 
 }

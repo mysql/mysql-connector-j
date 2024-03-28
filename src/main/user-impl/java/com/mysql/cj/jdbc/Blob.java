@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.SQLException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
@@ -54,6 +56,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
     private byte[] binaryData = null;
     private boolean isClosed = false;
     private ExceptionInterceptor exceptionInterceptor;
+    private final Lock lock = new ReentrantLock();
 
     /**
      * Creates a Blob without data
@@ -93,178 +96,257 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
         setBinaryData(data);
     }
 
-    private synchronized byte[] getBinaryData() {
-        return this.binaryData;
-    }
-
-    @Override
-    public synchronized java.io.InputStream getBinaryStream() throws SQLException {
-        checkClosed();
-
-        return new ByteArrayInputStream(getBinaryData());
-    }
-
-    @Override
-    public synchronized byte[] getBytes(long pos, int length) throws SQLException {
-        checkClosed();
-
-        if (pos < 1) {
-            throw SQLError.createSQLException(Messages.getString("Blob.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
-        }
-
-        pos--;
-
-        if (pos > this.binaryData.length) {
-            throw SQLError.createSQLException(Messages.getString("Blob.3"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
-        }
-
-        if (pos + length > this.binaryData.length) {
-            throw SQLError.createSQLException(Messages.getString("Blob.4"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
-        }
-
-        byte[] newData = new byte[length];
-        System.arraycopy(getBinaryData(), (int) pos, newData, 0, length);
-
-        return newData;
-    }
-
-    @Override
-    public synchronized long length() throws SQLException {
-        checkClosed();
-
-        return getBinaryData().length;
-    }
-
-    @Override
-    public synchronized long position(byte[] pattern, long start) throws SQLException {
-        throw SQLError.createSQLFeatureNotSupportedException();
-    }
-
-    @Override
-    public synchronized long position(java.sql.Blob pattern, long start) throws SQLException {
-        checkClosed();
-
-        return position(pattern.getBytes(0, (int) pattern.length()), start);
-    }
-
-    private synchronized void setBinaryData(byte[] newBinaryData) {
-        this.binaryData = newBinaryData;
-    }
-
-    @Override
-    public synchronized OutputStream setBinaryStream(long indexToWriteAt) throws SQLException {
-        checkClosed();
-
-        if (indexToWriteAt < 1) {
-            throw SQLError.createSQLException(Messages.getString("Blob.0"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
-        }
-
-        WatchableOutputStream bytesOut = new WatchableOutputStream();
-        bytesOut.setWatcher(this);
-
-        if (indexToWriteAt > 0) {
-            bytesOut.write(this.binaryData, 0, (int) (indexToWriteAt - 1));
-        }
-
-        return bytesOut;
-    }
-
-    @Override
-    public synchronized int setBytes(long writeAt, byte[] bytes) throws SQLException {
-        checkClosed();
-
-        return setBytes(writeAt, bytes, 0, bytes.length);
-    }
-
-    @Override
-    public synchronized int setBytes(long writeAt, byte[] bytes, int offset, int length) throws SQLException {
-        checkClosed();
-
-        OutputStream bytesOut = setBinaryStream(writeAt);
-
+    private byte[] getBinaryData() {
+        this.lock.lock();
         try {
-            bytesOut.write(bytes, offset, length);
-        } catch (IOException ioEx) {
-            SQLException sqlEx = SQLError.createSQLException(Messages.getString("Blob.1"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
-                    this.exceptionInterceptor);
-            sqlEx.initCause(ioEx);
-
-            throw sqlEx;
+            return this.binaryData;
         } finally {
-            try {
-                bytesOut.close();
-            } catch (IOException doNothing) {
-                // do nothing
+            this.lock.unlock();
+        }
+    }
+
+    @Override
+    public java.io.InputStream getBinaryStream() throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+            return new ByteArrayInputStream(getBinaryData());
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    @Override
+    public byte[] getBytes(long pos, int length) throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+
+            if (pos < 1) {
+                throw SQLError.createSQLException(Messages.getString("Blob.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
+
+            pos--;
+
+            if (pos > this.binaryData.length) {
+                throw SQLError.createSQLException(Messages.getString("Blob.3"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            }
+
+            if (pos + length > this.binaryData.length) {
+                throw SQLError.createSQLException(Messages.getString("Blob.4"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            }
+
+            byte[] newData = new byte[length];
+            System.arraycopy(getBinaryData(), (int) pos, newData, 0, length);
+
+            return newData;
+        } finally {
+            this.lock.unlock();
         }
-
-        return length;
-    }
-
-    public synchronized void streamClosed(byte[] byteData) {
-        this.binaryData = byteData;
-    }
-
-    @Override
-    public synchronized void streamClosed(WatchableStream out) {
-        int streamSize = out.size();
-
-        if (streamSize < this.binaryData.length) {
-            out.write(this.binaryData, streamSize, this.binaryData.length - streamSize);
-        }
-
-        this.binaryData = out.toByteArray();
-    }
-
-    @Override
-    public synchronized void truncate(long len) throws SQLException {
-        checkClosed();
-
-        if (len < 0) {
-            throw SQLError.createSQLException(Messages.getString("Blob.5"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
-        }
-
-        if (len > this.binaryData.length) {
-            throw SQLError.createSQLException(Messages.getString("Blob.6"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
-        }
-
-        // TODO: Do this without copying byte[]s by maintaining some end pointer on the original data
-
-        byte[] newData = new byte[(int) len];
-        System.arraycopy(getBinaryData(), 0, newData, 0, (int) len);
-        this.binaryData = newData;
     }
 
     @Override
-    public synchronized void free() throws SQLException {
-        this.binaryData = null;
-        this.isClosed = true;
+    public long length() throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+
+            return getBinaryData().length;
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     @Override
-    public synchronized InputStream getBinaryStream(long pos, long length) throws SQLException {
-        checkClosed();
-
-        if (pos < 1) {
-            throw SQLError.createSQLException(Messages.getString("Blob.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+    public long position(byte[] pattern, long start) throws SQLException {
+        this.lock.lock();
+        try {
+            throw SQLError.createSQLFeatureNotSupportedException();
+        } finally {
+            this.lock.unlock();
         }
-
-        pos--;
-
-        if (pos > this.binaryData.length) {
-            throw SQLError.createSQLException(Messages.getString("Blob.6"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
-        }
-
-        if (pos + length > this.binaryData.length) {
-            throw SQLError.createSQLException(Messages.getString("Blob.4"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
-        }
-
-        return new ByteArrayInputStream(getBinaryData(), (int) pos, (int) length);
     }
 
-    private synchronized void checkClosed() throws SQLException {
-        if (this.isClosed) {
-            throw SQLError.createSQLException(Messages.getString("Blob.7"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+    @Override
+    public long position(java.sql.Blob pattern, long start) throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+
+            return position(pattern.getBytes(0, (int) pattern.length()), start);
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    private void setBinaryData(byte[] newBinaryData) {
+        this.lock.lock();
+        try {
+            this.binaryData = newBinaryData;
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    @Override
+    public OutputStream setBinaryStream(long indexToWriteAt) throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+
+            if (indexToWriteAt < 1) {
+                throw SQLError.createSQLException(Messages.getString("Blob.0"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            }
+
+            WatchableOutputStream bytesOut = new WatchableOutputStream();
+            bytesOut.setWatcher(this);
+
+            if (indexToWriteAt > 0) {
+                bytesOut.write(this.binaryData, 0, (int) (indexToWriteAt - 1));
+            }
+
+            return bytesOut;
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    @Override
+    public int setBytes(long writeAt, byte[] bytes) throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+
+            return setBytes(writeAt, bytes, 0, bytes.length);
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    @Override
+    public int setBytes(long writeAt, byte[] bytes, int offset, int length) throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+
+            OutputStream bytesOut = setBinaryStream(writeAt);
+
+            try {
+                bytesOut.write(bytes, offset, length);
+            } catch (IOException ioEx) {
+                SQLException sqlEx = SQLError.createSQLException(Messages.getString("Blob.1"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                        this.exceptionInterceptor);
+                sqlEx.initCause(ioEx);
+
+                throw sqlEx;
+            } finally {
+                try {
+                    bytesOut.close();
+                } catch (IOException doNothing) {
+                    // do nothing
+                }
+            }
+
+            return length;
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    public void streamClosed(byte[] byteData) {
+        this.lock.lock();
+        try {
+            this.binaryData = byteData;
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    @Override
+    public void streamClosed(WatchableStream out) {
+        this.lock.lock();
+        try {
+            int streamSize = out.size();
+
+            if (streamSize < this.binaryData.length) {
+                out.write(this.binaryData, streamSize, this.binaryData.length - streamSize);
+            }
+
+            this.binaryData = out.toByteArray();
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    @Override
+    public void truncate(long len) throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+
+            if (len < 0) {
+                throw SQLError.createSQLException(Messages.getString("Blob.5"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            }
+
+            if (len > this.binaryData.length) {
+                throw SQLError.createSQLException(Messages.getString("Blob.6"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            }
+
+            // TODO: Do this without copying byte[]s by maintaining some end pointer on the original data
+
+            byte[] newData = new byte[(int) len];
+            System.arraycopy(getBinaryData(), 0, newData, 0, (int) len);
+            this.binaryData = newData;
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    @Override
+    public void free() throws SQLException {
+        this.lock.lock();
+        try {
+            this.binaryData = null;
+            this.isClosed = true;
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    @Override
+    public InputStream getBinaryStream(long pos, long length) throws SQLException {
+        this.lock.lock();
+        try {
+            checkClosed();
+
+            if (pos < 1) {
+                throw SQLError.createSQLException(Messages.getString("Blob.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            }
+
+            pos--;
+
+            if (pos > this.binaryData.length) {
+                throw SQLError.createSQLException(Messages.getString("Blob.6"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            }
+
+            if (pos + length > this.binaryData.length) {
+                throw SQLError.createSQLException(Messages.getString("Blob.4"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            }
+
+            return new ByteArrayInputStream(getBinaryData(), (int) pos, (int) length);
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    private void checkClosed() throws SQLException {
+        this.lock.lock();
+        try {
+            if (this.isClosed) {
+                throw SQLError.createSQLException(Messages.getString("Blob.7"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+            }
+        } finally {
+            this.lock.unlock();
         }
     }
 

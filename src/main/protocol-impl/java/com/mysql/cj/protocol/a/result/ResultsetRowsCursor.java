@@ -22,6 +22,7 @@ package com.mysql.cj.protocol.a.result;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.Session;
@@ -201,7 +202,9 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
             return;
         }
 
-        synchronized (this.owner.getSyncMutex()) {
+        Lock lock = this.owner.getLock();
+        lock.lock();
+        try {
             Session session = this.owner.getSession();
             TelemetrySpan span = session.getTelemetryHandler().startSpan(TelemetrySpanName.STMT_FETCH_PREPARED);
             try (TelemetryScope scope = span.makeCurrent()) {
@@ -267,6 +270,8 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
             } finally {
                 span.end();
             }
+        } finally {
+            lock.unlock();
         }
     }
 

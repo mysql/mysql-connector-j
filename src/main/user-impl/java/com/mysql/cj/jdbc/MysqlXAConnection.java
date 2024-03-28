@@ -355,10 +355,15 @@ public class MysqlXAConnection extends MysqlPooledConnection implements XAConnec
     }
 
     @Override
-    public synchronized Connection getConnection() throws SQLException {
-        Connection connToWrap = getConnection(false, true);
+    public Connection getConnection() throws SQLException {
+        this.lock.lock();
+        try {
+            Connection connToWrap = getConnection(false, true);
 
-        return connToWrap;
+            return connToWrap;
+        } finally {
+            this.lock.unlock();
+        }
     }
 
 }

@@ -21,6 +21,8 @@
 package com.mysql.cj.protocol.a.result;
 
 import java.util.HashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.Resultset;
@@ -55,6 +57,7 @@ public class NativeResultset implements Resultset {
 
     /** Pointer to current row data */
     protected Row thisRow = null; // Values for current row
+    protected final Lock lock = new ReentrantLock();
 
     public NativeResultset() {
     }
@@ -119,17 +122,27 @@ public class NativeResultset implements Resultset {
     }
 
     @Override
-    public synchronized void setNextResultset(Resultset nextResultset) {
-        this.nextResultset = nextResultset;
+    public void setNextResultset(Resultset nextResultset) {
+        this.lock.lock();
+        try {
+            this.nextResultset = nextResultset;
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     /**
      * @return the nextResultSet, if any, null if none exists.
      */
     @Override
-    public synchronized Resultset getNextResultset() {
-        // read next RS from streamer ?
-        return this.nextResultset;
+    public Resultset getNextResultset() {
+        this.lock.lock();
+        try {
+            // read next RS from streamer ?
+            return this.nextResultset;
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     /**
@@ -137,9 +150,14 @@ public class NativeResultset implements Resultset {
      * Statement.getMoreResults() won't work correctly.
      */
     @Override
-    public synchronized void clearNextResultset() {
-        // TODO release resources of nextResultset, close streamer
-        this.nextResultset = null;
+    public void clearNextResultset() {
+        this.lock.lock();
+        try {
+            // TODO release resources of nextResultset, close streamer
+            this.nextResultset = null;
+        } finally {
+            this.lock.unlock();
+        }
     }
 
     @Override

@@ -98,6 +98,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
@@ -4773,7 +4774,7 @@ public class StatementRegressionTest extends BaseTestCase {
             }
 
             @Override
-            public Object getSyncMutex() {
+            public Lock getLock() {
                 return null;
             }
 

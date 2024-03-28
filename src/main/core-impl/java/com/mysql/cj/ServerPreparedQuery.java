@@ -116,7 +116,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
     public void serverPrepare(String sql) throws IOException {
         this.session.checkClosed();
 
-        synchronized (this.session) {
+        this.session.getSessionLock().lock();
+        try {
             long begin = this.profileSQL ? System.currentTimeMillis() : 0;
 
             NativePacketPayload prepareResultPacket = this.session.getProtocol()
@@ -158,6 +159,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
                     this.session.getProtocol().skipPacket();
                 }
             }
+        } finally {
+            this.session.getSessionLock().unlock();
         }
     }
 
@@ -316,7 +319,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
     }
 
     public <T extends Resultset> T readExecuteResult(NativePacketPayload resultPacket, int maxRowsToRetrieve, boolean createStreamingResultSet,
-            ColumnDefinition metadata, ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory, String queryAsString) { // TODO queryAsString should be shared instead of passed
+            ColumnDefinition metadata, ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory, String queryAsString) {
+        // TODO queryAsString should be shared instead of passed
         try {
             long fetchStartTime = this.profileSQL ? this.session.getCurrentTimeNanosOrMillis() : 0;
 
@@ -381,10 +385,10 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
      *            parameter index
      * @param binding
      *            {@link BindValue containing long data}
-     *
      */
     private void serverLongData(int parameterIndex, BindValue binding) {
-        synchronized (this) {
+        this.lock.lock();
+        try {
             TelemetrySpan span = this.session.getTelemetryHandler().startSpan(TelemetrySpanName.STMT_SEND_LONG_DATA);
             try (TelemetryScope scope = span.makeCurrent()) {
                 String dbOperation = getQueryInfo().getStatementKeyword();
@@ -433,6 +437,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
             } finally {
                 span.end();
             }
+        } finally {
+            this.lock.unlock();
         }
     }
 
@@ -476,7 +482,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
         char[] cBuf = null;
         String clobEncoding = null;
 
-        synchronized (this.session) {
+        this.session.getSessionLock().lock();
+        try {
             if (isStream) {
                 bBuf = new byte[BLOB_STREAM_READ_BUF_SIZE];
             } else {
@@ -548,6 +555,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
                     }
                 }
             }
+        } finally {
+            this.session.getSessionLock().unlock();
         }
     }
 
@@ -570,7 +579,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
 
     public void serverResetStatement() {
         this.session.checkClosed();
-        synchronized (this.session) {
+        this.session.getSessionLock().lock();
+        try {
             TelemetrySpan span = this.session.getTelemetryHandler().startSpan(TelemetrySpanName.STMT_RESET_PREPARED);
             try (TelemetryScope scope = span.makeCurrent()) {
                 String dbOperation = getQueryInfo().getStatementKeyword();
@@ -598,6 +608,8 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
             } finally {
                 span.end();
             }
+        } finally {
+            this.session.getSessionLock().unlock();
         }
     }
 
