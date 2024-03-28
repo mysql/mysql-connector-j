@@ -2020,8 +2020,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException {
         String nativeSql = this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
-        return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, getDatabase(), DEFAULT_RESULT_SET_TYPE,
-                DEFAULT_RESULT_SET_CONCURRENCY);
+        return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, getDatabase(), DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY);
     }
 
     @Override

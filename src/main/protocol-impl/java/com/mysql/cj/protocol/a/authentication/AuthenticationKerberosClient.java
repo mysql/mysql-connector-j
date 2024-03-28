@@ -73,7 +73,7 @@ public class AuthenticationKerberosClient implements AuthenticationPlugin<Native
     private Subject subject = null;
     private String cachedPrincipalName = null;
 
-    private CallbackHandler credentialsCallbackHandler = (cbs) -> {
+    private CallbackHandler credentialsCallbackHandler = cbs -> {
         for (Callback cb : cbs) {
             if (NameCallback.class.isAssignableFrom(cb.getClass())) {
                 ((NameCallback) cb).setName(this.userPrincipalName);

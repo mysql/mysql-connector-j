@@ -88,14 +88,14 @@ public class StreamingSqlResultBuilder implements ResultBuilder<SqlResult> {
             } else if (this.lastEntity != null && this.lastEntity instanceof Field || this.protocol.isSqlResultPending()) {
                 ColumnDefinition cd;
                 if (this.lastEntity != null && this.lastEntity instanceof Field) {
-                    cd = this.protocol.readMetadata((Field) this.lastEntity, (n) -> {
+                    cd = this.protocol.readMetadata((Field) this.lastEntity, n -> {
                         this.statementExecuteOkBuilder.addProtocolEntity(n);
                     });
                     this.lastEntity = null;
                 } else {
                     cd = this.protocol.readMetadata(this.statementExecuteOkBuilder::addProtocolEntity);
                 }
-                return new SqlSingleResult(cd, this.protocol.getServerSession().getDefaultTimeZone(), new XProtocolRowInputStream(cd, this.protocol, (n) -> {
+                return new SqlSingleResult(cd, this.protocol.getServerSession().getDefaultTimeZone(), new XProtocolRowInputStream(cd, this.protocol, n -> {
                     this.statementExecuteOkBuilder.addProtocolEntity(n);
                 }), okReader, this.pset);
             } else {

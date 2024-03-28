@@ -96,7 +96,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
     /**
      * A callback for updating the username from the authentication plugin.
      */
-    private MysqlCallbackHandler callbackHandler = (cb) -> {
+    private MysqlCallbackHandler callbackHandler = cb -> {
         if (cb instanceof UsernameCallback) {
             this.username = ((UsernameCallback) cb).getUsername();
         }

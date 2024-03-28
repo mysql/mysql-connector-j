@@ -96,8 +96,7 @@ public class OpenTelemetryHandler implements TelemetryHandler {
 
     @Override
     public void propagateContext(BiConsumer<String, String> traceparentConsumer) {
-        this.openTelemetry.getPropagators().getTextMapPropagator().inject(Context.current(), traceparentConsumer,
-                (carrier, key, value) -> carrier.accept(key, value));
+        this.openTelemetry.getPropagators().getTextMapPropagator().inject(Context.current(), traceparentConsumer, BiConsumer::accept);
     }
 
 }

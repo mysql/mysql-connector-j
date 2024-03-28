@@ -69,9 +69,9 @@ public class StreamingDocResultBuilder implements ResultBuilder<DocResult> {
             this.metadata = new DefaultColumnDefinition(this.fields.toArray(new Field[] {}));
         }
 
-        this.rowList = entity instanceof Row ? new XProtocolRowInputStream(this.metadata, (Row) entity, this.protocol, (n) -> {
+        this.rowList = entity instanceof Row ? new XProtocolRowInputStream(this.metadata, (Row) entity, this.protocol, n -> {
             this.statementExecuteOkBuilder.addProtocolEntity(n);
-        }) : new XProtocolRowInputStream(this.metadata, this.protocol, (n) -> {
+        }) : new XProtocolRowInputStream(this.metadata, this.protocol, n -> {
             this.statementExecuteOkBuilder.addProtocolEntity(n);
         });
 

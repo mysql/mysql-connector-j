@@ -141,8 +141,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         checkUpdatability();
 
         this.charEncoding = this.session.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
-        this.populateInserterWithDefaultValues = getSession().getPropertySet().getBooleanProperty(PropertyKey.populateInsertRowWithDefaultValues)
-                .getValue();
+        this.populateInserterWithDefaultValues = getSession().getPropertySet().getBooleanProperty(PropertyKey.populateInsertRowWithDefaultValues).getValue();
         this.pedantic = getSession().getPropertySet().getBooleanProperty(PropertyKey.pedantic).getValue();
         this.hasLongColumnInfo = getSession().getServerSession().hasLongColumnInfo();
     }
@@ -998,8 +997,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
             // We're going to copy bytes from refresher results to rowToRefresh, thus we need them to have the same protocol encoding
 
-            this.refresher = ((ResultsetRow) this.thisRow).isBinaryEncoded()
-                    ? (ClientPreparedStatement) getConnection().serverPrepareStatement(this.refreshSQL)
+            this.refresher = ((ResultsetRow) this.thisRow).isBinaryEncoded() ? (ClientPreparedStatement) getConnection().serverPrepareStatement(this.refreshSQL)
                     : (ClientPreparedStatement) getConnection().clientPrepareStatement(this.refreshSQL);
 
             this.refresher.getQueryBindings().setColumnDefinition(getMetadata());

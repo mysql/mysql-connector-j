@@ -10444,7 +10444,7 @@ public class StatementRegressionTest extends BaseTestCase {
     public void testBug87429() throws Exception {
         Field stmtsCacheField = ConnectionImpl.class.getDeclaredField("serverSideStatementCache");
         stmtsCacheField.setAccessible(true);
-        ToIntFunction<Connection> getStmtsCacheSize = (c) -> {
+        ToIntFunction<Connection> getStmtsCacheSize = c -> {
             try {
                 LRUCache<?, ?> stmtsCacheObj = (LRUCache<?, ?>) stmtsCacheField.get(c);
                 return stmtsCacheObj == null ? -1 : stmtsCacheObj.size();
@@ -12491,7 +12491,7 @@ public class StatementRegressionTest extends BaseTestCase {
         props.setProperty(PropertyKey.emulateUnsupportedPstmts.getKeyName(), "true");
         Connection testConn = getConnectionWithProps(props);
 
-        Consumer<String> runQueryAndAssertResults = (query) -> {
+        Consumer<String> runQueryAndAssertResults = query -> {
             try {
                 this.pstmt = testConn.prepareStatement(query);
                 this.pstmt.setInt(1, 1);
@@ -12737,7 +12737,7 @@ public class StatementRegressionTest extends BaseTestCase {
     public void testBug104753() throws Exception {
         createTable("testBug104753", "(id BIGINT NOT NULL, PRIMARY KEY (id))");
 
-        Consumer<Integer> runQuery = (f) -> { // fetchSize
+        Consumer<Integer> runQuery = f -> { // fetchSize
             try {
                 this.pstmt.setFetchSize(f);
                 this.pstmt.execute();

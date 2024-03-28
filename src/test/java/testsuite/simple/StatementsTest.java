@@ -3753,7 +3753,7 @@ public class StatementsTest extends BaseTestCase {
 
         Field stmtsCacheField = ConnectionImpl.class.getDeclaredField("serverSideStatementCache");
         stmtsCacheField.setAccessible(true);
-        ToIntFunction<Connection> getStmtsCacheSize = (c) -> {
+        ToIntFunction<Connection> getStmtsCacheSize = c -> {
             try {
                 LRUCache<?, ?> stmtsCacheObj = (LRUCache<?, ?>) stmtsCacheField.get(c);
                 return stmtsCacheObj == null ? -1 : stmtsCacheObj.size();
@@ -3762,7 +3762,7 @@ public class StatementsTest extends BaseTestCase {
                 return -1;
             }
         };
-        Function<Connection, ServerPreparedStatement> getStmtsCacheSingleElem = (c) -> {
+        Function<Connection, ServerPreparedStatement> getStmtsCacheSingleElem = c -> {
             try {
                 @SuppressWarnings("unchecked")
                 LRUCache<?, ServerPreparedStatement> stmtsCacheObj = (LRUCache<?, ServerPreparedStatement>) stmtsCacheField.get(c);

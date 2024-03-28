@@ -272,8 +272,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             this.packetSender = new SimplePacketSender(this.socketConnection.getMysqlOutput());
             this.packetReader = new SimplePacketReader(this.socketConnection, this.maxAllowedPacket);
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(),
-                    getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(), getPacketReceivedTimeHolder(),
+                    ioEx, getExceptionInterceptor());
         }
 
         if (this.propertySet.getBooleanProperty(PropertyKey.logSlowQueries).getValue()) {
@@ -364,8 +364,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         } catch (FeatureNotAvailableException e) {
             throw new CJConnectionFeatureNotAvailableException(getPropertySet(), this.serverSession, getPacketSentTimeHolder(), e);
         } catch (IOException e) {
-            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(),
-                    getPacketReceivedTimeHolder(), e, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(), getPacketReceivedTimeHolder(),
+                    e, getExceptionInterceptor());
         }
     }
 
@@ -434,8 +434,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
             this.socketConnection.getSocketFactory().afterHandshake();
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(),
-                    getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(), getPacketReceivedTimeHolder(),
+                    ioEx, getExceptionInterceptor());
         }
 
         // Changing defaults for 8.0.3+ server: PNAME_useInformationSchema=true
@@ -594,8 +594,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             return buf;
 
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(),
-                    getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(), getPacketReceivedTimeHolder(),
+                    ioEx, getExceptionInterceptor());
         } catch (OutOfMemoryError oom) {
             throw ExceptionFactory.createException(oom.getMessage(), MysqlErrorNumbers.SQL_STATE_MEMORY_ALLOCATION_ERROR, 0, false, oom,
                     this.exceptionInterceptor);
@@ -610,8 +610,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             return buf;
 
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(),
-                    getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(), getPacketReceivedTimeHolder(),
+                    ioEx, getExceptionInterceptor());
         } catch (OutOfMemoryError oom) {
             throw ExceptionFactory.createException(oom.getMessage(), MysqlErrorNumbers.SQL_STATE_MEMORY_ALLOCATION_ERROR, 0, false, oom,
                     this.exceptionInterceptor);
@@ -639,8 +639,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                 reclaimLargeSharedSendPacket();
             }
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationsException(getPropertySet(), this.serverSession, getPacketSentTimeHolder(),
-                    getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationsException(getPropertySet(), this.serverSession, getPacketSentTimeHolder(), getPacketReceivedTimeHolder(),
+                    ioEx, getExceptionInterceptor());
         }
     }
 
@@ -721,8 +721,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             return returnPacket;
         } catch (IOException ioEx) {
             this.serverSession.preserveOldTransactionState();
-            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(),
-                    getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(), getPacketReceivedTimeHolder(),
+                    ioEx, getExceptionInterceptor());
         } catch (CJException e) {
             this.serverSession.preserveOldTransactionState();
             throw e;
@@ -777,8 +777,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             // Don't wrap CJExceptions
             throw ex;
         } catch (Exception fallThru) {
-            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(),
-                    getPacketReceivedTimeHolder(), fallThru, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(), getPacketReceivedTimeHolder(),
+                    fallThru, getExceptionInterceptor());
         }
 
         checkErrorMessage(resultPacket);
@@ -879,8 +879,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                 continue;
             }
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(),
-                    getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(), getPacketReceivedTimeHolder(),
+                    ioEx, getExceptionInterceptor());
         }
     }
 
@@ -1210,8 +1210,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         try {
             this.packetReader.skipPacket();
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(),
-                    getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(), getPacketReceivedTimeHolder(),
+                    ioEx, getExceptionInterceptor());
         }
     }
 
@@ -1344,8 +1344,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         try {
             return this.socketConnection.getMysqlInput().available() > 0;
         } catch (IOException ioEx) {
-            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(),
-                    getPacketReceivedTimeHolder(), ioEx, getExceptionInterceptor());
+            throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(), getPacketReceivedTimeHolder(),
+                    ioEx, getExceptionInterceptor());
         }
     }
 

@@ -111,7 +111,7 @@ public class AuthenticationLdapSaslClientPlugin implements AuthenticationPlugin<
 
     private boolean firstPass = true;
 
-    private CallbackHandler credentialsCallbackHandler = (cbs) -> {
+    private CallbackHandler credentialsCallbackHandler = cbs -> {
         for (Callback cb : cbs) {
             if (NameCallback.class.isAssignableFrom(cb.getClass())) {
                 ((NameCallback) cb).setName(this.user);
