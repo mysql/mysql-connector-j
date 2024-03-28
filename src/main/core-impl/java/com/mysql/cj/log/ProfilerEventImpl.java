@@ -150,7 +150,7 @@ public class ProfilerEventImpl implements ProfilerEvent {
         StringBuilder buf = new StringBuilder();
         buf.append("[");
 
-        switch (this.getEventType()) {
+        switch (getEventType()) {
             case TYPE_EXECUTE:
                 buf.append("EXECUTE");
                 break;

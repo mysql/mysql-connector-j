@@ -46,7 +46,7 @@ public class OkPacket implements ProtocolEntity {
         String errMsgEnc = session.getCharsetSettings().getErrorMessageEncoding();
 
         OkPacket ok = new OkPacket();
-        buf.setPosition(1); // skips the 'last packet' flag (packet signature) 
+        buf.setPosition(1); // skips the 'last packet' flag (packet signature)
 
         // read OK packet
         ok.setUpdateCount(buf.readInteger(IntegerDataType.INT_LENENC)); // affected_rows

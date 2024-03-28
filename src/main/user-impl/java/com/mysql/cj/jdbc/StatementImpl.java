@@ -569,8 +569,8 @@ public class StatementImpl implements JdbcStatement {
 
             pStmt.setFetchSize(this.query.getResultFetchSize());
 
-            if (this.getQueryTimeout() > 0) {
-                pStmt.setQueryTimeout(this.getQueryTimeout());
+            if (getQueryTimeout() > 0) {
+                pStmt.setQueryTimeout(getQueryTimeout());
             }
 
             if (this.maxRows > -1) {
@@ -648,7 +648,7 @@ public class StatementImpl implements JdbcStatement {
         if (createStreamingResultSet() && netTimeoutForStreamingResults > 0) {
             TelemetrySpan span = this.session.getTelemetryHandler().startSpan(TelemetrySpanName.SET_VARIABLE, "net_write_timeout");
             try (TelemetryScope scope = span.makeCurrent()) {
-                span.setAttribute(TelemetryAttribute.DB_NAME, this.getCurrentDatabase());
+                span.setAttribute(TelemetryAttribute.DB_NAME, getCurrentDatabase());
                 span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_SET);
                 span.setAttribute(TelemetryAttribute.DB_STATEMENT, TelemetryAttribute.OPERATION_SET + TelemetryAttribute.STATEMENT_SUFFIX);
                 span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
@@ -1942,7 +1942,7 @@ public class StatementImpl implements JdbcStatement {
     @Override
     public void setFetchSize(int rows) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            if (rows < 0 && rows != Integer.MIN_VALUE || this.maxRows > 0 && rows > this.getMaxRows()) {
+            if (rows < 0 && rows != Integer.MIN_VALUE || this.maxRows > 0 && rows > getMaxRows()) {
                 throw SQLError.createSQLException(Messages.getString("Statement.7"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 

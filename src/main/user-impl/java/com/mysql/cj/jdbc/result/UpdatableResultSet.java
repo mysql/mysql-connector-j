@@ -141,10 +141,10 @@ public class UpdatableResultSet extends ResultSetImpl {
         checkUpdatability();
 
         this.charEncoding = this.session.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
-        this.populateInserterWithDefaultValues = this.getSession().getPropertySet().getBooleanProperty(PropertyKey.populateInsertRowWithDefaultValues)
+        this.populateInserterWithDefaultValues = getSession().getPropertySet().getBooleanProperty(PropertyKey.populateInsertRowWithDefaultValues)
                 .getValue();
-        this.pedantic = this.getSession().getPropertySet().getBooleanProperty(PropertyKey.pedantic).getValue();
-        this.hasLongColumnInfo = this.getSession().getServerSession().hasLongColumnInfo();
+        this.pedantic = getSession().getPropertySet().getBooleanProperty(PropertyKey.pedantic).getValue();
+        this.hasLongColumnInfo = getSession().getServerSession().hasLongColumnInfo();
     }
 
     @Override
@@ -204,7 +204,7 @@ public class UpdatableResultSet extends ResultSetImpl {
      */
     public void checkUpdatability() throws SQLException {
         try {
-            if (this.getMetadata() == null) {
+            if (getMetadata() == null) {
                 // we've been created to be populated with cached metadata, and we don't have the metadata yet, we'll be called again by
                 // Connection.initializeResultsMetadataFromCache() when the metadata has been made available
 
@@ -216,7 +216,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
             int primaryKeyCount = 0;
 
-            Field[] fields = this.getMetadata().getFields();
+            Field[] fields = getMetadata().getFields();
             // We can only do this if we know that there is a currently selected database, or if we're talking to a > 4.1 version of MySQL server (as it returns
             // database names in field info)
             if (this.db == null || this.db.length() == 0) {
@@ -293,8 +293,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                 return;
             }
 
-            if (this.getSession().getPropertySet().getBooleanProperty(PropertyKey.strictUpdates).getValue()) {
-                java.sql.DatabaseMetaData dbmd = this.getConnection().getMetaData();
+            if (getSession().getPropertySet().getBooleanProperty(PropertyKey.strictUpdates).getValue()) {
+                java.sql.DatabaseMetaData dbmd = getConnection().getMetaData();
 
                 java.sql.ResultSet rs = null;
                 HashMap<String, String> primaryKeyNames = new HashMap<>();
@@ -413,7 +413,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             int numKeys = this.primaryKeyIndices.size();
             for (int i = 0; i < numKeys; i++) {
                 int index = this.primaryKeyIndices.get(i).intValue();
-                this.setParamValue(this.deleter, i + 1, this.thisRow, index, this.getMetadata().getFields()[index]);
+                setParamValue(this.deleter, i + 1, this.thisRow, index, getMetadata().getFields()[index]);
             }
 
             this.deleter.executeUpdate();
@@ -498,8 +498,8 @@ public class UpdatableResultSet extends ResultSetImpl {
     }
 
     private void extractDefaultValues() throws SQLException {
-        java.sql.DatabaseMetaData dbmd = this.getConnection().getMetaData();
-        this.defaultColumnValue = new byte[this.getMetadata().getFields().length][];
+        java.sql.DatabaseMetaData dbmd = getConnection().getMetaData();
+        this.defaultColumnValue = new byte[getMetadata().getFields().length][];
 
         java.sql.ResultSet columnsResultSet = null;
 
@@ -582,7 +582,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         StringBuilder allTablesBuf = new StringBuilder();
         Map<Integer, String> columnIndicesToTable = new HashMap<>();
 
-        Field[] fields = this.getMetadata().getFields();
+        Field[] fields = getMetadata().getFields();
 
         for (int i = 0; i < fields.length; i++) {
             Map<String, Integer> updColumnNameToIndex = null;
@@ -727,7 +727,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.inserter.executeUpdate();
 
             long autoIncrementId = this.inserter.getLastInsertID();
-            Field[] fields = this.getMetadata().getFields();
+            Field[] fields = getMetadata().getFields();
             byte[][] newRow = new byte[fields.length][];
 
             for (int i = 0; i < fields.length; i++) {
@@ -814,8 +814,8 @@ public class UpdatableResultSet extends ResultSetImpl {
                     generateStatements();
                 }
 
-                this.inserter = (ClientPreparedStatement) this.getConnection().clientPrepareStatement(this.insertSQL);
-                this.inserter.getQueryBindings().setColumnDefinition(this.getMetadata());
+                this.inserter = (ClientPreparedStatement) getConnection().clientPrepareStatement(this.insertSQL);
+                this.inserter.getQueryBindings().setColumnDefinition(getMetadata());
 
                 if (this.populateInserterWithDefaultValues) {
                     extractDefaultValues();
@@ -823,7 +823,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             }
             resetInserter();
 
-            Field[] fields = this.getMetadata().getFields();
+            Field[] fields = getMetadata().getFields();
             int numFields = fields.length;
 
             this.onInsertRow = true;
@@ -831,7 +831,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             this.savedCurrentRow = this.thisRow;
             byte[][] newRowData = new byte[numFields][];
             this.thisRow = new ByteArrayRow(newRowData, getExceptionInterceptor());
-            this.thisRow.setMetadata(this.getMetadata());
+            this.thisRow.setMetadata(getMetadata());
 
             for (int i = 0; i < numFields; i++) {
                 if (!this.populateInserterWithDefaultValues) {
@@ -920,7 +920,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
             if (this.useUsageAdvisor) {
                 if (this.deleter == null && this.inserter == null && this.refresher == null && this.updater == null) {
-                    this.eventSink.processEvent(ProfilerEvent.TYPE_USAGE, this.session, this.getOwningStatement(), this, 0, new Throwable(),
+                    this.eventSink.processEvent(ProfilerEvent.TYPE_USAGE, this.session, getOwningStatement(), this, 0, new Throwable(),
                             Messages.getString("UpdatableResultSet.34"));
                 }
             }
@@ -999,10 +999,10 @@ public class UpdatableResultSet extends ResultSetImpl {
             // We're going to copy bytes from refresher results to rowToRefresh, thus we need them to have the same protocol encoding
 
             this.refresher = ((ResultsetRow) this.thisRow).isBinaryEncoded()
-                    ? (ClientPreparedStatement) this.getConnection().serverPrepareStatement(this.refreshSQL)
-                    : (ClientPreparedStatement) this.getConnection().clientPrepareStatement(this.refreshSQL);
+                    ? (ClientPreparedStatement) getConnection().serverPrepareStatement(this.refreshSQL)
+                    : (ClientPreparedStatement) getConnection().clientPrepareStatement(this.refreshSQL);
 
-            this.refresher.getQueryBindings().setColumnDefinition(this.getMetadata());
+            this.refresher.getQueryBindings().setColumnDefinition(getMetadata());
         }
 
         this.refresher.clearParameters();
@@ -1014,7 +1014,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             int index = this.primaryKeyIndices.get(i).intValue();
 
             if (!this.doingUpdates && !this.onInsertRow) {
-                this.setParamValue(this.refresher, i + 1, this.thisRow, index, this.getMetadata().getFields()[index]);
+                setParamValue(this.refresher, i + 1, this.thisRow, index, getMetadata().getFields()[index]);
                 continue;
             }
 
@@ -1022,7 +1022,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
             // Primary keys not set?
             if (updateInsertStmt.isNull(index + 1) || dataFrom.length == 0) {
-                this.setParamValue(this.refresher, i + 1, this.thisRow, index, this.getMetadata().getFields()[index]);
+                setParamValue(this.refresher, i + 1, this.thisRow, index, getMetadata().getFields()[index]);
                 continue;
             }
 
@@ -1071,7 +1071,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     private void resetInserter() throws SQLException {
         this.inserter.clearParameters();
 
-        for (int i = 0; i < this.getMetadata().getFields().length; i++) {
+        for (int i = 0; i < getMetadata().getFields().length; i++) {
             this.inserter.setNull(i + 1, 0);
         }
     }
@@ -1116,11 +1116,11 @@ public class UpdatableResultSet extends ResultSetImpl {
                 generateStatements();
             }
 
-            this.updater = (ClientPreparedStatement) this.getConnection().clientPrepareStatement(this.updateSQL);
-            this.updater.getQueryBindings().setColumnDefinition(this.getMetadata());
+            this.updater = (ClientPreparedStatement) getConnection().clientPrepareStatement(this.updateSQL);
+            this.updater.getQueryBindings().setColumnDefinition(getMetadata());
         }
 
-        Field[] fields = this.getMetadata().getFields();
+        Field[] fields = getMetadata().getFields();
         int numFields = fields.length;
         this.updater.clearParameters();
 
@@ -1150,7 +1150,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         int numKeys = this.primaryKeyIndices.size();
         for (int i = 0; i < numKeys; i++) {
             int idx = this.primaryKeyIndices.get(i).intValue();
-            this.setParamValue(this.updater, numFields + i + 1, this.thisRow, idx, fields[idx]);
+            setParamValue(this.updater, numFields + i + 1, this.thisRow, idx, fields[idx]);
         }
     }
 
@@ -1883,7 +1883,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateNCharacterStream(int columnIndex, Reader x) throws SQLException {
-        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+        String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
             throw new SQLException(Messages.getString("ResultSet.16"));
         }
@@ -1909,7 +1909,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     @Override
     public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+            String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
             if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
                 throw new SQLException(Messages.getString("ResultSet.16"));
             }
@@ -1935,7 +1935,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateNClob(int columnIndex, Reader reader) throws SQLException {
-        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+        String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
             throw new SQLException(Messages.getString("ResultSet.17"));
         }
@@ -1949,7 +1949,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException {
-        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+        String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
             throw new SQLException(Messages.getString("ResultSet.17"));
         }
@@ -1964,7 +1964,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     @Override
     public void updateNClob(int columnIndex, java.sql.NClob nClob) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+            String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
             if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
                 throw new SQLException(Messages.getString("ResultSet.17"));
             }
@@ -1995,7 +1995,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     @Override
     public void updateNString(int columnIndex, String x) throws SQLException {
         synchronized (checkClosed().getConnectionMutex()) {
-            String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+            String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
             if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
                 throw new SQLException(Messages.getString("ResultSet.18"));
             }
@@ -2021,7 +2021,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public Reader getNCharacterStream(int columnIndex) throws SQLException {
-        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+        String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
             throw new SQLException(Messages.getString("ResultSet.11"));
         }
@@ -2036,7 +2036,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public NClob getNClob(int columnIndex) throws SQLException {
-        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+        String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
 
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
             throw new SQLException("Can not call getNClob() when field's charset isn't UTF-8");
@@ -2058,7 +2058,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
     @Override
     public String getNString(int columnIndex) throws SQLException {
-        String fieldEncoding = this.getMetadata().getFields()[columnIndex - 1].getEncoding();
+        String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
 
         if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
             throw new SQLException("Can not call getNString() when field's charset isn't UTF-8");

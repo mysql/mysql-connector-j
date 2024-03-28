@@ -532,7 +532,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
                     if (notice instanceof XSessionStateChanged) {
                         switch (((XSessionStateChanged) notice).getParamType()) {
                             case Notice.SessionStateChanged_CLIENT_ID_ASSIGNED:
-                                this.getServerSession().getCapabilities().setThreadId(((XSessionStateChanged) notice).getValue().getVUnsignedInt());
+                                getServerSession().getCapabilities().setThreadId(((XSessionStateChanged) notice).getValue().getVUnsignedInt());
                                 break;
                             case Notice.SessionStateChanged_ACCOUNT_EXPIRED:
                                 // TODO

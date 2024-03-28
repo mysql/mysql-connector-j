@@ -100,7 +100,7 @@ public class NativeQueryBindings implements QueryBindings {
         newBindings.setBindValues(bvs);
         newBindings.isLoadDataQuery = this.isLoadDataQuery;
         newBindings.sendTypesToServer.set(this.sendTypesToServer.get());
-        newBindings.setLongParameterSwitchDetected(this.isLongParameterSwitchDetected());
+        newBindings.setLongParameterSwitchDetected(isLongParameterSwitchDetected());
         return newBindings;
     }
 

@@ -83,7 +83,7 @@ public abstract class AbstractSocketConnection implements SocketConnection {
 
     @Override
     public boolean isSSLEstablished() {
-        return ExportControlled.enabled() && ExportControlled.isSSLEstablished(this.getMysqlSocket());
+        return ExportControlled.enabled() && ExportControlled.isSSLEstablished(getMysqlSocket());
     }
 
     @Override

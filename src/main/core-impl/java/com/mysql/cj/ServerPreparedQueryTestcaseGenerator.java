@@ -59,14 +59,14 @@ public class ServerPreparedQueryTestcaseGenerator extends ServerPreparedQuery {
     }
 
     private void dumpPrepareForTestcase() {
-        StringBuilder buf = new StringBuilder(this.getOriginalSql().length() + 64);
+        StringBuilder buf = new StringBuilder(getOriginalSql().length() + 64);
 
         this.session.getProtocol().generateQueryCommentBlock(buf);
 
         buf.append("PREPARE debug_stmt_");
         buf.append(this.statementId);
         buf.append(" FROM \"");
-        buf.append(this.getOriginalSql());
+        buf.append(getOriginalSql());
         buf.append("\";\n");
 
         TestUtils.dumpTestcaseQuery(buf.toString());
@@ -82,7 +82,7 @@ public class ServerPreparedQueryTestcaseGenerator extends ServerPreparedQuery {
     private void dumpExecuteForTestcase() {
         StringBuilder buf = new StringBuilder();
 
-        for (int i = 0; i < this.getParameterCount(); i++) {
+        for (int i = 0; i < getParameterCount(); i++) {
             this.session.getProtocol().generateQueryCommentBlock(buf);
 
             buf.append("SET @debug_stmt_param");
@@ -102,9 +102,9 @@ public class ServerPreparedQueryTestcaseGenerator extends ServerPreparedQuery {
         buf.append("EXECUTE debug_stmt_");
         buf.append(this.statementId);
 
-        if (this.getParameterCount() > 0) {
+        if (getParameterCount() > 0) {
             buf.append(" USING ");
-            for (int i = 0; i < this.getParameterCount(); i++) {
+            for (int i = 0; i < getParameterCount(); i++) {
                 if (i > 0) {
                     buf.append(", ");
                 }

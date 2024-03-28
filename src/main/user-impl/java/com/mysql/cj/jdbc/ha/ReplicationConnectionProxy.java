@@ -679,7 +679,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     }
 
     public synchronized void addReplicaHost(String hostPortPair) throws SQLException {
-        if (this.isHostReplica(hostPortPair)) {
+        if (isHostReplica(hostPortPair)) {
             return;
         }
         this.replicaHosts.add(getConnectionUrl().getReplicaHostOrSpawnIsolated(hostPortPair));

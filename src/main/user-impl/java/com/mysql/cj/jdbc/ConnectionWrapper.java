@@ -560,7 +560,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
                 return;
             }
 
-            if (!isInGlobalTx() && this.mc.getPropertySet().getBooleanProperty(PropertyKey.rollbackOnPooledClose).getValue() && !this.getAutoCommit()) {
+            if (!isInGlobalTx() && this.mc.getPropertySet().getBooleanProperty(PropertyKey.rollbackOnPooledClose).getValue() && !getAutoCommit()) {
                 rollback();
             }
 

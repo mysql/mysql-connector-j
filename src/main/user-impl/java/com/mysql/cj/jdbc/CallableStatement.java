@@ -159,7 +159,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
          */
         CallableStatementParamInfo(CallableStatementParamInfo fullParamInfo) {
             this.nativeSql = ((PreparedQuery) CallableStatement.this.query).getOriginalSql();
-            this.dbInUse = CallableStatement.this.getCurrentDatabase();
+            this.dbInUse = getCurrentDatabase();
             this.isFunctionCall = fullParamInfo.isFunctionCall;
             this.fakeParameters = fullParamInfo.fakeParameters;
             @SuppressWarnings("synthetic-access")
@@ -186,7 +186,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             boolean hadRows = paramTypesRs.last();
 
             this.nativeSql = ((PreparedQuery) CallableStatement.this.query).getOriginalSql();
-            this.dbInUse = CallableStatement.this.getCurrentDatabase();
+            this.dbInUse = getCurrentDatabase();
             this.isFunctionCall = CallableStatement.this.callingStoredFunction;
 
             if (hadRows) {

@@ -85,7 +85,7 @@ public class XServerCapabilities implements ServerCapabilities {
     }
 
     public Map<String, List<String>> getCompression() {
-        if (this.hasCapability(KEY_COMPRESSION)) {
+        if (hasCapability(KEY_COMPRESSION)) {
             return this.capabilities.get(KEY_COMPRESSION).getObj().getFldList().stream()
                     .collect(Collectors.toMap(f -> f.getKey().toLowerCase(), f -> f.getValue().getArray().getValueList().stream()
                             .map(v -> v.getScalar().getVString().getValue().toStringUtf8().toLowerCase()).collect(Collectors.toList())));

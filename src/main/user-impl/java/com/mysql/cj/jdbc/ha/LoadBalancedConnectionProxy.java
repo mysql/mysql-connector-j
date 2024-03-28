@@ -301,7 +301,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
         super.invalidateConnection(conn);
 
         // add host to the global blocklist, if enabled
-        if (this.isGlobalBlocklistEnabled()) {
+        if (isGlobalBlocklistEnabled()) {
             String host = this.connectionsToHostsMap.get(conn);
             if (host != null) {
                 addToGlobalBlocklist(host);
@@ -703,7 +703,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      */
     @Deprecated
     public void removeFromGlobalBlacklist(String host) {
-        this.removeFromGlobalBlocklist(host);
+        removeFromGlobalBlocklist(host);
     }
 
     /**
@@ -759,7 +759,7 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
      */
     @Deprecated
     public boolean isGlobalBlacklistEnabled() {
-        return this.isGlobalBlocklistEnabled();
+        return isGlobalBlocklistEnabled();
     }
 
     /**

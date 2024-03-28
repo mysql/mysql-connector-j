@@ -52,11 +52,11 @@ public class DataTruncationException extends CJException {
 
     public DataTruncationException(String message, int index, boolean parameter, boolean read, int dataSize, int transferSize, int vendorErrorCode) {
         super(message);
-        this.setIndex(index);
-        this.setParameter(parameter);
-        this.setRead(read);
-        this.setDataSize(dataSize);
-        this.setTransferSize(transferSize);
+        setIndex(index);
+        setParameter(parameter);
+        setRead(read);
+        setDataSize(dataSize);
+        setTransferSize(transferSize);
         setVendorCode(vendorErrorCode);
     }
 

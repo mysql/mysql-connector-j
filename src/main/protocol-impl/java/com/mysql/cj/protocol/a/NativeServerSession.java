@@ -252,7 +252,7 @@ public class NativeServerSession implements ServerSession {
 
     @Override
     public boolean isVersion(ServerVersion version) {
-        return this.getServerVersion().equals(version);
+        return getServerVersion().equals(version);
     }
 
     /**

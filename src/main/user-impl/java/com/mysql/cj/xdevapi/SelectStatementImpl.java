@@ -42,7 +42,7 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
 
     @Override
     protected RowResult executeStatement() {
-        return this.mysqlxSession.query(this.getMessageBuilder().buildFind(this.filterParams), new StreamingRowResultBuilder(this.mysqlxSession));
+        return this.mysqlxSession.query(getMessageBuilder().buildFind(this.filterParams), new StreamingRowResultBuilder(this.mysqlxSession));
     }
 
     @Override
@@ -52,7 +52,7 @@ public class SelectStatementImpl extends FilterableStatement<SelectStatement, Ro
 
     @Override
     protected RowResult executePreparedStatement() {
-        return this.mysqlxSession.query(this.getMessageBuilder().buildPrepareExecute(this.preparedStatementId, this.filterParams),
+        return this.mysqlxSession.query(getMessageBuilder().buildPrepareExecute(this.preparedStatementId, this.filterParams),
                 new StreamingRowResultBuilder(this.mysqlxSession));
     }
 

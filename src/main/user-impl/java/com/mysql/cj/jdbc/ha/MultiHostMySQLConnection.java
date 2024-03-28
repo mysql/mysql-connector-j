@@ -594,7 +594,7 @@ public class MultiHostMySQLConnection implements JdbcConnection {
 
     @Override
     public boolean isProxySet() {
-        return this.getActiveMySQLConnection().isProxySet();
+        return getActiveMySQLConnection().isProxySet();
     }
 
     @Override

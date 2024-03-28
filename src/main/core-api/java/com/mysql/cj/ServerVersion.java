@@ -76,7 +76,7 @@ public class ServerVersion implements Comparable<ServerVersion> {
             return false;
         }
         ServerVersion another = (ServerVersion) obj;
-        if (this.getMajor() != another.getMajor() || this.getMinor() != another.getMinor() || this.getSubminor() != another.getSubminor()) {
+        if (getMajor() != another.getMajor() || getMinor() != another.getMinor() || getSubminor() != another.getSubminor()) {
             return false;
         }
         return true;

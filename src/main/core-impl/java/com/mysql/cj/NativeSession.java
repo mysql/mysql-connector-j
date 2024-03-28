@@ -132,7 +132,7 @@ public class NativeSession extends CoreSession implements Serializable {
         this.hostInfo = hi;
 
         // reset max-rows to default value
-        this.setSessionMaxRows(-1);
+        setSessionMaxRows(-1);
 
         // TODO do we need different types of physical connections?
         SocketConnection socketConnection = new NativeSocketConnection();
@@ -153,7 +153,7 @@ public class NativeSession extends CoreSession implements Serializable {
 
         this.isClosed = false;
 
-        this.commandBuilder = new NativeMessageBuilder(this.getServerSession().supportsQueryAttributes());
+        this.commandBuilder = new NativeMessageBuilder(getServerSession().supportsQueryAttributes());
     }
 
     // TODO: this method should not be used in user-level APIs

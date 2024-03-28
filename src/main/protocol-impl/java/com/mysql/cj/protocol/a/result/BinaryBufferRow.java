@@ -136,7 +136,7 @@ public class BinaryBufferRow extends AbstractBufferRow {
     public byte[] getBytes(int index) {
         findAndSeekToOffset(index);
 
-        if (this.getNull(index)) {
+        if (getNull(index)) {
             return null;
         }
 

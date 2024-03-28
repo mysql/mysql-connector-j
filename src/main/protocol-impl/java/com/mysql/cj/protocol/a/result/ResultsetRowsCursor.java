@@ -107,7 +107,7 @@ public class ResultsetRowsCursor extends AbstractResultsetRows implements Result
 
     @Override
     public boolean isEmpty() {
-        return this.isBeforeFirst() && this.isAfterLast();
+        return isBeforeFirst() && isAfterLast();
     }
 
     @Override

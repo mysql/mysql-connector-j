@@ -51,7 +51,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 
         allowList.removeAll(blockList.keySet());
 
-        Map<String, Integer> allowListMap = this.getArrayIndexMap(allowList);
+        Map<String, Integer> allowListMap = getArrayIndexMap(allowList);
 
         for (int attempts = 0; attempts < numRetries;) {
             int random = (int) Math.floor(Math.random() * allowList.size());
@@ -76,7 +76,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
                         // exclude this host from being picked again
                         if (allowListIndex != null) {
                             allowList.remove(allowListIndex.intValue());
-                            allowListMap = this.getArrayIndexMap(allowList);
+                            allowListMap = getArrayIndexMap(allowList);
                         }
                         ((LoadBalancedConnectionProxy) proxy).addToGlobalBlocklist(hostPortSpec);
 
@@ -93,7 +93,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
                             blockList = ((LoadBalancedConnectionProxy) proxy).getGlobalBlocklist();
 
                             allowList.removeAll(blockList.keySet());
-                            allowListMap = this.getArrayIndexMap(allowList);
+                            allowListMap = getArrayIndexMap(allowList);
                         }
 
                         continue;

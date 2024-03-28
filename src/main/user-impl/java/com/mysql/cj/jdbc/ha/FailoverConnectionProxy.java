@@ -84,8 +84,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
 
             boolean isExecute = methodName.startsWith("execute");
 
-            if (FailoverConnectionProxy.this.connectedToSecondaryHost() && isExecute) {
-                FailoverConnectionProxy.this.incrementQueriesIssuedSinceFailover();
+            if (connectedToSecondaryHost() && isExecute) {
+                incrementQueriesIssuedSinceFailover();
             }
 
             Object result = super.invoke(proxy, method, args);

@@ -141,7 +141,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public JdbcConnection getMultiHostSafeProxy() {
-        return this.getProxy();
+        return getProxy();
     }
 
     @Override
@@ -450,7 +450,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
                 unSafeQueryInterceptors();
 
-                AbandonedConnectionCleanupThread.trackConnection(this, this.getSession().getNetworkResources());
+                AbandonedConnectionCleanupThread.trackConnection(this, getSession().getNetworkResources());
 
                 SocketAddress socketAddress = this.session.getRemoteSocketAddress();
                 if (InetSocketAddress.class.isInstance(socketAddress)) {
@@ -1300,7 +1300,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
         this.session.setSessionVariables();
 
-        this.session.loadServerVariables(this.getConnectionMutex(), this.dbmd.getDriverVersion());
+        this.session.loadServerVariables(getConnectionMutex(), this.dbmd.getDriverVersion());
 
         this.autoIncrementIncrement = this.session.getServerSession().getServerVariable("auto_increment_increment", 1);
 
@@ -1725,7 +1725,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public void realClose(boolean calledExplicitly, boolean issueRollback, boolean skipLocalTeardown, Throwable reason) throws SQLException {
         SQLException sqlEx = null;
 
-        if (this.isClosed()) {
+        if (isClosed()) {
             return;
         }
 
@@ -2020,7 +2020,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException {
         String nativeSql = this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
-        return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getDatabase(), DEFAULT_RESULT_SET_TYPE,
+        return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, getDatabase(), DEFAULT_RESULT_SET_TYPE,
                 DEFAULT_RESULT_SET_CONCURRENCY);
     }
 
@@ -2028,7 +2028,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException {
         String nativeSql = this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
-        ClientPreparedStatement pStmt = ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getDatabase(), DEFAULT_RESULT_SET_TYPE,
+        ClientPreparedStatement pStmt = ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, getDatabase(), DEFAULT_RESULT_SET_TYPE,
                 DEFAULT_RESULT_SET_CONCURRENCY);
 
         pStmt.setRetrieveGeneratedKeys(autoGenKeyIndex == java.sql.Statement.RETURN_GENERATED_KEYS);
@@ -2040,7 +2040,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         String nativeSql = this.processEscapeCodesForPrepStmts.getValue() ? nativeSQL(sql) : sql;
 
-        return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, this.getDatabase(), resultSetType, resultSetConcurrency);
+        return ServerPreparedStatement.getInstance(getMultiHostSafeProxy(), nativeSql, getDatabase(), resultSetType, resultSetConcurrency);
     }
 
     @Override
@@ -2549,7 +2549,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public boolean isServerLocal() throws SQLException {
         synchronized (getConnectionMutex()) {
             try {
-                return this.session.isServerLocal(this.getSession());
+                return this.session.isServerLocal(getSession());
             } catch (CJException ex) {
                 SQLException sqlEx = SQLExceptionsMapping.translateException(ex, getExceptionInterceptor());
                 throw sqlEx;
