@@ -246,17 +246,6 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         return this.currentConnection != null && this.currentConnection == this.replicasConnection;
     }
 
-    /**
-     * Use {@link #isReplicasConnection()} instead.
-     *
-     * @return true if it's a replicas connection
-     * @deprecated
-     */
-    @Deprecated
-    public boolean isSlavesConnection() {
-        return isReplicasConnection();
-    }
-
     @Override
     void pickNewConnection() throws SQLException {
         // no-op
@@ -536,22 +525,6 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         }
     }
 
-    /**
-     * Use {@link #getSourceConnection()} instead.
-     *
-     * @return {@link JdbcConnection}
-     * @deprecated
-     */
-    @Deprecated
-    public JdbcConnection getMasterConnection() {
-        getLock().lock();
-        try {
-            return getSourceConnection();
-        } finally {
-            getLock().unlock();
-        }
-    }
-
     public void promoteReplicaToSource(String hostPortPair) throws SQLException {
         getLock().lock();
         try {
@@ -574,24 +547,6 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         }
     }
 
-    /**
-     * Use {@link #promoteReplicaToSource(String)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public void promoteSlaveToMaster(String hostPortPair) throws SQLException {
-        getLock().lock();
-        try {
-            promoteReplicaToSource(hostPortPair);
-        } finally {
-            getLock().unlock();
-        }
-    }
-
     public void removeSourceHost(String hostPortPair) throws SQLException {
         getLock().lock();
         try {
@@ -601,48 +556,10 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         }
     }
 
-    /**
-     * Use {@link #removeSourceHost(String)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public void removeMasterHost(String hostPortPair) throws SQLException {
-        getLock().lock();
-        try {
-            removeSourceHost(hostPortPair);
-        } finally {
-            getLock().unlock();
-        }
-    }
-
     public void removeSourceHost(String hostPortPair, boolean waitUntilNotInUse) throws SQLException {
         getLock().lock();
         try {
             this.removeSourceHost(hostPortPair, waitUntilNotInUse, false);
-        } finally {
-            getLock().unlock();
-        }
-    }
-
-    /**
-     * Use {@link #removeSourceHost(String, boolean)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @param waitUntilNotInUse
-     *            remove only when not in use
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public void removeMasterHost(String hostPortPair, boolean waitUntilNotInUse) throws SQLException {
-        getLock().lock();
-        try {
-            removeSourceHost(hostPortPair, waitUntilNotInUse);
         } finally {
             getLock().unlock();
         }
@@ -686,28 +603,6 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         }
     }
 
-    /**
-     * Use {@link #removeSourceHost(String, boolean, boolean)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @param waitUntilNotInUse
-     *            remove only when not in use
-     * @param isNowReplica
-     *            place to replicas
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public void removeMasterHost(String hostPortPair, boolean waitUntilNotInUse, boolean isNowReplica) throws SQLException {
-        getLock().lock();
-        try {
-            removeSourceHost(hostPortPair, waitUntilNotInUse, isNowReplica);
-        } finally {
-            getLock().unlock();
-        }
-    }
-
     public boolean isHostSource(String hostPortPair) {
         if (hostPortPair == null) {
             return false;
@@ -715,39 +610,10 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         return this.sourceHosts.stream().anyMatch(hi -> hostPortPair.equalsIgnoreCase(hi.getHostPortPair()));
     }
 
-    /**
-     * Use {@link #isHostSource(String)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @return true if it's a source host
-     * @deprecated
-     */
-    @Deprecated
-    public boolean isHostMaster(String hostPortPair) {
-        return isHostSource(hostPortPair);
-    }
-
     public JdbcConnection getReplicasConnection() {
         getLock().lock();
         try {
             return this.replicasConnection;
-        } finally {
-            getLock().unlock();
-        }
-    }
-
-    /**
-     * Use {@link #getReplicasConnection()} instead.
-     *
-     * @return {@link JdbcConnection}
-     * @deprecated
-     */
-    @Deprecated
-    public JdbcConnection getSlavesConnection() {
-        getLock().lock();
-        try {
-            return getReplicasConnection();
         } finally {
             getLock().unlock();
         }
@@ -772,46 +638,10 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         }
     }
 
-    /**
-     * Use {@link #addReplicaHost(String)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public void addSlaveHost(String hostPortPair) throws SQLException {
-        getLock().lock();
-        try {
-            addReplicaHost(hostPortPair);
-        } finally {
-            getLock().unlock();
-        }
-    }
-
     public void removeReplica(String hostPortPair) throws SQLException {
         getLock().lock();
         try {
             removeReplica(hostPortPair, true);
-        } finally {
-            getLock().unlock();
-        }
-    }
-
-    /**
-     * Use {@link #removeReplica(String)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public void removeSlave(String hostPortPair) throws SQLException {
-        getLock().lock();
-        try {
-            removeReplica(hostPortPair);
         } finally {
             getLock().unlock();
         }
@@ -854,44 +684,11 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         }
     }
 
-    /**
-     * Use {@link #removeReplica(String, boolean)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @param closeGently
-     *            option
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public void removeSlave(String hostPortPair, boolean closeGently) throws SQLException {
-        getLock().lock();
-        try {
-            removeReplica(hostPortPair, closeGently);
-        } finally {
-            getLock().unlock();
-        }
-    }
-
     public boolean isHostReplica(String hostPortPair) {
         if (hostPortPair == null) {
             return false;
         }
         return this.replicaHosts.stream().anyMatch(hi -> hostPortPair.equalsIgnoreCase(hi.getHostPortPair()));
-    }
-
-    /**
-     * Use {@link #isHostReplica(String)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @return true if it's a replica
-     * @deprecated
-     */
-    @Deprecated
-    public boolean isHostSlave(String hostPortPair) {
-        return isHostReplica(hostPortPair);
     }
 
     public void setReadOnly(boolean readOnly) throws SQLException {

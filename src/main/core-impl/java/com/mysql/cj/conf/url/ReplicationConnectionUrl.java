@@ -39,10 +39,6 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
 
     private static final String TYPE_SOURCE = "SOURCE";
     private static final String TYPE_REPLICA = "REPLICA";
-    @Deprecated
-    private static final String TYPE_SOURCE_DEPRECATED = "MASTER";
-    @Deprecated
-    private static final String TYPE_REPLICA_DEPRECATED = "SLAVE";
 
     private List<HostInfo> sourceHosts = new ArrayList<>();
     private List<HostInfo> replicaHosts = new ArrayList<>();
@@ -64,11 +60,9 @@ public class ReplicationConnectionUrl extends ConnectionUrl {
         for (HostInfo hi : this.hosts) {
             Map<String, String> hostProperties = hi.getHostProperties();
             if (hostProperties.containsKey(PropertyKey.TYPE.getKeyName())) {
-                if (TYPE_SOURCE.equalsIgnoreCase(hostProperties.get(PropertyKey.TYPE.getKeyName()))
-                        || TYPE_SOURCE_DEPRECATED.equalsIgnoreCase(hostProperties.get(PropertyKey.TYPE.getKeyName()))) {
+                if (TYPE_SOURCE.equalsIgnoreCase(hostProperties.get(PropertyKey.TYPE.getKeyName()))) {
                     this.sourceHosts.add(hi);
-                } else if (TYPE_REPLICA.equalsIgnoreCase(hostProperties.get(PropertyKey.TYPE.getKeyName()))
-                        || TYPE_REPLICA_DEPRECATED.equalsIgnoreCase(hostProperties.get(PropertyKey.TYPE.getKeyName()))) {
+                } else if (TYPE_REPLICA.equalsIgnoreCase(hostProperties.get(PropertyKey.TYPE.getKeyName()))) {
                     this.replicaHosts.add(hi);
                 } else {
                     undefinedHosts.add(hi);

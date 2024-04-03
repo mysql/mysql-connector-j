@@ -81,30 +81,8 @@ public class ReplicationConnectionGroup {
         return this.sourceHostList;
     }
 
-    /**
-     * Use {@link #getSourceHosts()} instead.
-     *
-     * @return source hosts
-     * @deprecated
-     */
-    @Deprecated
-    public Collection<String> getMasterHosts() {
-        return getSourceHosts();
-    }
-
     public Collection<String> getReplicaHosts() {
         return this.replicaHostList;
-    }
-
-    /**
-     * Use {@link #getReplicaHosts()} instead.
-     *
-     * @return replica hosts
-     * @deprecated
-     */
-    @Deprecated
-    public Collection<String> getSlaveHosts() {
-        return getReplicaHosts();
     }
 
     /**
@@ -132,19 +110,6 @@ public class ReplicationConnectionGroup {
                 c.addReplicaHost(hostPortPair);
             }
         }
-    }
-
-    /**
-     * Use {@link #addReplicaHost(String)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public void addSlaveHost(String hostPortPair) throws SQLException {
-        addReplicaHost(hostPortPair);
     }
 
     public void handleCloseConnection(ReplicationConnection conn) {
@@ -181,21 +146,6 @@ public class ReplicationConnectionGroup {
     }
 
     /**
-     * Use {@link #removeReplicaHost(String, boolean)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @param closeGently
-     *            option
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public void removeSlaveHost(String hostPortPair, boolean closeGently) throws SQLException {
-        removeReplicaHost(hostPortPair, closeGently);
-    }
-
-    /**
      * Promotes a replica host to source.
      *
      * We can safely assume that if this host was removed from the replicas list or added to the sources list, then the same host promotion must happen in each
@@ -223,19 +173,6 @@ public class ReplicationConnectionGroup {
     }
 
     /**
-     * Use {@link #promoteReplicaToSource(String)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public void promoteSlaveToMaster(String hostPortPair) throws SQLException {
-        promoteReplicaToSource(hostPortPair);
-    }
-
-    /**
      * Removes a host from the sources hosts list.
      *
      * @param hostPortPair
@@ -245,19 +182,6 @@ public class ReplicationConnectionGroup {
      */
     public void removeSourceHost(String hostPortPair) throws SQLException {
         this.removeSourceHost(hostPortPair, true);
-    }
-
-    /**
-     * Use {@link #removeSourceHost(String)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public void removeMasterHost(String hostPortPair) throws SQLException {
-        removeSourceHost(hostPortPair);
     }
 
     /**
@@ -286,21 +210,6 @@ public class ReplicationConnectionGroup {
         }
     }
 
-    /**
-     * Use {@link #removeSourceHost(String, boolean)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @param closeGently
-     *            option
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public void removeMasterHost(String hostPortPair, boolean closeGently) throws SQLException {
-        removeSourceHost(hostPortPair, closeGently);
-    }
-
     public int getConnectionCountWithHostAsReplica(String hostPortPair) {
         int matched = 0;
 
@@ -310,19 +219,6 @@ public class ReplicationConnectionGroup {
             }
         }
         return matched;
-    }
-
-    /**
-     * Use {@link #getConnectionCountWithHostAsReplica(String)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @return count
-     * @deprecated
-     */
-    @Deprecated
-    public int getConnectionCountWithHostAsSlave(String hostPortPair) {
-        return getConnectionCountWithHostAsReplica(hostPortPair);
     }
 
     public int getConnectionCountWithHostAsSource(String hostPortPair) {
@@ -336,62 +232,16 @@ public class ReplicationConnectionGroup {
         return matched;
     }
 
-    /**
-     * Use {@link #getConnectionCountWithHostAsSource(String)} instead.
-     *
-     * @param hostPortPair
-     *            host:port
-     * @return count
-     * @deprecated
-     */
-    @Deprecated
-    public int getConnectionCountWithHostAsMaster(String hostPortPair) {
-        return getConnectionCountWithHostAsSource(hostPortPair);
-    }
-
     public long getNumberOfReplicasAdded() {
         return this.replicasAdded;
-    }
-
-    /**
-     * Use {@link #getNumberOfReplicasAdded()} instead.
-     *
-     * @return count
-     * @deprecated
-     */
-    @Deprecated
-    public long getNumberOfSlavesAdded() {
-        return getNumberOfReplicasAdded();
     }
 
     public long getNumberOfReplicasRemoved() {
         return this.replicasRemoved;
     }
 
-    /**
-     * Use {@link #getNumberOfReplicasRemoved()} instead.
-     *
-     * @return count
-     * @deprecated
-     */
-    @Deprecated
-    public long getNumberOfSlavesRemoved() {
-        return getNumberOfReplicasRemoved();
-    }
-
     public long getNumberOfReplicaPromotions() {
         return this.replicasPromoted;
-    }
-
-    /**
-     * Use {@link #getNumberOfReplicaPromotions()} instead.
-     *
-     * @return count
-     * @deprecated
-     */
-    @Deprecated
-    public long getNumberOfSlavePromotions() {
-        return getNumberOfReplicaPromotions();
     }
 
     public long getTotalConnectionCount() {

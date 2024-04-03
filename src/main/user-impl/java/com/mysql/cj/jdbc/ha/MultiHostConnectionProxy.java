@@ -303,17 +303,6 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
     abstract boolean isSourceConnection();
 
     /**
-     * Use {@link #isSourceConnection()} instead.
-     *
-     * @return boolean
-     * @deprecated
-     */
-    @Deprecated
-    boolean isMasterConnection() {
-        return isSourceConnection();
-    }
-
-    /**
      * Invalidates the current connection.
      *
      * @throws SQLException

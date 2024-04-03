@@ -79,38 +79,8 @@ public class ReplicationConnectionGroupManager {
         }
     }
 
-    /**
-     * Use {@link #addReplicaHost(String, String)} instead.
-     *
-     * @param group
-     *            group name
-     * @param hostPortPair
-     *            host:port
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public static void addSlaveHost(String group, String hostPortPair) throws SQLException {
-        addReplicaHost(group, hostPortPair);
-    }
-
     public static void removeReplicaHost(String group, String hostPortPair) throws SQLException {
         removeReplicaHost(group, hostPortPair, true);
-    }
-
-    /**
-     * Use {@link #removeReplicaHost(String, String)} instead.
-     *
-     * @param group
-     *            group name
-     * @param hostPortPair
-     *            host:port
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public static void removeSlaveHost(String group, String hostPortPair) throws SQLException {
-        removeReplicaHost(group, hostPortPair);
     }
 
     public static void removeReplicaHost(String group, String hostPortPair, boolean closeGently) throws SQLException {
@@ -120,43 +90,11 @@ public class ReplicationConnectionGroupManager {
         }
     }
 
-    /**
-     * Use {@link #removeReplicaHost(String, String, boolean)} instead.
-     *
-     * @param group
-     *            group name
-     * @param hostPortPair
-     *            host:port
-     * @param closeGently
-     *            option
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public static void removeSlaveHost(String group, String hostPortPair, boolean closeGently) throws SQLException {
-        removeReplicaHost(group, hostPortPair, closeGently);
-    }
-
     public static void promoteReplicaToSource(String group, String hostPortPair) throws SQLException {
         Collection<ReplicationConnectionGroup> s = getGroupsMatching(group);
         for (ReplicationConnectionGroup cg : s) {
             cg.promoteReplicaToSource(hostPortPair);
         }
-    }
-
-    /**
-     * Use {@link #promoteReplicaToSource(String, String)} instead.
-     *
-     * @param group
-     *            group name
-     * @param hostPortPair
-     *            host:port
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public static void promoteSlaveToMaster(String group, String hostPortPair) throws SQLException {
-        promoteReplicaToSource(group, hostPortPair);
     }
 
     public static long getReplicaPromotionCount(String group) throws SQLException {
@@ -171,37 +109,8 @@ public class ReplicationConnectionGroupManager {
         return promoted;
     }
 
-    /**
-     * Use {@link #getReplicaPromotionCount(String)} instead.
-     *
-     * @param group
-     *            group name
-     * @return count
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public static long getSlavePromotionCount(String group) throws SQLException {
-        return getReplicaPromotionCount(group);
-    }
-
     public static void removeSourceHost(String group, String hostPortPair) throws SQLException {
         removeSourceHost(group, hostPortPair, true);
-    }
-
-    /**
-     * Use {@link #removeSourceHost(String, String)} instead.
-     *
-     * @param group
-     *            group name
-     * @param hostPortPair
-     *            host:port
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public static void removeMasterHost(String group, String hostPortPair) throws SQLException {
-        removeSourceHost(group, hostPortPair);
     }
 
     public static void removeSourceHost(String group, String hostPortPair, boolean closeGently) throws SQLException {
@@ -209,23 +118,6 @@ public class ReplicationConnectionGroupManager {
         for (ReplicationConnectionGroup cg : s) {
             cg.removeSourceHost(hostPortPair, closeGently);
         }
-    }
-
-    /**
-     * Use {@link #removeSourceHost(String, String, boolean)} instead.
-     *
-     * @param group
-     *            group name
-     * @param hostPortPair
-     *            host:port
-     * @param closeGently
-     *            option
-     * @throws SQLException
-     * @deprecated
-     */
-    @Deprecated
-    public static void removeMasterHost(String group, String hostPortPair, boolean closeGently) throws SQLException {
-        removeSourceHost(group, hostPortPair, closeGently);
     }
 
     public static String getRegisteredReplicationConnectionGroups() {
@@ -250,19 +142,6 @@ public class ReplicationConnectionGroupManager {
         return total;
     }
 
-    /**
-     * Use {@link #getNumberOfSourcePromotion(String)} instead.
-     *
-     * @param groupFilter
-     *            filter
-     * @return count
-     * @deprecated
-     */
-    @Deprecated
-    public static int getNumberOfMasterPromotion(String groupFilter) {
-        return getNumberOfSourcePromotion(groupFilter);
-    }
-
     public static int getConnectionCountWithHostAsReplica(String groupFilter, String hostPortPair) {
         int total = 0;
         Collection<ReplicationConnectionGroup> s = getGroupsMatching(groupFilter);
@@ -270,21 +149,6 @@ public class ReplicationConnectionGroupManager {
             total += cg.getConnectionCountWithHostAsReplica(hostPortPair);
         }
         return total;
-    }
-
-    /**
-     * Use {@link #getConnectionCountWithHostAsReplica(String, String)} instead.
-     *
-     * @param groupFilter
-     *            filter
-     * @param hostPortPair
-     *            host:port
-     * @return count
-     * @deprecated
-     */
-    @Deprecated
-    public static int getConnectionCountWithHostAsSlave(String groupFilter, String hostPortPair) {
-        return getConnectionCountWithHostAsReplica(groupFilter, hostPortPair);
     }
 
     public static int getConnectionCountWithHostAsSource(String groupFilter, String hostPortPair) {
@@ -296,21 +160,6 @@ public class ReplicationConnectionGroupManager {
         return total;
     }
 
-    /**
-     * Use {@link #getConnectionCountWithHostAsSource(String, String)} instead.
-     *
-     * @param groupFilter
-     *            filter
-     * @param hostPortPair
-     *            host:port
-     * @return count
-     * @deprecated
-     */
-    @Deprecated
-    public static int getConnectionCountWithHostAsMaster(String groupFilter, String hostPortPair) {
-        return getConnectionCountWithHostAsSource(groupFilter, hostPortPair);
-    }
-
     public static Collection<String> getReplicaHosts(String groupFilter) {
         Collection<ReplicationConnectionGroup> s = getGroupsMatching(groupFilter);
         Collection<String> hosts = new ArrayList<>();
@@ -320,19 +169,6 @@ public class ReplicationConnectionGroupManager {
         return hosts;
     }
 
-    /**
-     * Use {@link #getReplicaHosts(String)} instead.
-     *
-     * @param groupFilter
-     *            filter
-     * @return hosts
-     * @deprecated
-     */
-    @Deprecated
-    public static Collection<String> getSlaveHosts(String groupFilter) {
-        return getReplicaHosts(groupFilter);
-    }
-
     public static Collection<String> getSourceHosts(String groupFilter) {
         Collection<ReplicationConnectionGroup> s = getGroupsMatching(groupFilter);
         Collection<String> hosts = new ArrayList<>();
@@ -340,19 +176,6 @@ public class ReplicationConnectionGroupManager {
             hosts.addAll(cg.getSourceHosts());
         }
         return hosts;
-    }
-
-    /**
-     * Use {@link #getSourceHosts(String)} instead.
-     *
-     * @param groupFilter
-     *            filter
-     * @return hosts
-     * @deprecated
-     */
-    @Deprecated
-    public static Collection<String> getMasterHosts(String groupFilter) {
-        return getSourceHosts(groupFilter);
     }
 
     public static long getTotalConnectionCount(String group) {

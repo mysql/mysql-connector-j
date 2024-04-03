@@ -748,32 +748,6 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     }
 
     /**
-     * Use {@link #removeFromGlobalBlocklist(String)} instead.
-     *
-     * @param host
-     *            host
-     * @deprecated
-     */
-    @Deprecated
-    public void removeFromGlobalBlacklist(String host) {
-        removeFromGlobalBlocklist(host);
-    }
-
-    /**
-     * Use {@link #addToGlobalBlocklist(String, long)} instead.
-     *
-     * @param host
-     *            The host to be blocklisted.
-     * @param timeout
-     *            The blocklist timeout for this entry.
-     * @deprecated
-     */
-    @Deprecated
-    public void addToGlobalBlacklist(String host, long timeout) {
-        this.addToGlobalBlocklist(host, timeout);
-    }
-
-    /**
      * Adds a host to the blocklist.
      *
      * @param host
@@ -784,35 +758,12 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
     }
 
     /**
-     * Use {@link #addToGlobalBlocklist(String)} instead.
-     *
-     * @param host
-     *            The host to be blocklisted.
-     * @deprecated
-     */
-    @Deprecated
-    public void addToGlobalBlacklist(String host) {
-        this.addToGlobalBlocklist(host);
-    }
-
-    /**
      * Checks if host blocklist management was enabled.
      *
      * @return true if host blocklist management was enabled
      */
     public boolean isGlobalBlocklistEnabled() {
         return this.globalBlocklistTimeout > 0;
-    }
-
-    /**
-     * Use {@link #isGlobalBlocklistEnabled()} instead.
-     *
-     * @return true if host blocklist management was enabled
-     * @deprecated
-     */
-    @Deprecated
-    public boolean isGlobalBlacklistEnabled() {
-        return isGlobalBlocklistEnabled();
     }
 
     /**
@@ -867,23 +818,6 @@ public class LoadBalancedConnectionProxy extends MultiHostConnectionProxy implem
             }
 
             return blocklistClone;
-        } finally {
-            getLock().unlock();
-        }
-    }
-
-    /**
-     * Use {@link #getGlobalBlocklist()} instead.
-     *
-     * @return
-     *         A local hosts blocklist.
-     * @deprecated
-     */
-    @Deprecated
-    public Map<String, Long> getGlobalBlacklist() {
-        getLock().lock();
-        try {
-            return getGlobalBlocklist();
         } finally {
             getLock().unlock();
         }

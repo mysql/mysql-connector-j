@@ -619,12 +619,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
         }
     }
 
-    @Deprecated
-    @Override
-    public void clearHasTriedMaster() {
-        this.mc.clearHasTriedMaster();
-    }
-
     @Override
     public java.sql.PreparedStatement clientPrepareStatement(String sql) throws SQLException {
         try {
@@ -701,12 +695,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public String getStatementComment() {
         return this.mc.getStatementComment();
-    }
-
-    @Deprecated
-    @Override
-    public boolean hasTriedMaster() {
-        return this.mc.hasTriedMaster();
     }
 
     @Override

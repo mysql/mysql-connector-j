@@ -298,11 +298,6 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     private int origPortToConnectTo;
 
-    /*
-     * For testing failover scenarios
-     */
-    private boolean hasTriedSourceFlag = false;
-
     private List<QueryInterceptor> queryInterceptors;
 
     protected JdbcPropertySet propertySet;
@@ -618,12 +613,6 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         } catch (SQLException | CJException sqlEx) {
             // ignore, we're going away.
         }
-    }
-
-    @Deprecated
-    @Override
-    public void clearHasTriedMaster() {
-        this.hasTriedSourceFlag = false;
     }
 
     @Override
@@ -1297,12 +1286,6 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     @Override
     public Properties getProperties() {
         return this.props;
-    }
-
-    @Deprecated
-    @Override
-    public boolean hasTriedMaster() {
-        return this.hasTriedSourceFlag;
     }
 
     /**

@@ -58,9 +58,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
      */
     void changeUser(String userName, String newPassword) throws SQLException;
 
-    @Deprecated
-    void clearHasTriedMaster();
-
     /**
      * Prepares a statement on the client, using client-side emulation
      * (irregardless of the configuration property 'useServerPrepStmts')
@@ -199,15 +196,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     String getStatementComment();
 
     /**
-     * Has this connection tried to execute a query on the "source"
-     * server (first host in a multiple host list).
-     *
-     * @return true if it has tried
-     */
-    @Deprecated
-    boolean hasTriedMaster();
-
-    /**
      * Is this connection currently a participant in an XA transaction?
      *
      * @return true if this connection currently a participant in an XA transaction
@@ -231,17 +219,6 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
      *         the list.
      */
     boolean isSourceConnection();
-
-    /**
-     * Use {@link #isSourceConnection()} instead.
-     *
-     * @return true if it's a source connection
-     * @deprecated
-     */
-    @Deprecated
-    default boolean isMasterConnection() {
-        return isSourceConnection();
-    }
 
     /**
      * Does this connection have the same resource name as the given

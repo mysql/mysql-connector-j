@@ -57,8 +57,8 @@ public enum PropertyKey {
     allowMultiQueries("allowMultiQueries", true), //
     allowNanAndInf("allowNanAndInf", true), //
     allowPublicKeyRetrieval("allowPublicKeyRetrieval", true), //
-    allowReplicaDownConnections("allowReplicaDownConnections", "allowSlaveDownConnections", true), //
-    allowSourceDownConnections("allowSourceDownConnections", "allowMasterDownConnections", true), //
+    allowReplicaDownConnections("allowReplicaDownConnections", true), //
+    allowSourceDownConnections("allowSourceDownConnections", true), //
     allowUrlInLocalInfile("allowUrlInLocalInfile", true), //
     alwaysSendSetIsolation("alwaysSendSetIsolation", true), //
     authenticationPlugins("authenticationPlugins", true), //
@@ -137,7 +137,7 @@ public enum PropertyKey {
     ldapServerHostname("ldapServerHostname", true), //
     loadBalanceAutoCommitStatementRegex("loadBalanceAutoCommitStatementRegex", true), //
     loadBalanceAutoCommitStatementThreshold("loadBalanceAutoCommitStatementThreshold", true), //
-    loadBalanceBlocklistTimeout("loadBalanceBlocklistTimeout", "loadBalanceBlacklistTimeout", true), //
+    loadBalanceBlocklistTimeout("loadBalanceBlocklistTimeout", true), //
     loadBalanceConnectionGroup("loadBalanceConnectionGroup", true), //
     loadBalanceExceptionChecker("loadBalanceExceptionChecker", true), //
     loadBalanceHostRemovalGracePeriod("loadBalanceHostRemovalGracePeriod", true), //
@@ -182,11 +182,11 @@ public enum PropertyKey {
     profilerEventHandler("profilerEventHandler", true), //
     profileSQL("profileSQL", true), //
     propertiesTransform("propertiesTransform", true), //
-    queriesBeforeRetrySource("queriesBeforeRetrySource", "queriesBeforeRetryMaster", true), //
+    queriesBeforeRetrySource("queriesBeforeRetrySource", true), //
     queryInfoCacheFactory("queryInfoCacheFactory", "parseInfoCacheFactory", true), //
     queryInterceptors("queryInterceptors", true), //
     queryTimeoutKillsConnection("queryTimeoutKillsConnection", true), //
-    readFromSourceWhenNoReplicas("readFromSourceWhenNoReplicas", "readFromMasterWhenNoSlaves", true), //
+    readFromSourceWhenNoReplicas("readFromSourceWhenNoReplicas", true), //
     readOnlyPropagatesToServer("readOnlyPropagatesToServer", true), //
     reconnectAtTxEnd("reconnectAtTxEnd", true), //
     replicationConnectionGroup("replicationConnectionGroup", true), //
@@ -198,7 +198,7 @@ public enum PropertyKey {
     rewriteBatchedStatements("rewriteBatchedStatements", true), //
     rollbackOnPooledClose("rollbackOnPooledClose", true), //
     scrollTolerantForwardOnly("scrollTolerantForwardOnly", true), //
-    secondsBeforeRetrySource("secondsBeforeRetrySource", "secondsBeforeRetryMaster", true), //
+    secondsBeforeRetrySource("secondsBeforeRetrySource", true), //
     selfDestructOnPingMaxOperations("selfDestructOnPingMaxOperations", true), //
     selfDestructOnPingSecondsLifetime("selfDestructOnPingSecondsLifetime", true), //
     sendFractionalSeconds("sendFractionalSeconds", true), //

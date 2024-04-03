@@ -1388,50 +1388,6 @@ public class ConnectionUrlTest {
     }
 
     /**
-     * Tests jdbc:mysql+srv:replication: connection strings with deprecated types.
-     */
-    @Test
-    public void testDeprecatedMysqlLoadReplicationDnsSrvConnectionUrl() {
-        Properties props = new Properties();
-        props.setProperty(PropertyKey.dnsSrv.getKeyName(), "true");
-
-        // More than one host of the same type.
-        assertThrows(InvalidConnectionAttributeException.class, "Specifying multiple host names for the same type with DNS SRV lookup is not allowed\\.",
-                () -> ConnectionUrl.getConnectionUrlInstance(
-                        "jdbc:mysql+srv:replication://(host=hostname1,type=master),(host=hostname2,type=master),(host=hostname3,type=slave)", null));
-        assertThrows(InvalidConnectionAttributeException.class, "Specifying multiple host names for the same type with DNS SRV lookup is not allowed\\.",
-                () -> ConnectionUrl.getConnectionUrlInstance(
-                        "jdbc:mysql:replication://(host=hostname1,type=master),(host=hostname2,type=master),(host=hostname3,type=slave)?dnsSrv=true", null));
-        assertThrows(InvalidConnectionAttributeException.class, "Specifying multiple host names for the same type with DNS SRV lookup is not allowed\\.",
-                () -> ConnectionUrl.getConnectionUrlInstance(
-                        "jdbc:mysql:replication://(host=hostname1,type=master),(host=hostname2,type=master),(host=hostname3,type=slave)", props));
-        assertThrows(InvalidConnectionAttributeException.class, "Specifying multiple host names for the same type with DNS SRV lookup is not allowed\\.",
-                () -> ConnectionUrl.getConnectionUrlInstance(
-                        "jdbc:mysql+srv:replication://(host=hostname1,type=master),(host=hostname2,type=slave),(host=hostname3,type=slave)", null));
-        assertThrows(InvalidConnectionAttributeException.class, "Specifying multiple host names for the same type with DNS SRV lookup is not allowed\\.",
-                () -> ConnectionUrl.getConnectionUrlInstance(
-                        "jdbc:mysql:replication://(host=hostname1,type=master),(host=hostname2,type=slave),(host=hostname3,type=slave)?dnsSrv=true", null));
-        assertThrows(InvalidConnectionAttributeException.class, "Specifying multiple host names for the same type with DNS SRV lookup is not allowed\\.",
-                () -> ConnectionUrl.getConnectionUrlInstance(
-                        "jdbc:mysql:replication://(host=hostname1,type=master),(host=hostname2,type=slave),(host=hostname3,type=slave)", props));
-
-        // Correct ConnectionUrl instances - jdbc:mysql:replication:.
-        props.setProperty(PropertyKey.dnsSrv.getKeyName(), "false");
-        assertEquals(ReplicationConnectionUrl.class, ConnectionUrl.getConnectionUrlInstance(
-                "jdbc:mysql:replication://(host=hostname1,type=master)(host=hostname2,type=master)(host=hostname2,type=slave)(host=hostname4,type=slave)?dnsSrv=false",
-                null).getClass());
-        assertEquals(ReplicationConnectionUrl.class, ConnectionUrl.getConnectionUrlInstance(
-                "jdbc:mysql:replication://(host=hostname1,type=master)(host=hostname2,type=master)(host=hostname2,type=slave)(host=hostname4,type=slave)",
-                props).getClass());
-        assertEquals(ReplicationConnectionUrl.class, ConnectionUrl.getConnectionUrlInstance(
-                "jdbc:mysql:replication://(host=hostname1,type=master)(host=hostname2,type=master)(host=hostname2,type=slave)(host=hostname4,type=slave)?dnsArv=false",
-                props).getClass());
-        assertEquals(ReplicationConnectionUrl.class, ConnectionUrl.getConnectionUrlInstance(
-                "jdbc:mysql:replication://(host=hostname1,type=master)(host=hostname2,type=master)(host=hostname2,type=slave)(host=hostname4,type=slave)?dnsSrv=true",
-                props).getClass());
-    }
-
-    /**
      * Tests jdbc:mysql+srv:replication: connection strings.
      */
     @Test

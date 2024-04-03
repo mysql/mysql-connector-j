@@ -462,7 +462,6 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         assertEquals(((JdbcConnection) this.conn).getSessionMaxRows(), cw.getSessionMaxRows());
         assertEquals(((JdbcConnection) this.conn).getURL(), cw.getURL());
         assertEquals(((JdbcConnection) this.conn).getUser(), cw.getUser());
-        assertFalse(cw.hasTriedMaster());
         assertFalse(cw.isClosed());
         assertFalse(cw.isInGlobalTx());
         assertFalse(cw.isSourceConnection());
@@ -558,7 +557,6 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         //        cw.recachePreparedStatement(this.pstmt);
 
         // TODO find a way to test following methods
-        //        cw.clearHasTriedMaster();
         //        cw.clearWarnings();
         //        cw.ping();
         //        cw.pingInternal(checkForClosedConnection, timeoutMillis);
@@ -743,7 +741,6 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         assertEquals(((JdbcConnection) this.conn).getSessionMaxRows(), cw.getSessionMaxRows());
         assertEquals(((JdbcConnection) this.conn).getURL(), cw.getURL());
         assertEquals(((JdbcConnection) this.conn).getUser(), cw.getUser());
-        assertFalse(cw.hasTriedMaster());
         assertTrue(cw.isClosed());
         assertFalse(cw.isInGlobalTx());
         assertFalse(cw.isSourceConnection());
@@ -906,7 +903,6 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         //        cw.unregisterStatement(this.stmt);
         //        cw.decachePreparedStatement(this.pstmt);
         //        cw.recachePreparedStatement(this.pstmt);
-        //        cw.clearHasTriedMaster();
         //        cw.clearWarnings();
         //        cw.ping();
         //        cw.pingInternal(checkForClosedConnection, timeoutMillis);
@@ -1084,7 +1080,6 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         assertEquals(((JdbcConnection) this.conn).getSessionMaxRows(), cw.getSessionMaxRows());
         assertEquals(((JdbcConnection) this.conn).getURL(), cw.getURL());
         assertEquals(((JdbcConnection) this.conn).getUser(), cw.getUser());
-        assertFalse(cw.hasTriedMaster());
         assertTrue(cw.isClosed());
         assertFalse(cw.isInGlobalTx());
         assertFalse(cw.isSourceConnection());
@@ -1253,7 +1248,6 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         //        cw.unregisterStatement(this.stmt);
         //        cw.decachePreparedStatement(this.pstmt);
         //        cw.recachePreparedStatement(this.pstmt);
-        //        cw.clearHasTriedMaster();
         //        cw.clearWarnings();
         //        cw.ping();
         //        cw.pingInternal(checkForClosedConnection, timeoutMillis);

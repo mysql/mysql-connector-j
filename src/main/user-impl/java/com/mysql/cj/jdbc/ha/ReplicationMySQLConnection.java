@@ -264,16 +264,4 @@ public class ReplicationMySQLConnection extends MultiHostMySQLConnection impleme
         }
     }
 
-    @Deprecated
-    @Override
-    public void clearHasTriedMaster() {
-        getLock().lock();
-        try {
-            getThisAsProxy().sourceConnection.clearHasTriedMaster();
-            getThisAsProxy().replicasConnection.clearHasTriedMaster();
-        } finally {
-            getLock().unlock();
-        }
-    }
-
 }
