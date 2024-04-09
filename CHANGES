@@ -3,6 +3,8 @@
 
 Version 9.0.0
 
+  - WL#16324, Update static MySQL keywords list.
+
   - Fix for Bug#110512 (Bug#35223851), Contribution: Replace synchronized with ReentrantLock.
     Thanks to Bart De Neuter and Janick Reynders for their contributions.
 
