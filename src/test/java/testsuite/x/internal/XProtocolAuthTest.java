@@ -86,6 +86,7 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
     @Test
     public void testBasicSaslMysql41Auth() throws Exception {
         assumeTrue(this.isSetForXTests, PropertyDefinitions.SYSP_testsuite_url_mysqlx + " must be set to run this test.");
+        assumeTrue(isPluginActive("mysql_native_password"), "This test requires support for 'mysql_native_password'");
 
         try {
             Session testSession = this.fact.getSession(this.baseUrl);
@@ -127,6 +128,7 @@ public class XProtocolAuthTest extends InternalXBaseTestCase {
     @Test
     public void testEmptyDatabaseMYSQL41() {
         assumeTrue(this.isSetForXTests, PropertyDefinitions.SYSP_testsuite_url_mysqlx + " must be set to run this test.");
+        assumeTrue(isPluginActive("mysql_native_password"), "This test requires support for 'mysql_native_password'");
 
         try {
             Session testSession = this.fact.getSession(this.baseUrl);

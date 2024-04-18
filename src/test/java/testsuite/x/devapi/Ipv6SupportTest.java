@@ -53,7 +53,7 @@ public class Ipv6SupportTest extends DevApiBaseTestCase {
             }
 
             this.session.sql("DROP USER IF EXISTS '" + this.testUser + "'@'%'").execute();
-            this.session.sql("CREATE USER '" + this.testUser + "'@'%' IDENTIFIED WITH mysql_native_password BY '" + this.testUser + "'").execute();
+            this.session.sql("CREATE USER '" + this.testUser + "'@'%' IDENTIFIED BY '" + this.testUser + "'").execute();
             this.session.sql("GRANT ALL ON *.* TO '" + this.testUser + "'@'%'").execute();
         }
     }

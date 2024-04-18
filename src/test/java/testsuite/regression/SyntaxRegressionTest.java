@@ -1978,12 +1978,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
     public void testInnodbTablespaceEncryption() throws Exception {
         assumeTrue(versionMeetsMinimum(5, 7, 11), "MySQL 5.7.11+ is required to run this test.");
 
-        boolean keyringPluginIsActive = false;
-        this.rs = this.stmt.executeQuery("SELECT (PLUGIN_STATUS='ACTIVE') AS `TRUE` FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME LIKE 'keyring_file'");
-        if (this.rs.next()) {
-            keyringPluginIsActive = this.rs.getBoolean(1);
-        }
-
+        boolean keyringPluginIsActive = isPluginActive(this.stmt, "keyring_file");
         if (keyringPluginIsActive) {
             createTable("testInnodbTablespaceEncryption", "(id INT, txt VARCHAR(100)) ENCRYPTION='y'");
 

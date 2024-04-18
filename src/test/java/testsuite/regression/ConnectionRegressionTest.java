@@ -1789,7 +1789,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         String user = "bug37570";
         Statement st = con.createStatement();
 
-        createUser(st, "'" + user + "'@'%'", "identified WITH mysql_native_password");
+        createUser(st, "'" + user + "'@'%'", "");
         st.executeUpdate("grant all on *.* to '" + user + "'@'%'");
         st.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER '" + user + "'@'%' IDENTIFIED BY '" + unicodePassword + "'"
                 : "SET PASSWORD FOR '" + user + "'@'%' = PASSWORD('" + unicodePassword + "')");
@@ -1797,8 +1797,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
         try {
             ((JdbcConnection) con).changeUser(user, unicodePassword);
-        } catch (SQLException sqle) {
-            sqle.printStackTrace();
+        } catch (SQLException e) {
             fail("Connection with non-latin1 password failed");
         }
     }
@@ -3214,14 +3213,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         boolean installPluginInRuntime = false;
         try {
             // Install plugin if required.
-            this.rs = this.stmt.executeQuery(
-                    "SELECT (PLUGIN_LIBRARY LIKE 'auth_test_plugin%') as `TRUE` FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='test_plugin_server'");
-            if (this.rs.next()) {
-                installPluginInRuntime = !this.rs.getBoolean(1);
-            } else {
-                installPluginInRuntime = true;
-            }
-
+            installPluginInRuntime = !isPluginActive(this.stmt, "test_plugin_server");
             if (installPluginInRuntime) {
                 try {
                     String ext = isServerRunningOnWindows() ? ".dll" : ".so";
@@ -3278,13 +3270,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         boolean installPluginInRuntime = false;
         try {
             // Install plugin if required.
-            this.rs = this.stmt.executeQuery("SELECT PLUGIN_STATUS FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='two_questions'");
-            if (this.rs.next()) {
-                assumeTrue(this.rs.getString(1).equals("ACTIVE"), "The 'two_questions' plugin is preinstalled but not active.");
-            } else {
-                installPluginInRuntime = true;
-            }
-
+            installPluginInRuntime = !isPluginActive(this.stmt, "two_questions");
             if (installPluginInRuntime) {
                 try {
                     String ext = isServerRunningOnWindows() ? ".dll" : ".so";
@@ -3337,13 +3323,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         boolean installPluginInRuntime = false;
         try {
             // Install plugin if required.
-            this.rs = this.stmt.executeQuery("SELECT PLUGIN_STATUS FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='three_attempts'");
-            if (this.rs.next()) {
-                assumeTrue(this.rs.getString(1).equals("ACTIVE"), "The 'three_attempts' plugin is preinstalled but not active.");
-            } else {
-                installPluginInRuntime = true;
-            }
-
+            installPluginInRuntime = !isPluginActive(this.stmt, "three_attempts");
             if (installPluginInRuntime) {
                 try {
                     String ext = isServerRunningOnWindows() ? ".dll" : ".so";
@@ -3651,14 +3631,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         boolean installPluginInRuntime = false;
         try {
             // Install plugin if required.
-            this.rs = this.stmt.executeQuery("SELECT (PLUGIN_LIBRARY LIKE 'auth_test_plugin%') as `TRUE` FROM INFORMATION_SCHEMA.PLUGINS "
-                    + "WHERE PLUGIN_NAME='cleartext_plugin_server'");
-            if (this.rs.next()) {
-                installPluginInRuntime = !this.rs.getBoolean(1);
-            } else {
-                installPluginInRuntime = true;
-            }
-
+            installPluginInRuntime = !isPluginActive(this.stmt, "cleartext_plugin_server");
             if (installPluginInRuntime) {
                 try {
                     String ext = isServerRunningOnWindows() ? ".dll" : ".so";
@@ -3723,7 +3696,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assumeTrue(versionMeetsMinimum(5, 6, 5), "MySQL 5.6.5+ is required to run this test.");
         assumeTrue((((MysqlConnection) this.conn).getSession().getServerSession().getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_SSL) != 0,
                 "This test requires server with SSL support.");
-        assumeTrue(pluginIsActive(this.stmt, "sha256_password"), "sha256_password plugin required to run this test");
+        assumeTrue(isPluginActive(this.stmt, "sha256_password"), "sha256_password plugin required to run this test");
         assumeTrue(supportsTestCertificates(this.stmt),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
 
@@ -3961,15 +3934,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertEquals(expectedUser, rset.getString(1).split("@")[0]);
         assertEquals(expectedUser, rset.getString(2).split("@")[0]);
         connection.close();
-    }
-
-    private boolean pluginIsActive(Statement st, String plugin) throws SQLException {
-        ResultSet rset = st.executeQuery("SELECT (PLUGIN_STATUS='ACTIVE') AS `TRUE` FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='" + plugin + "'");
-        boolean pluginIsActive = false;
-        if (rset.next()) {
-            pluginIsActive = rset.getBoolean(1);
-        }
-        return pluginIsActive;
     }
 
     private boolean allowsRsa(Statement st) throws SQLException {
@@ -5208,7 +5172,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     public void testLongAuthResponsePayload() throws Exception {
         NativeSession testSess;
         assumeTrue((testSess = (NativeSession) ((MysqlConnection) this.conn).getSession()).versionMeetsMinimum(5, 6, 6), "Requires MySQL 5.6.6+.");
-        assumeTrue(pluginIsActive(this.stmt, "sha256_password"), "sha256_password required to run this test");
+        assumeTrue(isPluginActive(this.stmt, "sha256_password"), "sha256_password required to run this test");
         assumeTrue(supportsTestCertificates(this.stmt),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
         assumeTrue(supportsTestSha256PasswordKeys(this.stmt),
@@ -5771,33 +5735,37 @@ public class ConnectionRegressionTest extends BaseTestCase {
     @Test
     public void testBug18869381() throws Exception {
         assumeTrue(((MysqlConnection) this.conn).getSession().versionMeetsMinimum(5, 6, 6), "Requires MySQL 5.6.6+.");
-        assumeTrue(pluginIsActive(this.stmt, "sha256_password"), "sha256_password plugin required to run this test");
+        assumeTrue(isPluginActive(this.stmt, "sha256_password"), "sha256_password plugin required to run this test");
         assumeTrue(supportsTestCertificates(this.stmt),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
+
+        boolean supportsMysqlNative = supportsMysqlNativePassword(this.stmt);
 
         try {
             if (!((MysqlConnection) this.conn).getSession().versionMeetsMinimum(8, 0, 5)) {
                 this.stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
             }
-            createUser(this.stmt, "'bug18869381user1'@'%'", "identified WITH sha256_password");
-            this.stmt.executeUpdate("grant all on *.* to 'bug18869381user1'@'%'");
-            createUser(this.stmt, "'bug18869381user2'@'%'", "identified WITH sha256_password");
-            this.stmt.executeUpdate("grant all on *.* to 'bug18869381user2'@'%'");
-            createUser(this.stmt, "'bug18869381user3'@'%'", "identified WITH mysql_native_password");
-            this.stmt.executeUpdate("grant all on *.* to 'bug18869381user3'@'%'");
-            this.stmt.executeUpdate(
-                    ((MysqlConnection) this.conn).getSession().versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'"
-                            : "set password for 'bug18869381user3'@'%' = PASSWORD('pwd3')");
+            createUser(this.stmt, "'bug18869381user1'@'%'", "IDENTIFIED WITH sha256_password");
+            this.stmt.executeUpdate("GRANT ALL ON *.* TO 'bug18869381user1'@'%'");
+            createUser(this.stmt, "'bug18869381user2'@'%'", "IDENTIFIED WITH sha256_password");
+            this.stmt.executeUpdate("GRANT ALL ON *.* TO 'bug18869381user2'@'%'");
+            if (supportsMysqlNative) {
+                createUser(this.stmt, "'bug18869381user3'@'%'", "IDENTIFIED WITH mysql_native_password");
+                this.stmt.executeUpdate("GRANT ALL ON *.* TO 'bug18869381user3'@'%'");
+                this.stmt.executeUpdate(
+                        ((MysqlConnection) this.conn).getSession().versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user3'@'%' IDENTIFIED BY 'pwd3'"
+                                : "SET PASSWORD FOR 'bug18869381user3'@'%' = PASSWORD('pwd3')");
+            }
             if (!((MysqlConnection) this.conn).getSession().versionMeetsMinimum(8, 0, 5)) {
-                this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
-                this.stmt.executeUpdate("SET SESSION old_passwords= 2");
+                this.stmt.executeUpdate("SET GLOBAL old_passwords = 2");
+                this.stmt.executeUpdate("SET SESSION old_passwords = 2");
             }
             this.stmt.executeUpdate(((MysqlConnection) this.conn).getSession().versionMeetsMinimum(5, 7, 6)
                     ? "ALTER USER 'bug18869381user1'@'%' IDENTIFIED BY 'LongLongLongLongLongLongLongLongLongLongLongLongPwd1'"
-                    : "set password for 'bug18869381user1'@'%' = PASSWORD('LongLongLongLongLongLongLongLongLongLongLongLongPwd1')");
+                    : "SET PASSWORD FOR 'bug18869381user1'@'%' = PASSWORD('LongLongLongLongLongLongLongLongLongLongLongLongPwd1')");
             this.stmt.executeUpdate(
                     ((MysqlConnection) this.conn).getSession().versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug18869381user2'@'%' IDENTIFIED BY 'pwd2'"
-                            : "set password for 'bug18869381user2'@'%' = PASSWORD('pwd2')");
+                            : "SET PASSWORD FOR 'bug18869381user2'@'%' = PASSWORD('pwd2')");
             this.stmt.executeUpdate("flush privileges");
 
             Properties props = new Properties();
@@ -5805,21 +5773,21 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             props.setProperty(PropertyKey.defaultAuthenticationPlugin.getKeyName(), MysqlNativePasswordPlugin.class.getName());
             props.setProperty(PropertyKey.useCompression.getKeyName(), "false");
-            testBug18869381WithProperties(dbUrl, props);
+            testBug18869381WithProperties(dbUrl, props, supportsMysqlNative);
             props.setProperty(PropertyKey.useCompression.getKeyName(), "true");
-            testBug18869381WithProperties(dbUrl, props);
+            testBug18869381WithProperties(dbUrl, props, supportsMysqlNative);
 
             props.setProperty(PropertyKey.defaultAuthenticationPlugin.getKeyName(), Sha256PasswordPlugin.class.getName());
             props.setProperty(PropertyKey.useCompression.getKeyName(), "false");
-            testBug18869381WithProperties(dbUrl, props);
+            testBug18869381WithProperties(dbUrl, props, supportsMysqlNative);
             props.setProperty(PropertyKey.useCompression.getKeyName(), "true");
-            testBug18869381WithProperties(dbUrl, props);
+            testBug18869381WithProperties(dbUrl, props, supportsMysqlNative);
 
             props.setProperty(PropertyKey.serverRSAPublicKeyFile.getKeyName(), "src/test/config/ssl-test-certs/mykey.pub");
             props.setProperty(PropertyKey.useCompression.getKeyName(), "false");
-            testBug18869381WithProperties(dbUrl, props);
+            testBug18869381WithProperties(dbUrl, props, supportsMysqlNative);
             props.setProperty(PropertyKey.useCompression.getKeyName(), "true");
-            testBug18869381WithProperties(dbUrl, props);
+            testBug18869381WithProperties(dbUrl, props, supportsMysqlNative);
 
             String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
             System.setProperty("javax.net.ssl.keyStore", trustStorePath);
@@ -5828,9 +5796,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
             System.setProperty("javax.net.ssl.trustStorePassword", "password");
             props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.name());
             props.setProperty(PropertyKey.useCompression.getKeyName(), "false");
-            testBug18869381WithProperties(dbUrl, props);
+            testBug18869381WithProperties(dbUrl, props, supportsMysqlNative);
             props.setProperty(PropertyKey.useCompression.getKeyName(), "true");
-            testBug18869381WithProperties(dbUrl, props);
+            testBug18869381WithProperties(dbUrl, props, supportsMysqlNative);
 
         } finally {
             if (!((MysqlConnection) this.conn).getSession().versionMeetsMinimum(8, 0, 5)) {
@@ -5840,7 +5808,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     @Test
-    private void testBug18869381WithProperties(String url, Properties props) throws Exception {
+    private void testBug18869381WithProperties(String url, Properties props, boolean supportsMysqlNative) throws Exception {
         Connection testConn = null;
         Statement testSt = null;
         ResultSet testRs = null;
@@ -5850,7 +5818,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             ((JdbcConnection) testConn).changeUser("bug18869381user1", "LongLongLongLongLongLongLongLongLongLongLongLongPwd1");
             testSt = testConn.createStatement();
-            testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
+            testRs = testSt.executeQuery("SELECT USER(),CURRENT_USER()");
             testRs.next();
             assertEquals("bug18869381user1", testRs.getString(1).split("@")[0]);
             assertEquals("bug18869381user1", testRs.getString(2).split("@")[0]);
@@ -5858,18 +5826,20 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             ((JdbcConnection) testConn).changeUser("bug18869381user2", "pwd2");
             testSt = testConn.createStatement();
-            testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
+            testRs = testSt.executeQuery("SELECT USER(),CURRENT_USER()");
             testRs.next();
             assertEquals("bug18869381user2", testRs.getString(1).split("@")[0]);
             assertEquals("bug18869381user2", testRs.getString(2).split("@")[0]);
             testSt.close();
 
-            ((JdbcConnection) testConn).changeUser("bug18869381user3", "pwd3");
-            testSt = testConn.createStatement();
-            testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
-            testRs.next();
-            assertEquals("bug18869381user3", testRs.getString(1).split("@")[0]);
-            assertEquals("bug18869381user3", testRs.getString(2).split("@")[0]);
+            if (supportsMysqlNative) {
+                ((JdbcConnection) testConn).changeUser("bug18869381user3", "pwd3");
+                testSt = testConn.createStatement();
+                testRs = testSt.executeQuery("SELECT USER(),CURRENT_USER()");
+                testRs.next();
+                assertEquals("bug18869381user3", testRs.getString(1).split("@")[0]);
+                assertEquals("bug18869381user3", testRs.getString(2).split("@")[0]);
+            }
 
         } finally {
             if (testConn != null) {
@@ -6324,11 +6294,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assumeTrue(versionMeetsMinimum(5, 5, 7), "MySQL 5.7.7+ is required to run this test.");
 
         Connection con = null;
-        createUser("'bug19354014user'@'%'", "identified WITH mysql_native_password");
-        this.stmt.executeUpdate("grant all on *.* to 'bug19354014user'@'%'");
+        createUser("'bug19354014user'@'%'", "");
+        this.stmt.executeUpdate("GRANT ALL ON *.* to 'bug19354014user'@'%'");
         this.stmt.executeUpdate(versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'bug19354014user'@'%' IDENTIFIED BY 'pwd'"
-                : "set password for 'bug19354014user'@'%' = PASSWORD('pwd')");
-        this.stmt.executeUpdate("flush privileges");
+                : "SET PASSWORD FOR 'bug19354014user'@'%' = PASSWORD('pwd')");
+        this.stmt.executeUpdate("FLUSH PRIVILEGES");
 
         try {
             Properties props = new Properties();
@@ -6339,7 +6309,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             con = getConnectionWithProps(props);
             ((JdbcConnection) con).changeUser("bug19354014user", "pwd");
         } finally {
-            this.stmt.executeUpdate("flush privileges");
+            this.stmt.executeUpdate("FLUSH PRIVILEGES");
 
             if (con != null) {
                 con.close();
@@ -6772,9 +6742,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
             String[] plugins;
 
             // install cleartext plugin if required
-            this.rs = testStmt.executeQuery(
-                    "SELECT (PLUGIN_LIBRARY LIKE 'auth_test_plugin%') FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='cleartext_plugin_server'");
-            if (!this.rs.next() || !this.rs.getBoolean(1)) {
+            if (!isPluginActive(this.stmt, "cleartext_plugin_server")) {
                 String ext = System.getProperty(PropertyDefinitions.SYSP_os_name).toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
 
                 try {
@@ -6790,9 +6758,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 clearTextPluginInstalled = true;
             }
 
-            if (testConn.getSession().versionMeetsMinimum(5, 7, 5)) {
-                // mysql_old_password plugin not supported
-                plugins = new String[] { "cleartext_plugin_server,-1", "mysql_native_password,0", "sha256_password,2" };
+            if (testConn.getSession().versionMeetsMinimum(5, 7, 5)) { // mysql_old_password plugin not supported
+                if (supportsMysqlNativePassword(this.stmt)) {
+                    plugins = new String[] { "cleartext_plugin_server,-1", "mysql_native_password,0", "sha256_password,2" };
+                } else {
+                    plugins = new String[] { "cleartext_plugin_server,-1", "sha256_password,2" };
+                }
             } else if (testConn.getSession().versionMeetsMinimum(5, 6, 6)) {
                 plugins = new String[] { "cleartext_plugin_server,-1", "mysql_native_password,0", "mysql_old_password,1", "sha256_password,2" };
 
@@ -7047,7 +7018,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     @Test
     public void testBug75670() throws Exception {
         assumeTrue(((MysqlConnection) this.conn).getSession().versionMeetsMinimum(5, 6, 6), "Requires MySQL 5.6.6+.");
-        assumeTrue(pluginIsActive(this.stmt, "sha256_password"), "sha256_password plugin required to run this test");
+        assumeTrue(isPluginActive(this.stmt, "sha256_password"), "sha256_password plugin required to run this test");
         assumeTrue(supportsTestCertificates(this.stmt),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
         assumeTrue(supportsTestSha256PasswordKeys(this.stmt),
@@ -9418,7 +9389,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 "This test requires server with SSL support.");
         assumeTrue(supportsTestCertificates(this.stmt),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
-        assumeTrue(pluginIsActive(this.stmt, "caching_sha2_password"), "caching_sha2_password plugin required to run this test");
+        assumeTrue(isPluginActive(this.stmt, "caching_sha2_password"), "caching_sha2_password plugin required to run this test");
 
         String trustStorePath = "src/test/config/ssl-test-certs/ca-truststore";
         System.setProperty("javax.net.ssl.keyStore", trustStorePath);
@@ -10480,7 +10451,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assumeTrue((((MysqlConnection) this.conn).getSession().getServerSession().getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_SSL) != 0,
                 "This test requires server with SSL support.");
         assumeTrue(((MysqlConnection) this.conn).getSession().versionMeetsMinimum(5, 6, 5), "Requires MySQL 5.6.5+ server.");
-        assumeTrue(pluginIsActive(this.stmt, "sha256_password"), "sha256_password required to run this test");
+        assumeTrue(isPluginActive(this.stmt, "sha256_password"), "sha256_password required to run this test");
         assumeTrue(supportsTestCertificates(this.stmt),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
 
@@ -10528,7 +10499,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
             // create user with required password and caching_sha2_password auth
             if (sess.versionMeetsMinimum(8, 0, 3)) {
-                assertTrue(pluginIsActive(s1, "caching_sha2_password"), "caching_sha2_password required to run this test");
+                assertTrue(isPluginActive(s1, "caching_sha2_password"), "caching_sha2_password required to run this test");
                 // create user with required password and sha256_password auth
                 createUser(s1, "'Bug25642226u2'@'%'", "identified WITH caching_sha2_password");
                 s1.executeUpdate("grant all on *.* to 'Bug25642226u2'@'%'");
@@ -11209,7 +11180,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
         String[] authenticationPlugins = new String[] { "caching_sha2_password", "sha256_password", "mysql_native_password" };
         List<String> authenticationPluginsTested = new ArrayList<>();
         for (String authPlugin : authenticationPlugins) {
-            if (pluginIsActive(this.stmt, authPlugin)) {
+            if (isPluginActive(this.stmt, authPlugin)) {
                 assertThrows(SQLException.class, String.format("Access denied for user '%s'@.*", systemUsername),
                         () -> getConnectionWithProps(String.format("jdbc:mysql://%s:%s", getHostFromTestsuiteUrl(), getPortFromTestsuiteUrl()),
                                 "sslMode=DISABLED,allowPublicKeyRetrieval=true,defaultAuthenticationPlugin=" + authPlugin));
@@ -11250,10 +11221,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
         String[] authenticationPlugins = new String[] { "caching_sha2_password", "sha256_password", "mysql_native_password" };
         List<String> authenticationPluginsTested = new ArrayList<>();
         for (String authPlugin : authenticationPlugins) {
-            if (pluginIsActive(this.stmt, authPlugin)) {
+            if (isPluginActive(this.stmt, authPlugin)) {
                 assertThrows(SQLException.class, String.format("Access denied for user '%s'@.*", systemUsername),
                         () -> getConnectionWithProps(String.format("jdbc:mysql://%s:%s", getHostFromTestsuiteUrl(), getPortFromTestsuiteUrl()),
-                                "defaultAuthenticationPlugin=" + authPlugin));
+                                "defaultAuthenticationPlugin=" + authPlugin + ",sslMode=DISABLED,allowPublicKeyRetreival=true"));
 
                 createUser(systemUsername, "IDENTIFIED WITH " + authPlugin + " BY 'testpwd'");
                 this.stmt.execute("GRANT ALL ON *.* TO " + systemUsername);

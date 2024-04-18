@@ -549,9 +549,7 @@ public class AuthenticationTest extends BaseTestCase {
         boolean installPluginInRuntime = false;
         try {
             // Install plugin if required.
-            this.rs = this.stmt.executeQuery("SELECT (PLUGIN_LIBRARY LIKE 'auth_test_plugin%') AS installed FROM INFORMATION_SCHEMA.PLUGINS "
-                    + "WHERE PLUGIN_NAME='cleartext_plugin_server'");
-            installPluginInRuntime = !this.rs.next() || !this.rs.getBoolean(1);
+            installPluginInRuntime = !isPluginActive(this.stmt, "cleartext_plugin_server");
 
             if (installPluginInRuntime) {
                 try {

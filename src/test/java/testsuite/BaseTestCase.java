@@ -1288,6 +1288,16 @@ public abstract class BaseTestCase {
                 || version.meetsMinimum(new ServerVersion(5, 6, 0)) && Util.isEnterpriseEdition(version.toString());
     }
 
+    protected boolean supportsMysqlNativePassword(Statement st) throws Exception {
+        return isPluginActive(st, "mysql_native_password");
+    }
+
+    protected boolean isPluginActive(Statement st, String plugin) throws SQLException {
+        ResultSet rsCheck = st.executeQuery(
+                "SELECT EXISTS(SELECT * FROM information_schema.plugins WHERE plugin_name = '" + plugin + "' AND plugin_status = 'ACTIVE') AS is_active");
+        return rsCheck.next() && rsCheck.getBoolean(1);
+    }
+
     protected String getHighestCommonTlsVersion() throws Exception {
         // Find out which TLS protocol versions are supported by this JVM.
         SSLContext sslContext = SSLContext.getInstance("TLS");

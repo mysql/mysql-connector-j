@@ -270,4 +270,11 @@ public class InternalXBaseTestCase {
         assertNotEquals(unexpected, actual);
     }
 
+    protected boolean isPluginActive(String plugin) {
+        Session session = new SessionFactory().getSession(this.baseUrl);
+        SqlResult res = session.sql("SELECT EXISTS(SELECT * FROM information_schema.plugins WHERE plugin_name = ? AND plugin_status = 'ACTIVE') AS is_active")
+                .bind(plugin).execute();
+        return res.fetchOne().getBoolean(0);
+    }
+
 }

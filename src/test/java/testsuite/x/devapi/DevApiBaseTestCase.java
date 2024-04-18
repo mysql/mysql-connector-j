@@ -211,6 +211,12 @@ public class DevApiBaseTestCase extends InternalXBaseTestCase {
         return -1;
     }
 
+    protected boolean isPluginActive(Session sess, String plugin) {
+        SqlResult res = sess.sql("SELECT EXISTS(SELECT * FROM information_schema.plugins WHERE plugin_name = ? AND plugin_status = 'ACTIVE') AS is_active")
+                .bind(plugin).execute();
+        return res.fetchOne().getBoolean(0);
+    }
+
     protected boolean supportsTestCertificates(Session sess) {
         SqlResult res = sess.sql("SELECT @@mysqlx_ssl_ca, @@ssl_ca").execute();
         if (res.hasNext()) {

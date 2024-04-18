@@ -3,6 +3,8 @@
 
 Version 9.0.0
 
+  - Fix for Bug#114687 (Bug#36529541), Tests fail after mysql_native_password has been made optional in server.
+
   - WL#16319, Remove deprecated insensitive terminology based methods.
 
   - WL#16324, Update static MySQL keywords list.

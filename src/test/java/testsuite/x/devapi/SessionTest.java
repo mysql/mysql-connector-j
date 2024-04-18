@@ -138,6 +138,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void urlWithDefaultSchema() {
+        assumeTrue(isPluginActive(this.session, "mysql_native_password"), "This test requires support for 'mysql_native_password'");
+
         try {
             // Create user with mysql_native_password authentication plugin as it can be used with any of the authentication mechanisms.
             this.session.sql("CREATE USER IF NOT EXISTS 'testUserN'@'%' IDENTIFIED WITH mysql_native_password BY 'testUserN'").execute();
@@ -190,6 +192,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void urlWithoutDefaultSchema() {
+        assumeTrue(isPluginActive(this.session, "mysql_native_password"), "This test requires support for 'mysql_native_password'");
+
         try {
             // Create user with mysql_native_password authentication plugin as it can be used with any of the authentication mechanisms.
             this.session.sql("CREATE USER IF NOT EXISTS 'testUserN'@'%' IDENTIFIED WITH mysql_native_password BY 'testUserN'").execute();
@@ -240,6 +244,8 @@ public class SessionTest extends DevApiBaseTestCase {
 
     @Test
     public void invalidDefaultSchema() {
+        assumeTrue(isPluginActive(this.session, "mysql_native_password"), "This test requires support for 'mysql_native_password'");
+
         try {
             // Create user with mysql_native_password authentication plugin as it can be used with any of the authentication mechanisms.
             this.session.sql("CREATE USER IF NOT EXISTS 'testUserN'@'%' IDENTIFIED WITH mysql_native_password BY 'testUserN'").execute();
@@ -353,7 +359,7 @@ public class SessionTest extends DevApiBaseTestCase {
     @Test
     public void testBug21690043() {
         try {
-            this.session.sql("CREATE USER 'bug21690043user1'@'%' IDENTIFIED WITH mysql_native_password").execute();
+            this.session.sql("CREATE USER 'bug21690043user1'@'%'").execute();
             this.session.sql("GRANT SELECT ON *.* TO 'bug21690043user1'@'%'").execute();
 
             Properties props = new Properties();

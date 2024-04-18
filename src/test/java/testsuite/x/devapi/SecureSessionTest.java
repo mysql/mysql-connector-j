@@ -178,7 +178,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
     public void testNonSecureSession() {
         try {
             Session testSession = this.fact.getSession(this.baseUrl);
-            testSession.sql("CREATE USER IF NOT EXISTS 'testPlainAuth'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd'").execute();
+            testSession.sql("CREATE USER IF NOT EXISTS 'testPlainAuth'@'%' IDENTIFIED BY 'pwd'").execute();
             testSession.sql("GRANT SELECT ON *.* TO 'testPlainAuth'@'%'").execute();
             testSession.close();
 
@@ -187,6 +187,11 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             userAndSslFreeBaseUrl = userAndSslFreeBaseUrl.replaceAll(PropertyKey.USER.getKeyName() + "=", PropertyKey.USER.getKeyName() + "VOID=");
             userAndSslFreeBaseUrl = userAndSslFreeBaseUrl.replaceAll(PropertyKey.PASSWORD.getKeyName() + "=", PropertyKey.PASSWORD.getKeyName() + "VOID=");
 
+            // Connect securely once so that the user credentials get cached in case of using caching_sha2_password by default.
+            testSession = this.fact.getSession(userAndSslFreeBaseUrl + makeParam(PropertyKey.xdevapiSslMode, XdevapiSslMode.REQUIRED)
+                    + makeParam(PropertyKey.USER, "testPlainAuth") + makeParam(PropertyKey.PASSWORD, "pwd"));
+
+            // Connect via non-secure session.
             testSession = this.fact.getSession(userAndSslFreeBaseUrl + makeParam(PropertyKey.xdevapiSslMode, XdevapiSslMode.DISABLED)
                     + makeParam(PropertyKey.USER, "testPlainAuth") + makeParam(PropertyKey.PASSWORD, "pwd"));
             assertNonSecureSession(testSession);
@@ -379,9 +384,13 @@ public class SecureSessionTest extends DevApiBaseTestCase {
      */
     @Test
     public void testAuthMechanisms() throws Throwable {
+        boolean supportsMysqlNative = isPluginActive(this.session, "mysql_native_password");
+
         try {
-            this.session.sql("CREATE USER IF NOT EXISTS 'testAuthMechNative'@'%' IDENTIFIED WITH mysql_native_password BY 'mysqlnative'").execute();
-            this.session.sql("GRANT SELECT ON *.* TO 'testAuthMechNative'@'%'").execute();
+            if (supportsMysqlNative) {
+                this.session.sql("CREATE USER IF NOT EXISTS 'testAuthMechNative'@'%' IDENTIFIED WITH mysql_native_password BY 'mysqlnative'").execute();
+                this.session.sql("GRANT SELECT ON *.* TO 'testAuthMechNative'@'%'").execute();
+            }
             this.session.sql("CREATE USER IF NOT EXISTS 'testAuthMechSha256'@'%' IDENTIFIED WITH sha256_password BY 'sha256'").execute();
             this.session.sql("GRANT SELECT ON *.* TO 'testAuthMechSha256'@'%'").execute();
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
@@ -419,15 +428,17 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             // With default auth mechanism for secure connections (PLAIN).
 
-            // *** User: mysqlnative; Auth: default.
-            props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
-            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
+            if (supportsMysqlNative) {
+                // *** User: mysqlnative; Auth: default.
+                props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
+                props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
 
-            testSession = this.fact.getSession(props);
-            assertSecureSession(testSession);
-            assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
-            assertUser("testAuthMechNative", testSession);
-            testSession.close();
+                testSession = this.fact.getSession(props);
+                assertSecureSession(testSession);
+                assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe & account gets cached.
+                assertUser("testAuthMechNative", testSession);
+                testSession.close();
+            }
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
                 // *** User: testAuthMechSha256; Auth: default.
@@ -455,35 +466,37 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             // Forcing an auth mechanism.
 
-            // *** User: testAuthMechNative; Auth: PLAIN.
-            props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
-            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
-            props.setProperty(PropertyKey.xdevapiAuth.getKeyName(), "PLAIN");
-
-            testSession = this.fact.getSession(props);
-            assertSecureSession(testSession);
-            assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
-            assertUser("testAuthMechNative", testSession);
-            testSession.close();
-
-            // *** User: testAuthMechNative; Auth: MYSQL41.
-            props.setProperty(PropertyKey.xdevapiAuth.getKeyName(), "MYSQL41");
-
-            testSession = this.fact.getSession(props);
-            assertSecureSession(testSession);
-            assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
-            assertUser("testAuthMechNative", testSession);
-            testSession.close();
-
-            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
-                // *** User: testAuthMechNative; Auth: SHA256_MEMORY.
-                props.setProperty(PropertyKey.xdevapiAuth.getKeyName(), "SHA256_MEMORY");
+            if (supportsMysqlNative) {
+                // *** User: testAuthMechNative; Auth: PLAIN.
+                props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
+                props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
+                props.setProperty(PropertyKey.xdevapiAuth.getKeyName(), "PLAIN");
 
                 testSession = this.fact.getSession(props);
                 assertSecureSession(testSession);
-                assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
+                assertEquals(AuthMech.PLAIN, getAuthMech.apply(testSession)); // Connection is secure, passwords are safe.
                 assertUser("testAuthMechNative", testSession);
                 testSession.close();
+
+                // *** User: testAuthMechNative; Auth: MYSQL41.
+                props.setProperty(PropertyKey.xdevapiAuth.getKeyName(), "MYSQL41");
+
+                testSession = this.fact.getSession(props);
+                assertSecureSession(testSession);
+                assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
+                assertUser("testAuthMechNative", testSession);
+                testSession.close();
+
+                if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
+                    // *** User: testAuthMechNative; Auth: SHA256_MEMORY.
+                    props.setProperty(PropertyKey.xdevapiAuth.getKeyName(), "SHA256_MEMORY");
+
+                    testSession = this.fact.getSession(props);
+                    assertSecureSession(testSession);
+                    assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
+                    assertUser("testAuthMechNative", testSession);
+                    testSession.close();
+                }
             }
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
@@ -566,15 +579,17 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             // With default auth mechanism for non-secure connections (MYSQL41|SHA2_MEMORY).
 
-            // *** User: testAuthMechNative; Auth: default.
-            props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
-            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
+            if (supportsMysqlNative) {
+                // *** User: testAuthMechNative; Auth: default.
+                props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
+                props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
 
-            testSession = this.fact.getSession(props);
-            assertNonSecureSession(testSession);
-            assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
-            assertUser("testAuthMechNative", testSession);
-            testSession.close();
+                testSession = this.fact.getSession(props);
+                assertNonSecureSession(testSession);
+                assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
+                assertUser("testAuthMechNative", testSession);
+                testSession.close();
+            }
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_PASSWORD requires secure connections in MySQL 8.0.3 and below.
                 // *** User: testAuthMechSha256; Auth: default.
@@ -602,31 +617,33 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             // Forcing an auth mechanism.
 
-            // *** User: testAuthMechNative; Auth: PLAIN.
-            props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
-            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
-            props.setProperty(PropertyKey.xdevapiAuth.getKeyName(), "PLAIN");
+            if (supportsMysqlNative) {
+                // *** User: testAuthMechNative; Auth: PLAIN.
+                props.setProperty(PropertyKey.USER.getKeyName(), "testAuthMechNative");
+                props.setProperty(PropertyKey.PASSWORD.getKeyName(), "mysqlnative");
+                props.setProperty(PropertyKey.xdevapiAuth.getKeyName(), "PLAIN");
 
-            assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
+                assertThrows(XProtocolError.class, "PLAIN authentication is not allowed via unencrypted connection\\.", () -> this.fact.getSession(props));
 
-            // *** User: testAuthMechNative; Auth: MYSQL41.
-            props.setProperty(PropertyKey.xdevapiAuth.getKeyName(), "MYSQL41");
-
-            testSession = this.fact.getSession(props);
-            assertNonSecureSession(testSession);
-            assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
-            assertUser("testAuthMechNative", testSession);
-            testSession.close();
-
-            if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
-                // *** User: testAuthMechNative; Auth: SHA256_MEMORY.
-                props.setProperty(PropertyKey.xdevapiAuth.getKeyName(), "SHA256_MEMORY");
+                // *** User: testAuthMechNative; Auth: MYSQL41.
+                props.setProperty(PropertyKey.xdevapiAuth.getKeyName(), "MYSQL41");
 
                 testSession = this.fact.getSession(props);
                 assertNonSecureSession(testSession);
-                assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
+                assertEquals(AuthMech.MYSQL41, getAuthMech.apply(testSession)); // Matching auth mechanism.
                 assertUser("testAuthMechNative", testSession);
                 testSession.close();
+
+                if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.4"))) { // SHA256_MEMORY support added in MySQL 8.0.4.
+                    // *** User: testAuthMechNative; Auth: SHA256_MEMORY.
+                    props.setProperty(PropertyKey.xdevapiAuth.getKeyName(), "SHA256_MEMORY");
+
+                    testSession = this.fact.getSession(props);
+                    assertNonSecureSession(testSession);
+                    assertEquals(AuthMech.SHA256_MEMORY, getAuthMech.apply(testSession)); // Account is cached by now.
+                    assertUser("testAuthMechNative", testSession);
+                    testSession.close();
+                }
             }
 
             if (mysqlVersionMeetsMinimum(ServerVersion.parseVersion("8.0.3"))) {
@@ -694,7 +711,9 @@ public class SecureSessionTest extends DevApiBaseTestCase {
 
             props.remove(PropertyKey.xdevapiAuth.getKeyName());
         } finally {
-            this.session.sql("DROP USER IF EXISTS testAuthMechNative").execute();
+            if (supportsMysqlNative) {
+                this.session.sql("DROP USER IF EXISTS testAuthMechNative").execute();
+            }
             this.session.sql("DROP USER IF EXISTS testAuthMechSha256").execute();
             this.session.sql("DROP USER IF EXISTS testAuthMechCachingSha2").execute();
         }
@@ -822,8 +841,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             Properties props = new Properties(this.sslFreeTestProperties);
             testSession = this.fact.getSession(props);
 
-            testSession.sql("CREATE USER 'bug25494338user'@'%' IDENTIFIED WITH mysql_native_password BY 'pwd' REQUIRE CIPHER '" + expectedCipher2 + "'")
-                    .execute();
+            testSession.sql("CREATE USER 'bug25494338user'@'%' IDENTIFIED BY 'pwd' REQUIRE CIPHER '" + expectedCipher2 + "'").execute();
             testSession.sql("GRANT SELECT ON *.* TO 'bug25494338user'@'%'").execute();
 
             props.setProperty(PropertyKey.xdevapiSslMode.getKeyName(), PropertyDefinitions.XdevapiSslMode.VERIFY_CA.toString());
@@ -920,6 +938,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
     public void testBug27629553() {
         assumeTrue(supportsTestCertificates(this.session),
                 "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
+        assumeTrue(isPluginActive(this.session, "mysql_native_password"), "This test requires support for 'mysql_native_password'");
 
         Session testSession = this.fact.getSession(this.baseUrl);
         testSession.sql("CREATE USER IF NOT EXISTS 'testBug27629553'@'%' IDENTIFIED WITH mysql_native_password").execute();
