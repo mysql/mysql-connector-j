@@ -74,7 +74,7 @@ import java.util.List;
  * <p>
  * Users of the CRUD API do not need to escape identifiers. This is true for working with collections and for working with relational tables.
  */
-public interface Session {
+public interface Session extends AutoCloseable {
 
     /**
      * Retrieve the list of Schema objects for which the current user has access.
@@ -152,6 +152,7 @@ public interface Session {
     /**
      * Close this session.
      */
+    @Override
     void close();
 
     /**
