@@ -805,7 +805,7 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.autoGenerateTestcaseScript"), "3.1.9", CATEGORY_DEBUGING_PROFILING, 18),
 
                 new EnumPropertyDefinition<>(PropertyKey.openTelemetry, OpenTelemetry.PREFERRED, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.openTelemetry"), "8.1.0", CATEGORY_DEBUGING_PROFILING, 19),
+                        Messages.getString("ConnectionProperties.openTelemetry"), "8.4.0", CATEGORY_DEBUGING_PROFILING, 19),
 
                 //
                 // CATEGORY_EXCEPTIONS
