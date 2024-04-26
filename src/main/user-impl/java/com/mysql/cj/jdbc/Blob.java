@@ -123,17 +123,17 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
             checkClosed();
 
             if (pos < 1) {
-                throw SQLError.createSQLException(Messages.getString("Blob.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.2"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
 
             pos--;
 
             if (pos > this.binaryData.length) {
-                throw SQLError.createSQLException(Messages.getString("Blob.3"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.3"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
 
             if (pos + length > this.binaryData.length) {
-                throw SQLError.createSQLException(Messages.getString("Blob.4"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.4"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
 
             byte[] newData = new byte[length];
@@ -195,7 +195,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
             checkClosed();
 
             if (indexToWriteAt < 1) {
-                throw SQLError.createSQLException(Messages.getString("Blob.0"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.0"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
 
             WatchableOutputStream bytesOut = new WatchableOutputStream();
@@ -234,7 +234,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
             try {
                 bytesOut.write(bytes, offset, length);
             } catch (IOException ioEx) {
-                SQLException sqlEx = SQLError.createSQLException(Messages.getString("Blob.1"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                SQLException sqlEx = SQLError.createSQLException(Messages.getString("Blob.1"), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR,
                         this.exceptionInterceptor);
                 sqlEx.initCause(ioEx);
 
@@ -285,11 +285,11 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
             checkClosed();
 
             if (len < 0) {
-                throw SQLError.createSQLException(Messages.getString("Blob.5"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.5"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
 
             if (len > this.binaryData.length) {
-                throw SQLError.createSQLException(Messages.getString("Blob.6"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.6"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
 
             // TODO: Do this without copying byte[]s by maintaining some end pointer on the original data
@@ -320,17 +320,17 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
             checkClosed();
 
             if (pos < 1) {
-                throw SQLError.createSQLException(Messages.getString("Blob.2"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.2"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
 
             pos--;
 
             if (pos > this.binaryData.length) {
-                throw SQLError.createSQLException(Messages.getString("Blob.6"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.6"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
 
             if (pos + length > this.binaryData.length) {
-                throw SQLError.createSQLException(Messages.getString("Blob.4"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.4"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
 
             return new ByteArrayInputStream(getBinaryData(), (int) pos, (int) length);
@@ -343,7 +343,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
         this.lock.lock();
         try {
             if (this.isClosed) {
-                throw SQLError.createSQLException(Messages.getString("Blob.7"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.7"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
         } finally {
             this.lock.unlock();

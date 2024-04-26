@@ -223,7 +223,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 this.db = fields[0].getDatabaseName();
 
                 if (this.db == null || this.db.length() == 0) {
-                    throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.43"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                    throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.43"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT,
                             getExceptionInterceptor());
                 }
             }
@@ -1069,7 +1069,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                     rowToRefresh.setBytes(i, val == null || rs.wasNull() ? null : val);
                 }
             } else {
-                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.12"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.12"), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR,
                         getExceptionInterceptor());
             }
         } finally {
@@ -1636,7 +1636,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
         } catch (FeatureNotAvailableException nae) {
             throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(targetType),
-                    MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
         }
     }
 
@@ -2214,7 +2214,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 asString = new String(asBytes, forcedEncoding);
             }
         } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
         }
 
@@ -2240,7 +2240,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             // This works for classes that aren't actually wrapping anything
             return iface.cast(this);
         } catch (ClassCastException cce) {
-            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
         }
     }

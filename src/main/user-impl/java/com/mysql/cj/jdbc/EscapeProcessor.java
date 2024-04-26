@@ -214,7 +214,7 @@ class EscapeProcessor {
                                 newSql.append(dateString);
                             } catch (java.util.NoSuchElementException e) {
                                 throw SQLError.createSQLException(Messages.getString("EscapeProcessor.1", new Object[] { argument }),
-                                        MysqlErrorNumbers.SQL_STATE_SYNTAX_ERROR, exceptionInterceptor);
+                                        MysqlErrorNumbers.SQLSTATE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION_NO_SUBCLASS, exceptionInterceptor);
                             }
                         }
                     } else if (StringUtils.startsWithIgnoreCase(collapsedToken, "{ts")) {
@@ -330,8 +330,8 @@ class EscapeProcessor {
                 }
                 newSql.append("'");
             } catch (java.util.NoSuchElementException e) {
-                throw SQLError.createSQLException(Messages.getString("EscapeProcessor.3", new Object[] { argument }), MysqlErrorNumbers.SQL_STATE_SYNTAX_ERROR,
-                        exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("EscapeProcessor.3", new Object[] { argument }),
+                        MysqlErrorNumbers.SQLSTATE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION_NO_SUBCLASS, exceptionInterceptor);
             }
         }
     }
@@ -362,7 +362,7 @@ class EscapeProcessor {
                 newSql.append('\'');
             } catch (IllegalArgumentException illegalArgumentException) {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("EscapeProcessor.2", new Object[] { argument }),
-                        MysqlErrorNumbers.SQL_STATE_SYNTAX_ERROR, exceptionInterceptor);
+                        MysqlErrorNumbers.SQLSTATE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION_NO_SUBCLASS, exceptionInterceptor);
                 sqlEx.initCause(illegalArgumentException);
 
                 throw sqlEx;
@@ -416,22 +416,22 @@ class EscapeProcessor {
         int firstIndexOfParen = functionToken.indexOf("(");
 
         if (firstIndexOfParen == -1) {
-            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.4", new Object[] { functionToken }), MysqlErrorNumbers.SQL_STATE_SYNTAX_ERROR,
-                    exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.4", new Object[] { functionToken }),
+                    MysqlErrorNumbers.SQLSTATE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION_NO_SUBCLASS, exceptionInterceptor);
         }
 
         int indexOfComma = functionToken.lastIndexOf(",");
 
         if (indexOfComma == -1) {
-            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.5", new Object[] { functionToken }), MysqlErrorNumbers.SQL_STATE_SYNTAX_ERROR,
-                    exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.5", new Object[] { functionToken }),
+                    MysqlErrorNumbers.SQLSTATE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION_NO_SUBCLASS, exceptionInterceptor);
         }
 
         int indexOfCloseParen = functionToken.indexOf(')', indexOfComma);
 
         if (indexOfCloseParen == -1) {
-            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.6", new Object[] { functionToken }), MysqlErrorNumbers.SQL_STATE_SYNTAX_ERROR,
-                    exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.6", new Object[] { functionToken }),
+                    MysqlErrorNumbers.SQLSTATE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION_NO_SUBCLASS, exceptionInterceptor);
 
         }
 
@@ -449,8 +449,8 @@ class EscapeProcessor {
         newType = JDBC_CONVERT_TO_MYSQL_TYPE_MAP.get(trimmedType.toUpperCase(Locale.ENGLISH));
 
         if (newType == null) {
-            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.7", new Object[] { type.trim() }), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
-                    exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("EscapeProcessor.7", new Object[] { type.trim() }),
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, exceptionInterceptor);
         }
 
         int replaceIndex = newType.indexOf("?");

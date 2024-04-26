@@ -829,21 +829,21 @@ public class MetaDataRegressionTest extends BaseTestCase {
             dbmd.supportsResultSetConcurrency(ResultSet.TYPE_FORWARD_ONLY, Integer.MIN_VALUE);
             fail("Exception should've been raised for bogus concurrency value");
         } catch (SQLException sqlEx) {
-            assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
         }
 
         try {
             assertTrue(dbmd.supportsResultSetConcurrency(ResultSet.TYPE_SCROLL_INSENSITIVE, Integer.MIN_VALUE));
             fail("Exception should've been raised for bogus concurrency value");
         } catch (SQLException sqlEx) {
-            assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
         }
 
         try {
             assertTrue(dbmd.supportsResultSetConcurrency(Integer.MIN_VALUE, Integer.MIN_VALUE));
             fail("Exception should've been raised for bogus concurrency value");
         } catch (SQLException sqlEx) {
-            assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
         }
     }
 
@@ -1385,7 +1385,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
         try {
             assertEquals(0, psMeta.getParameterType(1));
         } catch (SQLException sqlEx) {
-            assertEquals(MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQLSTATE_CONNJ_DRIVER_NOT_CAPABLE, sqlEx.getSQLState());
         }
 
         this.pstmt.close();

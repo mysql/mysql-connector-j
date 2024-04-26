@@ -255,7 +255,7 @@ public class ConnectionTest extends BaseTestCase {
             //
             // Check whether the driver thinks it really is deadlock...
             //
-            assertTrue(MysqlErrorNumbers.SQL_STATE_ROLLBACK_SERIALIZATION_FAILURE.equals(sqlEx.getSQLState()));
+            assertTrue(MysqlErrorNumbers.SQLSTATE_TRANSACTION_ROLLBACK_SERIALIZATION_FAILURE.equals(sqlEx.getSQLState()));
             assertTrue(sqlEx.getErrorCode() == 1205);
             // Make sure INNODB Status is getting dumped into error message
 

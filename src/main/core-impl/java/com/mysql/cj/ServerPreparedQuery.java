@@ -210,7 +210,7 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
                     if (firstFound && boundTimeToCheck != bindValues[i].getBoundBeforeExecutionNum()) {
                         throw ExceptionFactory.createException(
                                 Messages.getString("ServerPreparedStatement.11") + Messages.getString("ServerPreparedStatement.12"),
-                                MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, 0, true, null, this.session.getExceptionInterceptor());
+                                MysqlErrorNumbers.SQLSTATE_CONNJ_DRIVER_NOT_CAPABLE, 0, true, null, this.session.getExceptionInterceptor());
                     }
                     firstFound = true;
                     boundTimeToCheck = bindValues[i].getBoundBeforeExecutionNum();

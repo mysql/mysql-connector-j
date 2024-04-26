@@ -149,7 +149,7 @@ public class BlobFromLocator implements java.sql.Blob {
     }
 
     private void notEnoughInformationInQuery() throws SQLException {
-        throw SQLError.createSQLException(Messages.getString("Blob.8"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+        throw SQLError.createSQLException(Messages.getString("Blob.8"), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, this.exceptionInterceptor);
     }
 
     @Override
@@ -210,7 +210,7 @@ public class BlobFromLocator implements java.sql.Blob {
             int rowsUpdated = pStmt.executeUpdate();
 
             if (rowsUpdated != 1) {
-                throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, this.exceptionInterceptor);
             }
         } finally {
             if (pStmt != null) {
@@ -289,7 +289,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 return blobRs.getLong(1);
             }
 
-            throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, this.exceptionInterceptor);
         } finally {
             if (blobRs != null) {
                 try {
@@ -357,7 +357,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 return blobRs.getLong(1);
             }
 
-            throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, this.exceptionInterceptor);
         } finally {
             if (blobRs != null) {
                 try {
@@ -416,7 +416,7 @@ public class BlobFromLocator implements java.sql.Blob {
             int rowsUpdated = pStmt.executeUpdate();
 
             if (rowsUpdated != 1) {
-                throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+                throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, this.exceptionInterceptor);
             }
         } finally {
             if (pStmt != null) {
@@ -473,7 +473,7 @@ public class BlobFromLocator implements java.sql.Blob {
                 return blobRs.getBytes(1);
             }
 
-            throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("Blob.9"), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, this.exceptionInterceptor);
         } finally {
             if (blobRs != null) {
                 try {
@@ -509,11 +509,11 @@ public class BlobFromLocator implements java.sql.Blob {
             if (pos + len > blobLength) {
                 throw SQLError.createSQLException(
                         Messages.getString("Blob.invalidStreamLength", new Object[] { Long.valueOf(blobLength), Long.valueOf(pos), Long.valueOf(len) }),
-                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, BlobFromLocator.this.exceptionInterceptor);
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, BlobFromLocator.this.exceptionInterceptor);
             }
 
             if (pos < 1 || pos > blobLength) {
-                throw SQLError.createSQLException(Messages.getString("Blob.invalidStreamPos"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                throw SQLError.createSQLException(Messages.getString("Blob.invalidStreamPos"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT,
                         BlobFromLocator.this.exceptionInterceptor);
             }
         }

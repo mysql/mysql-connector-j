@@ -106,7 +106,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
             this.enableJMX = Boolean.parseBoolean(enableJMXAsString);
         } catch (Exception e) {
             throw SQLError.createSQLException(Messages.getString("MultihostConnection.badValueForHaEnableJMX", new Object[] { enableJMXAsString }),
-                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, null);
         }
 
         String allowSourceDownConnectionsAsString = props.getProperty(PropertyKey.allowSourceDownConnections.getKeyName(), "false");
@@ -115,7 +115,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
         } catch (Exception e) {
             throw SQLError.createSQLException(
                     Messages.getString("ReplicationConnectionProxy.badValueForAllowSourceDownConnections", new Object[] { enableJMXAsString }),
-                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, null);
         }
 
         String allowReplicaDownConnectionsAsString = props.getProperty(PropertyKey.allowReplicaDownConnections.getKeyName(), "false");
@@ -123,7 +123,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
             this.allowReplicaDownConnections = Boolean.parseBoolean(allowReplicaDownConnectionsAsString);
         } catch (Exception e) {
             throw SQLError.createSQLException(Messages.getString("ReplicationConnectionProxy.badValueForAllowReplicaDownConnections",
-                    new Object[] { allowReplicaDownConnectionsAsString }), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                    new Object[] { allowReplicaDownConnectionsAsString }), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, null);
         }
 
         String readFromSourceWhenNoReplicasAsString = props.getProperty(PropertyKey.readFromSourceWhenNoReplicas.getKeyName());
@@ -132,7 +132,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
 
         } catch (Exception e) {
             throw SQLError.createSQLException(Messages.getString("ReplicationConnectionProxy.badValueForReadFromSourceWhenNoReplicas",
-                    new Object[] { readFromSourceWhenNoReplicasAsString }), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                    new Object[] { readFromSourceWhenNoReplicasAsString }), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, null);
         }
 
         String group = props.getProperty(PropertyKey.replicationConnectionGroup.getKeyName(), null);
@@ -186,7 +186,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
                     throw exCaught;
                 }
                 throw SQLError.createSQLException(Messages.getString("ReplicationConnectionProxy.initializationWithEmptyHostsLists"),
-                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, null);
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, null);
             }
         }
     }
@@ -317,7 +317,7 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
                 if (invokeAgain) {
                     invokeAgain = false;
                 } else if (e.getCause() != null && e.getCause() instanceof SQLException
-                        && ((SQLException) e.getCause()).getSQLState() == MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_STATE
+                        && ((SQLException) e.getCause()).getSQLState() == MysqlErrorNumbers.SQLSTATE_INVALID_TRANSACTION_STATE_NO_SUBCLASS
                         && ((SQLException) e.getCause()).getErrorCode() == MysqlErrorNumbers.ERROR_CODE_NULL_LOAD_BALANCED_CONNECTION) {
                     try {
                         // Try to re-establish the connection with the last known read-only state.
@@ -347,7 +347,8 @@ public class ReplicationConnectionProxy extends MultiHostConnectionProxy impleme
     private void checkConnectionCapabilityForMethod(Method method) throws Throwable {
         if (this.sourceHosts.isEmpty() && this.replicaHosts.isEmpty() && !ReplicationConnection.class.isAssignableFrom(method.getDeclaringClass())) {
             throw SQLError.createSQLException(Messages.getString("ReplicationConnectionProxy.noHostsInconsistentState"),
-                    MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_STATE, MysqlErrorNumbers.ERROR_CODE_REPLICATION_CONNECTION_WITH_NO_HOSTS, true, null);
+                    MysqlErrorNumbers.SQLSTATE_INVALID_TRANSACTION_STATE_NO_SUBCLASS, MysqlErrorNumbers.ERROR_CODE_REPLICATION_CONNECTION_WITH_NO_HOSTS, true,
+                    null);
         }
     }
 

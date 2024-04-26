@@ -48,7 +48,7 @@ public class ConnectionFeatureNotAvailableException extends CommunicationsExcept
 
     @Override
     public String getSQLState() {
-        return MysqlErrorNumbers.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE;
+        return MysqlErrorNumbers.SQLSTATE_MYSQL_INVALID_CONNECTION_ATTRIBUTE;
     }
 
 }

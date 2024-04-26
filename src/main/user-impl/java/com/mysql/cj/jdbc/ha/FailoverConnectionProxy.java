@@ -605,7 +605,8 @@ public class FailoverConnectionProxy extends MultiHostConnectionProxy {
                 if (this.closedReason != null) {
                     reason += "  " + this.closedReason;
                 }
-                throw SQLError.createSQLException(reason, MysqlErrorNumbers.SQL_STATE_CONNECTION_NOT_OPEN, null /* no access to a interceptor here... */);
+                throw SQLError.createSQLException(reason, MysqlErrorNumbers.SQLSTATE_CONNECTION_EXCEPTION_CONNECTION_DOES_NOT_EXIST,
+                        null /* no access to a interceptor here... */);
             }
         }
 

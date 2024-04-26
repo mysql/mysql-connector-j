@@ -20,7 +20,7 @@
 
 package documentation;
 
-import java.util.HashMap;
+import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -36,41 +36,24 @@ public class ErrorMappingsDocGenerator {
     }
 
     public static void dumpSqlStatesMappingsAsXml() throws Exception {
-        TreeMap<Integer, Integer> allErrorNumbers = new TreeMap<>();
-        Map<Object, String> mysqlErrorNumbersToNames = new HashMap<>();
+        Map<Integer, String> mysqlErrors = new TreeMap<>();
 
-        //      Integer errorNumber = null;
-
-        //
-        // First create a list of all 'known' error numbers that are mapped.
-        //
-        for (Integer errorNumber : MysqlErrorNumbers.mysqlToSql99State.keySet()) {
-            allErrorNumbers.put(errorNumber, errorNumber);
-        }
-
-        //
-        // Now create a list of the actual MySQL error numbers we know about
-        //
-        java.lang.reflect.Field[] possibleFields = MysqlErrorNumbers.class.getDeclaredFields();
-
-        for (int i = 0; i < possibleFields.length; i++) {
-            String fieldName = possibleFields[i].getName();
-
-            if (fieldName.startsWith("ER_")) {
-                mysqlErrorNumbersToNames.put(possibleFields[i].get(null), fieldName);
+        // Create a list of all MySQL error numbers.
+        Field[] allFields = MysqlErrorNumbers.class.getDeclaredFields();
+        for (Field f : allFields) {
+            if (f.getName().startsWith("ER_") || f.getName().startsWith("WARN_")) {
+                mysqlErrors.put((Integer) f.get(null), f.getName());
             }
         }
 
-        System.out.println("<ErrorMappings>");
-
-        for (Integer errorNumber : allErrorNumbers.keySet()) {
-            String sql92State = MysqlErrorNumbers.mysqlToSql99(errorNumber.intValue());
-
-            System.out.println("   <ErrorMapping mysqlErrorNumber=\"" + errorNumber + "\" mysqlErrorName=\"" + mysqlErrorNumbersToNames.get(errorNumber)
-                    + "\" legacySqlState=\"" + "" + "\" sql92SqlState=\"" + (sql92State == null ? "" : sql92State) + "\"/>");
+        // Generate documentation tags for each error mapping.
+        System.out.printf("<ErrorMappings>%n");
+        for (Integer error : mysqlErrors.keySet()) {
+            String sqlstate = MysqlErrorNumbers.mysqlToSqlstate(error);
+            System.out.printf("   <ErrorMapping mysqlErrorNumber=\"%d\" mysqlErrorName=\"%s\" legacySqlState=\"\" sql92SqlState=\"%s\"/>%n", error,
+                    mysqlErrors.get(error), sqlstate);
         }
-
-        System.out.println("</ErrorMappings>");
+        System.out.printf("</ErrorMappings>%n");
     }
 
 }

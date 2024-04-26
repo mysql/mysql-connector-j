@@ -39,7 +39,7 @@ public class NotUpdatable extends SQLException {
      *            message for this exception.
      */
     public NotUpdatable(String reason) {
-        super(reason + Messages.getString("NotUpdatable.1"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR);
+        super(reason + Messages.getString("NotUpdatable.1"), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR);
     }
 
 }

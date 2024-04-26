@@ -47,11 +47,11 @@ public class MiniAdmin {
      */
     public MiniAdmin(java.sql.Connection conn) throws SQLException {
         if (conn == null) {
-            throw SQLError.createSQLException(Messages.getString("MiniAdmin.0"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, null);
+            throw SQLError.createSQLException(Messages.getString("MiniAdmin.0"), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, null);
         }
 
         if (!(conn instanceof JdbcConnection)) {
-            throw SQLError.createSQLException(Messages.getString("MiniAdmin.1"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+            throw SQLError.createSQLException(Messages.getString("MiniAdmin.1"), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR,
                     ((com.mysql.cj.jdbc.ConnectionImpl) conn).getExceptionInterceptor());
         }
 

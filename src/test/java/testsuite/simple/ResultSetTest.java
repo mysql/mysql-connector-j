@@ -306,7 +306,7 @@ public class ResultSetTest extends BaseTestCase {
             // -40:20:10 is an invalid value for a time object
             this.rs.getTime(2);
         } catch (SQLException ex) {
-            assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, ex.getSQLState());
         }
         Timestamp timestamp = this.rs.getTimestamp(3);
         assertEquals("2006-02-01 12:13:14.0", timestamp.toString());
@@ -318,7 +318,7 @@ public class ResultSetTest extends BaseTestCase {
         try {
             this.rs.getTimestamp(2);
         } catch (SQLException ex) {
-            assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, ex.getSQLState());
         }
     }
 

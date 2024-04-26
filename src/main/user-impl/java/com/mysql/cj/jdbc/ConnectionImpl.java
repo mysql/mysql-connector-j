@@ -448,7 +448,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                         this.propertySet.getBooleanProperty(PropertyKey.paranoid).getValue() ? Messages.getString("Connection.0")
                                 : Messages.getString("Connection.1",
                                         new Object[] { this.session.getHostInfo().getHost(), this.session.getHostInfo().getPort() }),
-                        MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_MYSQL_COMMUNICATION_LINK_FAILURE, ex, getExceptionInterceptor());
             }
         } catch (Throwable t) {
             this.connectionSpan.setError(t);
@@ -566,8 +566,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
     @Override
     public void throwConnectionClosedException() throws SQLException {
-        SQLException ex = SQLError.createSQLException(Messages.getString("Connection.2"), MysqlErrorNumbers.SQL_STATE_CONNECTION_NOT_OPEN,
-                getExceptionInterceptor());
+        SQLException ex = SQLError.createSQLException(Messages.getString("Connection.2"),
+                MysqlErrorNumbers.SQLSTATE_CONNECTION_EXCEPTION_CONNECTION_DOES_NOT_EXIST, getExceptionInterceptor());
 
         if (this.session.getForceClosedReason() != null) {
             ex.initCause(this.session.getForceClosedReason());
@@ -804,9 +804,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                     span.end();
                 }
             } catch (SQLException sqlException) {
-                if (MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlException.getSQLState())) {
-                    throw SQLError.createSQLException(Messages.getString("Connection.4"), MysqlErrorNumbers.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN,
-                            getExceptionInterceptor());
+                if (MysqlErrorNumbers.SQLSTATE_MYSQL_COMMUNICATION_LINK_FAILURE.equals(sqlException.getSQLState())) {
+                    throw SQLError.createSQLException(Messages.getString("Connection.4"),
+                            MysqlErrorNumbers.SQLSTATE_CONNECTION_EXCEPTION_TRANSACTION_RESOLUTION_UNKNOWN, getExceptionInterceptor());
                 }
 
                 throw sqlException;
@@ -919,7 +919,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             SQLException chainedEx = SQLError.createSQLException(
                     Messages.getString("Connection.UnableToConnectWithRetries",
                             new Object[] { this.propertySet.getIntegerProperty(PropertyKey.maxReconnects).getValue() }),
-                    MysqlErrorNumbers.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, connectionException, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQLSTATE_CONNECTION_EXCEPTION_SQL_CLIENT_UNABLE_TO_ESTABLISH_SQL_CONNECTION, connectionException,
+                    getExceptionInterceptor());
             throw chainedEx;
         }
 
@@ -1022,7 +1023,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             SQLException chainedEx = SQLError.createSQLException(Messages.getString("Connection.UnableToConnect"),
-                    MysqlErrorNumbers.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQLSTATE_CONNECTION_EXCEPTION_SQL_CLIENT_UNABLE_TO_ESTABLISH_SQL_CONNECTION, getExceptionInterceptor());
             chainedEx.initCause(connectionNotEstablishedBecause);
 
             throw chainedEx;
@@ -1100,8 +1101,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         if (this.pedantic.getValue()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
-                throw SQLError.createSQLException("HOLD_CUSRORS_OVER_COMMIT is only supported holdability level", MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                        getExceptionInterceptor());
+                throw SQLError.createSQLException("HOLD_CUSRORS_OVER_COMMIT is only supported holdability level",
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
         }
 
@@ -1236,10 +1237,11 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                         this.isolationLevel = intTI.intValue();
                         return this.isolationLevel;
                     }
-                    throw SQLError.createSQLException(Messages.getString("Connection.12", new Object[] { s }), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+                    throw SQLError.createSQLException(Messages.getString("Connection.12", new Object[] { s }), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR,
                             getExceptionInterceptor());
                 }
-                throw SQLError.createSQLException(Messages.getString("Connection.13"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Connection.13"), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR,
+                        getExceptionInterceptor());
             }
 
             return this.isolationLevel;
@@ -1318,7 +1320,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         try {
             LicenseConfiguration.checkLicenseType(this.session.getServerSession().getServerVariables());
         } catch (CJException e) {
-            throw SQLError.createSQLException(e.getMessage(), MysqlErrorNumbers.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
+            throw SQLError.createSQLException(e.getMessage(), MysqlErrorNumbers.SQLSTATE_CONNECTION_EXCEPTION_SQL_CLIENT_UNABLE_TO_ESTABLISH_SQL_CONNECTION,
+                    getExceptionInterceptor());
         }
 
         this.session.getProtocol().initServerSession();
@@ -1594,7 +1597,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         if (this.pedantic.getValue()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
-                throw SQLError.createSQLException(Messages.getString("Connection.17"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Connection.17"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
         }
 
@@ -1722,7 +1726,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
     public java.sql.PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         if (this.pedantic.getValue()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
-                throw SQLError.createSQLException(Messages.getString("Connection.17"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Connection.17"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
         }
 
@@ -1941,8 +1946,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                     }
                 }
                 if (this.session.getServerSession().isAutoCommit()) {
-                    throw SQLError.createSQLException(Messages.getString("Connection.20"), MysqlErrorNumbers.SQL_STATE_CONNECTION_NOT_OPEN,
-                            getExceptionInterceptor());
+                    throw SQLError.createSQLException(Messages.getString("Connection.20"),
+                            MysqlErrorNumbers.SQLSTATE_CONNECTION_EXCEPTION_CONNECTION_DOES_NOT_EXIST, getExceptionInterceptor());
                 }
                 try {
                     rollbackNoChecks();
@@ -1955,9 +1960,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
                 }
             } catch (SQLException sqlException) {
-                if (MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlException.getSQLState())) {
-                    throw SQLError.createSQLException(Messages.getString("Connection.21"), MysqlErrorNumbers.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN,
-                            getExceptionInterceptor());
+                if (MysqlErrorNumbers.SQLSTATE_MYSQL_COMMUNICATION_LINK_FAILURE.equals(sqlException.getSQLState())) {
+                    throw SQLError.createSQLException(Messages.getString("Connection.21"),
+                            MysqlErrorNumbers.SQLSTATE_CONNECTION_EXCEPTION_TRANSACTION_RESOLUTION_UNKNOWN, getExceptionInterceptor());
                 }
 
                 throw sqlException;
@@ -2012,7 +2017,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                             int indexOfError153 = msg.indexOf("153");
                             if (indexOfError153 != -1) {
                                 throw SQLError.createSQLException(Messages.getString("Connection.22", new Object[] { savepoint.getSavepointName() }),
-                                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, errno, getExceptionInterceptor());
+                                        MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, errno, getExceptionInterceptor());
                             }
                         }
                     }
@@ -2022,9 +2027,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                         throw sqlEx;
                     }
 
-                    if (MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
-                        throw SQLError.createSQLException(Messages.getString("Connection.23"), MysqlErrorNumbers.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN,
-                                getExceptionInterceptor());
+                    if (MysqlErrorNumbers.SQLSTATE_MYSQL_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
+                        throw SQLError.createSQLException(Messages.getString("Connection.23"),
+                                MysqlErrorNumbers.SQLSTATE_CONNECTION_EXCEPTION_TRANSACTION_RESOLUTION_UNKNOWN, getExceptionInterceptor());
                     }
 
                     throw sqlEx;
@@ -2103,7 +2108,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             throws SQLException {
         if (this.pedantic.getValue()) {
             if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
-                throw SQLError.createSQLException(Messages.getString("Connection.17"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Connection.17"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
         }
 
@@ -2227,7 +2233,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             checkClosed();
 
             if (db == null) {
-                throw SQLError.createSQLException("Database can not be null", MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException("Database can not be null", MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             if (this.connectionLifecycleInterceptors != null) {
@@ -2455,7 +2461,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
                         default:
                             throw SQLError.createSQLException(Messages.getString("Connection.25", new Object[] { level }),
-                                    MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
+                                    MysqlErrorNumbers.SQLSTATE_CONNJ_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
                     }
 
                     this.session.execSQL(null, sql, -1, null, false, this.nullStatementResultSetFactory, null, false);
@@ -2540,7 +2546,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             this.session.shutdownServer();
         } catch (CJException ex) {
             SQLException sqlEx = SQLError.createSQLException(Messages.getString("Connection.UnhandledExceptionDuringShutdown"),
-                    MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, getExceptionInterceptor());
 
             sqlEx.initCause(ex);
 
@@ -2736,7 +2742,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         }
 
         if (executor == null) {
-            throw SQLError.createSQLException(Messages.getString("Connection.26"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("Connection.26"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT,
+                    getExceptionInterceptor());
         }
 
         executor.execute(() -> {
@@ -2760,7 +2767,8 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             }
 
             if (executor == null) {
-                throw SQLError.createSQLException(Messages.getString("Connection.26"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                throw SQLError.createSQLException(Messages.getString("Connection.26"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT,
+                        getExceptionInterceptor());
             }
 
             checkClosed();
@@ -2948,7 +2956,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
             // anything
             return iface.cast(this);
         } catch (ClassCastException cce) {
-            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
         }
     }

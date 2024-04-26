@@ -248,28 +248,28 @@ public class DateTest extends BaseTestCase {
                 this.rs.getDate(1);
                 fail("Exception should have been thrown when trying to retrieve invalid date");
             } catch (SQLException sqlEx) {
-                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
             }
 
             try {
                 this.rs.getTimestamp(1);
                 fail("Exception should have been thrown when trying to retrieve invalid date");
             } catch (SQLException sqlEx) {
-                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
             }
 
             try {
                 this.rs.getDate(2);
                 fail("Exception should have been thrown when trying to retrieve invalid date");
             } catch (SQLException sqlEx) {
-                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
             }
 
             try {
                 this.rs.getTimestamp(2);
                 fail("Exception should have been thrown when trying to retrieve invalid date");
             } catch (SQLException sqlEx) {
-                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
             }
 
             PreparedStatement exceptionPrepStmt = exceptionConn.prepareStatement("SELECT fieldAsString, fieldAsDateTime FROM testZeroDateBehavior");
@@ -280,7 +280,7 @@ public class DateTest extends BaseTestCase {
                 this.rs.getDate(2);
                 fail("Exception should have been thrown when trying to retrieve invalid date");
             } catch (SQLException sqlEx) {
-                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
             }
 
         } finally {

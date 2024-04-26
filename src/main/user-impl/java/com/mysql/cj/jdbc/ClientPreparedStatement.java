@@ -328,7 +328,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
                 if (!this.doPingInstead && !checkReadOnlySafeStatement()) {
                     throw SQLError.createSQLException(Messages.getString("PreparedStatement.20") + Messages.getString("PreparedStatement.21"),
-                            MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                            MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }
 
                 ResultSetInternalMethods rs = null;
@@ -430,7 +430,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
                 if (this.connection.isReadOnly()) {
                     throw new SQLException(Messages.getString("PreparedStatement.25") + Messages.getString("PreparedStatement.26"),
-                            MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT);
+                            MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT);
                 }
 
                 if (this.query.getBatchedArgs() == null || this.query.getBatchedArgs().size() == 0) {
@@ -1008,7 +1008,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                 if (!this.doPingInstead) {
                     QueryReturnType queryReturnType = getQueryInfo().getQueryReturnType();
                     if (queryReturnType != QueryReturnType.PRODUCES_RESULT_SET && queryReturnType != QueryReturnType.MAY_PRODUCE_RESULT_SET) {
-                        throw SQLError.createSQLException(Messages.getString("Statement.57"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                        throw SQLError.createSQLException(Messages.getString("Statement.57"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT,
                                 getExceptionInterceptor());
                     }
                 }
@@ -1135,7 +1135,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
                 if (locallyScopedConn.isReadOnly(false)) {
                     throw SQLError.createSQLException(Messages.getString("PreparedStatement.34") + Messages.getString("PreparedStatement.35"),
-                            MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                            MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
                 }
 
                 if (!isNonResultSetProducingQuery()) {
@@ -1493,14 +1493,14 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         try {
             if (paramIndex < 1) {
                 throw SQLError.createSQLException(Messages.getString("PreparedStatement.49") + paramIndex + Messages.getString("PreparedStatement.50"),
-                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             } else if (paramIndex > ((PreparedQuery) this.query).getParameterCount()) {
                 throw SQLError.createSQLException(
                         Messages.getString("PreparedStatement.51") + paramIndex + Messages.getString("PreparedStatement.52")
                                 + ((PreparedQuery) this.query).getParameterCount() + Messages.getString("PreparedStatement.53"),
-                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             } else if (parameterIndexOffset == -1 && paramIndex == 1) {
-                throw SQLError.createSQLException(Messages.getString("PreparedStatement.63"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+                throw SQLError.createSQLException(Messages.getString("PreparedStatement.63"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT,
                         this.exceptionInterceptor);
             }
         } finally {
@@ -1938,7 +1938,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                         MysqlType.getByJdbcType(targetSqlType), -1);
             } catch (FeatureNotAvailableException nae) {
                 throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(targetSqlType),
-                        MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
             }
         } finally {
             connectionLock.unlock();
@@ -1970,7 +1970,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                         MysqlType.getByJdbcType(targetSqlType), scale);
             } catch (FeatureNotAvailableException nae) {
                 throw SQLError.createSQLFeatureNotSupportedException(Messages.getString("Statement.UnsupportedSQLType") + JDBCType.valueOf(targetSqlType),
-                        MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
             }
         } finally {
             connectionLock.unlock();

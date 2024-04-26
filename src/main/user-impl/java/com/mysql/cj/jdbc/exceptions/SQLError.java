@@ -137,7 +137,7 @@ public class SQLError {
         } catch (Exception sqlEx) {
             SQLException unexpectedEx = new SQLException(
                     "Unable to create correct SQLException class instance, error class/codes may be incorrect. Reason: " + Util.stackTraceToString(sqlEx),
-                    MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR);
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR);
 
             return runThroughExceptionInterceptor(interceptor, unexpectedEx);
 

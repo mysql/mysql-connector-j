@@ -491,7 +491,7 @@ public class StatementRegressionTest extends BaseTestCase {
             stmt2.getWarnings();
             fail("Should've caught an exception here");
         } catch (SQLException sqlEx) {
-            assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
         } finally {
             if (stmt2 != null) {
                 stmt2.close();
@@ -1085,7 +1085,7 @@ public class StatementRegressionTest extends BaseTestCase {
             try {
                 pStmt.setInt(4, 1);
             } catch (SQLException sqlEx) {
-                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
             }
         } finally {
             if (pStmt != null) {
@@ -2208,7 +2208,7 @@ public class StatementRegressionTest extends BaseTestCase {
             try {
                 _pstmt.setString(25, "");
             } catch (SQLException sqlEx) {
-                assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
+                assertTrue(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
             }
         } finally {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS testParameterBoundsCheck");
@@ -2650,7 +2650,7 @@ public class StatementRegressionTest extends BaseTestCase {
             try {
                 pStmt.clearParameters();
             } catch (SQLException sqlEx) {
-                assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
+                assertEquals(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
             }
 
             pStmt = ((com.mysql.cj.jdbc.JdbcConnection) this.conn).clientPrepareStatement("INSERT INTO testBug17857 VALUES (?)");
@@ -2658,7 +2658,7 @@ public class StatementRegressionTest extends BaseTestCase {
             try {
                 pStmt.clearParameters();
             } catch (SQLException sqlEx) {
-                assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
+                assertEquals(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
             }
 
         } finally {
@@ -5159,7 +5159,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.stmt.getGeneratedKeys();
             fail("Expected exception");
         } catch (SQLException sqlEx) {
-            assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
         }
 
         this.pstmt = this.conn.prepareStatement("SELECT 1");
@@ -5169,7 +5169,7 @@ public class StatementRegressionTest extends BaseTestCase {
             this.pstmt.getGeneratedKeys();
             fail("Expected exception");
         } catch (SQLException sqlEx) {
-            assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
+            assertEquals(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
         }
     }
 
@@ -5639,7 +5639,7 @@ public class StatementRegressionTest extends BaseTestCase {
             try {
                 this.pstmt.executeBatch();
             } catch (SQLException sqlEx) {
-                assertEquals(MysqlErrorNumbers.SQL_STATE_SYNTAX_ERROR, sqlEx.getSQLState());
+                assertEquals(MysqlErrorNumbers.SQLSTATE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION_NO_SUBCLASS, sqlEx.getSQLState());
             }
 
             this.pstmt = conn2.prepareStatement("INSERT INTO testBugDupeKeySingle VALUES (?)");
@@ -6199,14 +6199,14 @@ public class StatementRegressionTest extends BaseTestCase {
             this.rs = this.stmt.executeQuery("TRUNCATE testBug35653");
             fail("executeQuery() shouldn't allow TRUNCATE");
         } catch (SQLException e) {
-            assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT == e.getSQLState());
+            assertTrue(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT == e.getSQLState());
         }
 
         try {
             this.rs = this.stmt.executeQuery("RENAME TABLE testBug35653 TO testBug35653_new");
             fail("executeQuery() shouldn't allow RENAME");
         } catch (SQLException e) {
-            assertTrue(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT == e.getSQLState());
+            assertTrue(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT == e.getSQLState());
         } finally {
             dropTable("testBug35653_new");
         }

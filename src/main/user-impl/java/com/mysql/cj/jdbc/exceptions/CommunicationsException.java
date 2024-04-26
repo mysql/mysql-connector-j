@@ -63,7 +63,7 @@ public class CommunicationsException extends SQLRecoverableException implements 
 
     @Override
     public String getSQLState() {
-        return MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE;
+        return MysqlErrorNumbers.SQLSTATE_MYSQL_COMMUNICATION_LINK_FAILURE;
     }
 
     @Override

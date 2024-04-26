@@ -112,8 +112,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
         if (autoCommit && isInGlobalTx()) {
-            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
-                    MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), MysqlErrorNumbers.SQLSTATE_INVALID_TRANSACTION_TERMINATION_NO_SUBCLASS,
+                    MysqlErrorNumbers.ER_XAER_RMERR, this.exceptionInterceptor);
         }
 
         try {
@@ -243,8 +243,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public java.sql.Savepoint setSavepoint() throws SQLException {
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
-                    MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), MysqlErrorNumbers.SQLSTATE_INVALID_TRANSACTION_TERMINATION_NO_SUBCLASS,
+                    MysqlErrorNumbers.ER_XAER_RMERR, this.exceptionInterceptor);
         }
 
         try {
@@ -259,8 +259,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public java.sql.Savepoint setSavepoint(String arg0) throws SQLException {
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
-                    MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.0"), MysqlErrorNumbers.SQLSTATE_INVALID_TRANSACTION_TERMINATION_NO_SUBCLASS,
+                    MysqlErrorNumbers.ER_XAER_RMERR, this.exceptionInterceptor);
         }
 
         try {
@@ -342,8 +342,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public void commit() throws SQLException {
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.1"), MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
-                    MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.1"), MysqlErrorNumbers.SQLSTATE_INVALID_TRANSACTION_TERMINATION_NO_SUBCLASS,
+                    MysqlErrorNumbers.ER_XAER_RMERR, this.exceptionInterceptor);
         }
 
         try {
@@ -529,8 +529,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public void rollback() throws SQLException {
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.2"), MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
-                    MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.2"), MysqlErrorNumbers.SQLSTATE_INVALID_TRANSACTION_TERMINATION_NO_SUBCLASS,
+                    MysqlErrorNumbers.ER_XAER_RMERR, this.exceptionInterceptor);
         }
 
         try {
@@ -543,8 +543,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public void rollback(Savepoint arg0) throws SQLException {
         if (isInGlobalTx()) {
-            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.2"), MysqlErrorNumbers.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
-                    MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("ConnectionWrapper.2"), MysqlErrorNumbers.SQLSTATE_INVALID_TRANSACTION_TERMINATION_NO_SUBCLASS,
+                    MysqlErrorNumbers.ER_XAER_RMERR, this.exceptionInterceptor);
         }
 
         try {
@@ -1050,7 +1050,7 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
             return iface.cast(cachedUnwrapped);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
-                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         } finally {
             this.objectLock.unlock();
         }

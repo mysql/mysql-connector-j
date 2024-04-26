@@ -227,7 +227,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
             if (locallyScopedConn.isReadOnly()) {
                 throw SQLError.createSQLException(Messages.getString("ServerPreparedStatement.2") + Messages.getString("ServerPreparedStatement.3"),
-                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
             }
 
             clearWarnings();
@@ -374,7 +374,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                     this.session.dumpPacketRingBuffer();
                 }
 
-                SQLException sqlEx = SQLError.createSQLException(ex.toString(), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, ex, this.exceptionInterceptor);
+                SQLException sqlEx = SQLError.createSQLException(ex.toString(), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, ex, this.exceptionInterceptor);
 
                 if (this.dumpQueriesOnException.getValue()) {
                     String extractedSql = toString();
@@ -730,8 +730,8 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
                 return pstmt;
             } catch (CJException e) {
-                SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.27"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
-                        this.exceptionInterceptor);
+                SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.27"),
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, this.exceptionInterceptor);
                 sqlEx.initCause(e);
 
                 throw sqlEx;

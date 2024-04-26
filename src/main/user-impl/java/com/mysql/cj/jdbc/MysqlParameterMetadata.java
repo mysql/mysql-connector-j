@@ -80,7 +80,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 
     private void checkAvailable() throws SQLException {
         if (this.metadata == null || this.metadata.getFields() == null) {
-            throw SQLError.createSQLException(Messages.getString("MysqlParameterMetadata.0"), MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE,
+            throw SQLError.createSQLException(Messages.getString("MysqlParameterMetadata.0"), MysqlErrorNumbers.SQLSTATE_CONNJ_DRIVER_NOT_CAPABLE,
                     this.exceptionInterceptor);
         }
     }
@@ -171,12 +171,12 @@ public class MysqlParameterMetadata implements ParameterMetaData {
     private void checkBounds(int paramNumber) throws SQLException {
         if (paramNumber < 1) {
             throw SQLError.createSQLException(Messages.getString("MysqlParameterMetadata.1", new Object[] { paramNumber }),
-                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
 
         if (paramNumber > this.parameterCount) {
             throw SQLError.createSQLException(Messages.getString("MysqlParameterMetadata.2", new Object[] { paramNumber, this.parameterCount }),
-                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 
         }
     }
@@ -194,7 +194,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
             return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
-                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
     }
 

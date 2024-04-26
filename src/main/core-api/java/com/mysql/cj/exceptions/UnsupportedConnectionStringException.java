@@ -26,27 +26,27 @@ public class UnsupportedConnectionStringException extends CJException {
 
     public UnsupportedConnectionStringException() {
         super();
-        setSQLState(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT);
+        setSQLState(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT);
     }
 
     public UnsupportedConnectionStringException(String message) {
         super(message);
-        setSQLState(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT);
+        setSQLState(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT);
     }
 
     public UnsupportedConnectionStringException(String message, Throwable cause) {
         super(message, cause);
-        setSQLState(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT);
+        setSQLState(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT);
     }
 
     public UnsupportedConnectionStringException(Throwable cause) {
         super(cause);
-        setSQLState(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT);
+        setSQLState(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT);
     }
 
     public UnsupportedConnectionStringException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
-        setSQLState(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT);
+        setSQLState(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT);
     }
 
 }

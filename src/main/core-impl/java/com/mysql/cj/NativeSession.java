@@ -890,7 +890,7 @@ public class NativeSession extends CoreSession implements Serializable {
                 invokeNormalCloseListeners();
 
                 throw ExceptionFactory.createException(Messages.getString("Connection.exceededConnectionLifetime"),
-                        MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE, 0, false, null, this.exceptionInterceptor);
+                        MysqlErrorNumbers.SQLSTATE_MYSQL_COMMUNICATION_LINK_FAILURE, 0, false, null, this.exceptionInterceptor);
             }
             this.protocol.sendCommand(this.commandBuilder.buildComPing(null), false, timeoutMillis); // it isn't safe to use a shared packet here
         } catch (Throwable t) {

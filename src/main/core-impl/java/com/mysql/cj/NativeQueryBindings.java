@@ -139,7 +139,8 @@ public class NativeQueryBindings implements QueryBindings {
     public void checkParameterSet(int columnIndex) {
         if (!this.bindValues[columnIndex].isSet()) {
             throw ExceptionFactory.createException(Messages.getString("PreparedStatement.40") + (columnIndex + 1),
-                    MysqlErrorNumbers.SQL_STATE_WRONG_NO_OF_PARAMETERS, 0, true, null, this.session.getExceptionInterceptor());
+                    MysqlErrorNumbers.SQLSTATE_DYNAMIC_SQL_ERROR_USING_CLAUSE_DOES_NOT_MATCH_DYNAMIC_PARAMETER_SPECIFICATIONS, 0, true, null,
+                    this.session.getExceptionInterceptor());
         }
     }
 

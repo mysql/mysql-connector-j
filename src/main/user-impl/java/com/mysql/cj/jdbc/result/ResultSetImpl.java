@@ -371,7 +371,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
-                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             if (isStrictlyForwardOnly()) {
@@ -424,7 +424,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
-                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             if (isStrictlyForwardOnly()) {
@@ -449,7 +449,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
-                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             if (isStrictlyForwardOnly()) {
@@ -487,7 +487,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
         if (c == null) {
             throw SQLError.createSQLException(Messages.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"),
-                    MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         return c;
@@ -510,12 +510,12 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                 throw SQLError.createSQLException(
                         Messages.getString("ResultSet.Column_Index_out_of_range_low",
                                 new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.columnDefinition.getFields().length) }),
-                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             } else if (columnIndex > this.columnDefinition.getFields().length) {
                 throw SQLError.createSQLException(
                         Messages.getString("ResultSet.Column_Index_out_of_range_high",
                                 new Object[] { Integer.valueOf(columnIndex), Integer.valueOf(this.columnDefinition.getFields().length) }),
-                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             if (this.useUsageAdvisor) {
@@ -537,7 +537,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         checkClosed();
 
         if (!this.onValidRow) {
-            throw SQLError.createSQLException(Messages.getString(this.invalidRowReasonMessageKey), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+            throw SQLError.createSQLException(Messages.getString(this.invalidRowReasonMessageKey), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR,
                     getExceptionInterceptor());
         }
     }
@@ -598,7 +598,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             if (index == -1) {
                 throw SQLError.createSQLException(
                         Messages.getString("ResultSet.Column____112") + columnName + Messages.getString("ResultSet.___not_found._113"),
-                        MysqlErrorNumbers.SQL_STATE_COLUMN_NOT_FOUND, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_MYSQL_ER_BAD_FIELD_ERROR, getExceptionInterceptor());
             }
 
             return index;
@@ -614,7 +614,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
-                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             if (isStrictlyForwardOnly()) {
@@ -863,7 +863,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         } catch (NumberFormatException nfe) {
             throw SQLError.createSQLException(
                     Messages.getString("ResultSet.Bad_format_for_BigInteger", new Object[] { Integer.valueOf(columnIndex), stringVal }),
-                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 
@@ -1064,7 +1064,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                 asString = new String(asBytes, forcedEncoding);
             }
         } catch (UnsupportedEncodingException uee) {
-            throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw SQLError.createSQLException("Unsupported character encoding " + forcedEncoding, MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
         }
 
@@ -1095,7 +1095,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public String getCursorName() throws SQLException {
-        throw SQLError.createSQLException(Messages.getString("ResultSet.Positioned_Update_not_supported"), MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE,
+        throw SQLError.createSQLException(Messages.getString("ResultSet.Positioned_Update_not_supported"), MysqlErrorNumbers.SQLSTATE_CONNJ_DRIVER_NOT_CAPABLE,
                 getExceptionInterceptor());
     }
 
@@ -1203,7 +1203,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                     } catch (NumberFormatException ex) {
                         throw SQLError.createSQLException(
                                 Messages.getString("ResultSet.Bad_format_for_BigDecimal", new Object[] { stringVal, Integer.valueOf(columnIndex) }),
-                                MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                                MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
                 }
                 return null;
@@ -1265,7 +1265,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     @Override
     public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
         if (type == null) {
-            throw SQLError.createSQLException("Type parameter can not be null", MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+            throw SQLError.createSQLException("Type parameter can not be null", MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
 
         Lock connectionLock = checkClosed().getConnectionLock();
@@ -1391,7 +1391,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                 return (T) this.thisRow.getValue(columnIndex - 1, new DurationValueFactory(this.session.getPropertySet()));
             }
 
-            throw SQLError.createSQLException("Conversion not supported for type " + type.getName(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
+            throw SQLError.createSQLException("Conversion not supported for type " + type.getName(), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT,
                     getExceptionInterceptor());
         } finally {
             connectionLock.unlock();
@@ -1478,7 +1478,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                     } catch (NumberFormatException ex) {
                         throw SQLError.createSQLException(
                                 Messages.getString("ResultSet.Bad_format_for_BigDecimal", new Object[] { stringVal, Integer.valueOf(columnIndex) }),
-                                MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                                MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, getExceptionInterceptor());
                     }
 
                     return val;
@@ -1566,8 +1566,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         checkClosed();
 
         if (!hasRows()) {
-            throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
-                    getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, getExceptionInterceptor());
         }
 
         int currentRowNumber = this.rowData.getPosition();
@@ -1606,7 +1606,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             }
 
         } catch (SQLException sqlEx) {
-            throw SQLError.createSQLException("Operation not allowed on closed ResultSet.", MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR,
+            throw SQLError.createSQLException("Operation not allowed on closed ResultSet.", MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR,
                     getExceptionInterceptor());
         }
     }
@@ -1641,8 +1641,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             return new URL(val);
         } catch (MalformedURLException mfe) {
-            throw SQLError.createSQLException(Messages.getString("ResultSet.Malformed_URL____104") + val + "'", MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                    getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("ResultSet.Malformed_URL____104") + val + "'",
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 
@@ -1657,8 +1657,8 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             return new URL(val);
         } catch (MalformedURLException mfe) {
-            throw SQLError.createSQLException(Messages.getString("ResultSet.Malformed_URL____107") + val + "'", MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT,
-                    getExceptionInterceptor());
+            throw SQLError.createSQLException(Messages.getString("ResultSet.Malformed_URL____107") + val + "'",
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 
@@ -1685,7 +1685,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
-                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, getExceptionInterceptor());
             }
             return this.rowData.isAfterLast();
         } finally {
@@ -1700,7 +1700,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
-                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             return this.rowData.isBeforeFirst();
@@ -1716,7 +1716,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
-                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             return this.rowData.isFirst();
@@ -1732,7 +1732,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
-                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             return this.rowData.isLast();
@@ -1759,7 +1759,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
-                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             if (isStrictlyForwardOnly()) {
@@ -1800,7 +1800,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
-                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             boolean b;
@@ -1881,7 +1881,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
-                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             if (isStrictlyForwardOnly()) {
@@ -2016,7 +2016,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             if (!hasRows()) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
-                        MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, getExceptionInterceptor());
             }
 
             if (isStrictlyForwardOnly()) {
@@ -2062,7 +2062,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             if (direction != FETCH_FORWARD && direction != FETCH_REVERSE && direction != FETCH_UNKNOWN) {
                 throw SQLError.createSQLException(Messages.getString("ResultSet.Illegal_value_for_fetch_direction_64"),
-                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             if (isStrictlyForwardOnly() && direction != FETCH_FORWARD) {
@@ -2083,7 +2083,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         try {
             if (rows < 0 && rows != Integer.MIN_VALUE) { /* || rows > getMaxRows() */
                 throw SQLError.createSQLException(Messages.getString("ResultSet.Value_must_be_between_0_and_getMaxRows()_66"),
-                        MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                        MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
             this.fetchSize = rows;
@@ -2716,7 +2716,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException(Messages.getString("Common.UnableToUnwrap", new Object[] { iface.toString() }),
-                    MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+                    MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 

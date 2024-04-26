@@ -215,7 +215,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
             db1Connection.prepareCall("{ call COMPROVAR_USUARI(?, ?, ?, ?, ?, ?) }");
             return null;
         });
-        assertEquals(MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, e.getSQLState());
+        assertEquals(MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, e.getSQLState());
 
         CallableStatement cstmt3 = db1Connection.prepareCall("{ call COMPROVAR_USUARI(?, ?, ?, ?, ?) }");
         cstmt3.setString(1, "abc");

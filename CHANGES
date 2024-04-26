@@ -3,6 +3,8 @@
 
 Version 9.0.0
 
+  - WL#16342, Update MySQL error codes mapping.
+
   - WL#16353, Refresh the list of acceptable TLS ciphers.
 
   - Fix for Bug#114687 (Bug#36529541), Tests fail after mysql_native_password has been made optional in server.

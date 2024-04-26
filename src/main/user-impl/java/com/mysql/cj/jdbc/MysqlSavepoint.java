@@ -64,7 +64,7 @@ public class MysqlSavepoint implements Savepoint {
      */
     MysqlSavepoint(String name, ExceptionInterceptor exceptionInterceptor) throws SQLException {
         if (name == null || name.length() == 0) {
-            throw SQLError.createSQLException(Messages.getString("MysqlSavepoint.0"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+            throw SQLError.createSQLException(Messages.getString("MysqlSavepoint.0"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, exceptionInterceptor);
         }
 
         this.savepointName = name;
@@ -74,7 +74,8 @@ public class MysqlSavepoint implements Savepoint {
 
     @Override
     public int getSavepointId() throws SQLException {
-        throw SQLError.createSQLException(Messages.getString("MysqlSavepoint.1"), MysqlErrorNumbers.SQL_STATE_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
+        throw SQLError.createSQLException(Messages.getString("MysqlSavepoint.1"), MysqlErrorNumbers.SQLSTATE_CONNJ_DRIVER_NOT_CAPABLE,
+                this.exceptionInterceptor);
     }
 
     @Override

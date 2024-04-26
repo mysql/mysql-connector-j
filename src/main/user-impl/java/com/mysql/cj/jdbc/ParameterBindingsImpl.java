@@ -101,7 +101,7 @@ public class ParameterBindingsImpl implements ParameterBindings {
                         charsetIndex = session.getServerSession().getCharsetSettings().getCollationIndexForJavaEncoding(
                                 this.propertySet.getStringProperty(PropertyKey.characterEncoding).getValue(), session.getServerSession().getServerVersion());
                     } catch (RuntimeException ex) {
-                        throw SQLError.createSQLException(ex.toString(), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT, ex, null);
+                        throw SQLError.createSQLException(ex.toString(), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, ex, null);
                     }
                     break;
             }

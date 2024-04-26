@@ -41,11 +41,11 @@ public class PacketTooBigException extends SQLException {
      *            the maximum size the server will accept
      */
     public PacketTooBigException(long packetSize, long maximumPacketSize) {
-        super(Messages.getString("PacketTooBigException.0", new Object[] { packetSize, maximumPacketSize }), MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR);
+        super(Messages.getString("PacketTooBigException.0", new Object[] { packetSize, maximumPacketSize }), MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR);
     }
 
     public PacketTooBigException(String message) {
-        super(message, MysqlErrorNumbers.SQL_STATE_GENERAL_ERROR);
+        super(message, MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR);
     }
 
 }

@@ -30,11 +30,11 @@ public class OperationNotSupportedException extends SQLException {
     static final long serialVersionUID = 474918612056813430L;
 
     public OperationNotSupportedException() {
-        super(Messages.getString("RowDataDynamic.3"), MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT);
+        super(Messages.getString("RowDataDynamic.3"), MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT);
     }
 
     public OperationNotSupportedException(String message) {
-        super(message, MysqlErrorNumbers.SQL_STATE_ILLEGAL_ARGUMENT);
+        super(message, MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT);
     }
 
 }

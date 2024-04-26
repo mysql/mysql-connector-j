@@ -393,7 +393,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         errorBuf.append(serverErrorMessage);
         errorBuf.append("\"");
 
-        String xOpen = MysqlErrorNumbers.mysqlToSqlState(errno);
+        String xOpen = MysqlErrorNumbers.mysqlToSqlstate(errno);
 
         throw ExceptionFactory.createException(MysqlErrorNumbers.get(xOpen) + ", " + errorBuf.toString(), xOpen, errno, false, null, getExceptionInterceptor());
     }
@@ -593,7 +593,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(), getPacketReceivedTimeHolder(),
                     ioEx, getExceptionInterceptor());
         } catch (OutOfMemoryError oom) {
-            throw ExceptionFactory.createException(oom.getMessage(), MysqlErrorNumbers.SQL_STATE_MEMORY_ALLOCATION_ERROR, 0, false, oom,
+            throw ExceptionFactory.createException(oom.getMessage(), MysqlErrorNumbers.SQLSTATE_CLI_SPECIFIC_CONDITION_MEMORY_ALLOCATION_ERROR, 0, false, oom,
                     this.exceptionInterceptor);
         }
     }
@@ -609,7 +609,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             throw ExceptionFactory.createCommunicationsException(this.propertySet, this.serverSession, getPacketSentTimeHolder(), getPacketReceivedTimeHolder(),
                     ioEx, getExceptionInterceptor());
         } catch (OutOfMemoryError oom) {
-            throw ExceptionFactory.createException(oom.getMessage(), MysqlErrorNumbers.SQL_STATE_MEMORY_ALLOCATION_ERROR, 0, false, oom,
+            throw ExceptionFactory.createException(oom.getMessage(), MysqlErrorNumbers.SQLSTATE_CLI_SPECIFIC_CONDITION_MEMORY_ALLOCATION_ERROR, 0, false, oom,
                     this.exceptionInterceptor);
         }
     }
@@ -805,13 +805,13 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                     serverErrorMessage = serverErrorMessage.substring(6);
 
                     if (xOpen.equals("HY000")) {
-                        xOpen = MysqlErrorNumbers.mysqlToSqlState(errno);
+                        xOpen = MysqlErrorNumbers.mysqlToSqlstate(errno);
                     }
                 } else {
-                    xOpen = MysqlErrorNumbers.mysqlToSqlState(errno);
+                    xOpen = MysqlErrorNumbers.mysqlToSqlstate(errno);
                 }
             } else {
-                xOpen = MysqlErrorNumbers.mysqlToSqlState(errno);
+                xOpen = MysqlErrorNumbers.mysqlToSqlstate(errno);
             }
 
             clearInputStream();
@@ -1711,7 +1711,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                 this.loadFileBufRef = new SoftReference<>(filePacket);
             } catch (OutOfMemoryError oom) {
                 throw ExceptionFactory.createException(Messages.getString("MysqlIO.111", new Object[] { packetLength }),
-                        MysqlErrorNumbers.SQL_STATE_MEMORY_ALLOCATION_ERROR, 0, false, oom, this.exceptionInterceptor);
+                        MysqlErrorNumbers.SQLSTATE_CLI_SPECIFIC_CONDITION_MEMORY_ALLOCATION_ERROR, 0, false, oom, this.exceptionInterceptor);
             }
         }
 
@@ -2107,7 +2107,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                     int code = r.getValue(codeFieldIndex, ivf);
 
                     if (forTruncationOnly) {
-                        if (code == MysqlErrorNumbers.ER_WARN_DATA_TRUNCATED || code == MysqlErrorNumbers.ER_WARN_DATA_OUT_OF_RANGE) {
+                        if (code == MysqlErrorNumbers.WARN_DATA_TRUNCATED || code == MysqlErrorNumbers.ER_WARN_DATA_OUT_OF_RANGE) {
                             DataTruncation newTruncation = new MysqlDataTruncation(r.getValue(messageFieldIndex, svf), 0, false, false, 0, 0, code);
 
                             if (currentWarning == null) {
@@ -2120,7 +2120,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                         //String level = warnRs.getString("Level");
                         String message = r.getValue(messageFieldIndex, svf);
 
-                        SQLWarning newWarning = new SQLWarning(message, MysqlErrorNumbers.mysqlToSqlState(code), code);
+                        SQLWarning newWarning = new SQLWarning(message, MysqlErrorNumbers.mysqlToSqlstate(code), code);
                         if (currentWarning == null) {
                             currentWarning = newWarning;
                         } else {
@@ -2243,7 +2243,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
                 if (allowedBlobSendChunkSize <= 0) {
                     throw ExceptionFactory.createException(Messages.getString("Connection.15", new Object[] { packetHeaderSize }),
-                            MysqlErrorNumbers.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, 0, false, null, this.exceptionInterceptor);
+                            MysqlErrorNumbers.SQLSTATE_MYSQL_INVALID_CONNECTION_ATTRIBUTE, 0, false, null, this.exceptionInterceptor);
                 }
 
                 blobSendChunkSize.setValue(allowedBlobSendChunkSize);

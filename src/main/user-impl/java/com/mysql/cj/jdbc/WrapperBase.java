@@ -48,7 +48,7 @@ abstract class WrapperBase {
      */
     protected void checkAndFireConnectionError(SQLException sqlEx) throws SQLException {
         if (this.pooledConnection != null) {
-            if (MysqlErrorNumbers.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
+            if (MysqlErrorNumbers.SQLSTATE_MYSQL_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
                 this.pooledConnection.callConnectionEventListeners(MysqlPooledConnection.CONNECTION_ERROR_EVENT, sqlEx);
             }
         }
