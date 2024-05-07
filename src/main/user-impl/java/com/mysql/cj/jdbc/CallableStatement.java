@@ -850,7 +850,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                 String dbOperation = getQueryInfo().getStatementKeyword();
                 span.setAttribute(TelemetryAttribute.DB_NAME, getCurrentDatabase());
                 span.setAttribute(TelemetryAttribute.DB_OPERATION, dbOperation);
-                span.setAttribute(TelemetryAttribute.DB_STATEMENT, dbOperation + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, paramInfo.nativeSql);
                 span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
                 span.setAttribute(TelemetryAttribute.DB_USER, this.connection.getUser());
                 span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());

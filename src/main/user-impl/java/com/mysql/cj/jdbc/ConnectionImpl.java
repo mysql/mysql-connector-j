@@ -1555,7 +1555,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 String dbOperation = cStmt.getQueryInfo().getStatementKeyword();
                 span.setAttribute(TelemetryAttribute.DB_NAME, getDatabase());
                 span.setAttribute(TelemetryAttribute.DB_OPERATION, dbOperation);
-                span.setAttribute(TelemetryAttribute.DB_STATEMENT, dbOperation + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, cStmt.getQueryInfo().getSqlForBatch());
                 span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
                 span.setAttribute(TelemetryAttribute.DB_USER, getUser());
                 span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
@@ -1676,7 +1676,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 String dbOperation = pStmt.getQueryInfo().getStatementKeyword();
                 span.setAttribute(TelemetryAttribute.DB_NAME, getDatabase());
                 span.setAttribute(TelemetryAttribute.DB_OPERATION, dbOperation);
-                span.setAttribute(TelemetryAttribute.DB_STATEMENT, dbOperation + TelemetryAttribute.STATEMENT_SUFFIX);
+                span.setAttribute(TelemetryAttribute.DB_STATEMENT, pStmt.getQueryInfo().getSqlForBatch());
                 span.setAttribute(TelemetryAttribute.DB_SYSTEM, TelemetryAttribute.DB_SYSTEM_DEFAULT);
                 span.setAttribute(TelemetryAttribute.DB_USER, getUser());
                 span.setAttribute(TelemetryAttribute.THREAD_ID, Thread.currentThread().getId());
