@@ -325,6 +325,9 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PropertyKey.dnsSrv, DEFAULT_VALUE_FALSE, RUNTIME_NOT_MODIFIABLE,
                         Messages.getString("ConnectionProperties.dnsSrv"), "8.0.19", CATEGORY_NETWORK, Integer.MIN_VALUE),
 
+                new IntegerPropertyDefinition(PropertyKey.regenerateConnectionTimeout, 0, RUNTIME_MODIFIABLE, 
+                        "Auto reconnection interval", "8.4.0", CATEGORY_NETWORK, 11, 5, Integer.MAX_VALUE),
+                
                 //
                 // CATEGORY_SECURITY
                 //

@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Timer;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
@@ -87,6 +88,9 @@ public class NativeSession extends CoreSession implements Serializable {
     /** When did the last query finish? */
     private long lastQueryFinishedTime = 0;
 
+    /** When did last connection was established? */
+    private long lastConnectionTime = -1;
+
     /** The comment (if any) to prepend to all queries sent to the server (to show up in "SHOW PROCESSLIST") */
     private String queryComment = null;
 
@@ -125,6 +129,9 @@ public class NativeSession extends CoreSession implements Serializable {
         } else {
             setTelemetryHandler(NoopTelemetryHandler.getInstance());
         }
+
+        int randomSeconds = new Random().nextInt(300); // From 0 to 299 seconds
+        this.lastConnectionTime = System.currentTimeMillis() + (randomSeconds * 1000);
     }
 
     public void connect(HostInfo hi, String user, String password, String database, int loginTimeout, TransactionEventHandler transactionManager)
@@ -785,6 +792,29 @@ public class NativeSession extends CoreSession implements Serializable {
         int endOfQueryPacketPosition = packet != null ? packet.getPosition() : 0;
 
         this.lastQueryFinishedTime = 0; // we're busy!
+
+        int reconnectionMins = getPropertySet().getIntegerProperty(PropertyKey.regenerateConnectionTimeout).getValue();
+
+        if (this.lastConnectionTime != -1 && reconnectionMins > 0 &&
+                (System.currentTimeMillis() - this.lastConnectionTime > reconnectionMins * 60 * 1000)) {
+
+            // close the current socket
+            try {
+                quit();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
+            // create a new socket
+            try {
+                this.lastConnectionTime = System.currentTimeMillis();
+                invokeReconnectListeners();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                // if the reconnection does not work give an error
+                throw ex;
+            }
+        }
 
         if (this.autoReconnect.getValue() && (getServerSession().isAutoCommit() || this.autoReconnectForPools.getValue()) && this.needsPing && !isBatch) {
             try {

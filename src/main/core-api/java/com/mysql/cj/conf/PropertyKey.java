@@ -189,6 +189,7 @@ public enum PropertyKey {
     readFromSourceWhenNoReplicas("readFromSourceWhenNoReplicas", "readFromMasterWhenNoSlaves", true), //
     readOnlyPropagatesToServer("readOnlyPropagatesToServer", true), //
     reconnectAtTxEnd("reconnectAtTxEnd", true), //
+    regenerateConnectionTimeout("regenerateConnectionTimeout", true),
     replicationConnectionGroup("replicationConnectionGroup", true), //
     reportMetricsIntervalMillis("reportMetricsIntervalMillis", true), //
     requireSSL("requireSSL", true), //
