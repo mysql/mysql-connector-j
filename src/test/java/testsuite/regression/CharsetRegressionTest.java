@@ -692,37 +692,21 @@ public class CharsetRegressionTest extends BaseTestCase {
     public void testBug72630() throws Exception {
         // bug is related to authentication plugins, available only in 5.5.7+
         if (versionMeetsMinimum(5, 5, 7)) {
-            try {
-                createUser("'Bug72630User'@'%'", "IDENTIFIED WITH mysql_native_password");
-                this.stmt.execute("GRANT ALL ON *.* TO 'Bug72630User'@'%'");
-                this.stmt.executeUpdate(
-                        ((MysqlConnection) this.conn).getSession().versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'Bug72630User'@'%' IDENTIFIED BY 'pwd'"
-                                : "set password for 'Bug72630User'@'%' = PASSWORD('pwd')");
+            createUser("'Bug72630User'@'%'", "");
+            this.stmt.execute("GRANT ALL ON *.* TO 'Bug72630User'@'%'");
+            this.stmt
+                    .executeUpdate(((MysqlConnection) this.conn).getSession().versionMeetsMinimum(5, 7, 6) ? "ALTER USER 'Bug72630User'@'%' IDENTIFIED BY 'pwd'"
+                            : "SET PASSWORD FOR 'Bug72630User'@'%' = PASSWORD('pwd')");
 
-                final Properties props = new Properties();
-                props.setProperty(PropertyKey.USER.getKeyName(), "Bug72630User");
-                props.setProperty(PropertyKey.PASSWORD.getKeyName(), "pwd");
-                props.setProperty(PropertyKey.characterEncoding.getKeyName(), "NonexistentEncoding");
+            final Properties props = new Properties();
+            props.setProperty(PropertyKey.USER.getKeyName(), "Bug72630User");
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "pwd");
+            props.setProperty(PropertyKey.characterEncoding.getKeyName(), "NonexistentEncoding");
+            assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'", () -> getConnectionWithProps(props));
 
-                assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'", () -> {
-                    try {
-                        getConnectionWithProps(props);
-                        return null;
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        throw ex;
-                    }
-                });
-
-                props.remove(PropertyKey.characterEncoding.getKeyName());
-                props.setProperty(PropertyKey.passwordCharacterEncoding.getKeyName(), "NonexistentEncoding");
-                assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'", () -> {
-                    getConnectionWithProps(props);
-                    return null;
-                });
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            props.remove(PropertyKey.characterEncoding.getKeyName());
+            props.setProperty(PropertyKey.passwordCharacterEncoding.getKeyName(), "NonexistentEncoding");
+            assertThrows(SQLException.class, "Unsupported character encoding 'NonexistentEncoding'", () -> getConnectionWithProps(props));
         }
     }
 

@@ -3164,15 +3164,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
         props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
 
         // Disable the built-in default authentication plugin, by name.
-        props.setProperty(PropertyKey.disabledAuthenticationPlugins.getKeyName(), "mysql_native_password");
-        assertThrows(SQLException.class, "Can't disable the default authentication plugin\\. Either remove \"mysql_native_password\" from the disabled "
+        props.setProperty(PropertyKey.disabledAuthenticationPlugins.getKeyName(), "caching_sha2_password");
+        assertThrows(SQLException.class, "Can't disable the default authentication plugin\\. Either remove \"caching_sha2_password\" from the disabled "
                 + "authentication plugins list, or choose a different default authentication plugin\\.", () -> getConnectionWithProps(props));
 
         // Disable the built-in default authentication plugin, by class.
-        props.setProperty(PropertyKey.disabledAuthenticationPlugins.getKeyName(), MysqlNativePasswordPlugin.class.getName());
+        props.setProperty(PropertyKey.disabledAuthenticationPlugins.getKeyName(), CachingSha2PasswordPlugin.class.getName());
         assertThrows(SQLException.class,
                 "Can't disable the default authentication plugin\\. Either remove "
-                        + "\"com\\.mysql\\.cj\\.protocol\\.a\\.authentication\\.MysqlNativePasswordPlugin\" from the disabled authentication plugins list, "
+                        + "\"com\\.mysql\\.cj\\.protocol\\.a\\.authentication\\.CachingSha2PasswordPlugin\" from the disabled authentication plugins list, "
                         + "or choose a different default authentication plugin\\.",
                 () -> getConnectionWithProps(props));
 

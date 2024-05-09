@@ -77,7 +77,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
     /**
      * Contains instances of authentication plugins that implements {@link AuthenticationPlugin} interface. Key values are MySQL protocol plugin names, for
-     * example "mysql_native_password" and "mysql_old_password" for built-in plugins.
+     * example "caching_sha2_password" and "mysql_native_password" for built-in plugins.
      */
     private Map<String, AuthenticationPlugin<NativePacketPayload>> authenticationPlugins = null;
     /**
@@ -213,10 +213,9 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      * Starts by filling the map with instances of the built-in authentication plugins. Then creates instances of plugins listed in the "authenticationPlugins"
      * connection property and adds them to the map too.
      *
-     * The key for the map entry is got by {@link AuthenticationPlugin#getProtocolPluginName()} thus it is possible to replace built-in plugins with custom
-     * implementations. To do it, the custom plugin should return one of the values "mysql_native_password", "mysql_clear_password", "sha256_password",
-     * "caching_sha2_password", "mysql_old_password", "authentication_ldap_sasl_client" or "authentication_kerberos_client" from its own getProtocolPluginName()
-     * method.
+     * The plugins map uses the plugin names as keys, which are obtained from {@link AuthenticationPlugin#getProtocolPluginName()} thus it is possible to
+     * replace built-in plugins with custom implementations as long as the implementations use the same MySQL authentication plugin client-side name, such as,
+     * "caching_sha2_password" and "mysql_native_password".
      */
     @SuppressWarnings("unchecked")
     private void loadAuthenticationPlugins() {
@@ -308,7 +307,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
      * if it was Auth Method Switch Request Packet then handshake will be interrupted with exception.
      *
      * @param pluginName
-     *            mysql protocol plugin names, for example "mysql_native_password" and "mysql_old_password" for built-in plugins
+     *            mysql protocol plugin names, for example "caching_sha2_password" and "mysql_native_password" for built-in plugins
      * @return null if plugin is not found or authentication plugin instance initialized with current connection properties
      */
     @SuppressWarnings("unchecked")

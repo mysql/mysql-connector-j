@@ -196,7 +196,7 @@ public class PropertyDefinitions {
                 new StringPropertyDefinition(PropertyKey.disabledAuthenticationPlugins, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.disabledAuthenticationPlugins"), "5.1.19", CATEGORY_AUTH, Integer.MIN_VALUE + 7),
 
-                new StringPropertyDefinition(PropertyKey.defaultAuthenticationPlugin, "mysql_native_password", RUNTIME_MODIFIABLE,
+                new StringPropertyDefinition(PropertyKey.defaultAuthenticationPlugin, "caching_sha2_password", RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.defaultAuthenticationPlugin"), "5.1.19", CATEGORY_AUTH, Integer.MIN_VALUE + 8),
 
                 new StringPropertyDefinition(PropertyKey.ldapServerHostname, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,

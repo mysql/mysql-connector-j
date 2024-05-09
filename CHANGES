@@ -3,6 +3,8 @@
 
 Version 9.0.0
 
+  - WL#16376, Set 'caching_sha2_password' as default fallback authentication plugin.
+
   - WL#16342, Update MySQL error codes mapping.
 
   - WL#16353, Refresh the list of acceptable TLS ciphers.
