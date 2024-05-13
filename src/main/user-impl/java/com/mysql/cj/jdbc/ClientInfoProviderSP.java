@@ -20,6 +20,7 @@
 
 package com.mysql.cj.jdbc;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLClientInfoException;
@@ -45,7 +46,7 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
     private final Lock lock = new ReentrantLock();
 
     @Override
-    public void initialize(java.sql.Connection conn, Properties configurationProps) throws SQLException {
+    public void initialize(Connection conn, Properties configurationProps) throws SQLException {
         this.lock.lock();
         try {
             String identifierQuote = ((JdbcConnection) conn).getSession().getIdentifierQuoteString();
@@ -93,7 +94,7 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
     }
 
     @Override
-    public Properties getClientInfo(java.sql.Connection conn) throws SQLException {
+    public Properties getClientInfo(Connection conn) throws SQLException {
         this.lock.lock();
         try {
             ResultSet rs = null;
@@ -121,7 +122,7 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
     }
 
     @Override
-    public String getClientInfo(java.sql.Connection conn, String name) throws SQLException {
+    public String getClientInfo(Connection conn, String name) throws SQLException {
         this.lock.lock();
         try {
             ResultSet rs = null;
@@ -150,7 +151,7 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
     }
 
     @Override
-    public void setClientInfo(java.sql.Connection conn, Properties properties) throws SQLClientInfoException {
+    public void setClientInfo(Connection conn, Properties properties) throws SQLClientInfoException {
         this.lock.lock();
         try {
             Enumeration<?> propNames = properties.propertyNames();
@@ -172,7 +173,7 @@ public class ClientInfoProviderSP implements ClientInfoProvider {
     }
 
     @Override
-    public void setClientInfo(java.sql.Connection conn, String name, String value) throws SQLClientInfoException {
+    public void setClientInfo(Connection conn, String name, String value) throws SQLClientInfoException {
         this.lock.lock();
         try {
             this.setClientInfoSp.setString(1, name);

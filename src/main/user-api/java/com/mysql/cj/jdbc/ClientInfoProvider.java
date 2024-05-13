@@ -20,6 +20,7 @@
 
 package com.mysql.cj.jdbc;
 
+import java.sql.Connection;
 import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.util.Properties;
@@ -43,7 +44,7 @@ public interface ClientInfoProvider {
      * @throws SQLException
      *             if initialization fails.
      */
-    void initialize(java.sql.Connection conn, Properties configurationProps) throws SQLException;
+    void initialize(Connection conn, Properties configurationProps) throws SQLException;
 
     /**
      * Called once by the driver when the connection this provider instance
@@ -74,7 +75,7 @@ public interface ClientInfoProvider {
      * @return client info as Properties
      * @see java.sql.Connection#getClientInfo()
      */
-    Properties getClientInfo(java.sql.Connection conn) throws SQLException;
+    Properties getClientInfo(Connection conn) throws SQLException;
 
     /**
      * Returns the client info for the connection that this provider
@@ -95,7 +96,7 @@ public interface ClientInfoProvider {
      * @return the client info by given property name
      * @see java.sql.Connection#getClientInfo(java.lang.String)
      */
-    String getClientInfo(java.sql.Connection conn, String name) throws SQLException;
+    String getClientInfo(Connection conn, String name) throws SQLException;
 
     /**
      * Sets the client info for the connection that this provider
@@ -116,7 +117,7 @@ public interface ClientInfoProvider {
      *
      * @see java.sql.Connection#setClientInfo(java.util.Properties)
      */
-    void setClientInfo(java.sql.Connection conn, Properties properties) throws SQLClientInfoException;
+    void setClientInfo(Connection conn, Properties properties) throws SQLClientInfoException;
 
     /**
      * Sets the client info for the connection that this provider
@@ -139,6 +140,6 @@ public interface ClientInfoProvider {
      *
      * @see java.sql.Connection#setClientInfo(java.lang.String,java.lang.String)
      */
-    void setClientInfo(java.sql.Connection conn, String name, String value) throws SQLClientInfoException;
+    void setClientInfo(Connection conn, String name, String value) throws SQLClientInfoException;
 
 }

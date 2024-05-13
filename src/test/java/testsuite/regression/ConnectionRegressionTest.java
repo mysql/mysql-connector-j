@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -12088,6 +12089,92 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertEquals((connectedToHost1 ? host4 : host1) + ":" + defaultPort, ((JdbcConnection) testConn).getHostPortPair());
 
         testConn.close();
+    }
+
+    /**
+     * Test fix for Bug#114989 (36612566), Setting null value in setClientInfo throws an NPE.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug114989() throws Exception {
+        final String clientInfoKey1 = "testBug114989-key1";
+        final String clientInfoValue1 = "testBug114989-value1";
+        final String clientInfoKey2 = "testBug114989-key2";
+        final String clientInfoValue2 = "testBug114989-value2";
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.clientInfoProvider.getKeyName(), CommentClientInfoProvider.class.getName());
+        try (Connection testConn = getConnectionWithProps(props)) {
+            // Start with empty client info.
+            Properties clientInfoOut = testConn.getClientInfo();
+            assertTrue(clientInfoOut.isEmpty());
+
+            // Add 2 properties via Properties.
+            Properties clientInfoIn = new Properties();
+            clientInfoIn.setProperty(clientInfoKey1, clientInfoValue1);
+            clientInfoIn.setProperty(clientInfoKey2, clientInfoValue2);
+            testConn.setClientInfo(clientInfoIn);
+            clientInfoOut = testConn.getClientInfo();
+            assertNotSame(clientInfoIn, clientInfoOut);
+            assertEquals(2, clientInfoOut.size());
+            assertTrue(clientInfoOut.containsKey(clientInfoKey1));
+            assertEquals(clientInfoValue1, testConn.getClientInfo(clientInfoKey1));
+            assertTrue(clientInfoOut.containsKey(clientInfoKey2));
+            assertEquals(clientInfoValue2, testConn.getClientInfo(clientInfoKey2));
+
+            // Clear the client info map.
+            testConn.setClientInfo(new Properties());
+            clientInfoOut = testConn.getClientInfo();
+            assertTrue(clientInfoOut.isEmpty());
+
+            // Add one client info name=value pair.
+            testConn.setClientInfo(clientInfoKey1, clientInfoValue1);
+            clientInfoOut = testConn.getClientInfo();
+            assertFalse(clientInfoOut.isEmpty());
+            assertEquals(1, clientInfoOut.size());
+            assertTrue(clientInfoOut.containsKey(clientInfoKey1));
+            assertEquals(clientInfoValue1, testConn.getClientInfo(clientInfoKey1));
+
+            // Add another client info name=value pair.
+            testConn.setClientInfo(clientInfoKey2, clientInfoValue2);
+            clientInfoOut = testConn.getClientInfo();
+            assertFalse(clientInfoOut.isEmpty());
+            assertEquals(2, clientInfoOut.size());
+            assertTrue(clientInfoOut.containsKey(clientInfoKey1));
+            assertEquals(clientInfoValue1, testConn.getClientInfo(clientInfoKey1));
+            assertTrue(clientInfoOut.containsKey(clientInfoKey2));
+            assertEquals(clientInfoValue2, testConn.getClientInfo(clientInfoKey2));
+
+            // Returned Properties is never the same.
+            assertNotSame(testConn.getClientInfo(), testConn.getClientInfo());
+
+            // Replace one of the client info properties value.
+            testConn.setClientInfo(clientInfoKey2, clientInfoValue1);
+            clientInfoOut = testConn.getClientInfo();
+            assertFalse(clientInfoOut.isEmpty());
+            assertEquals(2, clientInfoOut.size());
+            assertTrue(clientInfoOut.containsKey(clientInfoKey1));
+            assertEquals(clientInfoValue1, testConn.getClientInfo(clientInfoKey1));
+            assertTrue(clientInfoOut.containsKey(clientInfoKey2));
+            assertEquals(clientInfoValue1, testConn.getClientInfo(clientInfoKey2));
+
+            // Undefined client info property name returns null.
+            assertNull(testConn.getClientInfo("undefined"));
+
+            // Clear one of the client info properties.
+            testConn.setClientInfo(clientInfoKey2, null);
+            clientInfoOut = testConn.getClientInfo();
+            assertFalse(clientInfoOut.isEmpty());
+            assertEquals(1, clientInfoOut.size());
+            assertTrue(clientInfoOut.containsKey(clientInfoKey1));
+            assertEquals(clientInfoValue1, testConn.getClientInfo(clientInfoKey1));
+
+            // Clear the client info map.
+            testConn.setClientInfo(null);
+            clientInfoOut = testConn.getClientInfo();
+            assertTrue(clientInfoOut.isEmpty());
+        }
     }
 
 }

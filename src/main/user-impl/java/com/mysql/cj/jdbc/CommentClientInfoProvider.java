@@ -20,10 +20,11 @@
 
 package com.mysql.cj.jdbc;
 
+import java.sql.Connection;
 import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
-import java.util.Enumeration;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 /**
  * An implementation of ClientInfoProvider that exposes the client info as a comment prepended to all statements issued by the driver.
@@ -36,7 +37,7 @@ public class CommentClientInfoProvider implements ClientInfoProvider {
     private Properties clientInfo;
 
     @Override
-    public synchronized void initialize(java.sql.Connection conn, Properties configurationProps) throws SQLException {
+    public synchronized void initialize(Connection conn, Properties configurationProps) throws SQLException {
         this.clientInfo = new Properties();
     }
 
@@ -46,54 +47,44 @@ public class CommentClientInfoProvider implements ClientInfoProvider {
     }
 
     @Override
-    public synchronized Properties getClientInfo(java.sql.Connection conn) throws SQLException {
-        return this.clientInfo;
+    public synchronized Properties getClientInfo(Connection conn) throws SQLException {
+        Properties clientInfoOut = new Properties();
+        clientInfoOut.putAll(this.clientInfo);
+        return clientInfoOut;
     }
 
     @Override
-    public synchronized String getClientInfo(java.sql.Connection conn, String name) throws SQLException {
+    public synchronized String getClientInfo(Connection conn, String name) throws SQLException {
         return this.clientInfo.getProperty(name);
     }
 
     @Override
-    public synchronized void setClientInfo(java.sql.Connection conn, Properties properties) throws SQLClientInfoException {
+    public synchronized void setClientInfo(Connection conn, Properties properties) throws SQLClientInfoException {
         this.clientInfo = new Properties();
-
-        Enumeration<?> propNames = properties.propertyNames();
-
-        while (propNames.hasMoreElements()) {
-            String name = (String) propNames.nextElement();
-
-            this.clientInfo.put(name, properties.getProperty(name));
+        if (properties != null) {
+            this.clientInfo.putAll(properties);
         }
-
         setComment(conn);
     }
 
     @Override
-    public synchronized void setClientInfo(java.sql.Connection conn, String name, String value) throws SQLClientInfoException {
-        this.clientInfo.setProperty(name, value);
+    public synchronized void setClientInfo(Connection conn, String name, String value) throws SQLClientInfoException {
+        if (value == null) {
+            this.clientInfo.remove(name);
+        } else {
+            this.clientInfo.setProperty(name, value);
+        }
         setComment(conn);
     }
 
-    private synchronized void setComment(java.sql.Connection conn) {
-        StringBuilder commentBuf = new StringBuilder();
-
-        Enumeration<?> propNames = this.clientInfo.propertyNames();
-
-        while (propNames.hasMoreElements()) {
-            String name = (String) propNames.nextElement();
-
-            if (commentBuf.length() > 0) {
-                commentBuf.append(", ");
-            }
-
-            commentBuf.append("" + name);
-            commentBuf.append("=");
-            commentBuf.append("" + this.clientInfo.getProperty(name));
+    private synchronized void setComment(Connection conn) throws SQLClientInfoException {
+        String clientInfoComment = this.clientInfo.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).collect(Collectors.joining(", "));
+        try {
+            conn.unwrap(JdbcConnection.class).setStatementComment(clientInfoComment);
+        } catch (SQLException e) {
+            SQLClientInfoException clientInfoEx = new SQLClientInfoException();
+            clientInfoEx.initCause(e);
         }
-
-        ((com.mysql.cj.jdbc.JdbcConnection) conn).setStatementComment(commentBuf.toString());
     }
 
 }
