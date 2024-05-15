@@ -25,7 +25,7 @@ package com.mysql.cj.xdevapi;
  * <p>
  * The Client object is obtained via {@link ClientFactory#getClient(String, java.util.Properties)} or {@link ClientFactory#getClient(String, String)} methods.
  */
-public interface Client {
+public interface Client extends AutoCloseable {
 
     /**
      * Get <code>Session</code> from pool or the new one.
@@ -41,6 +41,7 @@ public interface Client {
      * Calling the method <code>close</code> on a <code>Client</code>
      * object that is already closed is a no-op.
      */
+    @Override
     public void close();
 
     public enum ClientProperty {

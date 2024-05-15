@@ -2533,4 +2533,41 @@ public class SessionTest extends DevApiBaseTestCase {
         }
     }
 
+    @Test
+    void testAutoCloseableSession() throws Exception {
+        final Session testSessionRef;
+
+        try (Session testSession = this.fact.getSession(this.baseUrl)) {
+            assertTrue(testSession.isOpen());
+            testSessionRef = testSession;
+        }
+
+        assertNotNull(testSessionRef);
+        assertFalse(testSessionRef.isOpen());
+    }
+
+    @Test
+    void testAutoCloseableClient() throws Exception {
+        final ClientFactory testClientFactory = new ClientFactory();
+        final Client testClientRef;
+        final Session testSessionRef1;
+        final Session testSessionRef2;
+
+        try (Client testClient = testClientFactory.getClient(this.baseUrl, new Properties())) {
+            testSessionRef1 = testClient.getSession();
+            assertTrue(testSessionRef1.isOpen());
+            testSessionRef2 = testClient.getSession();
+            assertTrue(testSessionRef2.isOpen());
+            testClientRef = testClient;
+        }
+
+        assertNotNull(testSessionRef1);
+        assertFalse(testSessionRef1.isOpen());
+        assertNotNull(testSessionRef2);
+        assertFalse(testSessionRef2.isOpen());
+
+        assertNotNull(testClientRef);
+        assertThrows(XDevAPIError.class, "Client is closed\\.", testClientRef::getSession);
+    }
+
 }

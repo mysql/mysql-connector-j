@@ -3,6 +3,9 @@
 
 Version 9.0.0
 
+  - Fix for Bug#114846 (Bug#36574322), Auto-closeable X dev session.
+    Thanks to Daniel Kec for his contribution.
+
   - Fix for Bug#114989 (Bug#36612566), Setting null value in setClientInfo throws an NPE.
 
   - WL#16376, Set 'caching_sha2_password' as default fallback authentication plugin.
