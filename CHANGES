@@ -3,6 +3,8 @@
 
 Version 9.0.0
 
+  - Fix for Bug#114800 (Bug#36576596), Wrong code by an old patch.
+
   - Fix for Bug#114846 (Bug#36574322), Auto-closeable X dev session.
     Thanks to Daniel Kec for his contribution.
 

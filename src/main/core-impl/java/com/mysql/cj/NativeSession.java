@@ -836,10 +836,10 @@ public class NativeSession extends CoreSession implements Serializable {
                 if (ex instanceof IOException) {
                     // IO may be dirty or damaged beyond repair, force close it.
                     this.protocol.getSocketConnection().forceClose();
-                } else if (ex instanceof IOException) {
-                    invokeCleanupListeners(ex);
                 }
                 this.needsPing = true;
+            } else if (ex instanceof IOException) {
+                invokeCleanupListeners(ex);
             }
             throw ExceptionFactory.createException(ex.getMessage(), ex, this.exceptionInterceptor);
 
