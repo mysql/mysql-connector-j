@@ -943,7 +943,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             }
 
             // Send query command and sql query string
-            NativePacketPayload resultPacket = sendCommand(queryPacket, false, 0);
+            NativePacketPayload resultPacket = sendCommand(queryPacket, false,
+                    callingQuery.getTimeoutInMillis() <= 0 ? 0 : callingQuery.getTimeoutInMillis());
 
             final long queryEndTime = getCurrentTimeNanosOrMillis();
             final long queryDuration = queryEndTime - queryStartTime;
