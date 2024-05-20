@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.Message;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.MessageListener;
 import com.mysql.cj.protocol.ProtocolEntity;
@@ -40,10 +40,9 @@ public class ResultMessageListener<R> implements MessageListener<XMessage> {
     private ResultBuilder<?> resultBuilder;
     private CompletableFuture<R> future;
 
-    private Map<Class<? extends GeneratedMessageV3>, ProtocolEntityFactory<? extends ProtocolEntity, XMessage>> messageToProtocolEntityFactory = new HashMap<>();
+    private Map<Class<? extends Message>, ProtocolEntityFactory<? extends ProtocolEntity, XMessage>> messageToProtocolEntityFactory = new HashMap<>();
 
-    public ResultMessageListener(
-            Map<Class<? extends GeneratedMessageV3>, ProtocolEntityFactory<? extends ProtocolEntity, XMessage>> messageToProtocolEntityFactory,
+    public ResultMessageListener(Map<Class<? extends Message>, ProtocolEntityFactory<? extends ProtocolEntity, XMessage>> messageToProtocolEntityFactory,
             ResultBuilder<R> resultBuilder, CompletableFuture<R> future) {
         this.messageToProtocolEntityFactory = messageToProtocolEntityFactory;
         this.resultBuilder = resultBuilder;
@@ -53,7 +52,7 @@ public class ResultMessageListener<R> implements MessageListener<XMessage> {
     @Override
     @SuppressWarnings("unchecked")
     public boolean processMessage(XMessage message) {
-        Class<? extends GeneratedMessageV3> msgClass = (Class<? extends GeneratedMessageV3>) message.getMessage().getClass();
+        Class<? extends Message> msgClass = message.getMessage().getClass();
 
         if (Error.class.equals(msgClass)) {
             this.future.completeExceptionally(new XProtocolError(Error.class.cast(message.getMessage())));

@@ -40,7 +40,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import com.google.protobuf.GeneratedMessageV3;
 import com.mysql.cj.Constants;
 import com.mysql.cj.Messages;
 import com.mysql.cj.QueryResult;
@@ -136,7 +135,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     private boolean compressionEnabled = false;
     private CompressionAlgorithm compressionAlgorithm;
 
-    private Map<Class<? extends GeneratedMessageV3>, ProtocolEntityFactory<? extends ProtocolEntity, XMessage>> messageToProtocolEntityFactory = new HashMap<>();
+    private Map<Class<? extends com.google.protobuf.Message>, ProtocolEntityFactory<? extends ProtocolEntity, XMessage>> messageToProtocolEntityFactory = new HashMap<>();
 
     public XProtocol(HostInfo hostInfo, PropertySet propertySet) {
         if (hostInfo == null && propertySet == null) {
@@ -586,8 +585,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
             while (!done) {
                 XMessageHeader header = this.reader.readHeader();
                 XMessage mess = this.reader.readMessage(null, header);
-                @SuppressWarnings("unchecked")
-                Class<? extends GeneratedMessageV3> msgClass = (Class<? extends GeneratedMessageV3>) mess.getMessage().getClass();
+                Class<? extends com.google.protobuf.Message> msgClass = mess.getMessage().getClass();
 
                 if (Error.class.equals(msgClass)) {
                     throw new XProtocolError(Error.class.cast(mess.getMessage()));

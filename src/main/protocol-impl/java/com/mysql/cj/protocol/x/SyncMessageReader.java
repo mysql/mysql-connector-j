@@ -31,8 +31,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -56,7 +56,7 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
     private FullReadInputStream inputStream;
 
     LinkedList<XMessageHeader> headersQueue = new LinkedList<>();
-    LinkedList<GeneratedMessageV3> messagesQueue = new LinkedList<>();
+    LinkedList<Message> messagesQueue = new LinkedList<>();
 
     /** Queue of <code>MessageListener</code>s waiting to process messages. */
     BlockingQueue<MessageListener<XMessage>> messageListenerQueue = new LinkedBlockingQueue<>();
@@ -144,7 +144,7 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends GeneratedMessageV3> T readMessageLocal(Class<T> messageClass, boolean fromQueue) {
+    private <T extends Message> T readMessageLocal(Class<T> messageClass, boolean fromQueue) {
         XMessageHeader header;
         if (fromQueue) {
             header = this.headersQueue.poll();
@@ -204,7 +204,7 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
         this.syncOperationLock.lock();
         try {
             try {
-                Class<? extends GeneratedMessageV3> expectedClass = MessageConstants.getMessageClassForType(expectedType);
+                Class<? extends Message> expectedClass = MessageConstants.getMessageClassForType(expectedType);
 
                 List<Notice> notices = null;
                 XMessageHeader hdr;
@@ -216,7 +216,7 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
                             .getInstance(new XMessage(readMessageLocal(MessageConstants.getMessageClassForType(ServerMessages.Type.NOTICE_VALUE), true))));
                 }
 
-                Class<? extends GeneratedMessageV3> messageClass = MessageConstants.getMessageClassForType(hdr.getMessageType());
+                Class<? extends Message> messageClass = MessageConstants.getMessageClassForType(hdr.getMessageType());
                 // ensure that parsed message class matches incoming tag
                 if (expectedClass != messageClass) {
                     throw new WrongArgumentException("Unexpected message class. Expected '" + expectedClass.getSimpleName() + "' but actually received '"

@@ -34,8 +34,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.FullReadInputStream;
@@ -61,7 +61,7 @@ public class SyncMessageReaderTest {
      * @param type
      * @return a byte array
      */
-    private static byte[] serializeMessage(GeneratedMessageV3 msg, int type) {
+    private static byte[] serializeMessage(Message msg, int type) {
         int packetLen = msg.getSerializedSize() + 1;
         byte[] packet = ByteBuffer.allocate(packetLen + 4).order(ByteOrder.LITTLE_ENDIAN).putInt(packetLen).put((byte) type).put(msg.toByteArray()).array();
         return packet;
@@ -169,12 +169,12 @@ public class SyncMessageReaderTest {
      */
     @Test
     public void testMappingTables() throws InvalidProtocolBufferException {
-        for (Map.Entry<Class<? extends GeneratedMessageV3>, Integer> entry : MessageConstants.MESSAGE_CLASS_TO_TYPE.entrySet()) {
+        for (Map.Entry<Class<? extends Message>, Integer> entry : MessageConstants.MESSAGE_CLASS_TO_TYPE.entrySet()) {
             /* int type = */entry.getValue();
-            Class<? extends GeneratedMessageV3> messageClass = entry.getKey();
-            Parser<? extends GeneratedMessageV3> parser = MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
+            Class<? extends Message> messageClass = entry.getKey();
+            Parser<? extends Message> parser = MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
             assertNotNull(parser);
-            GeneratedMessageV3 partiallyParsed = parser.parsePartialFrom(new byte[] {});
+            Message partiallyParsed = parser.parsePartialFrom(new byte[] {});
             assertEquals(messageClass, partiallyParsed.getClass(), "Parsed class should equal the class that mapped to it via type tag");
         }
     }

@@ -23,8 +23,8 @@ package com.mysql.cj.protocol.x;
 import java.util.List;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.protocol.ProtocolEntity;
@@ -97,7 +97,7 @@ public class Notice implements ProtocolEntity {
     }
 
     @SuppressWarnings("unchecked")
-    static <T extends GeneratedMessageV3> T parseNotice(ByteString payload, Class<T> noticeClass) {
+    static <T extends Message> T parseNotice(ByteString payload, Class<T> noticeClass) {
         try {
             Parser<T> parser = (Parser<T>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(noticeClass);
             return parser.parseFrom(payload);
