@@ -1587,6 +1587,12 @@ public class StringUtils {
         return stringVal;
     }
 
+    public static String zeroFill(String value, int length) {
+        char[] zeros = new char[length];
+        Arrays.fill(zeros, '0');
+        return new String(zeros) + value;
+    }
+
     public static int safeIntParse(String intAsString) {
         try {
             return Integer.parseInt(intAsString);

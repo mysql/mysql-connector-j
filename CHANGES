@@ -3,6 +3,8 @@
 
 Version 9.1.0
 
+  - Fix for Bug#110586 (Bug#35254470), got unexpected result when the data type was set to ZEROFILL.
+
 Version 9.0.0
 
   - WL#16391, Upgrade 3rd party libraries and tools.

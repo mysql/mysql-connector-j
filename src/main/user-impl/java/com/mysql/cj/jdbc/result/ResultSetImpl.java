@@ -909,6 +909,10 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
             return StringUtils.padString(stringVal, fieldLength);
         }
 
+        if (stringVal != null && f.isZeroFill() && f.getMysqlType() != MysqlType.YEAR) {
+            return StringUtils.zeroFill(stringVal, (int) (f.getLength() - stringVal.length()));
+        }
+
         return stringVal;
     }
 

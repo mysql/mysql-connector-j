@@ -73,6 +73,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
@@ -82,6 +83,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.JdbcRowSet;
@@ -8286,6 +8288,60 @@ public class ResultSetRegressionTest extends BaseTestCase {
                 this.rs.getRow();
             }
         } while ((useLIMIT = !useLIMIT) || (useCursor = !useCursor) || (maxRowsLargerThanLIMIT = !maxRowsLargerThanLIMIT));
+    }
+
+    /**
+     * Tests fix for Bug#110586 (Bug#35254470), got unexpected result when the data type was set to ZEROFILL.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug110586() throws Exception {
+        boolean useZF = false;
+        boolean useNull = false;
+        boolean useSPS = false;
+        boolean usePS = false;
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            try (Connection testConn = getConnectionWithProps(props)) {
+                String zeroFill = useZF ? "ZEROFILL" : "";
+                String cols = Arrays.asList("c0 TINYINT ", "c1 SMALLINT ", "c2 MEDIUMINT", "c3 INT", "c4 BIGINT", "c5 FLOAT", "c6 DOUBLE", "c7 DECIMAL(10,2)")
+                        .stream().map(c -> c.concat(" " + zeroFill)).collect(Collectors.joining(", ", "(", ")"));
+                createTable("testBug110586", cols);
+                String insertSql = "INSERT INTO testBug110586 VALUES("
+                        + (useNull ? String.join("", Collections.nCopies(7, "NULL, ")) + "NULL)" : "1, 2, 3, 4, 5, 6, 7, 1.23)");
+                String selectSql = "SELECT * FROM testBug110586";
+
+                if (usePS) {
+                    this.pstmt = testConn.prepareStatement(insertSql);
+                    this.pstmt.executeUpdate();
+                    this.pstmt = testConn.prepareStatement(selectSql);
+                    this.rs = this.pstmt.executeQuery();
+                } else {
+                    this.stmt.executeUpdate(insertSql);
+                    this.rs = this.stmt.executeQuery(selectSql);
+                }
+
+                final String testCase = String.format("Case: [useZF: %s, useNull: %s, useServerPrepStmts: %s, usePreparedStatement: %s]", useZF ? "Y" : "N",
+                        useNull ? "Y" : "N", useSPS ? "Y" : "N", usePS ? "Y" : "N");
+                assertTrue(this.rs.next(), testCase);
+                assertEquals(useNull ? null : (useZF ? "00" : "") + "1", this.rs.getString(1), testCase);
+                assertEquals(useNull ? null : (useZF ? "0000" : "") + "2", this.rs.getString(2), testCase);
+                assertEquals(useNull ? null : (useZF ? "0000000" : "") + "3", this.rs.getString(3), testCase);
+                assertEquals(useNull ? null : (useZF ? "000000000" : "") + "4", this.rs.getString(4), testCase);
+                assertEquals(useNull ? null : (useZF ? "0000000000000000000" : "") + "5", this.rs.getString(5), testCase);
+                assertEquals(useNull ? null : (useZF ? "000000000" : "") + "6.0", this.rs.getString(6), testCase);
+                assertEquals(useNull ? null : (useZF ? "0000000000000000000" : "") + "7.0", this.rs.getString(7), testCase);
+                assertEquals(useNull ? null : (useZF ? "000000" : "") + "1.23", this.rs.getString(8), testCase);
+            } finally {
+                try {
+                    dropTable("testBug110586");
+                } catch (Exception e) {
+                    // Ignore exception.
+                }
+            }
+        } while ((useZF = !useZF) || (useNull = !useNull) || (useSPS = !useSPS) || (usePS = !usePS));
     }
 
 }
