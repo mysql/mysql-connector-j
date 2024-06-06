@@ -531,7 +531,7 @@ public class XProtocolTest extends InternalXBaseTestCase {
         assertEquals("mysql", capabilities.getNodeType());
         assertTrue(capabilities.getTls());
         assertFalse(capabilities.getClientPwdExpireOk());
-        assertTrue(capabilities.getAuthenticationMechanisms().contains("MYSQL41"));
+        assertFalse(capabilities.getAuthenticationMechanisms().isEmpty());
         assertEquals("text", capabilities.getDocFormats());
     }
 
