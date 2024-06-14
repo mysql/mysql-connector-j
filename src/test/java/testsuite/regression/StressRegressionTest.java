@@ -39,12 +39,14 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.protocol.a.MysqlTextValueDecoder;
 
 import testsuite.BaseTestCase;
 
@@ -462,6 +464,44 @@ public class StressRegressionTest extends BaseTestCase {
             return iterationsChanged;
         }
 
+    }
+
+    /**
+     * Tests fix for Bug#114410 (Bug#36434816), Code performance issue.
+     */
+    @Test
+    public void testBug114410() {
+        String timeSample = "838:59:59.000000";
+        String timestampSample = "1970-01-01 00:00:01";
+        int repetitions = 1000000;
+
+        long startTime = System.nanoTime();
+        for (int i = 0; i < repetitions; i++) {
+            Pattern.compile("[-]{0,1}\\d{2,3}:\\d{2}:\\d{2}(\\.\\d{1,9})?").matcher(timeSample).matches();
+        }
+        long timeElapsedPriorFix = System.nanoTime() - startTime;
+
+        startTime = System.nanoTime();
+        for (int i = 0; i < repetitions; i++) {
+            MysqlTextValueDecoder.isTime(timeSample);
+        }
+        long timeElapsedPostFix = System.nanoTime() - startTime;
+
+        assertTrue(timeElapsedPostFix < timeElapsedPriorFix);
+
+        startTime = System.nanoTime();
+        for (int i = 0; i < repetitions; i++) {
+            Pattern.compile("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9}){0,1}").matcher(timestampSample).matches();
+        }
+        timeElapsedPriorFix = System.nanoTime() - startTime;
+
+        startTime = System.nanoTime();
+        for (int i = 0; i < repetitions; i++) {
+            MysqlTextValueDecoder.isTimestamp(timestampSample);
+        }
+        timeElapsedPostFix = System.nanoTime() - startTime;
+
+        assertTrue(timeElapsedPostFix < timeElapsedPriorFix);
     }
 
 }

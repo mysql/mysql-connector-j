@@ -61,6 +61,7 @@ public class MysqlTextValueDecoder implements ValueDecoder {
     public static final int TIMESTAMP_STR_LEN_WITH_NANOS = TIMESTAMP_STR_LEN_NO_FRAC + 10;
 
     public static final Pattern TIME_PTRN = Pattern.compile("[-]{0,1}\\d{2,3}:\\d{2}:\\d{2}(\\.\\d{1,9})?");
+    public static final Pattern DATETIME_PTRN = Pattern.compile("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9}){0,1}");
 
     /** Max string length of a signed long = 9223372036854775807 (19+1 for minus sign) */
     public static final int MAX_SIGNED_LONG_LEN = 20;
@@ -267,7 +268,6 @@ public class MysqlTextValueDecoder implements ValueDecoder {
     }
 
     public static boolean isTimestamp(String s) {
-        Pattern DATETIME_PTRN = Pattern.compile("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9}){0,1}");
         Matcher matcher = DATETIME_PTRN.matcher(s);
         return matcher.matches();
     }
