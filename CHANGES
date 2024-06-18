@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/en/
 
+Version 9.1.0
+
 Version 9.0.0
 
   - WL#16391, Upgrade 3rd party libraries and tools.
