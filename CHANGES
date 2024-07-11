@@ -3,6 +3,8 @@
 
 Version 9.1.0
 
+  - Fix for Bug#109418 (Bug#36043556), batch insert threw an unexpected exception.
+
   - Fix for Bug#114410 (Bug#36434816), Code performance issue.
 
   - Fix for Bug#110586 (Bug#35254470), got unexpected result when the data type was set to ZEROFILL.

@@ -13677,4 +13677,51 @@ public class StatementRegressionTest extends BaseTestCase {
         assertDoesNotThrow(((JdbcPreparedStatement) this.pstmt)::getParameterBindings);
     }
 
+    /**
+     * Test fix for Bug#109418 (Bug#36043556), batch insert threw an unexpected exception.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug109418() throws Exception {
+        boolean useRBS = false;
+        boolean cachePS = false;
+        boolean useSPS = false;
+        boolean useRGK = false;
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), Boolean.toString(useRBS));
+            props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), Boolean.toString(cachePS));
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            try (Connection testConn = getConnectionWithProps(props)) {
+                createTable("testBug109418", "(id INT PRIMARY KEY)");
+
+                this.pstmt = testConn.prepareStatement("INSERT INTO testBug109418(id) VALUES(?)",
+                        useRGK ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+
+                this.pstmt.setInt(1, 1);
+                this.pstmt.addBatch();
+                this.pstmt.setInt(1, 2);
+                this.pstmt.addBatch();
+                this.pstmt.executeBatch();
+                this.pstmt.close();
+
+                this.pstmt = testConn.prepareStatement("INSERT INTO testBug109418(id) VALUES(?)",
+                        useRGK ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                this.pstmt.setInt(1, 3);
+                this.pstmt.addBatch();
+                this.pstmt.setInt(1, 1);
+                this.pstmt.addBatch();
+
+                final String testCase = String.format("Case: [useRBS=%s, cachePS=%s, useSPS=%s, useRGK=%s]", useRBS ? "Y" : "N", cachePS ? "Y" : "N",
+                        useSPS ? "Y" : "N", useRGK ? "Y" : "N");
+                assertThrows(testCase, BatchUpdateException.class, this.pstmt::executeBatch);
+            } finally {
+                dropTable("testBug109418");
+                this.pstmt.close();
+            }
+
+        } while ((useRBS = !useRBS) || (cachePS = !cachePS) || (useSPS = !useSPS) || (useRGK = !useRGK));
+    }
+
 }

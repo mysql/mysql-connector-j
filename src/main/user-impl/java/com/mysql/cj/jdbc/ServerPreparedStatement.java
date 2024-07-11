@@ -208,6 +208,8 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
                 this.connection.recachePreparedStatement(this);
                 this.isCached = true;
+                this.results = null;
+                this.generatedKeysResults = null;
                 return;
             }
 
