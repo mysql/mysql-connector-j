@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2024, Oracle and/or its affiliates.
+ * Copyright (c) 2024, Oracle and/or its affiliates.
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License, version 2.0, as published by
  * the Free Software Foundation.
@@ -20,31 +20,22 @@
 
 package com.mysql.cj.jdbc;
 
-import java.math.BigInteger;
-import java.sql.SQLException;
+import java.util.Arrays;
 
-import com.mysql.cj.MysqlType;
-import com.mysql.cj.QueryBindings;
-import com.mysql.cj.QueryInfo;
+public enum CloseOption {
 
-public interface JdbcPreparedStatement extends java.sql.PreparedStatement, JdbcStatement {
+    IMPLICIT, // Close operation initiated internally by a clean up routine.
+    FORCED, // A forced, hard close.
+    ROLLBACK, // Allow rollback during the close operation.
+    PROPAGATE, // Allow propagating the close operation to dependents and owner objects.
+    NO_CACHE; // Does not allow caching the closing object.
 
-    QueryBindings getQueryBindings();
+    public boolean in(CloseOption... options) {
+        return Arrays.stream(options).anyMatch(this::equals);
+    }
 
-    byte[] getBytesRepresentation(int parameterIndex) throws SQLException;
-
-    QueryInfo getQueryInfo();
-
-    boolean isNull(int paramIndex) throws SQLException;
-
-    String getPreparedSql();
-
-    void setBytes(int parameterIndex, byte[] x, boolean escapeIfNeeded) throws SQLException;
-
-    void setBigInteger(int parameterIndex, BigInteger x) throws SQLException;
-
-    void setNull(int parameterIndex, MysqlType mysqlType) throws SQLException;
-
-    ParameterBindings getParameterBindings() throws SQLException;
+    public boolean notIn(CloseOption... options) {
+        return Arrays.stream(options).noneMatch(this::equals);
+    }
 
 }

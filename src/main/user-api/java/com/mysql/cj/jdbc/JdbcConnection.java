@@ -53,16 +53,13 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
      * @param newPassword
      *            the password to authenticate with
      * @throws SQLException
-     *             if authentication fails, or some other error occurs while
-     *             performing the command.
+     *             if authentication fails, or some other error occurs while performing the command.
      */
     void changeUser(String userName, String newPassword) throws SQLException;
 
     /**
-     * Prepares a statement on the client, using client-side emulation
-     * (irregardless of the configuration property 'useServerPrepStmts')
-     * with the same semantics as the java.sql.Connection.prepareStatement()
-     * method with the same argument types.
+     * Prepares a statement on the client, using client-side emulation (regardless of the configuration property 'useServerPrepStmts') with the same semantics
+     * as the java.sql.Connection.prepareStatement() method with the same argument types.
      *
      * @param sql
      *            statement
@@ -74,10 +71,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     java.sql.PreparedStatement clientPrepareStatement(String sql) throws SQLException;
 
     /**
-     * Prepares a statement on the client, using client-side emulation
-     * (irregardless of the configuration property 'useServerPrepStmts')
-     * with the same semantics as the java.sql.Connection.prepareStatement()
-     * method with the same argument types.
+     * Prepares a statement on the client, using client-side emulation (regardless of the configuration property 'useServerPrepStmts') with the same semantics
+     * as the java.sql.Connection.prepareStatement() method with the same argument types.
      *
      * @param sql
      *            statement
@@ -91,10 +86,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     java.sql.PreparedStatement clientPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException;
 
     /**
-     * Prepares a statement on the client, using client-side emulation
-     * (irregardless of the configuration property 'useServerPrepStmts')
-     * with the same semantics as the java.sql.Connection.prepareStatement()
-     * method with the same argument types.
+     * Prepares a statement on the client, using client-side emulation (regardless of the configuration property 'useServerPrepStmts') with the same semantics
+     * as the java.sql.Connection.prepareStatement() method with the same argument types.
      *
      * @param sql
      *            statement
@@ -111,10 +104,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     java.sql.PreparedStatement clientPrepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException;
 
     /**
-     * Prepares a statement on the client, using client-side emulation
-     * (irregardless of the configuration property 'useServerPrepStmts')
-     * with the same semantics as the java.sql.Connection.prepareStatement()
-     * method with the same argument types.
+     * Prepares a statement on the client, using client-side emulation (regardless of the configuration property 'useServerPrepStmts') with the same semantics
+     * as the java.sql.Connection.prepareStatement() method with the same argument types.
      *
      * @param sql
      *            statement
@@ -129,10 +120,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     java.sql.PreparedStatement clientPrepareStatement(String sql, int[] autoGenKeyIndexes) throws SQLException;
 
     /**
-     * Prepares a statement on the client, using client-side emulation
-     * (irregardless of the configuration property 'useServerPrepStmts')
-     * with the same semantics as the java.sql.Connection.prepareStatement()
-     * method with the same argument types.
+     * Prepares a statement on the client, using client-side emulation (regardless of the configuration property 'useServerPrepStmts') with the same semantics
+     * as the java.sql.Connection.prepareStatement() method with the same argument types.
      *
      * @param sql
      *            statement
@@ -151,10 +140,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     java.sql.PreparedStatement clientPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException;
 
     /**
-     * Prepares a statement on the client, using client-side emulation
-     * (irregardless of the configuration property 'useServerPrepStmts')
-     * with the same semantics as the java.sql.Connection.prepareStatement()
-     * method with the same argument types.
+     * Prepares a statement on the client, using client-side emulation (regardless of the configuration property 'useServerPrepStmts') with the same semantics
+     * as the java.sql.Connection.prepareStatement() method with the same argument types.
      *
      * @param sql
      *            statement
@@ -169,29 +156,23 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     java.sql.PreparedStatement clientPrepareStatement(String sql, String[] autoGenKeyColNames) throws SQLException;
 
     /**
-     * Returns the number of statements active on this connection, which
-     * haven't been .close()d.
+     * Returns the number of statements active on this connection, which haven't been .close()d.
      *
      * @return the number of active statements
      */
     int getActiveStatementCount();
 
     /**
-     * Reports how long this connection has been idle.
-     * This time (reported in milliseconds) is updated once a query has
-     * completed.
+     * Reports how long this connection has been idle. This time (reported in milliseconds) is updated once a query has completed.
      *
-     * @return number of ms that this connection has been idle, 0 if the driver
-     *         is busy retrieving results.
+     * @return number of ms that this connection has been idle, 0 if the driver is busy retrieving results.
      */
     long getIdleFor();
 
     /**
-     * Returns the comment that will be prepended to all statements
-     * sent to the server.
+     * Returns the comment that will be prepended to all statements sent to the server.
      *
-     * @return the comment that will be prepended to all statements
-     *         sent to the server.
+     * @return the comment that will be prepended to all statements sent to the server.
      */
     String getStatementComment();
 
@@ -212,17 +193,14 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
 
     // TODO this and other multi-host connection specific methods should be moved to special interface
     /**
-     * Is this connection connected to the first host in the list if
-     * there is a list of servers in the URL?
+     * Is this connection connected to the first host in the list if there is a list of servers in the URL?
      *
-     * @return true if this connection is connected to the first in
-     *         the list.
+     * @return true if this connection is connected to the first in the list.
      */
     boolean isSourceConnection();
 
     /**
-     * Does this connection have the same resource name as the given
-     * connection (for XA)?
+     * Does this connection have the same resource name as the given connection (for XA)?
      *
      * @param c
      *            connection
@@ -238,8 +216,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     boolean lowerCaseTableNames();
 
     /**
-     * Detect if the connection is still good by sending a ping command
-     * to the server.
+     * Detect if the connection is still good by sending a ping command to the server.
      *
      * @throws SQLException
      *             if the ping fails
@@ -247,8 +224,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     void ping() throws SQLException;
 
     /**
-     * Resets the server-side state of this connection. Doesn't work if isParanoid() is set
-     * (it will become a no-op in this case). Usually only used from connection pooling code.
+     * Resets the server-side state of this connection. Doesn't work if isParanoid() is set (it will become a no-op in this case). Usually only used from
+     * connection pooling code.
      *
      * @throws SQLException
      *             if the operation fails while resetting server state.
@@ -256,10 +233,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     void resetServerState() throws SQLException;
 
     /**
-     * Prepares a statement on the server (irregardless of the
-     * configuration property 'useServerPrepStmts') with the same semantics
-     * as the java.sql.Connection.prepareStatement() method with the
-     * same argument types.
+     * Prepares a statement on the server (regardless of the configuration property 'useServerPrepStmts') with the same semantics as the method
+     * java.sql.Connection.prepareStatement() with the same argument types.
      *
      * @param sql
      *            statement
@@ -271,10 +246,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     java.sql.PreparedStatement serverPrepareStatement(String sql) throws SQLException;
 
     /**
-     * Prepares a statement on the server (irregardless of the
-     * configuration property 'useServerPrepStmts') with the same semantics
-     * as the java.sql.Connection.prepareStatement() method with the
-     * same argument types.
+     * Prepares a statement on the server (regardless of the configuration property 'useServerPrepStmts') with the same semantics as the method
+     * java.sql.Connection.prepareStatement() with the same argument types.
      *
      * @param sql
      *            statement
@@ -288,10 +261,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     java.sql.PreparedStatement serverPrepareStatement(String sql, int autoGenKeyIndex) throws SQLException;
 
     /**
-     * Prepares a statement on the server (irregardless of the
-     * configuration property 'useServerPrepStmts') with the same semantics
-     * as the java.sql.Connection.prepareStatement() method with the
-     * same argument types.
+     * Prepares a statement on the server (regardless of the configuration property 'useServerPrepStmts') with the same semantics as the method
+     * java.sql.Connection.prepareStatement() with the same argument types.
      *
      * @param sql
      *            statement
@@ -308,10 +279,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException;
 
     /**
-     * Prepares a statement on the server (irregardless of the
-     * configuration property 'useServerPrepStmts') with the same semantics
-     * as the java.sql.Connection.prepareStatement() method with the
-     * same argument types.
+     * Prepares a statement on the server (regardless of the configuration property 'useServerPrepStmts') with the same semantics as the method
+     * java.sql.Connection.prepareStatement() with the same argument types.
      *
      * @param sql
      *            statement
@@ -330,10 +299,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     java.sql.PreparedStatement serverPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException;
 
     /**
-     * Prepares a statement on the server (irregardless of the
-     * configuration property 'useServerPrepStmts') with the same semantics
-     * as the java.sql.Connection.prepareStatement() method with the
-     * same argument types.
+     * Prepares a statement on the server (regardless of the configuration property 'useServerPrepStmts') with the same semantics as the method
+     * java.sql.Connection.prepareStatement() with the same argument types.
      *
      * @param sql
      *            statement
@@ -347,10 +314,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     java.sql.PreparedStatement serverPrepareStatement(String sql, int[] autoGenKeyIndexes) throws SQLException;
 
     /**
-     * Prepares a statement on the server (irregardless of the
-     * configuration property 'useServerPrepStmts') with the same semantics
-     * as the java.sql.Connection.prepareStatement() method with the
-     * same argument types.
+     * Prepares a statement on the server (regardless of the configuration property 'useServerPrepStmts') with the same semantics as the method
+     * java.sql.Connection.prepareStatement() with the same argument types.
      *
      * @param sql
      *            statement
@@ -371,13 +336,11 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     void setFailedOver(boolean flag);
 
     /**
-     * Sets the comment that will be prepended to all statements
-     * sent to the server. Do not use slash-star or star-slash tokens
-     * in the comment as these will be added by the driver itself.
+     * Sets the comment that will be prepended to all statements sent to the server. Do not use slash-star or star-slash tokens in the comment as these will be
+     * added by the driver itself.
      *
      * @param comment
-     *            the comment that will be prepended to all statements
-     *            sent to the server.
+     *            the comment that will be prepended to all statements sent to the server.
      */
     void setStatementComment(String comment);
 
@@ -390,10 +353,9 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     void shutdownServer() throws SQLException;
 
     /**
-     * Returns the -session- value of 'auto_increment_increment' from the server if it exists,
-     * or '1' if not.
+     * Returns the session value of 'auto_increment_increment' from the server if it exists, or '1' if not.
      *
-     * @return the -session- value of 'auto_increment_increment'
+     * @return the session value of 'auto_increment_increment'
      */
     int getAutoIncrementIncrement();
 
@@ -459,8 +421,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
      *
      * @param sql
      *            the query that is the key to the cache
-     * @return metadata cached for the given SQL, or none if it doesn't
-     *         exist.
+     * @return metadata cached for the given SQL, or none if it doesn't exist.
      */
     CachedResultSetMetaData getCachedMetaData(String sql);
 
@@ -485,8 +446,7 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
      * @param cachedMetaData
      *            metadata (if it exists) to populate the cache.
      * @param resultSet
-     *            the result set to retreive metadata from, or apply to.
-     *
+     *            the result set to retrieve metadata from, or apply to.
      * @throws SQLException
      *             if an error occurs
      */
@@ -498,9 +458,8 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
      * Tests to see if the connection is in Read Only Mode.
      *
      * @param useSessionStatus
-     *            in some cases, for example when restoring connection with autoReconnect=true,
-     *            we can rely only on saved readOnly state, so use useSessionStatus=false in that case
-     *
+     *            in some cases, for example when restoring connection with autoReconnect=true, we can rely only on saved readOnly state, so use
+     *            useSessionStatus=false in that case
      * @return true if the connection is read only
      * @exception SQLException
      *                if a database access error occurs
@@ -510,21 +469,16 @@ public interface JdbcConnection extends java.sql.Connection, MysqlConnection, Tr
     void pingInternal(boolean checkForClosedConnection, int timeoutMillis) throws SQLException;
 
     /**
-     * Closes connection and frees resources.
+     * Close the connection and release resources.
      *
-     * @param calledExplicitly
-     *            is this being called from close()
-     * @param issueRollback
-     *            should a rollback() be issued?
-     * @param skipLocalTeardown
-     *            if true, driver tries to close connection normally, performing rollbacks,
-     *            closing open statements etc; otherwise the force close is performed
-     * @param reason
-     *            the exception caused this method call
+     * @param cause
+     *            the exception that caused this method call
+     * @param options
+     *            options indicating how the close was initiated and/or what should be performed during the close
      * @throws SQLException
      *             if an error occurs
      */
-    void realClose(boolean calledExplicitly, boolean issueRollback, boolean skipLocalTeardown, Throwable reason) throws SQLException;
+    void doClose(Throwable cause, CloseOption... options) throws SQLException;
 
     void recachePreparedStatement(JdbcPreparedStatement pstmt) throws SQLException;
 

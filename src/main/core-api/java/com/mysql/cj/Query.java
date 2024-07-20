@@ -59,9 +59,8 @@ public interface Query {
 
     /**
      * Get the batched args as added by the addBatch method(s).
-     * The list is unmodifiable and might contain any combination of String,
-     * ClientPreparedQueryBindings, or ServerPreparedQueryBindings depending on how the parameters were
-     * batched.
+     * The list is unmodifiable and might contain any combination of String, ClientPreparedQueryBindings, or ServerPreparedQueryBindings depending on how the
+     * parameters were batched.
      *
      * @return an unmodifiable List of batched args
      */

@@ -28,7 +28,7 @@ import com.mysql.cj.Session;
 
 public interface ResultsetRowsOwner {
 
-    void closeOwner(boolean calledExplicitly);
+    void closeOwner();
 
     MysqlConnection getConnection();
 

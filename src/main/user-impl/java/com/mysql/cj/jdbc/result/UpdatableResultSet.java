@@ -48,6 +48,7 @@ import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.FeatureNotAvailableException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
+import com.mysql.cj.jdbc.CloseOption;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.MysqlSQLXML;
 import com.mysql.cj.jdbc.StatementImpl;
@@ -929,8 +930,11 @@ public class UpdatableResultSet extends ResultSetImpl {
         return ret;
     }
 
+    /**
+     * Close this ResultSet and release resources. By default the close is considered explicit and does not propagate to owner statements.
+     */
     @Override
-    public void realClose(boolean calledExplicitly) throws SQLException {
+    public void doClose(CloseOption... options) throws SQLException {
         if (this.isClosed) {
             return;
         }
@@ -979,7 +983,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                 sqlEx = ex;
             }
 
-            super.realClose(calledExplicitly);
+            super.doClose(options);
 
             if (sqlEx != null) {
                 throw sqlEx;

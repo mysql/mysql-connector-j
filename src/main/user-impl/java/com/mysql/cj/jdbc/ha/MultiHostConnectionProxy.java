@@ -36,6 +36,7 @@ import com.mysql.cj.conf.ConnectionUrl;
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.RuntimeProperty;
+import com.mysql.cj.jdbc.CloseOption;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.util.Util;
@@ -329,7 +330,7 @@ public abstract class MultiHostConnectionProxy implements InvocationHandler {
         this.lock.lock();
         try {
             if (conn != null && !conn.isClosed()) {
-                conn.realClose(true, !conn.getAutoCommit(), true, null);
+                conn.doClose(null, CloseOption.IMPLICIT, CloseOption.ROLLBACK, CloseOption.FORCED);
             }
         } catch (SQLException e) {
             // swallow this exception, current connection should be useless anyway.

@@ -158,8 +158,7 @@ public interface Resultset extends ProtocolEntity {
     Resultset getNextResultset();
 
     /**
-     * Clears the reference to the next result set in a multi-result set
-     * "chain".
+     * Clears the reference to the next result set in a multi-result set "chain".
      */
     void clearNextResultset();
 

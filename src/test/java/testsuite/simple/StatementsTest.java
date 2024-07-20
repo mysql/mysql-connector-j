@@ -3758,7 +3758,7 @@ public class StatementsTest extends BaseTestCase {
                 LRUCache<?, ?> stmtsCacheObj = (LRUCache<?, ?>) stmtsCacheField.get(c);
                 return stmtsCacheObj == null ? -1 : stmtsCacheObj.size();
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                fail("Fail getting the statemets cache size.");
+                fail("Fail getting the statements cache size.");
                 return -1;
             }
         };
@@ -3768,7 +3768,7 @@ public class StatementsTest extends BaseTestCase {
                 LRUCache<?, ServerPreparedStatement> stmtsCacheObj = (LRUCache<?, ServerPreparedStatement>) stmtsCacheField.get(c);
                 return stmtsCacheObj.get(stmtsCacheObj.keySet().iterator().next());
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                fail("Fail getting the statemets cache element.");
+                fail("Fail getting the statements cache element.");
                 return null;
             }
         };

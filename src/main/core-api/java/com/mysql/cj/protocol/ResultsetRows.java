@@ -68,7 +68,6 @@ public interface ResultsetRows extends RowList, ProtocolEntity {
 
     /**
      * We're done.
-     *
      */
     default void close() {
     }

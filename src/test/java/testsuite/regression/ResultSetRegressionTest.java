@@ -292,44 +292,33 @@ public class ResultSetRegressionTest extends BaseTestCase {
      */
     @Test
     public void testClobberStreamingRS() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.clobberStreamingResults.getKeyName(), "true");
+
+        Connection clobberConn = getConnectionWithProps(props);
+        Statement clobberStmt = clobberConn.createStatement();
+
+        createTable(clobberStmt, "StreamingClobber", "(dummyid INTEGER NOT NULL, dummyname VARCHAR(32), PRIMARY KEY (dummyid))");
+        clobberStmt.executeUpdate("INSERT INTO StreamingClobber (dummyid, dummyname) VALUES (0, NULL), (1, 'nro 1'), (2, 'nro 2'), (3, 'nro 3')");
+
+        Statement streamStmt = null;
+
         try {
-            Properties props = new Properties();
-            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
-            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
-            props.setProperty(PropertyKey.clobberStreamingResults.getKeyName(), "true");
+            streamStmt = clobberConn.createStatement(java.sql.ResultSet.TYPE_FORWARD_ONLY, java.sql.ResultSet.CONCUR_READ_ONLY);
+            streamStmt.setFetchSize(Integer.MIN_VALUE);
+            this.rs = streamStmt.executeQuery("SELECT dummyid, dummyname FROM StreamingClobber ORDER BY dummyid");
+            this.rs.next();
 
-            Connection clobberConn = getConnectionWithProps(props);
-
-            Statement clobberStmt = clobberConn.createStatement();
-
-            clobberStmt.executeUpdate("DROP TABLE IF EXISTS StreamingClobber");
-            clobberStmt.executeUpdate("CREATE TABLE StreamingClobber ( DUMMYID INTEGER NOT NULL, DUMMYNAME VARCHAR(32),PRIMARY KEY (DUMMYID) )");
-            clobberStmt.executeUpdate("INSERT INTO StreamingClobber (DUMMYID, DUMMYNAME) VALUES (0, NULL)");
-            clobberStmt.executeUpdate("INSERT INTO StreamingClobber (DUMMYID, DUMMYNAME) VALUES (1, 'nro 1')");
-            clobberStmt.executeUpdate("INSERT INTO StreamingClobber (DUMMYID, DUMMYNAME) VALUES (2, 'nro 2')");
-            clobberStmt.executeUpdate("INSERT INTO StreamingClobber (DUMMYID, DUMMYNAME) VALUES (3, 'nro 3')");
-
-            Statement streamStmt = null;
-
-            try {
-                streamStmt = clobberConn.createStatement(java.sql.ResultSet.TYPE_FORWARD_ONLY, java.sql.ResultSet.CONCUR_READ_ONLY);
-                streamStmt.setFetchSize(Integer.MIN_VALUE);
-
-                this.rs = streamStmt.executeQuery("SELECT DUMMYID, DUMMYNAME FROM StreamingClobber ORDER BY DUMMYID");
-
-                this.rs.next();
-
-                // This should proceed normally, after the driver clears the input stream
-                ResultSet rs2 = clobberStmt.executeQuery("SHOW VARIABLES");
-                rs2.next();
-                this.rs.close();
-            } finally {
-                if (streamStmt != null) {
-                    streamStmt.close();
-                }
-            }
+            // This should proceed normally, after the driver clears the input stream
+            ResultSet rs2 = clobberStmt.executeQuery("SHOW VARIABLES");
+            rs2.next();
+            this.rs.close();
         } finally {
-            this.stmt.executeUpdate("DROP TABLE IF EXISTS StreamingClobber");
+            if (streamStmt != null) {
+                streamStmt.close();
+            }
         }
     }
 

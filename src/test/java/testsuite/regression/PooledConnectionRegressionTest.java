@@ -565,15 +565,15 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         //        cw.checkClosed();
 
         cw.close();
-        assertEquals(26, cw.getActiveStatementCount()); // TODO why are they still active? Active statements should be cleaned when connection is returned to pool.
+        assertEquals(26, cw.getActiveStatementCount()); // Still active because the underlying connection wasn't really closed, but returned to the pool.
         checkConnectionReturnedToPool(cw);
 
-        cw.normalClose();
+        pc.close(); // Now the connection is really closed.
         assertEquals(0, cw.getActiveStatementCount());
         checkReallyClosedConnection(cw);
 
         // TODO find a way to test following methods
-        //        cw.realClose(calledExplicitly, issueRollback, skipLocalTeardown, reason);
+        //        cw.realClose(calledExplicitly, issueRollback, skipLocalTeardown, reason); // replaced by doClose(options)
         //        cw.cleanup(whyCleanedUp);
         //        cw.abort(executor);
         //        cw.abortInternal();
@@ -909,7 +909,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         //        cw.createNewIO(isForReconnect);
         //        cw.changeUser(userName, newPassword);
         //        cw.checkClosed();
-        //        cw.realClose(calledExplicitly, issueRollback, skipLocalTeardown, reason);
+        //        cw.realClose(calledExplicitly, issueRollback, skipLocalTeardown, reason); // replaced by doClose(options)
         //        cw.cleanup(whyCleanedUp);
         //        cw.abort(executor);
         //        cw.abortInternal();
@@ -1254,7 +1254,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
         //        cw.createNewIO(isForReconnect);
         //        cw.changeUser(userName, newPassword);
         //        cw.checkClosed();
-        //        cw.realClose(calledExplicitly, issueRollback, skipLocalTeardown, reason);
+        //        cw.realClose(calledExplicitly, issueRollback, skipLocalTeardown, reason); // replaced by doClose(options)
         //        cw.cleanup(whyCleanedUp);
         //        cw.abort(executor);
         //        cw.abortInternal();

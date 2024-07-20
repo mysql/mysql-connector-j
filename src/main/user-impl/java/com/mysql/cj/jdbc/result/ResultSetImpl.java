@@ -70,6 +70,7 @@ import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.Blob;
 import com.mysql.cj.jdbc.BlobFromLocator;
 import com.mysql.cj.jdbc.Clob;
+import com.mysql.cj.jdbc.CloseOption;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.JdbcPreparedStatement;
 import com.mysql.cj.jdbc.JdbcStatement;
@@ -574,7 +575,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     @Override
     public void close() throws SQLException {
-        realClose(true);
+        doClose(CloseOption.PROPAGATE);
     }
 
     @Override
@@ -1898,10 +1899,12 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         }
     }
 
+    /**
+     * Close this ResultSet and release resources. By default the close is considered explicit and does not propagate to owner statements.
+     */
     @Override
-    public void realClose(boolean calledExplicitly) throws SQLException {
+    public void doClose(CloseOption... options) throws SQLException {
         JdbcConnection locallyScopedConn = this.connection;
-
         if (locallyScopedConn == null) {
             return; // already closed
         }
@@ -1916,8 +1919,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
             try {
                 if (this.useUsageAdvisor) {
-
-                    if (!calledExplicitly) {
+                    if (CloseOption.IMPLICIT.in(options)) {
                         this.eventSink.processEvent(ProfilerEvent.TYPE_USAGE, this.session, this.owningStatement, this, 0, new Throwable(),
                                 Messages.getString("ResultSet.ResultSet_implicitly_closed_by_driver"));
                     }
@@ -1953,12 +1955,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                     }
                 }
             } finally {
-                if (this.owningStatement != null && calledExplicitly) {
-                    this.owningStatement.removeOpenResultSet(this);
+                if (CloseOption.PROPAGATE.in(options) && this.owningStatement != null) {
+                    this.owningStatement.notifyResultSetClose(this);
                 }
 
                 SQLException exceptionDuringClose = null;
-
                 if (this.rowData != null) {
                     try {
                         this.rowData.close();
@@ -1969,7 +1970,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
                 if (this.statementUsedForFetchingRows != null) {
                     try {
-                        this.statementUsedForFetchingRows.realClose(true, false);
+                        this.statementUsedForFetchingRows.doClose();
                     } catch (SQLException sqlEx) {
                         if (exceptionDuringClose != null) {
                             exceptionDuringClose.setNextException(sqlEx);
@@ -2751,9 +2752,9 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     }
 
     @Override
-    public void closeOwner(boolean calledExplicitly) {
+    public void closeOwner() {
         try {
-            realClose(calledExplicitly);
+            doClose(CloseOption.IMPLICIT);
         } catch (SQLException e) {
             throw ExceptionFactory.createException(e.getMessage(), e);
         }

@@ -127,6 +127,7 @@ import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.interceptors.QueryInterceptor;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
+import com.mysql.cj.jdbc.CloseOption;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.JdbcPreparedStatement;
@@ -985,7 +986,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for BUG#1933 -- Driver property 'maxRows' has no effect.
+     * Tests fix for BUG#1933 -- Driver property 'maxRows' has no effect.
      *
      * @throws Exception
      */
@@ -1214,7 +1215,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for BUG#3557 -- UpdatableResultSet not picking up default values
+     * Tests fix for BUG#3557 -- UpdatableResultSet not picking up default values
      *
      * @throws Exception
      */
@@ -3809,7 +3810,7 @@ public class StatementRegressionTest extends BaseTestCase {
             }
 
             @Override
-            public void realClose(boolean calledExplicitly) throws SQLException {
+            public void doClose(CloseOption... options) throws SQLException {
             }
 
             @Override
@@ -4703,7 +4704,7 @@ public class StatementRegressionTest extends BaseTestCase {
             }
 
             @Override
-            public void closeOwner(boolean calledExplicitly) {
+            public void closeOwner() {
             }
 
             @Override
@@ -11518,7 +11519,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#20453773, EXECUTEUPDATE() FAILS FOR SERVER SIDE STMT WHEN LOGSLOWQUERIES=TRUE.
+     * Tests fix for Bug#20453773, EXECUTEUPDATE() FAILS FOR SERVER SIDE STMT WHEN LOGSLOWQUERIES=TRUE.
      *
      * @throws Exception
      */
@@ -11555,7 +11556,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#21132376, PSTMT->CLOSE() AFTER PSTMT->EXECUTEBATCH() CALL RETURNS ERROR.
+     * Tests fix for Bug#21132376, PSTMT->CLOSE() AFTER PSTMT->EXECUTEBATCH() CALL RETURNS ERROR.
      *
      * @throws Exception
      */
@@ -11611,7 +11612,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#20391550, SETSTRING() CALL AFTER CONNECTION CLOSE RESULTS IN NULLPOINTEREXCEPTION.
+     * Tests fix for Bug#20391550, SETSTRING() CALL AFTER CONNECTION CLOSE RESULTS IN NULLPOINTEREXCEPTION.
      *
      * @throws Exception
      */
@@ -11657,7 +11658,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#103303 (32766143), JAVA.LANG.CLASSCASTEXCEPTION WHEN INSERTING BLOB WITH SERVER PREPARED STATEMENT.
+     * Tests fix for Bug#103303 (32766143), JAVA.LANG.CLASSCASTEXCEPTION WHEN INSERTING BLOB WITH SERVER PREPARED STATEMENT.
      *
      * @throws Exception
      */
@@ -11835,7 +11836,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#103612 (32902019), Incorrectly identified WITH...SELECT as unsafe for read-only connections.
+     * Tests fix for Bug#103612 (32902019), Incorrectly identified WITH...SELECT as unsafe for read-only connections.
      *
      * @throws Exception
      *
@@ -11984,7 +11985,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#105211 (33468860), class java.time.LocalDate cannot be cast to class java.sql.Date.
+     * Tests fix for Bug#105211 (33468860), class java.time.LocalDate cannot be cast to class java.sql.Date.
      *
      * @throws Exception
      */
@@ -12020,7 +12021,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#84365 (33425867), INSERT..VALUE with VALUES function lead to a StringIndexOutOfBoundsException.
+     * Tests fix for Bug#84365 (33425867), INSERT..VALUE with VALUES function lead to a StringIndexOutOfBoundsException.
      *
      * @throws Exception
      */
@@ -12067,7 +12068,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#85223 (25656020), MYSQLSQLXML SETSTRING CRASH.
+     * Tests fix for Bug#85223 (25656020), MYSQLSQLXML SETSTRING CRASH.
      *
      * @throws Exception
      */
@@ -12092,7 +12093,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#96900 (30355150), STATEMENT.CANCEL()CREATE A DATABASE CONNECTION BUT DOES NOT CLOSE THE CONNECTION.
+     * Tests fix for Bug#96900 (30355150), STATEMENT.CANCEL()CREATE A DATABASE CONNECTION BUT DOES NOT CLOSE THE CONNECTION.
      *
      * @throws Exception
      */
@@ -13600,7 +13601,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#77183 (21181501), INSERT..VALUE..lead to invalidation of batch insert.
+     * Tests fix for Bug#77183 (Bug#21181501), INSERT..VALUE..lead to invalidation of batch insert.
      *
      * @throws Exception
      */
@@ -13667,7 +13668,7 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#22931632, GETPARAMETERBINDINGS() ON A PS RETURNS NPE WHEN NOT ALL PARAMETERS ARE BOUND.
+     * Tests fix for Bug#22931632, GETPARAMETERBINDINGS() ON A PS RETURNS NPE WHEN NOT ALL PARAMETERS ARE BOUND.
      *
      * @throws Exception
      */
@@ -13722,6 +13723,52 @@ public class StatementRegressionTest extends BaseTestCase {
             }
 
         } while ((useRBS = !useRBS) || (cachePS = !cachePS) || (useSPS = !useSPS) || (useRGK = !useRGK));
+    }
+
+    /**
+     * Tests fix for Bug#113509 (Bug#36154975), closeOnCompletion cause no statement reuse and server memory leak.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug113509() throws Exception {
+        boolean useSPS = false;
+        boolean cachePS = false;
+        boolean closeOnCompl = false;
+
+        do {
+            final String testCase = String.format("Case [SPS: %s, CachePS: %s, CloseOnCompletion: %s]", useSPS ? "Y" : "N", cachePS ? "Y" : "N",
+                    closeOnCompl ? "Y" : "N");
+
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), Boolean.toString(cachePS));
+
+            try (Connection testConn = getConnectionWithProps(props)) {
+                this.rs = testConn.createStatement().executeQuery("SHOW STATUS LIKE 'Prepared_stmt_count'");
+                assertTrue(this.rs.next());
+                int currPrepCount = this.rs.getInt(2);
+
+                for (int i = 0; i < 3; i++) {
+                    PreparedStatement testPstmt = testConn.prepareStatement("SELECT ?");
+                    if (closeOnCompl) {
+                        testPstmt.closeOnCompletion();
+                    }
+
+                    testPstmt.setString(1, "Connector/J");
+                    ResultSet testRs = testPstmt.executeQuery();
+                    assertTrue(testRs.next(), testCase);
+                    testRs.close(); // Triggers statement close if closeOnCompletion has been set.
+
+                    assertEquals(closeOnCompl, testPstmt.isClosed(), testCase);
+                    testPstmt.close(); // Does nothing if closeOnCompletion has been set.
+                    assertTrue(testPstmt.isClosed(), testCase);
+                }
+                this.rs = testConn.createStatement().executeQuery("SHOW STATUS LIKE 'Prepared_stmt_count'");
+                assertTrue(this.rs.next(), testCase);
+                assertEquals(useSPS && cachePS ? 1 : 0, this.rs.getInt(2) - currPrepCount, testCase);
+            }
+        } while ((useSPS = !useSPS) || (cachePS = !cachePS) || (closeOnCompl = !closeOnCompl));
     }
 
 }

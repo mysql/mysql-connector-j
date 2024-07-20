@@ -114,7 +114,6 @@ import com.mysql.cj.protocol.MessageReader;
 import com.mysql.cj.protocol.MessageSender;
 import com.mysql.cj.protocol.PacketReceivedTimeHolder;
 import com.mysql.cj.protocol.PacketSentTimeHolder;
-import com.mysql.cj.protocol.Protocol;
 import com.mysql.cj.protocol.ProtocolEntity;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
 import com.mysql.cj.protocol.ProtocolEntityReader;
@@ -146,7 +145,7 @@ import com.mysql.cj.util.TestUtils;
 import com.mysql.cj.util.TimeUtil;
 import com.mysql.cj.util.Util;
 
-public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implements Protocol<NativePacketPayload>, RuntimePropertyListener {
+public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implements RuntimePropertyListener {
 
     protected static final int INITIAL_PACKET_SIZE = 1024;
     protected static final int COMP_HEADER_LENGTH = 3;
@@ -668,7 +667,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         }
 
         try {
-
             checkForOutstandingStreamingData();
 
             // Clear serverStatus...this value is guarded by an external mutex, as you can only ever be processing one command at a time
@@ -869,8 +867,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         try {
             int len;
 
-            // Due to a bug in some older Linux kernels (fixed after the patch "tcp: fix FIONREAD/SIOCINQ"), our SocketInputStream.available() may return 1 even
-            // if there is no data in the Stream, so, we need to check if InputStream.skip() actually skipped anything.
+            // Due to a bug in some older Linux kernels (fixed after the patch "tcp: fix FIONREAD/SIOCINQ"), SocketInputStream.available() may return 1 even
+            // if there is no data in the Stream. Checking the result of InputStream.skip() confirms if it actually skipped anything.
             while ((len = this.socketConnection.getMysqlInput().available()) > 0 && this.socketConnection.getMysqlInput().skip(len) > 0) {
                 continue;
             }
@@ -1213,7 +1211,6 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
     /**
      * Log-off of the MySQL server and close the socket.
-     *
      */
     public final void quit() {
         try {
@@ -1876,19 +1873,17 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         this.streamingData = streamingData;
     }
 
-    public void checkForOutstandingStreamingData() {
+    private void checkForOutstandingStreamingData() {
         if (this.streamingData != null) {
             boolean shouldClobber = this.propertySet.getBooleanProperty(PropertyKey.clobberStreamingResults).getValue();
-
             if (!shouldClobber) {
-                throw ExceptionFactory.createException(Messages.getString("MysqlIO.39") + this.streamingData + Messages.getString("MysqlIO.40")
-                        + Messages.getString("MysqlIO.41") + Messages.getString("MysqlIO.42"), this.exceptionInterceptor);
+                throw ExceptionFactory.createException(Messages.getString("MysqlIO.39", new Object[] { this.streamingData }), this.exceptionInterceptor);
             }
 
-            // Close the result set
-            this.streamingData.getOwner().closeOwner(false);
+            // Close the result set.
+            this.streamingData.getOwner().closeOwner();
 
-            // clear any pending data....
+            // Clear any pending data.
             clearInputStream();
         }
     }

@@ -591,7 +591,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for BUG#7952 -- Infinite recursion when 'falling back' to source in failover configuration.
+     * Tests fix for BUG#7952 -- Infinite recursion when 'falling back' to source in failover configuration.
      *
      * @throws Exception
      */
@@ -5729,7 +5729,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#18869381 - CHANGEUSER() FOR SHA USER RESULTS IN NULLPOINTEREXCEPTION
+     * Tests fix for Bug#18869381 - CHANGEUSER() FOR SHA USER RESULTS IN NULLPOINTEREXCEPTION
      *
      * @throws Exception
      */
@@ -5872,7 +5872,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
             testStmt.close();
             testConn.close();
         } catch (SQLException e) {
-            e.printStackTrace();
             fail("No SQLException should be thrown.");
         }
 
@@ -5932,7 +5931,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
                 }
             });
 
-            // 2. kill the connection running the slow query, at server side, to make sure the driver doesn't hang after its killed
+            // 2. kill the connection running the slow query to make sure the driver doesn't hang after that
             final long timestamp = System.currentTimeMillis();
             long elapsedTime = 0;
 
@@ -10351,7 +10350,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#89948 (27658489), Batched statements are not committed for useLocalTransactionState=true.
+     * Tests fix for Bug#89948 (27658489), Batched statements are not committed for useLocalTransactionState=true.
      *
      * @throws Exception
      */
@@ -10689,7 +10688,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#41172 (11750577), PROFILEREVENT.PACK() THROWS ARRAYINDEXOUTOFBOUNDSEXCEPTION.
+     * Tests fix for Bug#41172 (11750577), PROFILEREVENT.PACK() THROWS ARRAYINDEXOUTOFBOUNDSEXCEPTION.
      *
      * @throws Exception
      */
@@ -10724,7 +10723,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#74690 (20010454), PROFILEREVENT HOSTNAME HAS NO GETTER().
+     * Tests fix for Bug#74690 (20010454), PROFILEREVENT HOSTNAME HAS NO GETTER().
      *
      * @throws Exception
      */
@@ -10762,7 +10761,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#70677 (17640628), CONNECTOR J WITH PROFILESQL - LOG CONTAINS LOTS OF STACKTRACE DATA.
+     * Tests fix for Bug#70677 (17640628), CONNECTOR J WITH PROFILESQL - LOG CONTAINS LOTS OF STACKTRACE DATA.
      *
      * @throws Exception
      */
@@ -10793,7 +10792,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#98445 (30832513), Connection option clientInfoProvider=ClientInfoProviderSP causes NPE.
+     * Tests fix for Bug#98445 (30832513), Connection option clientInfoProvider=ClientInfoProviderSP causes NPE.
      *
      * @throws Exception
      */
@@ -10933,7 +10932,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#97714 (30570249), Contribution: Expose elapsed time for query interceptor to avoid hacky thread local implementations.
+     * Tests fix for Bug#97714 (30570249), Contribution: Expose elapsed time for query interceptor to avoid hacky thread local implementations.
      *
      * @throws Exception
      */
@@ -11980,7 +11979,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#23143279, CLIENT HANG WHEN LOADBALANCESTRATEGY IS BESTRESPONSETIME.
+     * Tests fix for Bug#23143279, CLIENT HANG WHEN LOADBALANCESTRATEGY IS BESTRESPONSETIME.
      *
      * @throws Exception
      */
@@ -12092,7 +12091,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Test fix for Bug#114989 (36612566), Setting null value in setClientInfo throws an NPE.
+     * Tests fix for Bug#114989 (36612566), Setting null value in setClientInfo throws an NPE.
      *
      * @throws Exception
      */

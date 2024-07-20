@@ -379,7 +379,8 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                 //
                 locallyScopedConn.setSessionMaxRows(getQueryInfo().getFirstStmtChar() == 'S' ? this.maxRows : -1);
 
-                rs = executeInternal(this.maxRows, sendPacket, createStreamingResultSet(), getQueryInfo().getFirstStmtChar() == 'S', cachedMetadata, false);
+                rs = executeInternal(this.maxRows, sendPacket, meetsConditionsForStreamingResultSet(), getQueryInfo().getFirstStmtChar() == 'S', cachedMetadata,
+                        false);
 
                 if (cachedMetadata != null) {
                     locallyScopedConn.initializeResultsMetadataFromCache(((PreparedQuery) this.query).getOriginalSql(), cachedMetadata, rs);
@@ -1052,7 +1053,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
 
                 locallyScopedConn.setSessionMaxRows(this.maxRows);
 
-                this.results = executeInternal(this.maxRows, sendPacket, createStreamingResultSet(), true, cachedMetadata, false);
+                this.results = executeInternal(this.maxRows, sendPacket, meetsConditionsForStreamingResultSet(), true, cachedMetadata, false);
 
                 if (oldDb != null) {
                     locallyScopedConn.setDatabase(oldDb);
@@ -1398,8 +1399,11 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         }
     }
 
+    /**
+     * Close this Statement and release resources. By default the close is considered explicit and does not propagate to dependents.
+     */
     @Override
-    public void realClose(boolean calledExplicitly, boolean closeOpenResults) throws SQLException {
+    public void doClose(CloseOption... options) throws SQLException {
         JdbcConnection locallyScopedConn = this.connection;
 
         if (locallyScopedConn == null) {
@@ -1409,9 +1413,6 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
         Lock connectionLock = checkClosed().getConnectionLock();
         connectionLock.lock();
         try {
-
-            // additional check in case Statement was closed
-            // while current thread was waiting for lock
             if (this.isClosed) {
                 return;
             }
@@ -1424,7 +1425,7 @@ public class ClientPreparedStatement extends com.mysql.cj.jdbc.StatementImpl imp
                 }
             }
 
-            super.realClose(calledExplicitly, closeOpenResults);
+            super.doClose(options);
 
             ((PreparedQuery) this.query).setOriginalSql(null);
             ((PreparedQuery) this.query).setQueryBindings(null);

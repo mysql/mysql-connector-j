@@ -38,6 +38,7 @@ import com.mysql.cj.jdbc.CallableStatement;
 import com.mysql.cj.jdbc.CallableStatement.CallableStatementParamInfo;
 import com.mysql.cj.jdbc.ClientPreparedStatement;
 import com.mysql.cj.jdbc.Clob;
+import com.mysql.cj.jdbc.CloseOption;
 import com.mysql.cj.jdbc.ConnectionImpl;
 import com.mysql.cj.jdbc.ConnectionWrapper;
 import com.mysql.cj.jdbc.DatabaseMetaData;
@@ -101,7 +102,6 @@ public class TranslateExceptions {
         CtClass ctQueryBindings = pool.get(QueryBindings.class.getName());
         //CtClass ctByteArray = pool.get(byte[].class.getName());
         CtClass ctColumnDefinition = pool.get(ColumnDefinition.class.getName());
-
         CtClass ctLongArray = pool.get(long[].class.getName());
         //CtClass ctInputStream = pool.get(InputStream.class.getName());
         CtClass ctJdbcConnection = pool.get(JdbcConnection.class.getName());
@@ -113,8 +113,8 @@ public class TranslateExceptions {
         CtClass ctStatement = pool.get(java.sql.Statement.class.getName());
         CtClass ctStatementImpl = pool.get(StatementImpl.class.getName());
         CtClass ctString = pool.get(String.class.getName());
-
         CtClass ctMessageBody = pool.get(Message.class.getName());
+        CtClass ctCloseOptions = pool.get(CloseOption[].class.getName());
 
         // class we want to instrument
         CtClass clazz;
@@ -332,8 +332,7 @@ public class TranslateExceptions {
                         new CtClass[] { CtClass.intType, ctMessageBody, CtClass.booleanType, CtClass.booleanType, ctColumnDefinition, CtClass.booleanType }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         //catchRuntimeException(clazz, clazz.getDeclaredMethod("isRewritableWithMultiValueClause", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("realClose", new CtClass[] { CtClass.booleanType, CtClass.booleanType }),
-                EXCEPTION_INTERCEPTOR_GETTER);
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("doClose", new CtClass[] { ctCloseOptions }), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("serverExecute", new CtClass[] { CtClass.intType, CtClass.booleanType, ctColumnDefinition }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         //catchRuntimeException(clazz, clazz.getDeclaredMethod("serverLongData", new CtClass[] { CtClass.intType, ctServerPreparedQueryBindValue }),
@@ -398,7 +397,7 @@ public class TranslateExceptions {
         catchRuntimeException(clazz, clazz.getDeclaredMethod("getResultSetInternal", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("processMultiCountsAndKeys", new CtClass[] { ctStatementImpl, CtClass.intType, ctLongArray }),
                 EXCEPTION_INTERCEPTOR_GETTER);
-        catchRuntimeException(clazz, clazz.getDeclaredMethod("removeOpenResultSet", new CtClass[] { ctResultSetInternalMethods }),
+        catchRuntimeException(clazz, clazz.getDeclaredMethod("notifyResultSetClose", new CtClass[] { ctResultSetInternalMethods }),
                 EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("resetCancelledState", new CtClass[] {}), EXCEPTION_INTERCEPTOR_GETTER);
         catchRuntimeException(clazz, clazz.getDeclaredMethod("setHoldResultsOpenOverClose", new CtClass[] { CtClass.booleanType }),

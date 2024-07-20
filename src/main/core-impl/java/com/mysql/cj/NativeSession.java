@@ -100,7 +100,7 @@ public class NativeSession extends CoreSession implements Serializable {
     private boolean isClosed = true;
 
     /** Why was this session implicitly closed, if known? (for diagnostics) */
-    private Throwable forceClosedReason;
+    private Throwable forceClosedReason = null;
 
     private CopyOnWriteArrayList<WeakReference<SessionEventListener>> listeners = new CopyOnWriteArrayList<>();
 
@@ -184,7 +184,7 @@ public class NativeSession extends CoreSession implements Serializable {
         super.quit();
     }
 
-    // TODO: we should examine the call flow here, we shouldn't have to know about the socket connection but this should be address in a wider scope.
+    // TODO: we should examine the call flow here, we shouldn't have to know about the socket connection but this should be addressed in a wider scope.
     @Override
     public void forceClose() {
         if (this.protocol != null) {
@@ -198,7 +198,7 @@ public class NativeSession extends CoreSession implements Serializable {
             } catch (Throwable t) {
                 // can't do anything about it, and we're forcibly aborting
             }
-            //this.protocol = null; // TODO actually we shouldn't remove protocol instance because some it's methods can be called after closing socket
+            //this.protocol = null; // TODO actually we shouldn't remove protocol instance because some of its methods can be called after closing the socket
         }
         getSessionLock().lock();
         try {

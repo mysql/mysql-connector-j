@@ -47,6 +47,7 @@ import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.interceptors.QueryInterceptor;
 import com.mysql.cj.jdbc.ClientInfoProvider;
+import com.mysql.cj.jdbc.CloseOption;
 import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.JdbcPreparedStatement;
 import com.mysql.cj.jdbc.JdbcPropertySet;
@@ -412,8 +413,8 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     }
 
     @Override
-    public void realClose(boolean calledExplicitly, boolean issueRollback, boolean skipLocalTeardown, Throwable reason) throws SQLException {
-        getActiveMySQLConnection().realClose(calledExplicitly, issueRollback, skipLocalTeardown, reason);
+    public void doClose(Throwable cause, CloseOption... options) throws SQLException {
+        getActiveMySQLConnection().doClose(cause, options);
     }
 
     @Override
@@ -736,11 +737,6 @@ public class MultiHostMySQLConnection implements JdbcConnection {
     @Override
     public String getHostPortPair() {
         return getActiveMySQLConnection().getHostPortPair();
-    }
-
-    @Override
-    public void normalClose() {
-        getActiveMySQLConnection().normalClose();
     }
 
     @Override

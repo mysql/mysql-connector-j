@@ -126,8 +126,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
         try {
             serverPrepare(sql);
         } catch (CJException | SQLException sqlEx) {
-            realClose(false, true);
-
+            doClose(CloseOption.NO_CACHE);
             throw SQLExceptionsMapping.translateException(sqlEx, this.exceptionInterceptor);
         }
 
@@ -183,41 +182,6 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
     protected void setClosed(boolean flag) {
         this.isClosed = flag;
-    }
-
-    @Override
-    public void close() throws SQLException {
-        JdbcConnection locallyScopedConn = this.connection;
-
-        if (locallyScopedConn == null) {
-            return; // already closed
-        }
-
-        Lock connectionLock = locallyScopedConn.getConnectionLock();
-        connectionLock.lock();
-        try {
-            if (this.isClosed) {
-                return; // already closed
-            }
-
-            if (this.isCacheable && isPoolable()) {
-                clearParameters();
-                clearAttributes();
-
-                this.isClosed = true;
-
-                this.connection.recachePreparedStatement(this);
-                this.isCached = true;
-                this.results = null;
-                this.generatedKeysResults = null;
-                return;
-            }
-
-            this.isClosed = false;
-            realClose(true, true);
-        } finally {
-            connectionLock.unlock();
-        }
     }
 
     @Override
@@ -455,8 +419,12 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
         throw new IllegalArgumentException(Messages.getString("ServerPreparedStatement.7"));
     }
 
+    /**
+     * Close this Statement and release resources. By default the close is considered explicit, does not propagate to dependents and allows caching the
+     * Statement.
+     */
     @Override
-    public void realClose(boolean calledExplicitly, boolean closeOpenResults) throws SQLException {
+    public void doClose(CloseOption... options) throws SQLException {
         JdbcConnection locallyScopedConn = this.connection;
         if (locallyScopedConn == null) {
             return; // already closed
@@ -465,14 +433,23 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
         Lock connectionLock = locallyScopedConn.getConnectionLock();
         connectionLock.lock();
         try {
-            if (this.connection != null) {
-                //
-                // Don't communicate with the server if we're being called from the finalizer...
-                //
-                // This will leak server resources, but if we don't do this, we'll deadlock (potentially, because there's no guarantee when, what order, and
-                // what concurrency finalizers will be called with). Well-behaved programs won't rely on finalizers to clean up their statements.
-                //
+            if (this.isClosed) {
+                return; // already closed
+            }
 
+            // Cache statement if caching is allowed for this close operation and the statement is cacheable.
+            if (CloseOption.NO_CACHE.notIn(options) && this.isCacheable && isPoolable()) {
+                clearParameters();
+                clearAttributes();
+                this.isClosed = true;
+                this.connection.recachePreparedStatement(this);
+                this.isCached = true;
+                this.results = null;
+                this.generatedKeysResults = null;
+                return;
+            }
+
+            if (this.connection != null) {
                 CJException exceptionDuringClose = null;
 
                 if (this.isCached) {
@@ -484,12 +461,12 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                 Session sessionLocalCopy = this.session;
                 String user = this.connection.getUser();
 
-                super.realClose(calledExplicitly, closeOpenResults);
+                super.doClose(options);
 
                 ((ServerPreparedQuery) this.query).clearParameters(false);
 
                 // Finally deallocate the prepared statement.
-                if (calledExplicitly && !locallyScopedConn.isClosed()) {
+                if (!locallyScopedConn.isClosed()) {
                     TelemetrySpan span = sessionLocalCopy.getTelemetryHandler().startSpan(TelemetrySpanName.STMT_DEALLOCATE_PREPARED);
                     try (TelemetryScope scope = span.makeCurrent()) {
                         String dbOperation = getQueryInfo().getStatementKeyword();
@@ -753,7 +730,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
 
             if (this.isClosed) {
                 this.isClosed = false;
-                realClose(true, true);
+                doClose(CloseOption.PROPAGATE, CloseOption.NO_CACHE);
             }
         }
     }

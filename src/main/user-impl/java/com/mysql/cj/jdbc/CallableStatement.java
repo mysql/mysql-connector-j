@@ -675,7 +675,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
      *             if a database access error occurs
      */
     private void checkStreamability() throws SQLException {
-        if (this.hasOutputParams && createStreamingResultSet()) {
+        if (this.hasOutputParams && meetsConditionsForStreamingResultSet()) {
             throw SQLError.createSQLException(Messages.getString("CallableStatement.14"), MysqlErrorNumbers.SQLSTATE_CONNJ_DRIVER_NOT_CAPABLE,
                     getExceptionInterceptor());
         }

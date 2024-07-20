@@ -50,10 +50,8 @@ import com.mysql.cj.telemetry.TelemetrySpanName;
 import com.mysql.cj.util.Util;
 
 /**
- * Provides streaming of Resultset rows. Each next row is consumed from the
- * input stream only on {@link #next()} call. Consumed rows are not cached thus
- * we only stream result sets when they are forward-only, read-only, and the
- * fetch size has been set to Integer.MIN_VALUE (rows are read one by one).
+ * Provides streaming of Resultset rows. Each next row is consumed from the input stream only on {@link #next()} call. Consumed rows are not cached thus result
+ * sets are streamed only when they are forward-only, read-only, and the fetch size has been set to Integer.MIN_VALUE (rows are read one by one).
  *
  * @param <T>
  *            ProtocolEntity type
@@ -61,28 +59,24 @@ import com.mysql.cj.util.Util;
 public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractResultsetRows implements ResultsetRows {
 
     private NativeProtocol protocol;
+    private NativeMessageBuilder commandBuilder = null;
+    private ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory;
 
-    private boolean isAfterEnd = false;
-
-    private boolean noMoreRows = false;
-
-    private boolean isBinaryEncoded = false;
+    private final Lock lock = new ReentrantLock();
 
     private Row nextRow;
 
+    private boolean isAfterEnd = false;
+    private boolean noMoreRows = false;
+    private boolean isBinaryEncoded = false;
     private boolean streamerClosed = false;
 
     private ExceptionInterceptor exceptionInterceptor;
 
-    private ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory;
-
-    private NativeMessageBuilder commandBuilder = null;
-    private final Lock lock = new ReentrantLock();
-
     /**
-     * Creates a new RowDataDynamic object.
+     * Creates a new ResultsetRowsStreaming object.
      *
-     * @param io
+     * @param protocol
      *            the connection to MySQL that this data is coming from
      * @param columnDefinition
      *            the metadata that describe this data
@@ -91,9 +85,9 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
      * @param resultSetFactory
      *            {@link ProtocolEntityFactory}
      */
-    public ResultsetRowsStreaming(NativeProtocol io, ColumnDefinition columnDefinition, boolean isBinaryEncoded,
+    public ResultsetRowsStreaming(NativeProtocol protocol, ColumnDefinition columnDefinition, boolean isBinaryEncoded,
             ProtocolEntityFactory<T, NativePacketPayload> resultSetFactory) {
-        this.protocol = io;
+        this.protocol = protocol;
         this.isBinaryEncoded = isBinaryEncoded;
         this.metadata = columnDefinition;
         this.exceptionInterceptor = this.protocol.getExceptionInterceptor();
@@ -115,14 +109,12 @@ public class ResultsetRowsStreaming<T extends ProtocolEntity> extends AbstractRe
             while (next() != null) {
                 hadMore = true;
                 howMuchMore++;
-
                 if (howMuchMore % 100 == 0) {
                     Thread.yield();
                 }
             }
 
-            if (!this.protocol.getPropertySet().getBooleanProperty(PropertyKey.clobberStreamingResults).getValue()
-                    && this.protocol.getPropertySet().getIntegerProperty(PropertyKey.netTimeoutForStreamingResults).getValue() > 0) {
+            if (this.protocol.getPropertySet().getIntegerProperty(PropertyKey.netTimeoutForStreamingResults).getValue() > 0) {
                 Session session = this.owner.getSession();
                 TelemetrySpan span = session.getTelemetryHandler().startSpan(TelemetrySpanName.SET_VARIABLE, "net_write_timeout");
                 try (TelemetryScope scope = span.makeCurrent()) {

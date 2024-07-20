@@ -1150,8 +1150,8 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     }
 
     @Override
-    public void realClose(boolean calledExplicitly, boolean issueRollback, boolean skipLocalTeardown, Throwable reason) throws SQLException {
-        this.mc.realClose(calledExplicitly, issueRollback, skipLocalTeardown, reason);
+    public void doClose(Throwable cause, CloseOption... options) throws SQLException {
+        this.mc.doClose(cause, options);
     }
 
     @Override
@@ -1227,11 +1227,6 @@ public class ConnectionWrapper extends WrapperBase implements JdbcConnection {
     @Override
     public String getHostPortPair() {
         return this.mc.getHostPortPair();
-    }
-
-    @Override
-    public void normalClose() {
-        this.mc.normalClose();
     }
 
     @Override

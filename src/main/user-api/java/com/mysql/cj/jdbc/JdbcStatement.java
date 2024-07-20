@@ -39,9 +39,8 @@ public interface JdbcStatement extends java.sql.Statement, Query {
     public static final int MAX_ROWS = 50000000; // From the MySQL FAQ
 
     /**
-     * Workaround for containers that 'check' for sane values of
-     * Statement.setFetchSize() so that applications can use
-     * the Java variant of libmysql's mysql_use_result() behavior.
+     * Workaround for containers that 'check' for sane values of Statement.setFetchSize() so that applications can use the Java variant of libmysql's
+     * mysql_use_result() behavior.
      *
      * @throws SQLException
      *             if an error occurs
@@ -49,8 +48,7 @@ public interface JdbcStatement extends java.sql.Statement, Query {
     void enableStreamingResults() throws SQLException;
 
     /**
-     * Resets this statements fetch size and result set type to the values
-     * they had before enableStreamingResults() was called.
+     * Resets this statements fetch size and result set type to the values they had before enableStreamingResults() was called.
      *
      * @throws SQLException
      *             if an error occurs
@@ -58,20 +56,13 @@ public interface JdbcStatement extends java.sql.Statement, Query {
     void disableStreamingResults() throws SQLException;
 
     /**
-     * Sets an InputStream instance that will be used to send data
-     * to the MySQL server for a "LOAD DATA LOCAL INFILE" statement
-     * rather than a FileInputStream or URLInputStream that represents
-     * the path given as an argument to the statement.
+     * Sets an InputStream instance that will be used to send data to the MySQL server for a "LOAD DATA LOCAL INFILE" statement rather than a FileInputStream or
+     * URLInputStream that represents the path given as an argument to the statement.
      *
-     * This stream will be read to completion upon execution of a
-     * "LOAD DATA LOCAL INFILE" statement, and will automatically
-     * be closed by the driver, so it needs to be reset
-     * before each call to execute*() that would cause the MySQL
-     * server to request data to fulfill the request for
-     * "LOAD DATA LOCAL INFILE".
+     * This stream will be read to completion upon execution of a "LOAD DATA LOCAL INFILE" statement, and will automatically be closed by the driver, so it
+     * needs to be reset before each call to execute*() that would cause the MySQL server to request data to fulfill the request for "LOAD DATA LOCAL INFILE".
      *
-     * If this value is set to NULL, the driver will revert to using
-     * a FileInputStream or URLInputStream as required.
+     * If this value is set to NULL, the driver will revert to using a FileInputStream or URLInputStream as required.
      *
      * @param stream
      *            input stream
@@ -79,11 +70,9 @@ public interface JdbcStatement extends java.sql.Statement, Query {
     void setLocalInfileInputStream(InputStream stream);
 
     /**
-     * Returns the InputStream instance that will be used to send
-     * data in response to a "LOAD DATA LOCAL INFILE" statement.
+     * Returns the InputStream instance that will be used to send data in response to a "LOAD DATA LOCAL INFILE" statement.
      *
-     * This method returns NULL if no such stream has been set
-     * via setLocalInfileInputStream().
+     * This method returns NULL if no such stream has been set via setLocalInfileInputStream().
      *
      * @return
      *         input stream
@@ -95,14 +84,12 @@ public interface JdbcStatement extends java.sql.Statement, Query {
     ExceptionInterceptor getExceptionInterceptor();
 
     /**
-     * Callback for result set instances to remove them from the Set that
-     * tracks them per-statement
+     * Callback for ResultSet instances to notify the owning Statement when they are being closed.
      *
      * @param rs
-     *            result set
+     *            The ResultSet being closed
      */
-
-    void removeOpenResultSet(ResultSetInternalMethods rs);
+    void notifyResultSetClose(ResultSetInternalMethods rs);
 
     /**
      * Returns the number of open result sets for this statement.
@@ -120,5 +107,15 @@ public interface JdbcStatement extends java.sql.Statement, Query {
     void clearAttributes();
 
     ResultSetInternalMethods getResultSetInternal();
+
+    /**
+     * Closes this Statement and release resources.
+     *
+     * @param options
+     *            options indicating how the close was initiated and/or what should be performed during the close
+     * @throws SQLException
+     *             if an error occurs
+     */
+    void doClose(CloseOption... options) throws SQLException;
 
 }

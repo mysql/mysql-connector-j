@@ -145,9 +145,8 @@ public class NativeResultset implements Resultset {
         }
     }
 
-    /**
-     * We can't do this ourselves, otherwise the contract for
-     * Statement.getMoreResults() won't work correctly.
+    /*
+     * We can't do this ourselves, otherwise the contract for Statement.getMoreResults() won't work correctly.
      */
     @Override
     public void clearNextResultset() {

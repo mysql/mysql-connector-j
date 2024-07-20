@@ -24,6 +24,7 @@ import java.math.BigInteger;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import com.mysql.cj.jdbc.CloseOption;
 import com.mysql.cj.jdbc.JdbcPreparedStatement;
 import com.mysql.cj.jdbc.JdbcStatement;
 import com.mysql.cj.protocol.Resultset;
@@ -99,15 +100,14 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet, ResultsetR
     Object getObjectStoredProc(String colName, java.util.Map<Object, Object> map, int desiredSqlType) throws SQLException;
 
     /**
-     * Closes this ResultSet and releases resources.
+     * Close this ResultSet and release resources.
      *
-     * @param calledExplicitly
-     *            was realClose called by the standard ResultSet.close() method, or was it closed internally by the
-     *            driver?
+     * @param options
+     *            options indicating how the close was initiated and/or what should be performed during the close
      * @throws SQLException
      *             if an error occurs
      */
-    void realClose(boolean calledExplicitly) throws SQLException;
+    void doClose(CloseOption... options) throws SQLException;
 
     /**
      * Sets the first character of the query that was issued to create

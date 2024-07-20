@@ -607,7 +607,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 if (isClosed()) {
                     this.session.forceClose();
                 } else {
-                    realClose(false, false, false, whyCleanedUp);
+                    doClose(whyCleanedUp, CloseOption.IMPLICIT, CloseOption.PROPAGATE);
                 }
             }
         } catch (SQLException | CJException sqlEx) {
@@ -700,18 +700,9 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                 }
             }
 
-            realClose(true, true, false, null);
+            doClose(null, CloseOption.ROLLBACK, CloseOption.PROPAGATE);
         } finally {
             connectionLock.unlock();
-        }
-    }
-
-    @Override
-    public void normalClose() {
-        try {
-            close();
-        } catch (SQLException e) {
-            ExceptionFactory.createException(e.getMessage(), e);
         }
     }
 
@@ -726,7 +717,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
 
         for (JdbcStatement stmt : this.openStatements) {
             try {
-                ((StatementImpl) stmt).realClose(false, true);
+                stmt.doClose(CloseOption.IMPLICIT, CloseOption.PROPAGATE, CloseOption.NO_CACHE);
             } catch (SQLException sqlEx) {
                 postponedException = sqlEx; // throw it later, cleanup all statements first
             }
@@ -1068,7 +1059,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                             ps.isCached = false;
                             ps.setClosed(false);
                             try {
-                                ps.realClose(true, true);
+                                ps.doClose(CloseOption.PROPAGATE, CloseOption.NO_CACHE);
                             } catch (SQLException sqlEx) {
                                 // punt
                             }
@@ -1752,71 +1743,78 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
         return pStmt;
     }
 
+    /**
+     * Close the connection and release resources. By default the close is considered explicit, does not roll back the transaction, does not propagate to
+     * dependents and is processed normally (not forced).
+     */
     @Override
-    public void realClose(boolean calledExplicitly, boolean issueRollback, boolean skipLocalTeardown, Throwable reason) throws SQLException {
-        SQLException sqlEx = null;
-
-        if (isClosed()) {
-            return;
-        }
-
-        this.session.setForceClosedReason(reason);
-
+    public void doClose(Throwable reason, CloseOption... options) throws SQLException {
+        Lock connectionLock = getConnectionLock();
+        connectionLock.lock();
         try {
-            if (!skipLocalTeardown) {
-                if (!getAutoCommit() && issueRollback) {
-                    try {
-                        rollback();
-                    } catch (SQLException ex) {
-                        sqlEx = ex;
-                    }
-                }
+            if (isClosed()) {
+                return;
+            }
+            SQLException sqlEx = null;
 
+            this.session.setForceClosedReason(reason);
+
+            try {
                 if (this.propertySet.getBooleanProperty(PropertyKey.gatherPerfMetrics).getValue()) {
                     this.session.getProtocol().getMetricsHolder().reportMetrics(this.session.getLog());
                 }
-
                 if (this.useUsageAdvisor.getValue()) {
-                    if (!calledExplicitly) {
+                    if (CloseOption.IMPLICIT.in(options)) {
                         this.session.getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_USAGE, this.session, null, null, 0, new Throwable(),
                                 Messages.getString("Connection.18"));
                     }
-
                     if (System.currentTimeMillis() - this.session.getConnectionCreationTimeMillis() < 500) {
                         this.session.getProfilerEventHandler().processEvent(ProfilerEvent.TYPE_USAGE, this.session, null, null, 0, new Throwable(),
                                 Messages.getString("Connection.19"));
                     }
                 }
 
-                try {
-                    closeAllOpenStatements();
-                } catch (SQLException ex) {
-                    sqlEx = ex;
+                if (!getAutoCommit() && CloseOption.ROLLBACK.in(options)) {
+                    try {
+                        rollback();
+                    } catch (SQLException e) {
+                        sqlEx = e;
+                    }
                 }
 
-                this.session.quit();
-            } else {
-                this.session.forceClose();
+                if (CloseOption.PROPAGATE.in(options)) {
+                    try {
+                        closeAllOpenStatements();
+                    } catch (SQLException ex) {
+                        sqlEx = ex;
+                    }
+                }
+
+                if (CloseOption.FORCED.in(options)) {
+                    this.session.forceClose();
+                } else {
+                    this.session.quit();
+                }
+
+                if (this.queryInterceptors != null) {
+                    this.queryInterceptors.forEach(QueryInterceptor::destroy);
+                }
+                if (this.exceptionInterceptor != null) {
+                    this.exceptionInterceptor.destroy();
+                }
+            } finally {
+                this.openStatements.clear();
+                this.queryInterceptors = null;
+                this.exceptionInterceptor = null;
+                this.nullStatementResultSetFactory = null;
+                this.session.getTelemetryHandler().removeLinkTarget(this.connectionSpan);
             }
 
-            if (this.queryInterceptors != null) {
-                this.queryInterceptors.forEach(QueryInterceptor::destroy);
+            if (sqlEx != null) {
+                throw sqlEx;
             }
-
-            if (this.exceptionInterceptor != null) {
-                this.exceptionInterceptor.destroy();
-            }
-
         } finally {
-            this.openStatements.clear();
-            this.queryInterceptors = null;
-            this.exceptionInterceptor = null;
-            this.nullStatementResultSetFactory = null;
-            this.session.getTelemetryHandler().removeLinkTarget(this.connectionSpan);
-        }
-
-        if (sqlEx != null) {
-            throw sqlEx;
+            connectionLock.unlock();
         }
     }
 
@@ -1834,7 +1832,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                     if (oldServerPrepStmt != null && oldServerPrepStmt != pstmt) {
                         ((ServerPreparedStatement) oldServerPrepStmt).isCached = false;
                         ((ServerPreparedStatement) oldServerPrepStmt).setClosed(false);
-                        ((ServerPreparedStatement) oldServerPrepStmt).realClose(true, true);
+                        ((ServerPreparedStatement) oldServerPrepStmt).doClose(CloseOption.PROPAGATE, CloseOption.NO_CACHE);
                     }
                 } finally {
                     this.serverSideStatementCheckCacheLock.unlock();

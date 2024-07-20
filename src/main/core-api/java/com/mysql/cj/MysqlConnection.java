@@ -60,8 +60,6 @@ public interface MysqlConnection {
 
     void checkClosed();
 
-    void normalClose();
-
     /**
      * Destroys this connection and any underlying resources.
      *
