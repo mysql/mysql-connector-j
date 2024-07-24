@@ -13771,4 +13771,29 @@ public class StatementRegressionTest extends BaseTestCase {
         } while ((useSPS = !useSPS) || (cachePS = !cachePS) || (closeOnCompl = !closeOnCompl));
     }
 
+    /**
+     * Tests fix for Bug#112790 (Bug#35936477), Statement.getGeneratedKeys() returns unexpected value.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug112790() throws Exception {
+        createTable("testBug112790", "(id INT AUTO_INCREMENT PRIMARY KEY, value INT)");
+
+        this.stmt.addBatch("INSERT INTO testBug112790 VALUES (1, 1)");
+        this.stmt.executeBatch();
+
+        this.stmt.executeUpdate("INSERT INTO testBug112790 (value) VALUES (2)", Statement.RETURN_GENERATED_KEYS);
+        this.rs = this.stmt.getGeneratedKeys();
+        assertTrue(this.rs.next());
+        assertEquals(2, this.rs.getInt(1));
+        assertFalse(this.rs.next());
+
+        this.stmt.addBatch("INSERT INTO testBug112790 VALUES (3, 3)");
+        this.stmt.executeBatch();
+
+        this.stmt.executeUpdate("INSERT INTO testBug112790 (value) VALUES (4)", Statement.NO_GENERATED_KEYS);
+        assertThrows(SQLException.class, this.stmt::getGeneratedKeys);
+    }
+
 }

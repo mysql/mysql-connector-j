@@ -1418,6 +1418,9 @@ public class StatementImpl implements JdbcStatement {
                 this.lastQueryIsOnDupKeyUpdate = returnGeneratedKeys && firstStatementChar == 'I' && containsOnDuplicateKeyInString(sql);
 
                 ResultSetInternalMethods rs = null;
+                if (!isBatch) {
+                    this.batchedGeneratedKeys = null;
+                }
 
                 if (this.doEscapeProcessing) {
                     Object escapedSqlResult = EscapeProcessor.escapeSQL(sql, this.session.getServerSession().getSessionTimeZone(),

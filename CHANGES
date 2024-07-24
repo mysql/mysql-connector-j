@@ -3,6 +3,8 @@
 
 Version 9.1.0
 
+  - Fix for Bug#112790 (Bug#35936477), Statement.getGeneratedKeys() returns unexpected value.
+
   - Fix for Bug#113509 (Bug#36154975), closeOnCompletion cause no statement reuse and server memory leak.
 
   - Fix for Bug#109418 (Bug#36043556), batch insert threw an unexpected exception.
