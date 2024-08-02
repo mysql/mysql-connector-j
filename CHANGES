@@ -3,6 +3,8 @@
 
 Version 9.1.0
 
+  - WL#16490, OpenID Connect authentication support.
+
   - Fix for Bug#112790 (Bug#35936477), Statement.getGeneratedKeys() returns unexpected value.
 
   - Fix for Bug#113509 (Bug#36154975), closeOnCompletion cause no statement reuse and server memory leak.

@@ -49,6 +49,7 @@ import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
 import com.mysql.cj.protocol.a.authentication.AuthenticationKerberosClient;
 import com.mysql.cj.protocol.a.authentication.AuthenticationLdapSaslClientPlugin;
 import com.mysql.cj.protocol.a.authentication.AuthenticationOciClient;
+import com.mysql.cj.protocol.a.authentication.AuthenticationOpenidConnectClient;
 import com.mysql.cj.protocol.a.authentication.AuthenticationWebAuthnClient;
 import com.mysql.cj.protocol.a.authentication.CachingSha2PasswordPlugin;
 import com.mysql.cj.protocol.a.authentication.MysqlClearPasswordPlugin;
@@ -250,6 +251,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         pluginsToInit.add(new AuthenticationKerberosClient());
         pluginsToInit.add(new AuthenticationOciClient());
         pluginsToInit.add(new AuthenticationWebAuthnClient());
+        pluginsToInit.add(new AuthenticationOpenidConnectClient());
 
         // plugins from authenticationPluginClasses connection parameter
         String authenticationPluginClasses = this.propertySet.getStringProperty(PropertyKey.authenticationPlugins).getValue();

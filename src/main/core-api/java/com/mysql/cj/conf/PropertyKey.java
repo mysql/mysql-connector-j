@@ -61,6 +61,7 @@ public enum PropertyKey {
     allowSourceDownConnections("allowSourceDownConnections", true), //
     allowUrlInLocalInfile("allowUrlInLocalInfile", true), //
     alwaysSendSetIsolation("alwaysSendSetIsolation", true), //
+    authenticationOpenidConnectCallbackHandler("authenticationOpenidConnectCallbackHandler", true), //
     authenticationPlugins("authenticationPlugins", true), //
     authenticationWebAuthnCallbackHandler("authenticationWebAuthnCallbackHandler", true), //
     autoClosePStmtStreams("autoClosePStmtStreams", true), //
@@ -124,6 +125,7 @@ public enum PropertyKey {
     ha_enableJMX("ha.enableJMX", "haEnableJMX", true), //
     ha_loadBalanceStrategy("ha.loadBalanceStrategy", "haLoadBalanceStrategy", true), //
     holdResultsOpenOverStatementClose("holdResultsOpenOverStatementClose", true), //
+    idTokenFile("idTokenFile", true), //
     ignoreNonTxTables("ignoreNonTxTables", true), //
     includeInnodbStatusInDeadlockExceptions("includeInnodbStatusInDeadlockExceptions", true), //
     includeThreadDumpInDeadlockExceptions("includeThreadDumpInDeadlockExceptions", true), //

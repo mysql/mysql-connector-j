@@ -26,6 +26,7 @@ import java.util.Map;
 
 import com.mysql.cj.Messages;
 import com.mysql.cj.PerConnectionLRUFactory;
+import com.mysql.cj.callback.OpenidConnectIdTokenFromFileCallbackHandler;
 import com.mysql.cj.log.Log;
 import com.mysql.cj.log.StandardLogger;
 import com.mysql.cj.util.PerVmServerConfigCacheFactory;
@@ -209,7 +210,11 @@ public class PropertyDefinitions {
                         Messages.getString("ConnectionProperties.ociConfigProfile"), "8.0.33", CATEGORY_AUTH, Integer.MIN_VALUE + 11),
 
                 new StringPropertyDefinition(PropertyKey.authenticationWebAuthnCallbackHandler, DEFAULT_VALUE_NULL_STRING, RUNTIME_MODIFIABLE,
-                        Messages.getString("ConnectionProperties.authenticationWebAuthnCallbackHandler"), "8.2.0", CATEGORY_AUTH, Integer.MIN_VALUE + 13),
+                        Messages.getString("ConnectionProperties.authenticationWebAuthnCallbackHandler"), "8.2.0", CATEGORY_AUTH, Integer.MIN_VALUE + 12),
+
+                new StringPropertyDefinition(PropertyKey.authenticationOpenidConnectCallbackHandler,
+                        OpenidConnectIdTokenFromFileCallbackHandler.class.getName(), RUNTIME_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.authenticationOpenidConnectCallbackHandler"), "9.1.0", CATEGORY_AUTH, Integer.MIN_VALUE + 13),
 
                 //
                 // CATEGORY_CONNECTION

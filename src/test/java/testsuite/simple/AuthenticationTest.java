@@ -27,6 +27,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -34,11 +36,16 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 
 import javax.security.sasl.SaslException;
 
 import org.junit.jupiter.api.Test;
 
+import com.mysql.cj.callback.MysqlCallback;
+import com.mysql.cj.callback.MysqlCallbackHandler;
+import com.mysql.cj.callback.OpenidConnectAuthenticationCallback;
+import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
@@ -538,7 +545,7 @@ public class AuthenticationTest extends BaseTestCase {
     }
 
     /**
-     * Test for WL#14650 - Support for MFA (multi factor authentication) authentication
+     * Test for WL#14650 - Support for MFA (multi factor authentication) authentication.
      *
      * @throws Exception
      */
@@ -721,6 +728,185 @@ public class AuthenticationTest extends BaseTestCase {
                 this.stmt.executeUpdate("UNINSTALL PLUGIN cleartext_plugin_server");
             }
         }
+    }
+
+    private static final String WL16490_ID_TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJteXN1YmoiLCJpc3MiOiJodHRwczovL215aXNzdWVyLmNvbSIsImV4cCI6Mj"
+            + "EzNDgyOTc4Mn0.RTeEvRQsA_P3CDMyS3Q-cH9D9fioWZel5RVPygE9EzGGE94URT_EeyasayAamCIdo8f9_G5q3TAqiyGANZcnPG0prayJONVjGuu6AXCtkk43v7MvGDRVGx-Cn1clekts4z"
+            + "09wdHdAGNak8SgVSq5WxKlo00uvNlPQjlh5927B38xBvEg8fISi0yVljpQT8SUCcBlcJL0Kk9uww3aF03qQIKB_TXaMIqsJM_Bm7llE3MtqzxMA8LoP7Weg1sblEMr-gSCPnrJ3HcKYXjFlF"
+            + "DPnq6qOLw4tR-o87SFuFUD0D6cgdWieh2rvTjv1dpl9mI0MArRZuVaiCmpreZUxdyrio3dXCkNVg_mWNmrBoCPrM0D_Wr4X22YHiChLb4F8UHU6H6l_YgQCw8jr727LOccYSiEyc4xe5dHeQ"
+            + "rsRf4sexQ37_yjnYszvWulIOFLSxbV1HJHuvPPG76Cwe_fUvwxsHqX14JvXcGRSW3QfYN3edqXUu3cIHKgddcWWbO4E52xODHWz8IPpR_LfVttn4lsEJB8ELcSE_dR77fo59kWj-TOTLNXDR"
+            + "C6W5X1QoLBrOQn1PDpA3KL7UvWHHKP7FyqoSi64UYGrAvzZCo_zhRoHjsW-gX7FsgRPs_Xujls6j8kGupJ7f8svTlpiPZt832OmxxUPabE52rgxFqDirSkFa8";
+    private static final String WL16490_OPENID_SERVER_CONFIG = "JSON://{\"myissuer\":\"{\\\\\"kty\\\\\":\\\\\"RSA\\\\\",\\\\\"n\\\\\":\\\\\"26unngWQbtxxQr7kASZ"
+            + "zd1mSAF5fHTIvkcqOqRGc1dEaaZBETuVnLZFiaG8C3fQf-_9J7NwcN42EueDJOLf8SJ_qeFdT1wdMLZNzvlmZVspeIlNlH2YRXw7zYZt5MxVH4kgHkXF9vW4f3QzujP1I7ogva_YAue2GFYF"
+            + "tYpeHGMzGsyNrvvRfQoVMPR3yaZDvaH-6A5PHP5nnKoLzYZqKz4nTrXh9c4ZjGSQLdAj3Pe_jkgXgqOrXoQPwKPsE_m8PT5kRJvnKIWqWXFILIFn4s7rNySM6nXNmF1c0_EFx8MBo-I6j9Js"
+            + "d5NxbXDVopyuNVJfO-cj_QXBGFNBl1AosfS1MvA-Wej3Nuf_mOwAiDCx7yZIdLkL_IvmHFEhBBUeTn0QB_SxGzinEK6BzVxNK5RlrxOkPSRF_0voXI_9Sa9jJDCnR7rhcfTCmbrVaEPkREU6"
+            + "vCVEVHKCC7lQoHCfp5wSM0jEyCBi7P8wDqvpWfk8g8sqZkPjIAQRht84GsMQ5ifBuB-p4ed_v8X3Z_aKsSz4zVai8O4RCnbE-JgP2tzY7eaCqNpIByl8DopDVpJjMF4rFxuxSCD_dNi4UDEf"
+            + "Yz9RrUgXRNQ_bxpcxCCwL0t0u95JyJs5IN5YD4b9NV0p1nmuuK8_03q1ZBrd7ODWDqU8DtQ_vav4PbI9tpeknH78\\\\\",\\\\\"e\\\\\":\\\\\"AQAB\\\\\","
+            + "\\\\\"alg\\\\\":\\\\\"RS256\\\\\",\\\\\"use\\\\\":\\\\\"sig\\\\\",\\\\\"name\\\\\":\\\\\"https://myissuer.com\\\\\"}\"}";
+
+    /**
+     * Test for WL#16490 - OpenID Connect authentication support.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testWl16490() throws Exception {
+        assumeTrue(versionMeetsMinimum(9, 1, 0), "MySQL 9.1.0+ is required to run this test.");
+        assumeTrue(isEnterpriseEdition(), "MySQL Commercial edition required to run this test.");
+
+        boolean installPluginInRuntime = false;
+        try {
+            // Install plugin if required.
+            installPluginInRuntime = !isPluginActive(this.stmt, "authentication_openid_connect");
+
+            if (installPluginInRuntime) {
+                try {
+                    String ext = isServerRunningOnWindows() ? ".dll" : ".so";
+                    this.stmt.executeUpdate("INSTALL PLUGIN authentication_openid_connect SONAME 'authentication_openid_connect" + ext + "'");
+                } catch (SQLException e) {
+                    if (e.getErrorCode() == MysqlErrorNumbers.ER_CANT_OPEN_LIBRARY) {
+                        installPluginInRuntime = false;
+                        assumeTrue(false, "Failed installing the authentication plugin 'authentication_openid_connect'.");
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+
+            // Configure the server.
+            this.stmt.execute("SET GLOBAL authentication_openid_connect_configuration = '" + WL16490_OPENID_SERVER_CONFIG + "'");
+
+            // Create test users.
+            createUser("'testWl16490_1fa'@'%'",
+                    "IDENTIFIED WITH 'authentication_openid_connect' AS '{\"identity_provider\":\"myissuer\",\"user\":\"mysubj\"}'");
+            this.stmt.executeUpdate("GRANT ALL ON * TO testWl16490_1fa");
+            createUser("'testWl16490_2fa'@'%'", "IDENTIFIED BY 'testpwd1' AND "
+                    + "IDENTIFIED WITH 'authentication_openid_connect' AS '{\"identity_provider\":\"myissuer\",\"user\":\"mysubj\"}'");
+            this.stmt.executeUpdate("GRANT ALL ON * TO testWl16490_2fa");
+
+            // Create temp files containing Identity Tokens.
+            Path goodIdTokenFile = Files.createTempFile("wl16490_jwt_good_", ".txt");
+            Files.write(goodIdTokenFile, WL16490_ID_TOKEN.getBytes());
+
+            byte[] badIdToken = new byte[10 * 1024 + 1];
+            new Random().nextBytes(badIdToken);
+            Path badIdTokenFile = Files.createTempFile("wl16490_jwt_bad_", ".txt");
+            Files.write(badIdTokenFile, badIdToken);
+
+            String url = String.format("jdbc:mysql://%s:%s/", getHostFromTestsuiteUrl(), getPortFromTestsuiteUrl());
+            Properties props = new Properties();
+
+            // TS.1.a: Good Identity Token file (1st factor).
+            props.clear();
+            props.setProperty(PropertyKey.USER.getKeyName(), "testWl16490_1fa");
+            props.setProperty(PropertyKey.idTokenFile.getKeyName(), goodIdTokenFile.toString());
+            try (Connection testConn = getConnectionWithProps(url, props)) {
+                Statement testStmt = testConn.createStatement();
+                this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                assertTrue(this.rs.next());
+                assertEquals("testWl16490_1fa", this.rs.getString(1).split("@")[0]);
+                assertEquals("testWl16490_1fa", this.rs.getString(2).split("@")[0]);
+            }
+
+            // TS.1.b: Good Identity Token file (2nd factor).
+            props.clear();
+            props.setProperty(PropertyKey.USER.getKeyName(), "testWl16490_2fa");
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "testpwd1");
+            props.setProperty(PropertyKey.idTokenFile.getKeyName(), goodIdTokenFile.toString());
+            try (Connection testConn = getConnectionWithProps(url, props)) {
+                Statement testStmt = testConn.createStatement();
+                this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                assertTrue(this.rs.next());
+                assertEquals("testWl16490_2fa", this.rs.getString(1).split("@")[0]);
+                assertEquals("testWl16490_2fa", this.rs.getString(2).split("@")[0]);
+            }
+
+            // TS.1.c: Good Identity Token file and 'authentication_openid_connect_client' as the default (1st factor).
+            props.clear();
+            props.setProperty(PropertyKey.USER.getKeyName(), "testWl16490_1fa");
+            props.setProperty(PropertyKey.idTokenFile.getKeyName(), goodIdTokenFile.toString());
+            props.setProperty(PropertyKey.defaultAuthenticationPlugin.getKeyName(), "authentication_openid_connect_client");
+            try (Connection testConn = getConnectionWithProps(url, props)) {
+                Statement testStmt = testConn.createStatement();
+                this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                assertTrue(this.rs.next());
+                assertEquals("testWl16490_1fa", this.rs.getString(1).split("@")[0]);
+                assertEquals("testWl16490_1fa", this.rs.getString(2).split("@")[0]);
+            }
+
+            // TS.1.d: Good Identity Token file and 'authentication_openid_connect_client' as the default (2st factor).
+            props.clear();
+            props.setProperty(PropertyKey.USER.getKeyName(), "testWl16490_2fa");
+            props.setProperty(PropertyKey.PASSWORD.getKeyName(), "testpwd1");
+            props.setProperty(PropertyKey.idTokenFile.getKeyName(), goodIdTokenFile.toString());
+            props.setProperty(PropertyKey.defaultAuthenticationPlugin.getKeyName(), "authentication_openid_connect_client");
+            try (Connection testConn = getConnectionWithProps(url, props)) {
+                Statement testStmt = testConn.createStatement();
+                this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                assertTrue(this.rs.next());
+                assertEquals("testWl16490_2fa", this.rs.getString(1).split("@")[0]);
+                assertEquals("testWl16490_2fa", this.rs.getString(2).split("@")[0]);
+            }
+
+            // TS.3: Good Identity Token supplied by custom callback handler.
+            props.clear();
+            props.setProperty(PropertyKey.USER.getKeyName(), "testWl16490_1fa");
+            props.setProperty(PropertyKey.authenticationOpenidConnectCallbackHandler.getKeyName(),
+                    Wl16490OpenidConnectIdTokenCustomCallbackHandler.class.getName());
+            assertFalse(Wl16490OpenidConnectIdTokenCustomCallbackHandler.handled);
+            try (Connection testConn = getConnectionWithProps(url, props)) {
+                Statement testStmt = testConn.createStatement();
+                this.rs = testStmt.executeQuery("SELECT USER(), CURRENT_USER()");
+                assertTrue(this.rs.next());
+                assertEquals("testWl16490_1fa", this.rs.getString(1).split("@")[0]);
+                assertEquals("testWl16490_1fa", this.rs.getString(2).split("@")[0]);
+                assertTrue(Wl16490OpenidConnectIdTokenCustomCallbackHandler.handled);
+            }
+
+            // TS.4.2: No idTokenFile property.
+            props.clear();
+            props.setProperty(PropertyKey.USER.getKeyName(), "testWl16490_1fa");
+            assertThrows(SQLException.class,
+                    "A path to a file containing an OpenID Identity Token must be specified in the connection property 'idTokenFile'\\.",
+                    () -> getConnectionWithProps(url, props));
+
+            // TS.4.3: Wrong location for the Identity Token file.
+            props.clear();
+            props.setProperty(PropertyKey.USER.getKeyName(), "testWl16490_1fa");
+            props.setProperty(PropertyKey.idTokenFile.getKeyName(), "/foobar/jwt.txt");
+            assertThrows(SQLException.class, "Failed reading the OpenID Identity Token file specified in the connection property 'idTokenFile'\\.",
+                    () -> getConnectionWithProps(url, props));
+
+            // TS.4.4: Identity Token too big.
+            props.clear();
+            props.setProperty(PropertyKey.USER.getKeyName(), "testWl16490_1fa");
+            props.setProperty(PropertyKey.idTokenFile.getKeyName(), badIdTokenFile.toString());
+            assertThrows(SQLException.class, "The file specified in the connection property 'idTokenFile' contains an invalid OpenID Identity Token\\.",
+                    () -> getConnectionWithProps(url, props));
+
+            // TS.4 SSL disabled.
+            props.clear();
+            props.setProperty(PropertyKey.USER.getKeyName(), "testWl16490_1fa");
+            props.setProperty(PropertyKey.idTokenFile.getKeyName(), goodIdTokenFile.toString());
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.toString());
+            assertThrows(SQLException.class, "Access denied for user 'testWl16490_1fa'.*", () -> getConnectionWithProps(url, props));
+        } finally {
+            if (installPluginInRuntime) {
+                this.stmt.executeUpdate("UNINSTALL PLUGIN authentication_openid_connect");
+            }
+        }
+    }
+
+    public static class Wl16490OpenidConnectIdTokenCustomCallbackHandler implements MysqlCallbackHandler {
+
+        public static boolean handled = false;
+
+        @Override
+        public void handle(MysqlCallback cb) {
+            ((OpenidConnectAuthenticationCallback) cb).setIdentityToken(WL16490_ID_TOKEN.getBytes());
+            handled = true;
+        }
+
     }
 
 }
