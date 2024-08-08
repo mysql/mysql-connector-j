@@ -808,7 +808,7 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                     }
                 }
 
-                TelemetrySpan span = this.session.getTelemetryHandler().startSpan(TelemetrySpanName.ROLLBACK);
+                TelemetrySpan span = this.session.getTelemetryHandler().startSpan(TelemetrySpanName.COMMIT);
                 try (TelemetryScope scope = span.makeCurrent()) {
                     span.setAttribute(TelemetryAttribute.DB_NAME, getDatabase());
                     span.setAttribute(TelemetryAttribute.DB_OPERATION, TelemetryAttribute.OPERATION_ROLLBACK);
