@@ -20,9 +20,11 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -47,6 +49,7 @@ import com.mysql.cj.conf.PropertyDefinitions.SslMode;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.cj.util.StringUtils;
 
 import testsuite.BaseTestCase;
 
@@ -1866,6 +1869,40 @@ public class CallableStatementRegressionTest extends BaseTestCase {
                 ParameterMetaData testPmd = testCstmt.getParameterMetaData();
                 assertEquals(Integer.bitCount(i), testPmd.getParameterCount(), "Failed in query " + testSql);
             }
+        }
+    }
+
+    /**
+     * Tests fix for Bug#36936407, PrepareCall method doesn't work as expected when DB name is involved.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug36936407() throws Exception {
+        assumeTrue(!StringUtils.isNullOrEmpty(this.conn.getCatalog()) || !StringUtils.isNullOrEmpty(this.conn.getSchema()),
+                "Test URL must specify a database.");
+
+        createProcedure("testBug36936407", "(IN a VARCHAR(10)) BEGIN SELECT a; END");
+        final String database = !StringUtils.isNullOrEmpty(this.conn.getCatalog()) ? this.conn.getCatalog() : this.conn.getSchema();
+
+        /*
+         * Case 1: Database specified in the URL (default test URL should specify a database).
+         */
+        try (Connection testConn = getConnectionWithProps("")) {
+            assertDoesNotThrow(() -> testConn.prepareCall("{ CALL " + database + ".testBug36936407(\"MySQL?\") }").execute());
+
+            assertDoesNotThrow(() -> testConn.prepareCall("{ CALL testBug36936407(\"MySQL?\") }").execute());
+        }
+
+        /*
+         * Case 2: Database not specified in the URL.
+         */
+        try (Connection testConn = getConnectionWithProps(getNoDbUrl(dbUrl), "")) {
+            assertDoesNotThrow(() -> testConn.prepareCall("{ CALL " + database + ".testBug36936407(\"MySQL?\") }").execute());
+
+            assertThrows(SQLException.class, () -> testConn.prepareCall("{ CALL testBug36936407(\"MySQL?\") }").execute());
+            testConn.createStatement().execute("USE " + database); // Not recommended by the JDBC, but the test report relies on it.
+            assertDoesNotThrow(() -> testConn.prepareCall("{ CALL testBug36936407(\"MySQL?\") }").execute());
         }
     }
 

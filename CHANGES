@@ -3,6 +3,8 @@
 
 Version 9.1.0
 
+  - Fix for Bug#36936407, PrepareCall method doesn't work as expected when DB name is involved.
+
   - WL#16490, OpenID Connect authentication support.
 
   - Fix for Bug#112790 (Bug#35936477), Statement.getGeneratedKeys() returns unexpected value.

@@ -70,6 +70,7 @@ import com.mysql.cj.telemetry.TelemetryScope;
 import com.mysql.cj.telemetry.TelemetrySpan;
 import com.mysql.cj.telemetry.TelemetrySpanName;
 import com.mysql.cj.util.SearchMode;
+import com.mysql.cj.util.StringInspector;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.Util;
 
@@ -540,9 +541,13 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                                 if ("?".equals(param)) {
                                     questionMarkCount = 1;
                                 } else {
-                                    questionMarkCount = StringUtils
-                                            .stripCommentsAndHints(param, "'\"", "'\"", !this.session.getServerSession().isNoBackslashEscapesSet()).codePoints()
-                                            .filter(c -> c == '?').count();
+                                    StringInspector strInspector = new StringInspector(param, "'\"", "'\"", "",
+                                            this.session.getServerSession().isNoBackslashEscapesSet() ? SearchMode.__MRK_COM_MYM_HNT_WS
+                                                    : SearchMode.__BSE_MRK_COM_MYM_HNT_WS);
+                                    while (strInspector.indexOfIgnoreCase("?") >= 0) {
+                                        questionMarkCount++;
+                                        strInspector.incrementPosition();
+                                    }
                                 }
                                 for (int j = 0; j < questionMarkCount; j++) {
                                     this.placeholderToParameterIndexMap[placeholderCount++] = startIndex + i;
