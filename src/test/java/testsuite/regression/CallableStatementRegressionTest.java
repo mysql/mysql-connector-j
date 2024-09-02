@@ -1906,4 +1906,46 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         }
     }
 
+    /**
+     * Tests fix for Bug#115265 (Bug#36843227), Second stored procedure call with cacheCallableStmts might fail.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug115265() throws Exception {
+        createProcedure("testBug115265Procedure", "(IN a INT, IN b INT, OUT c INT) BEGIN SELECT a + b INTO c; END");
+        createFunction("testBug115265Function", "(a INT, b INT) RETURNS INT DETERMINISTIC RETURN a + b");
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.cacheCallableStmts.getKeyName(), "true");
+        try (Connection testConn = getConnectionWithProps(props)) {
+            final String testProcedureQuery1 = "{CALL testBug115265Procedure(?,?,?)}";
+            final String testProcedureQuery2 = "{CALL testBug115265Procedure(1,?,?)}";
+            final String testFunctionQuery1 = "{? = CALL testBug115265Function(?,?)}";
+            final String testFunctionQuery2 = "{? = CALL testBug115265Function(1,?)}";
+
+            testBug115265RunTest(testConn, testProcedureQuery1, 3, true);
+            testBug115265RunTest(testConn, testProcedureQuery1, 3, true);
+
+            testBug115265RunTest(testConn, testProcedureQuery2, 2, true);
+            testBug115265RunTest(testConn, testProcedureQuery2, 2, true);
+
+            testBug115265RunTest(testConn, testFunctionQuery1, 3, false);
+            testBug115265RunTest(testConn, testFunctionQuery1, 3, false);
+
+            testBug115265RunTest(testConn, testFunctionQuery2, 2, false);
+            testBug115265RunTest(testConn, testFunctionQuery2, 2, false);
+        }
+    }
+
+    private void testBug115265RunTest(Connection testConn, String query, int placeholderCount, boolean isProcedure) throws SQLException {
+        CallableStatement testCstmt = testConn.prepareCall(query);
+        testCstmt.setInt("b", 10);
+        if (placeholderCount == 3) {
+            testCstmt.setInt("a", 1);
+        }
+        testCstmt.registerOutParameter(isProcedure ? placeholderCount : 1, Types.INTEGER);
+        testCstmt.execute();
+        assertEquals(11, isProcedure ? testCstmt.getInt("c") : testCstmt.getInt(1));
+    }
+
 }

@@ -141,6 +141,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
         Map<String, CallableStatementParam> parameterMap;
 
+        int[] placeholderToParameterIndexMap;
+
         boolean isReadOnlySafeProcedure = false;
 
         boolean isReadOnlySafeChecked = false;
@@ -158,17 +160,15 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             this.dbInUse = getCurrentDatabase();
             this.isFunctionCall = fullParamInfo.isFunctionCall;
             this.fakeParameters = fullParamInfo.fakeParameters;
-            @SuppressWarnings("synthetic-access")
-            int[] localParameterMap = CallableStatement.this.placeholderToParameterIndexMap;
-            int parameterMapLength = localParameterMap.length;
 
             this.isReadOnlySafeProcedure = fullParamInfo.isReadOnlySafeProcedure;
             this.isReadOnlySafeChecked = fullParamInfo.isReadOnlySafeChecked;
             this.parameterList = new ArrayList<>(fullParamInfo.numParameters);
             this.parameterMap = new HashMap<>(fullParamInfo.numParameters);
+            setPlaceholderToParameterIndexMap(fullParamInfo.placeholderToParameterIndexMap);
 
-            for (int i = 0; i < parameterMapLength; i++) {
-                CallableStatementParam param = fullParamInfo.parameterList.get(localParameterMap[i]);
+            for (int i : this.placeholderToParameterIndexMap) {
+                CallableStatementParam param = fullParamInfo.parameterList.get(i);
 
                 this.parameterList.add(param);
                 this.parameterMap.put(param.paramName, param);
@@ -385,6 +385,10 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             }
         }
 
+        void setPlaceholderToParameterIndexMap(int[] localPlaceholderToParameterIndexMap) {
+            this.placeholderToParameterIndexMap = localPlaceholderToParameterIndexMap.clone();
+        }
+
     }
 
     private final static int NOT_OUTPUT_PARAMETER_INDICATOR = Integer.MIN_VALUE;
@@ -489,8 +493,6 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         return new CallableStatement(conn, paramInfo);
     }
 
-    private int[] placeholderToParameterIndexMap;
-
     private void generateParameterMap() throws SQLException {
         Lock connectionLock = checkClosed().getConnectionLock();
         connectionLock.lock();
@@ -506,12 +508,12 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
             PreparedQuery q = (PreparedQuery) this.query;
 
             if (this.paramInfo != null && !this.paramInfo.fakeParameters && q.getParameterCount() >= 0) {
-                this.placeholderToParameterIndexMap = new int[q.getParameterCount()];
+                int[] localPlaceholderToParameterIndexMap = new int[q.getParameterCount()];
 
                 int startIndex = 0;
 
                 if (this.callingStoredFunction) {
-                    this.placeholderToParameterIndexMap[0] = 0;
+                    localPlaceholderToParameterIndexMap[0] = 0;
                     startIndex = 1;
                 }
 
@@ -550,12 +552,13 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                                     }
                                 }
                                 for (int j = 0; j < questionMarkCount; j++) {
-                                    this.placeholderToParameterIndexMap[placeholderCount++] = startIndex + i;
+                                    localPlaceholderToParameterIndexMap[placeholderCount++] = startIndex + i;
                                 }
                             }
                         }
                     }
                 }
+                this.paramInfo.setPlaceholderToParameterIndexMap(localPlaceholderToParameterIndexMap);
             }
         } finally {
             connectionLock.unlock();
@@ -629,8 +632,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
             int localParamIndex = paramIndex - 1;
 
-            if (this.placeholderToParameterIndexMap != null) {
-                localParamIndex = this.placeholderToParameterIndexMap[localParamIndex];
+            if (this.paramInfo.placeholderToParameterIndexMap != null) {
+                localParamIndex = this.paramInfo.placeholderToParameterIndexMap[localParamIndex];
             }
 
             CallableStatementParam paramDescriptor = this.paramInfo.getParameter(localParamIndex);
@@ -1529,12 +1532,12 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
                         MysqlErrorNumbers.SQLSTATE_CONNJ_ILLEGAL_ARGUMENT, getExceptionInterceptor());
             }
 
-            if (this.placeholderToParameterIndexMap == null) {
+            if (this.paramInfo.placeholderToParameterIndexMap == null) {
                 return namedParamInfo.index + 1; // JDBC indices are 1-based
             }
 
-            for (int i = 0; i < this.placeholderToParameterIndexMap.length; i++) {
-                if (this.placeholderToParameterIndexMap[i] == namedParamInfo.index) {
+            for (int i = 0; i < this.paramInfo.placeholderToParameterIndexMap.length; i++) {
+                if (this.paramInfo.placeholderToParameterIndexMap[i] == namedParamInfo.index) {
                     return i + 1;
                 }
             }
@@ -1694,7 +1697,7 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
         Lock connectionLock = checkClosed().getConnectionLock();
         connectionLock.lock();
         try {
-            if (this.placeholderToParameterIndexMap == null) {
+            if (this.paramInfo.placeholderToParameterIndexMap == null) {
                 return this.paramInfo;
             }
 
@@ -1988,8 +1991,8 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
             int localParamIndex = paramIndex - 1;
 
-            if (this.placeholderToParameterIndexMap != null) {
-                localParamIndex = this.placeholderToParameterIndexMap[localParamIndex];
+            if (this.paramInfo.placeholderToParameterIndexMap != null) {
+                localParamIndex = this.paramInfo.placeholderToParameterIndexMap[localParamIndex];
             }
 
             int rsIndex = this.parameterIndexToRsIndex[localParamIndex];
@@ -2374,14 +2377,14 @@ public class CallableStatement extends ClientPreparedStatement implements java.s
 
                         int outParamIndex = 0;
 
-                        if (this.placeholderToParameterIndexMap == null) {
+                        if (this.paramInfo.placeholderToParameterIndexMap == null) {
                             outParamIndex = outParamInfo.index + 1;
                         } else {
                             // Find it, todo: remove this linear search
                             boolean found = false;
 
-                            for (int i = 0; i < this.placeholderToParameterIndexMap.length; i++) {
-                                if (this.placeholderToParameterIndexMap[i] == outParamInfo.index) {
+                            for (int i = 0; i < this.paramInfo.placeholderToParameterIndexMap.length; i++) {
+                                if (this.paramInfo.placeholderToParameterIndexMap[i] == outParamInfo.index) {
                                     outParamIndex = i + 1; /* JDBC is 1-based */
                                     found = true;
                                     break;
