@@ -1766,7 +1766,11 @@ public class StringUtils {
                     buf.append('\\');
                     break;
                 case '\'':
-                    buf.append('\'');
+                    if (useAnsiQuotedIdentifiers) {
+                        buf.append('\'');
+                    } else {
+                        buf.append('\\');
+                    }
                     buf.append('\'');
                     break;
                 case '"': /* Better safe than sorry */
