@@ -3,6 +3,9 @@
 
 Version 9.1.0
 
+  - Fix for Bug#108415 (Bug#34579258), NullPointerException in AbstractQuery::stopQueryTimer.
+    Thanks to Anthony Milbourne for his contribution.
+
   - Fix for Bug#115265 (Bug#36843227), Second stored procedure call with cacheCallableStmts might fail.
 
   - Fix for Bug#36936407, PrepareCall method doesn't work as expected when DB name is involved.

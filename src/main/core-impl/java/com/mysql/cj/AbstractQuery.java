@@ -235,7 +235,9 @@ public abstract class AbstractQuery implements Query {
                 throw ExceptionFactory.createException(t.getMessage(), t);
             }
 
-            this.session.getCancelTimer().purge();
+            if (this.session != null) {
+                this.session.getCancelTimer().purge();
+            }
 
             if (checkCancelTimeout) {
                 checkCancelTimeout();

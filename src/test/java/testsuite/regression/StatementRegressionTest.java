@@ -13796,4 +13796,37 @@ public class StatementRegressionTest extends BaseTestCase {
         assertThrows(SQLException.class, this.stmt::getGeneratedKeys);
     }
 
+    /**
+     * Tests fix for Bug#108415 (Bug#34579258), NullPointerException in AbstractQuery::stopQueryTimer.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug108415() throws Exception {
+        Connection testConn = getNewConnection();
+        final long sessionToKill = ((JdbcConnection) testConn).getId();
+
+        ExecutorService execServ = Executors.newSingleThreadExecutor();
+        execServ.execute(() -> {
+            try {
+                TimeUnit.SECONDS.sleep(2);
+            } catch (InterruptedException e) {
+            }
+            try {
+                System.out.println("Killing process id " + sessionToKill);
+                this.stmt.execute("KILL " + sessionToKill);
+            } catch (SQLException e) {
+            }
+        });
+
+        Statement testStmt = testConn.createStatement();
+        testStmt.setQueryTimeout(15);
+        assertThrows(SQLException.class, () -> {
+            testStmt.executeQuery("SELECT SLEEP(15)");
+            return null;
+        });
+
+        execServ.shutdown();
+    }
+
 }
