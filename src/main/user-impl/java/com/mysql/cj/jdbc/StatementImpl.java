@@ -1079,7 +1079,7 @@ public class StatementImpl implements JdbcStatement {
                 for (commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
                     String nextQuery = (String) this.query.getBatchedArgs().get(commandIndex);
 
-                    if (((queryBuf.length() + nextQuery.length()) * numberOfBytesPerChar + 1 /* for semicolon */
+                    if (queryBuf.length() > 0 && ((queryBuf.length() + nextQuery.length()) * numberOfBytesPerChar + 1 /* for semicolon */
                             + NativeConstants.HEADER_LENGTH) * escapeAdjust + 32 > this.maxAllowedPacket.getValue()) {
                         try {
                             batchStmt.execute(queryBuf.toString(), java.sql.Statement.RETURN_GENERATED_KEYS);

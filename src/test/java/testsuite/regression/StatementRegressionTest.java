@@ -13829,4 +13829,37 @@ public class StatementRegressionTest extends BaseTestCase {
         execServ.shutdown();
     }
 
+    /**
+     * Tests fix for Bug#101054 (Bug#32544786), Batched Query > maxAllowedPacket size causes an ArrayIndexOutOfBoundsException.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug101054() throws Exception {
+        boolean allowMQ = false;
+        createTable("testBug101054", "(c0 VARCHAR(2048) NOT NULL)");
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.allowMultiQueries.getKeyName(), Boolean.toString(allowMQ));
+            props.setProperty(PropertyKey.characterEncoding.getKeyName(), "utf8");
+            props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), "1024");
+
+            try (Connection testConn = getConnectionWithProps(props)) {
+                this.stmt = testConn.createStatement();
+
+                final String valueToInsert = new String(new char[512]).replace('\0', 'X');
+                final String sql = String.format("INSERT INTO testBug101054 VALUES ('%s')", valueToInsert);
+                final String testCase = String.format("Case [allowMQ: %s]", allowMQ ? "Y" : "N");
+
+                this.stmt.addBatch(sql);
+                assertDoesNotThrow(this.stmt::executeBatch, testCase);
+
+                this.rs = this.stmt.executeQuery("SELECT * FROM testBug101054");
+                while (this.rs.next()) {
+                    assertEquals(valueToInsert, this.rs.getString(1), testCase);
+                }
+            }
+        } while (allowMQ = !allowMQ);
+    }
+
 }
