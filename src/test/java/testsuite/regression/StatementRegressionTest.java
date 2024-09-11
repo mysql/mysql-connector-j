@@ -13862,4 +13862,71 @@ public class StatementRegressionTest extends BaseTestCase {
         } while (allowMQ = !allowMQ);
     }
 
+    /**
+     * Tests fix for Bug#84117 (Bug#25247468), includeThreadNamesAsStatementComment ignored when using prepared statement.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug84117() throws Exception {
+        String threadName = Thread.currentThread().getName();
+        try {
+            Thread.currentThread().setName("TestBug84117.thread");
+
+            boolean incThrNm = false;
+            do {
+                TestBug84117QueryInterceptor.expectsThreadName = incThrNm;
+                TestBug84117QueryInterceptor.occurrences = 0;
+
+                final Properties props = new Properties();
+                props.setProperty(PropertyKey.queryInterceptors.getKeyName(), TestBug84117QueryInterceptor.class.getName());
+                props.setProperty(PropertyKey.includeThreadNamesAsStatementComment.getKeyName(), Boolean.toString(incThrNm));
+
+                final String testQuery = "/* TestBug84117.comment */ SELECT 'MySQL Connector/J'";
+
+                // Statement:
+                try (Connection testConn = getConnectionWithProps(props); Statement testStmt = testConn.createStatement()) {
+                    testStmt.executeQuery(testQuery);
+                }
+
+                // Client PreparedStatement:
+                props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "false");
+                try (Connection testConn = getConnectionWithProps(props); PreparedStatement testPstmt = testConn.prepareStatement(testQuery)) {
+                    testPstmt.executeQuery();
+                }
+
+                // Server PreparedStatement:
+                props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+                try (Connection testConn = getConnectionWithProps(props); PreparedStatement testPstmt = testConn.prepareStatement(testQuery)) {
+                    testPstmt.executeQuery();
+                }
+
+                assertEquals(3, TestBug84117QueryInterceptor.occurrences);
+            } while (incThrNm = !incThrNm);
+        } finally {
+            Thread.currentThread().setName(threadName);
+        }
+    }
+
+    public static class TestBug84117QueryInterceptor extends BaseQueryInterceptor {
+
+        static boolean expectsThreadName = false;
+        static int occurrences = 0;
+
+        @Override
+        public <T extends Resultset> T preProcess(Supplier<String> sql, Query interceptedQuery) {
+            String sqlString = sql.get();
+            if (sqlString.contains("SELECT 'MySQL Connector/J'")) {
+                if (expectsThreadName) {
+                    assertTrue(sqlString.contains("/* Java thread: TestBug84117.thread */"));
+                } else {
+                    assertFalse(sqlString.contains("/* Java thread: TestBug84117.thread */"));
+                }
+                occurrences++;
+            }
+            return super.preProcess(sql, interceptedQuery);
+        }
+
+    }
+
 }

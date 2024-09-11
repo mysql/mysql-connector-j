@@ -36,6 +36,8 @@ import java.util.Timer;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.mysql.cj.conf.HostInfo;
 import com.mysql.cj.conf.PropertyDefinitions.OpenTelemetry;
@@ -622,7 +624,12 @@ public class NativeSession extends CoreSession implements Serializable {
 
     @Override
     public String getQueryComment() {
-        return this.queryComment;
+        String comment = this.queryComment;
+        if (getPropertySet().getBooleanProperty(PropertyKey.includeThreadNamesAsStatementComment).getValue()) {
+            comment = Stream.of(comment, Messages.getString("NativeSession.ThreadNameComment", new String[] { Thread.currentThread().getName() }))
+                    .filter(s -> !StringUtils.isNullOrEmpty(s)).collect(Collectors.joining(", "));
+        }
+        return comment;
     }
 
     @Override

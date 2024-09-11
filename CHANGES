@@ -3,6 +3,9 @@
 
 Version 9.1.0
 
+  - Fix for Bug#84117 (Bug#25247468), includeThreadNamesAsStatementComment ignored when using prepared statement.
+    Thanks to Yyjun Yyjun for his contribution.
+
   - Fix for Bug#101054 (Bug#32544786), Batched Query > maxAllowedPacket size causes an ArrayIndexOutOfBoundsException.
 
   - Fix for Bug#108415 (Bug#34579258), NullPointerException in AbstractQuery::stopQueryTimer.

@@ -110,9 +110,6 @@ public class NativeMessageBuilder implements MessageBuilder<NativePacketPayload>
     @Override
     public NativePacketPayload buildComQuery(NativePacketPayload sharedPacket, Session sess, String query, Query callingQuery, String characterEncoding) {
         String statementComment = sess.getQueryComment();
-        if (sess.getPropertySet().getBooleanProperty(PropertyKey.includeThreadNamesAsStatementComment).getValue()) {
-            statementComment = (statementComment != null ? statementComment + ", " : "") + "java thread: " + Thread.currentThread().getName();
-        }
         byte[] commentAsBytes = StringUtils.getBytes(statementComment, characterEncoding);
 
         QueryAttributesBindings queryAttributesBindings = null;
