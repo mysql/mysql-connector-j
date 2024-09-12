@@ -625,7 +625,7 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
                 t = SQLError.createCommunicationsException(this.connection, this.session.getProtocol().getPacketSentTimeHolder(),
                         this.session.getProtocol().getPacketReceivedTimeHolder(), ioEx, this.exceptionInterceptor);
             } catch (CJException sqlEx) {
-                SQLException ex = SQLExceptionsMapping.translateException(sqlEx);
+                SQLException ex = SQLExceptionsMapping.translateException(sqlEx, this.exceptionInterceptor);
 
                 if (this.dumpQueriesOnException.getValue()) {
                     StringBuilder messageBuf = new StringBuilder(((PreparedQuery) this.query).getOriginalSql().length() + 32);

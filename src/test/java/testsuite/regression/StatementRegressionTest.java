@@ -123,6 +123,7 @@ import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.exceptions.ExceptionFactory;
+import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.interceptors.QueryInterceptor;
@@ -13925,6 +13926,63 @@ public class StatementRegressionTest extends BaseTestCase {
                 occurrences++;
             }
             return super.preProcess(sql, interceptedQuery);
+        }
+
+    }
+
+    /**
+     * Tests fix for Bug#96623 (Bug#30221117), batch update with rewriteBatchedStatements&useServerPrepStmts send fail request.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug96623() throws Exception {
+        boolean allowMQ = false;
+        boolean rwBS = false;
+        boolean useSPS = false;
+        boolean cachePS = false;
+
+        createTable("testBug96623", "(c0 int)");
+        do {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.allowMultiQueries.getKeyName(), Boolean.toString(allowMQ));
+            props.setProperty(PropertyKey.rewriteBatchedStatements.getKeyName(), Boolean.toString(rwBS));
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), Boolean.toString(useSPS));
+            props.setProperty(PropertyKey.cachePrepStmts.getKeyName(), Boolean.toString(cachePS));
+            props.setProperty(PropertyKey.emulateUnsupportedPstmts.getKeyName(), "true");
+            props.setProperty(PropertyKey.exceptionInterceptors.getKeyName(), TestBug96623ExceptionInterceptor.class.getName());
+
+            TestBug96623ExceptionInterceptor.testCase = String.format("Case [allowMQ: %s, rwBS: %s, useSPS: %s, cachePS: %s]", allowMQ ? "Y" : "N",
+                    rwBS ? "Y" : "N", useSPS ? "Y" : "N", cachePS ? "Y" : "N");
+
+            try (Connection testConn = getConnectionWithProps(props); PreparedStatement ps = testConn.prepareStatement("UPDATE testBug96623 SET c0=?")) {
+                for (int i = 0; i < 4; i++) {
+                    ps.setInt(1, i);
+                    ps.addBatch();
+                }
+
+                ps.executeBatch();
+            }
+        } while ((allowMQ = !allowMQ) || (rwBS = !rwBS) || (useSPS = !useSPS) || (cachePS = !cachePS));
+    }
+
+    public static class TestBug96623ExceptionInterceptor implements ExceptionInterceptor {
+
+        static String testCase = null;
+
+        @Override
+        public ExceptionInterceptor init(Properties props, Log log) {
+            return this;
+        }
+
+        @Override
+        public void destroy() {
+        }
+
+        @Override
+        public SQLException interceptException(Exception sqlEx) {
+            assertFalse(sqlEx instanceof SQLSyntaxErrorException, testCase);
+            return null;
         }
 
     }
