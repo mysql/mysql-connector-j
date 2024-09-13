@@ -3,6 +3,9 @@
 
 Version 9.1.0
 
+  - Fix for Bug#114705 (Bug#36539680), Contribution: make trustStorePassword be null if this.trustStoreSettings.keyStorePassword is null.
+    Thanks to Jesper Blomquist for his contribution.
+
   - Fix for Bug#84117 (Bug#25247468), includeThreadNamesAsStatementComment ignored when using prepared statement.
     Thanks to Yyjun Yyjun for his contribution.
 

@@ -12091,7 +12091,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     }
 
     /**
-     * Tests fix for Bug#114989 (36612566), Setting null value in setClientInfo throws an NPE.
+     * Tests fix for Bug#114989 (Bug#36612566), Setting null value in setClientInfo throws an NPE.
      *
      * @throws Exception
      */
@@ -12173,6 +12173,98 @@ public class ConnectionRegressionTest extends BaseTestCase {
             testConn.setClientInfo(null);
             clientInfoOut = testConn.getClientInfo();
             assertTrue(clientInfoOut.isEmpty());
+        }
+    }
+
+    /**
+     * Tests fix for Bug#114705 (Bug#36539680), Contribution: make trustStorePassword be null if this.trustStoreSettings.keyStorePassword is null.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug114705() throws Exception {
+        assumeTrue(supportsTestCertificates(this.stmt),
+                "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
+
+        final String user = "testBug114705";
+        final String password = "testBug114705";
+
+        createUser("'" + user + "'@'%'", "IDENTIFIED BY '" + password + "' REQUIRE X509");
+        this.stmt.execute("GRANT SELECT ON *.* TO '" + user + "'@'%'");
+
+        final Properties props = new Properties();
+        props.setProperty(PropertyKey.USER.getKeyName(), user);
+        props.setProperty(PropertyKey.PASSWORD.getKeyName(), password);
+
+        /*
+         * sslMode REQUIRED + keyStore settings (password is required in Java keystores).
+         */
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.name());
+        props.setProperty(PropertyKey.fallbackToSystemKeyStore.getKeyName(), "true");
+
+        // Configuration via System properties.
+        try {
+            System.setProperty("javax.net.ssl.keyStore", "src/test/config/ssl-test-certs/client-keystore");
+            System.setProperty("javax.net.ssl.keyStoreType", "JKS");
+            System.clearProperty("javax.net.ssl.keyStorePassword");
+            assertThrows(SQLException.class, () -> getConnectionWithProps(props));
+
+            System.setProperty("javax.net.ssl.keyStorePassword", "password");
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+                assertTrue(this.rs.next());
+                assertEquals(user, this.rs.getString(1).split("@")[0]);
+            }
+        } finally {
+            System.clearProperty("javax.net.ssl.keyStore");
+            System.clearProperty("javax.net.ssl.keyStoreType");
+            System.clearProperty("javax.net.ssl.keyStorePassword");
+        }
+
+        // Configuration via connection properties.
+        props.setProperty(PropertyKey.clientCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/client-keystore");
+        props.setProperty(PropertyKey.clientCertificateKeyStoreType.getKeyName(), "JKS");
+        assertThrows(SQLException.class, () -> getConnectionWithProps(props));
+
+        props.setProperty(PropertyKey.clientCertificateKeyStorePassword.getKeyName(), "password");
+        try (Connection testConn = getConnectionWithProps(props)) {
+            Statement testStmt = testConn.createStatement();
+            this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+            assertTrue(this.rs.next());
+            assertEquals(user, this.rs.getString(1).split("@")[0]);
+        }
+
+        /*
+         * sslMode VERIFY_CA + trustStore settings (password not required to read from a Java truststore)
+         */
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.VERIFY_CA.name());
+        props.setProperty(PropertyKey.fallbackToSystemTrustStore.getKeyName(), "true");
+
+        // Configuration via System properties.
+        try {
+            System.setProperty("javax.net.ssl.trustStore", "src/test/config/ssl-test-certs/ca-truststore");
+            System.setProperty("javax.net.ssl.trustStoreType", "JKS");
+            System.clearProperty("javax.net.ssl.trustStorePassword");
+            try (Connection testConn = getConnectionWithProps(props)) {
+                Statement testStmt = testConn.createStatement();
+                this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+                assertTrue(this.rs.next());
+                assertEquals(user, this.rs.getString(1).split("@")[0]);
+            }
+        } finally {
+            System.clearProperty("javax.net.ssl.trustStore");
+            System.clearProperty("javax.net.ssl.trustStoreType");
+        }
+
+        // Configuration via connection properties.
+        props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
+        props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
+        try (Connection testConn = getConnectionWithProps(props)) {
+            Statement testStmt = testConn.createStatement();
+            this.rs = testStmt.executeQuery("SELECT CURRENT_USER()");
+            assertTrue(this.rs.next());
+            assertEquals(user, this.rs.getString(1).split("@")[0]);
         }
     }
 

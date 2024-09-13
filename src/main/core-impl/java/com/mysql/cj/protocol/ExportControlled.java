@@ -538,7 +538,7 @@ public class ExportControlled {
                 if (this.verifyServerCertificate) {
                     KeyStore trustKeyStore = null;
                     if (!StringUtils.isNullOrEmpty(this.trustStoreSettings.keyStoreUrl) && !StringUtils.isNullOrEmpty(this.trustStoreSettings.keyStoreType)) {
-                        char[] trustStorePassword = this.trustStoreSettings.keyStorePassword == null ? new char[0]
+                        char[] trustStorePassword = this.trustStoreSettings.keyStorePassword == null ? null
                                 : this.trustStoreSettings.keyStorePassword.toCharArray();
                         trustStoreIS = new URL(this.trustStoreSettings.keyStoreUrl).openStream();
                         trustKeyStore = StringUtils.isNullOrEmpty(this.keyStoreProvider) ? KeyStore.getInstance(this.trustStoreSettings.keyStoreType)
