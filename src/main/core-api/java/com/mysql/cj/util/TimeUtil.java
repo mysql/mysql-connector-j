@@ -59,19 +59,19 @@ public class TimeUtil {
     public static final LocalDate DEFAULT_DATE = LocalDate.of(1970, 1, 1);
     public static final LocalTime DEFAULT_TIME = LocalTime.of(0, 0);
 
-    public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("uuuu-MM-dd");
     public static final DateTimeFormatter TIME_FORMATTER_NO_FRACT_NO_OFFSET = DateTimeFormatter.ofPattern("HH:mm:ss");
     public static final DateTimeFormatter TIME_FORMATTER_WITH_NANOS_NO_OFFSET = DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSSSSS");
     public static final DateTimeFormatter TIME_FORMATTER_NO_FRACT_WITH_OFFSET = DateTimeFormatter.ofPattern("HH:mm:ssXXX");
     public static final DateTimeFormatter TIME_FORMATTER_WITH_NANOS_WITH_OFFSET = DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSSSSSXXX");
     public static final DateTimeFormatter TIME_FORMATTER_WITH_OPTIONAL_MICROS = new DateTimeFormatterBuilder().appendPattern("HH:mm:ss")
             .appendFraction(ChronoField.NANO_OF_SECOND, 0, 6, true).toFormatter();
-    public static final DateTimeFormatter DATETIME_FORMATTER_NO_FRACT_NO_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    public static final DateTimeFormatter DATETIME_FORMATTER_WITH_MILLIS_NO_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
-    public static final DateTimeFormatter DATETIME_FORMATTER_WITH_NANOS_NO_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSS");
-    public static final DateTimeFormatter DATETIME_FORMATTER_NO_FRACT_WITH_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX");
-    public static final DateTimeFormatter DATETIME_FORMATTER_WITH_NANOS_WITH_OFFSET = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSSXXX");
-    public static final DateTimeFormatter DATETIME_FORMATTER_WITH_OPTIONAL_MICROS = new DateTimeFormatterBuilder().appendPattern("yyyy-MM-dd HH:mm:ss")
+    public static final DateTimeFormatter DATETIME_FORMATTER_NO_FRACT_NO_OFFSET = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss");
+    public static final DateTimeFormatter DATETIME_FORMATTER_WITH_MILLIS_NO_OFFSET = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss.SSS");
+    public static final DateTimeFormatter DATETIME_FORMATTER_WITH_NANOS_NO_OFFSET = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss.SSSSSSSSS");
+    public static final DateTimeFormatter DATETIME_FORMATTER_NO_FRACT_WITH_OFFSET = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ssXXX");
+    public static final DateTimeFormatter DATETIME_FORMATTER_WITH_NANOS_WITH_OFFSET = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss.SSSSSSSSSXXX");
+    public static final DateTimeFormatter DATETIME_FORMATTER_WITH_OPTIONAL_MICROS = new DateTimeFormatterBuilder().appendPattern("uuuu-MM-dd HH:mm:ss")
             .appendFraction(ChronoField.NANO_OF_SECOND, 0, 6, true).toFormatter();
 
     public static final Pattern DATE_LITERAL_WITH_DELIMITERS = Pattern

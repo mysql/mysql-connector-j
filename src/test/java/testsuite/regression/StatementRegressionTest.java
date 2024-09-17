@@ -140,6 +140,7 @@ import com.mysql.cj.jdbc.ServerPreparedStatement;
 import com.mysql.cj.jdbc.StatementImpl;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.jdbc.exceptions.MySQLTimeoutException;
+import com.mysql.cj.jdbc.exceptions.MysqlDataTruncation;
 import com.mysql.cj.jdbc.ha.ReplicationConnection;
 import com.mysql.cj.jdbc.interceptors.ResultSetScannerInterceptor;
 import com.mysql.cj.jdbc.result.CachedResultSetMetaData;
@@ -13985,6 +13986,28 @@ public class StatementRegressionTest extends BaseTestCase {
             return null;
         }
 
+    }
+
+    /**
+     * Tests fix for Bug#116114 (Bug#37067812), Connector/J is writing incorrect values when passed negative dates.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug116114() throws Exception {
+        createTable("testBug116114", "(d DATE, dt DATETIME)");
+
+        LocalDate negativeDate = LocalDate.of(-1, 1, 1);
+        this.pstmt = this.conn.prepareStatement("INSERT INTO testBug116114 (d) VALUES (?)");
+        this.pstmt.setObject(1, negativeDate);
+        assertThrows(MysqlDataTruncation.class, this.pstmt::executeUpdate);
+        assertThrows(SQLSyntaxErrorException.class, () -> this.stmt.executeUpdate("INSERT INTO testBug116114 (d) VALUES '-0001-01-01'"));
+
+        LocalDateTime negativeDateTime = LocalDateTime.of(-1, 1, 1, 1, 1, 1);
+        this.pstmt = this.conn.prepareStatement("INSERT INTO testBug116114 (dt) VALUES (?)");
+        this.pstmt.setObject(1, negativeDateTime);
+        assertThrows(MysqlDataTruncation.class, this.pstmt::executeUpdate);
+        assertThrows(SQLSyntaxErrorException.class, () -> this.stmt.executeUpdate("INSERT INTO testBug116114 (dt) VALUES '-0001-01-01 01:01:01'"));
     }
 
 }

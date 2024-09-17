@@ -3,6 +3,8 @@
 
 Version 9.1.0
 
+  - Fix for Bug#116114 (Bug#37067812), Connector/J is writing incorrect values when passed negative dates.
+
   - Fix for Bug#96623 (Bug#30221117), batch update with rewriteBatchedStatements&useServerPrepStmts send fail request.
 
   - Fix for Bug#114705 (Bug#36539680), Contribution: make trustStorePassword be null if this.trustStoreSettings.keyStorePassword is null.
