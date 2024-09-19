@@ -27,9 +27,9 @@ import com.mysql.cj.conf.PropertyKey;
 /**
  * The callback object used by the authentication plugin AuthenticationOpenidConnectClient to let the client application supply Identity Tokens to the driver.
  *
- * In OpenID user authentication is outsourced to an IDP. This Callback is required to allow triggering some sort of user interaction, to perform a login into
- * an external system, at the time the connection is established and not prior to it. This is so because this depends on the mysql user being authenticated and
- * how this user is created in the MySQL Server.
+ * In OpenID, user authentication is outsourced to an IdP. This Callback is required to trigger some sort of user interaction by performing a login into an
+ * external system at the time the connection is established but not prior to it, because the success of the authentication depends on the MySQL user being
+ * authenticated and how the user was created on the MySQL Server.
  */
 public class OpenidConnectAuthenticationCallback implements MysqlCallback {
 
