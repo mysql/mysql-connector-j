@@ -1,8 +1,8 @@
 # MySQL Connector/J
 
-[![GitHub top language](https://img.shields.io/github/languages/top/mysql/mysql-connector-j?label=Java&color=5382a1)](https://github.com/mysql/mysql-connector-j/tree/release/9.x/src) [![License: GPLv2 with FOSS exception](https://img.shields.io/badge/License-GPLv2_with_FOSS_exception-c30014.svg)](LICENSE) [![Maven Central](https://img.shields.io/maven-central/v/com.mysql/mysql-connector-j?label=Maven%20Central)](https://central.sonatype.com/search?q=g%3Acom.mysql+a%3Amysql-connector-j)
+[![GitHub top language](https://img.shields.io/github/languages/top/mysql/mysql-connector-j?label=Java&color=5382a1)](https://github.com/mysql/mysql-connector-j/tree/release/9.x/src/) [![License: GPLv2 with FOSS exception](https://img.shields.io/badge/License-GPLv2_with_FOSS_exception-c30014)](LICENSE) [![Maven Central Version](https://img.shields.io/maven-central/v/com.mysql/mysql-connector-j?label=Maven%20Central)](https://central.sonatype.com/search?q=g%3Acom.mysql+a%3Amysql-connector-j)
 
-MySQL provides connectivity for client applications developed in the Java programming language with MySQL Connector/J, a driver that implements the [Java Database Connectivity (JDBC) API](https://www.oracle.com/technetwork/java/javase/jdbc/) and also [MySQL X DevAPI](https://dev.mysql.com/doc/x-devapi-userguide/en/).
+MySQL provides connectivity for client applications developed in the Java programming language with MySQL Connector/J, a driver that implements the [Java Database Connectivity (JDBC) API](https://www.oracle.com/java/technologies/javase/javase-tech-database.html) and also [MySQL X DevAPI](https://dev.mysql.com/doc/x-devapi-userguide/en/).
 
 MySQL Connector/J 9.1 is a JDBC Type 4 driver that is compatible with the [JDBC 4.2](https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/) specification. The Type 4 designation means that the driver is a pure Java implementation of the MySQL protocol and does not rely on the MySQL client libraries.
 
@@ -14,6 +14,10 @@ For more information, please visit the official [MySQL Connector/J documentation
 
 Please refer to the [README](README) and [LICENSE](LICENSE) files, available in this repository, and the [Legal Notices in the MySQL Connector/J documentation](https://dev.mysql.com/doc/connector-j/en/preface.html) for further details.
 
+## Security
+
+Oracle values the independent security research community and believes that responsible disclosure of security vulnerabilities helps us ensure the security and privacy of all our users. Please refer to the [security guidelines](SECURITY.md) document for additional information.
+
 ## Getting the Latest Release
 
 MySQL Connector/J is free for usage under the terms of the specified licensing and it runs on any operating system that is able to run a Java Virtual Machine.
@@ -23,9 +27,10 @@ MySQL Connector/J is free for usage under the terms of the specified licensing a
 MySQL Connector/J can be installed from pre-compiled packages that can be downloaded from the [MySQL Connector/J download page](https://dev.mysql.com/downloads/connector/j/). Installing MySQL Connector/J only requires obtaining the corresponding JAR file from the downloaded bundle or installer and including it in the application's CLASSPATH.
 
 According to how you use MySQL Connector/J, you may also need to install the following third-party libraries on your system for it to work:
-* Protocol Buffers (protobuf-java) is required for using X DevAPI
-* Oracle Cloud Infrastructure SDK for Java (oci-java-sdk) is required to support OCI AIM authentication
-* Simple Logging Facade API (slf4j-api) is required for using the logging capabilities provided by the default implementation of org.slf4j.Logger.Slf4JLogger by MySQL Connector/J 
+* Protocol Buffers (protobuf-java) is required for using X DevAPI.
+* Oracle Cloud Infrastructure SDK for Java (oci-java-sdk) is required to support OCI AIM authentication.
+* Simple Logging Facade API (slf4j-api) is required for using the logging capabilities provided by the default implementation of org.slf4j.Logger.Slf4JLogger by MySQL Connector/J.
+* OpenTelemetry API and SDK are required for enabling OpenTelemetry native instrumentation.
 
 ### As a Maven Dependency
 
@@ -65,20 +70,20 @@ This repository contains the MySQL Connector/J source code as per the latest rel
 
 ## Contributing
 
-There are a few ways to contribute to the MySQL Connector/J code. Please refer to the [contributing guidelines](CONTRIBUTING.md) for additional information.
+We greatly appreciate feedback from our users, including bug reports and code contributions. Your input helps us improve, and we thank you for any issues you report or code you contribute. Please refer to the [contributing guidelines](CONTRIBUTING.md) document for additional information.
 
 ## Additional Resources
 
 * [MySQL Connector/J Developer Guide](https://dev.mysql.com/doc/connector-j/en/).
 * [MySQL Connector/J X DevAPI Reference](https://dev.mysql.com/doc/dev/connector-j/).
-* [MySQL Connector/J, JDBC and Java forum](https://forums.mysql.com/list.php?39).
-* [`#connectors` channel in MySQL Community Slack](https://mysqlcommunity.slack.com/messages/connectors). ([Sign-up](https://lefred.be/mysql-community-on-slack/) required if you do not have an Oracle account.)
-* [@MySQL on Twitter](https://twitter.com/MySQL).
+* [MySQL Connector/J, JDBC and Java Forum](https://forums.mysql.com/list.php?39).
+* [`#connectors` channel in MySQL Community Slack](https://mysqlcommunity.slack.com/messages/connectors) ([Sign-up](https://lefred.be/mysql-community-on-slack/) required if you do not have an Oracle account.)
+* [@MySQL on X](https://x.com/MySQL/).
 * [MySQL Blog](https://blogs.oracle.com/mysql/).
 * [MySQL Connectors Blog archive](https://dev.mysql.com/blog-archive/?cat=Connectors%20%2F%20Languages).
 * [MySQL Newsletter](https://www.mysql.com/news-and-events/newsletter/).
-* [MySQL Bugs Database](https://bugs.mysql.com/).
+* [MySQL Bugs Tracking System](https://bugs.mysql.com).
 
 For more information about this and other MySQL products, please visit [MySQL Contact & Questions](https://www.mysql.com/about/contact/).
 
-[![Twitter Follow](https://img.shields.io/twitter/follow/MySQL.svg?label=Follow%20%40MySQL&style=social)](https://twitter.com/intent/follow?screen_name=MySQL)
+[![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/MySQL.svg?label=Follow%20%40MySQL&style=social)](https://x.com/intent/follow?screen_name=MySQL)

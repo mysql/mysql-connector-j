@@ -1,50 +1,62 @@
 # Contributing Guidelines
 
-We love getting feedback from our users. Bugs and code contributions are great forms of feedback and we thank you for any bugs you report or code you contribute.
+We greatly appreciate feedback from our users, including bug reports and code contributions. Your input helps us improve, and we thank you for any issues you report or code you contribute.
 
 ## Reporting Issues
 
-Before reporting a new bug, please [check first](https://bugs.mysql.com/search.php) to see if a similar bug already exists.
+Before submitting a new bug report, please [check here](https://bugs.mysql.com/search.php) to see if the issue has already been reported.
 
-Bug reports should be as complete as possible. Please try and include the following:
+When reporting a bug, ensure your report is as detailed as possible. Please include the following:
 
-* Complete steps to reproduce the issue.
-* Any information about platform and environment that could be specific to the bug.
-* Specific version of the product you are using.
-* Specific version of the server being used.
-* Sample code to help reproduce the issue, if possible.
+* Clear, reproducible steps to demonstrate the issue.
+* Relevant platform and environment information.
+* The specific version of the product in use.
+* The version of the MySQL Server in use.
+* Sample code that can help reproduce the issue, if applicable.
 
 ## Contributing Code
 
-Contributing to MySQL projects is easy. You just need to follow these steps.
+We welcome your code contributions. Before submitting code via a GitHub pull request or by filing a bug on [bugs.mysql.com](https://bugs.mysql.com), you will need to sign the Oracle Contributor Agreement (OCA). Instructions for signing the OCA are available on the [OCA Page](https://oca.opensource.oracle.com).
 
-* Make sure you have a user account at [bugs.mysql.com](https://bugs.mysql.com). You will need to reference this user account when you submit your Oracle Contributor Agreement (OCA).
-* Sign the Oracle Contributor Agreement. You can find instructions for doing that at the [OCA Page](https://oca.opensource.oracle.com/).
-* Develop your pull request. Make sure you are aware of the requirements for the project (e.g. do not require Java 7 if we are supporting Java 8 and higher).
-* Validate your pull request by including tests that sufficiently cover the functionality you are adding.
-* Verify that the entire test suite passes with your code applied.
-* Submit your pull request. While you can submit the pull request via [GitHub](https://github.com/mysql/mysql-connector-j/pulls), you can also submit it directly via [bugs.mysql.com](https://bugs.mysql.com).
+**Only pull requests from contributors who have signed the OCA can be accepted.**
 
-Thanks again for your wish to contribute to MySQL. We truly believe in the principles of open source development and appreciate any contributions to our projects.
+### Submitting a Contribution
+
+1. Ensure you have a user account at [bugs.mysql.com](https://bugs.mysql.com). You'll need to reference this account when submitting your OCA.
+2. Sign the Oracle Contributor Agreement. Instructions are provided on the [OCA Page](https://oca.opensource.oracle.com).
+3. Validate your contribution by including tests that adequately cover the functionality you're adding.
+4. Ensure the entire test suite passes with your changes applied.
+5. Submit your pull request through [GitHub](https://github.com/mysql/mysql-connector-j/pulls/) or upload it to a bug record on [bugs.mysql.com](https://bugs.mysql.com) using the _Contributions_ tab.
+
+### Developing Your Pull Request
+
+1. Create your pull request, following the [project's requirements](https://dev.mysql.com/doc/connector-j/en/connector-j-installing.html).
+2. Include sufficient tests to validate the new functionality.
+3. Confirm that the entire test suite passes with your changes applied.
+4. Submit the pull request via [GitHub](https://github.com/mysql/mysql-connector-j/pulls/) or directly via [bugs.mysql.com](https://bugs.mysql.com).
+
+We deeply value contributions to MySQL and thank you for supporting open-source development.
 
 ## Setting Up a Development Environment
 
-You can use your preferred Java IDE to view, edit, and compile the MySQL Connector/J source code. The configuration setup can be adapted from [Installing from Source](https://dev.mysql.com/doc/connector-j/en/connector-j-installing-source.html) with little effort.
+You can use your preferred Java IDE to view, edit, and compile the MySQL Connector/J source code. For project configuration, please refer to the instructions in [Installing from Source](https://dev.mysql.com/doc/connector-j/en/connector-j-installing-source.html).
 
-Running the entire test suite or your own test case is also possible by setting a few Ant properties in your IDE preferences setup. Refer to [Testing Connector/J](https://dev.mysql.com/doc/connector-j/en/connector-j-testing.html) for additional details.
+To run the full test suite or individual test cases, configure the necessary Ant properties within your IDE preferences. For further details, see [Testing Connector/J](https://dev.mysql.com/doc/connector-j/en/connector-j-testing.html).
 
 ## Getting Help
 
-If you need help or just want to get in touch with us, please use the following resources:
+If you need assistance or would like to reach out to the community, please use the following resources:
 
-* [MySQL Connector/J, JDBC and Java forum](https://forums.mysql.com/list.php?39).
-* [`#connectors` channel in MySQL Community Slack](https://mysqlcommunity.slack.com/messages/connectors). ([Sign-up](https://lefred.be/mysql-community-on-slack/) required if you do not have an Oracle account.)
-* [@MySQL on Twitter](https://twitter.com/MySQL).
+* [MySQL Connector/J Developer Guide](https://dev.mysql.com/doc/connector-j/en/).
+* [MySQL Connector/J X DevAPI Reference](https://dev.mysql.com/doc/dev/connector-j/).
+* [MySQL Connector/J, JDBC and Java Forum](https://forums.mysql.com/list.php?39).
+* [`#connectors` channel on MySQL Community Slack](https://mysqlcommunity.slack.com/messages/connectors/) ([Sign-up](https://lefred.be/mysql-community-on-slack/) required if you do not have an Oracle account.)
+* [@MySQL on X](https://x.com/MySQL/).
 * [MySQL Blog](https://blogs.oracle.com/mysql/).
 * [MySQL Connectors Blog archive](https://dev.mysql.com/blog-archive/?cat=Connectors%20%2F%20Languages).
 * [MySQL Newsletter](https://www.mysql.com/news-and-events/newsletter/).
-* [MySQL Bugs Database](https://bugs.mysql.com/).
+* [MySQL Bugs Tracking System](https://bugs.mysql.com).
 
-We hope to hear from you soon. Enjoy your coding!
+We look forward to hearing from you and encourage you to get involved. Happy coding!
 
-[![Twitter Follow](https://img.shields.io/twitter/follow/MySQL.svg?label=Follow%20%40MySQL&style=social)](https://twitter.com/intent/follow?screen_name=MySQL)
+[![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/MySQL?style=social)](https://x.com/intent/follow?screen_name=MySQL)
