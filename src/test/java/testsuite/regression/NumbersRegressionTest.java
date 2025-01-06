@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSetMetaData;
@@ -268,6 +269,27 @@ public class NumbersRegressionTest extends BaseTestCase {
             con.close();
 
         } while ((useSPS = !useSPS) || (useCursorFetch = !useCursorFetch));
+    }
+
+    /**
+     * Tests fix for BUG#109339, BIGINT UNSIGNED column fails to accept its maximum supported value.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug109339() throws Exception {
+        BigInteger value = new BigInteger("18446744073709551615"); // 2^64-1 - maximum value supported by BIGINT UNSIGNED
+
+        createTable("testBug109339", "(field1 BIGINT UNSIGNED)");
+
+        PreparedStatement ps = this.conn.prepareStatement("INSERT INTO testBug109339 VALUES (?)");
+        ps.setObject(1, value);
+        ps.executeUpdate();
+
+        this.rs = this.conn.prepareStatement("SELECT * FROM testBug109339").executeQuery();
+        this.rs.next();
+
+        assertTrue(this.rs.getObject(1).toString().equals(value.toString()));
     }
 
 }

@@ -56,7 +56,7 @@ public class NumberValueEncoder extends AbstractValueEncoder {
             case INT_UNSIGNED:
             case BIGINT:
             case BIGINT_UNSIGNED:
-                return String.valueOf(x.longValue());
+                return x.toString();
             case FLOAT:
             case FLOAT_UNSIGNED:
                 return StringUtils.fixDecimalExponent(Float.toString(x.floatValue()));
