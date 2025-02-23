@@ -52,6 +52,7 @@ import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 
 import com.mysql.cj.Messages;
@@ -106,6 +107,7 @@ import com.mysql.cj.result.SqlTimeValueFactory;
 import com.mysql.cj.result.SqlTimestampValueFactory;
 import com.mysql.cj.result.StringValueFactory;
 import com.mysql.cj.result.UtilCalendarValueFactory;
+import com.mysql.cj.result.UuidValueFactory;
 import com.mysql.cj.result.ValueFactory;
 import com.mysql.cj.result.ZonedDateTimeValueFactory;
 import com.mysql.cj.util.LogUtils;
@@ -192,6 +194,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
     private ValueFactory<Double> doubleValueFactory;
     private ValueFactory<BigDecimal> bigDecimalValueFactory;
     private ValueFactory<InputStream> binaryStreamValueFactory;
+    private ValueFactory<UUID> uuidValueFactory;
     private ValueFactory<Time> defaultTimeValueFactory;
     private ValueFactory<Timestamp> defaultTimestampValueFactory;
 
@@ -274,6 +277,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         this.doubleValueFactory = new DoubleValueFactory(pset);
         this.bigDecimalValueFactory = new BigDecimalValueFactory(pset);
         this.binaryStreamValueFactory = new BinaryStreamValueFactory(pset);
+        this.uuidValueFactory = new UuidValueFactory(pset);
 
         this.defaultTimeValueFactory = new SqlTimeValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone(), this);
         this.defaultTimestampValueFactory = new SqlTimestampValueFactory(pset, null, this.session.getServerSession().getDefaultTimeZone(),
@@ -1319,7 +1323,10 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
                 checkRowPos();
                 checkColumnBounds(columnIndex);
                 return (T) this.thisRow.getValue(columnIndex - 1, this.doubleValueFactory);
-
+            } else if (type.equals(UUID.class)) {
+                checkRowPos();
+                checkColumnBounds(columnIndex);
+                return (T) this.thisRow.getValue(columnIndex - 1, this.uuidValueFactory);
             } else if (type.equals(byte[].class)) {
                 return (T) getBytes(columnIndex);
 
