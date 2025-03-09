@@ -2005,8 +2005,6 @@ public class ConnectionImpl implements JdbcConnection, SessionEventListener, Ser
                     this.session.execSQL(null, autoCommitFlag ? "SET autocommit=1" : "SET autocommit=0", -1, null, false, this.nullStatementResultSetFactory,
                             null, false);
                 }
-            } catch (CJCommunicationsException e) {
-                throw e;
             } catch (CJException e) {
                 // Reset to current autocommit value in case of an exception different than a communication exception occurs.
                 this.session.getServerSession().setAutoCommit(isAutoCommit);
