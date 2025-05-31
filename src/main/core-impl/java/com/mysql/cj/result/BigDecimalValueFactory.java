@@ -52,6 +52,9 @@ public class BigDecimalValueFactory extends AbstractNumericValueFactory<BigDecim
      * @return result
      */
     private BigDecimal adjustResult(BigDecimal d) {
+        if (d.signum() == 0) {
+            d = BigDecimal.ZERO.setScale(d.scale());
+        }
         if (this.hasScale) {
             try {
                 return d.setScale(this.scale);
