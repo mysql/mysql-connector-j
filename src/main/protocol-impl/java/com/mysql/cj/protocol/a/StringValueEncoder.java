@@ -171,11 +171,9 @@ public class StringValueEncoder extends AbstractValueEncoder {
             case BLOB:
             case MEDIUMBLOB:
             case LONGBLOB:
-                StringBuilder sb = new StringBuilder("'");
-                sb.append(x);
-                sb.append("'");
-                return sb.toString();
+                return StringUtils.toString(getBytes(binding), this.charEncoding.getValue());
             case DATE:
+                StringBuilder sb;
                 Object dt = TimeUtil.parseToDateTimeObject(x, binding.getMysqlType());
                 if (dt instanceof LocalDate) {
                     sb = new StringBuilder("'");
