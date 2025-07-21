@@ -14053,11 +14053,13 @@ public class StatementRegressionTest extends BaseTestCase {
     }
 
     @Test
-    public  void testBug118688() throws Exception {
+    public void testBug118688() throws Exception {
         ClientPreparedStatement preparedStatement = (ClientPreparedStatement) this.conn.prepareStatement("SELECT * FROM test wehre id = ?");
         preparedStatement.setString(1, "'a'");
         String sql = ((ClientPreparedQuery) preparedStatement.getQuery()).asSql();
-        assertEquals("SELECT * FROM test wehre id = '''a'''",sql);
+        assertEquals("SELECT * FROM test wehre id = '''a'''", sql);
+        preparedStatement.close();
+        assertTrue(preparedStatement.isClosed());
     }
 
 }
