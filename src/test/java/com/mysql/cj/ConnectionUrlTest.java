@@ -1206,6 +1206,39 @@ public class ConnectionUrlTest {
         }
     }
 
+    @Test
+    public void testReplaceLegacyPropertyValuesInGlobalPropsForMultiHost() throws Exception {
+        // URL-level legacy value
+        String cs1 = "jdbc:mysql://host1:3306,host2:3306/db?zeroDateTimeBehavior=convertToNull";
+        ConnectionUrl url1 = ConnectionUrl.getConnectionUrlInstance(cs1, null);
+        assertEquals(ZeroDatetimeBehavior.CONVERT_TO_NULL.name(),
+                url1.getConnectionArgumentsAsProperties().getProperty(PropertyKey.zeroDateTimeBehavior.getKeyName()));
+        // Info map legacy value
+        String cs2 = "jdbc:mysql://host1:3306,host2:3306/db";
+        Properties p2 = new Properties();
+        p2.setProperty(PropertyKey.zeroDateTimeBehavior.getKeyName(), "convertToNull");
+        ConnectionUrl url2 = ConnectionUrl.getConnectionUrlInstance(cs2, p2);
+        assertEquals(ZeroDatetimeBehavior.CONVERT_TO_NULL.name(),
+                url2.getConnectionArgumentsAsProperties().getProperty(PropertyKey.zeroDateTimeBehavior.getKeyName()));
+        // Mixed: URL has unrelated params, info has legacy value
+        String cs3 = "jdbc:mysql://host1:3306,host2:3306/db?useSSL=false&allowPublicKeyRetrieval=true";
+        Properties p3 = new Properties();
+        p3.setProperty(PropertyKey.zeroDateTimeBehavior.getKeyName(), "convertToNull");
+        ConnectionUrl url3 = ConnectionUrl.getConnectionUrlInstance(cs3, p3);
+        assertEquals(ZeroDatetimeBehavior.CONVERT_TO_NULL.name(),
+                url3.getConnectionArgumentsAsProperties().getProperty(PropertyKey.zeroDateTimeBehavior.getKeyName()));
+    }
+    
+    @Test
+    public void testFixProtocolDependenciesAppliedToGlobalProps() {
+        // When protocol=pipe is specified globally, socketFactory should be auto-set in global props too
+        String cs = "jdbc:mysql://host1:3306,host2:3306/db?protocol=pipe";
+        ConnectionUrl url = ConnectionUrl.getConnectionUrlInstance(cs, null);
+        Properties props = url.getConnectionArgumentsAsProperties();
+        assertEquals("com.mysql.cj.protocol.NamedPipeSocketFactory",
+                props.getProperty(PropertyKey.socketFactory.getKeyName()));
+    }
+    
     /**
      * Tests jdbc:mysql+srv: connection strings.
      */

@@ -372,6 +372,11 @@ public abstract class ConnectionUrl implements DatabaseUrlContainer {
         setupPropertiesTransformer();
         expandPropertiesFromConfigFiles(this.properties);
         injectPerTypeProperties(this.properties);
+
+        // Fix protocol dependencies in global properties (e.g., set socketFactory when protocol=PIPE).
+        fixProtocolDependencies(this.properties);
+        // Workaround for zeroDateTimeBehavior=convertToNull hard-coded in NetBeans
+        replaceLegacyPropertyValues(this.properties);
     }
 
     /**
