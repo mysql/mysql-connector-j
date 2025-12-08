@@ -50,8 +50,8 @@ public class OpenTelemetryHandler implements TelemetryHandler {
             otelApiAvaliable = false;
         }
     }
-    private OpenTelemetry openTelemetry = null;
-    private Tracer tracer = null;
+    private OpenTelemetry openTelemetry;
+    private Tracer tracer;
     private WeakHashMap<TelemetrySpan, Span> spans = new WeakHashMap<>();
     private List<Span> linkTargets = new ArrayList<>();
 
@@ -63,14 +63,11 @@ public class OpenTelemetryHandler implements TelemetryHandler {
         if (!isOpenTelemetryApiAvailable()) {
             throw ExceptionFactory.createException(Messages.getString("Connection.OtelApiNotFound"));
         }
-
-        this.openTelemetry = GlobalOpenTelemetry.get();
-        this.tracer = this.openTelemetry.getTracer(Constants.CJ_NAME, Constants.CJ_VERSION);
     }
 
     @Override
     public TelemetrySpan startSpan(TelemetrySpanName spanName, Object... args) {
-        SpanBuilder spanBuilder = this.tracer.spanBuilder(spanName.getName(args)).setSpanKind(SpanKind.CLIENT);
+        SpanBuilder spanBuilder = getTracer().spanBuilder(spanName.getName(args)).setSpanKind(SpanKind.CLIENT);
         this.linkTargets.stream().map(Span::getSpanContext).forEach(spanBuilder::addLink);
         Span otelSpan = spanBuilder.startSpan();
         TelemetrySpan span = new OpenTelemetrySpan(otelSpan);
@@ -96,7 +93,20 @@ public class OpenTelemetryHandler implements TelemetryHandler {
 
     @Override
     public void propagateContext(BiConsumer<String, String> traceparentConsumer) {
-        this.openTelemetry.getPropagators().getTextMapPropagator().inject(Context.current(), traceparentConsumer, BiConsumer::accept);
+        getOpenTelemetry().getPropagators().getTextMapPropagator().inject(Context.current(), traceparentConsumer, BiConsumer::accept);
     }
 
+    private OpenTelemetry getOpenTelemetry() {
+        if (this.openTelemetry == null) {
+            this.openTelemetry = GlobalOpenTelemetry.get();
+        }
+        return this.openTelemetry;
+    }
+
+    private Tracer getTracer() {
+        if (tracer == null) {
+            this.tracer = getOpenTelemetry().getTracer(Constants.CJ_NAME, Constants.CJ_VERSION);
+        }
+        return this.tracer;
+    }
 }
