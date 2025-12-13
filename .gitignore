@@ -19,5 +19,4 @@
 hs_err_pid*.log
 *.sh
 .idea
-!run-tests.sh
-!lib/download-dependencies.sh
+*.iml
