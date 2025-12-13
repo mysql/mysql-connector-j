@@ -59,7 +59,7 @@ public class QueryInfo {
     private static final String AS_CLAUSE = "AS";
     private static final String[] ODKU_CLAUSE = new String[] { "ON", "DUPLICATE", "KEY", "UPDATE" };
     private static final String LAST_INSERT_ID_FUNC = "LAST_INSERT_ID";
-    private static final String INTO_CLAUSE = "INTO";
+    private static final String INTO_CLAUSE = " INTO ";
 
     private QueryInfo baseQueryInfo = null;
 

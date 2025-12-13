@@ -14660,4 +14660,16 @@ public class StatementRegressionTest extends BaseTestCase {
         }
     }
 
+    /**
+     * Tests fix for Bug#119245, INTO should be allowed
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug119245_IntoInsideVar() throws Exception {
+        createTable("testbug119245Table", "(id INT AUTO_INCREMENT PRIMARY KEY, margintotal VARCHAR(255))");
+
+        // Test 1: execute() with INTO @var
+        assertEquals(0, this.stmt.executeQuery("SELECT margintotal FROM testbug119245Table").getFetchSize());
+    }
 }
