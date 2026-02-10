@@ -140,8 +140,7 @@ public class MysqlBinaryValueDecoder implements ValueDecoder {
             nanos = 1000 * (bytes[offset + 8] & 0xff | (bytes[offset + 9] & 0xff) << 8 | (bytes[offset + 10] & 0xff) << 16 | (bytes[offset + 11] & 0xff) << 24);
         }
 
-        int totalHours = days * 24 + hours;
-        InternalTime time = new InternalTime(totalHours, minutes, seconds, nanos, scale);
+        InternalTime time = new InternalTime(days * 24 + hours, minutes, seconds, nanos, scale);
         if (negative) {
             time.setNegative(true);
         }
