@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/en/
 
+Version 10.0.0
+
 Version 9.7.0
 
   - Fix for Bug#119863 (Bug#38951042), Inaccurate decoding of negative TIME durations in Binary Protocol (Cursor Mode).
