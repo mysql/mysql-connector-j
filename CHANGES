@@ -3,6 +3,8 @@
 
 Version 10.0.0
 
+  - Fix for Bug#120227 (Bug#39204043), LOAD DATA LOCAL INFILE: missing EOF packet on IOException leaves server thread hanging.
+
   - Fix for Bug#120096 (Bug#39125648), MysqlConnector/Java Connection Url CharacterEncoding bug.
     Thanks to Rahman Rejepov for his contribution.
 

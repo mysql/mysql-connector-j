@@ -1723,6 +1723,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
 
         byte[] fileBuf = new byte[packetLength];
         BufferedInputStream fileIn = null;
+        CJException pendingException = null;
         try {
             fileIn = getFileStream(fileName);
 
@@ -1732,7 +1733,7 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                 filePacket.writeBytes(StringLengthDataType.STRING_FIXED, fileBuf, 0, bytesRead);
                 send(filePacket, filePacket.getPosition());
             }
-        } catch (IOException ioEx) {
+        } catch (IOException ex) {
             boolean isParanoid = this.propertySet.getBooleanProperty(PropertyKey.paranoid).getValue();
 
             StringBuilder messageBuf = new StringBuilder(Messages.getString("MysqlIO.62"));
@@ -1744,24 +1745,42 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             messageBuf.append(Messages.getString("MysqlIO.63"));
             if (!isParanoid) {
                 messageBuf.append(Messages.getString("MysqlIO.64"));
-                messageBuf.append(Util.stackTraceToString(ioEx));
+                messageBuf.append(Util.stackTraceToString(ex));
             }
 
-            throw ExceptionFactory.createException(messageBuf.toString(), ioEx, this.exceptionInterceptor);
+            pendingException = ExceptionFactory.createException(messageBuf.toString(), ex, this.exceptionInterceptor);
+            throw pendingException;
+        } catch (CJException ex) {
+            pendingException = ex;
+            throw ex;
         } finally {
+            CJException closeException = null;
             if (fileIn != null) {
                 try {
                     fileIn.close();
-                } catch (Exception ex) {
-                    throw ExceptionFactory.createException(Messages.getString("MysqlIO.65"), ex, this.exceptionInterceptor);
+                } catch (IOException ex) {
+                    closeException = ExceptionFactory.createException(Messages.getString("MysqlIO.65"), ex, this.exceptionInterceptor);
+                    if (pendingException != null) {
+                        pendingException.addSuppressed(closeException);
+                    }
                 }
 
                 fileIn = null;
-            } else {
-                // File open failed, but server needs one packet.
-                filePacket.setPosition(0);
-                send(filePacket, filePacket.getPosition());
-                checkErrorMessage(); // To clear response off of queue.
+            }
+
+            if (pendingException != null || closeException != null) {
+                // File open, read, or close failed, but the server still expects EOF.
+                try {
+                    filePacket.setPosition(0);
+                    send(filePacket, filePacket.getPosition());
+                    checkErrorMessage(); // To clear response off of queue.
+                } catch (Exception cleanupEx) {
+                    // Best effort cleanup. Preserve the original failure.
+                }
+            }
+
+            if (closeException != null && pendingException == null) {
+                throw closeException;
             }
         }
 

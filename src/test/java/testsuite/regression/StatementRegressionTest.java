@@ -51,6 +51,7 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -103,6 +104,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 
@@ -14903,6 +14905,83 @@ public class StatementRegressionTest extends BaseTestCase {
                 assertFalse(this.rs.next(), testCase);
             }
         } while ((useCF = !useCF) || (useSPS = !useSPS));
+    }
+
+    /**
+     * Tests fix for Bug#120227 (Bug#39204043), LOAD DATA LOCAL INFILE: missing EOF packet on IOException leaves server thread hanging.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug120227() throws Exception {
+        assumeTrue(supportsLoadLocalInfile(this.stmt), "This test requires the server started with --local-infile=ON");
+
+        Function<Integer, byte[]> genCsv = rows -> {
+            StringBuilder csv = new StringBuilder(rows * 25);
+            for (int i = 0; i < rows; i++) {
+                csv.append(i).append(",testBug120227_").append(i).append("\n");
+            }
+            return csv.toString().getBytes(StandardCharsets.UTF_8);
+        };
+
+        // InputStream that sends some data then throws an IOException.
+        // Simulates a network interruption, proxy disconnect, disk read error, etc.
+        InputStream faultyStream = new InputStream() {
+
+            private static final int FAIL_AFTER = 25000; // Fail after ~25KB.
+            private final ByteArrayInputStream is = new ByteArrayInputStream(genCsv.apply(2000)); // ~50KB, enough to start transfer.
+            private int bytesRead = 0;
+
+            @Override
+            public int read() throws IOException {
+                if (this.bytesRead++ > FAIL_AFTER) {
+                    throw new IOException("TestBug120227: simulated failure at " + this.bytesRead + " bytes");
+                }
+                return this.is.read();
+            }
+
+            @Override
+            public int read(byte[] b, int off, int len) throws IOException {
+                if (this.bytesRead > FAIL_AFTER) {
+                    throw new IOException("TestBug120227: simulated failure at " + this.bytesRead + " bytes");
+                }
+                int n = this.is.read(b, off, len);
+                if (n > 0) {
+                    this.bytesRead += n;
+                }
+                return n;
+            }
+
+        };
+
+        createTable("testBug120227", "(id INT, val VARCHAR(100))");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.toString());
+        props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+        props.setProperty(PropertyKey.allowLoadLocalInfile.getKeyName(), "true");
+        props.setProperty(PropertyKey.maxAllowedPacket.getKeyName(), "10240");
+
+        try (Connection testConn = getConnectionWithProps(props); Statement testStmt = testConn.createStatement()) {
+            // 1. IOException during LOAD DATA.
+            String connId = getSingleIndexedValueWithQuery(testConn, 1, "SELECT CONNECTION_ID()").toString();
+
+            testStmt.unwrap(JdbcStatement.class).setLocalInfileInputStream(faultyStream);
+            assertThrows(SQLException.class, () -> testStmt
+                    .execute("LOAD DATA LOCAL INFILE 'foo' INTO TABLE testBug120227 FIELDS TERMINATED BY ',' LINES TERMINATED BY '\\n' (id, val)"));
+
+            // 2. Verify server-side connection state.
+            this.rs = this.stmt.executeQuery("SELECT command, info FROM information_schema.processlist WHERE id = " + connId);
+            assertTrue(this.rs.next());
+            // Thread is in sleep state.
+            assertEquals("sleep", this.rs.getString(1).toLowerCase());
+            assertNull(this.rs.getString(2));
+
+            // 3. Try to use the connection again.
+            testConn.setNetworkTimeout(null, 2000);
+            this.rs = testStmt.executeQuery("SELECT 1");
+            assertTrue(this.rs.next());
+        }
     }
 
 }
