@@ -3,6 +3,9 @@
 
 Version 10.0.0
 
+  - Fix for Bug#120096 (Bug#39125648), MysqlConnector/Java Connection Url CharacterEncoding bug.
+    Thanks to Rahman Rejepov for his contribution.
+
 Version 9.7.0
 
   - Fix for Bug#119863 (Bug#38951042), Inaccurate decoding of negative TIME durations in Binary Protocol (Cursor Mode).

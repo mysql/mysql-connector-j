@@ -9094,4 +9094,29 @@ public class ResultSetRegressionTest extends BaseTestCase {
         } while (useSPS = !useSPS);
     }
 
+    /**
+     * Tests fix for Bug#120096 (Bug#39125648), MysqlConnector/Java Connection Url CharacterEncoding bug.
+     *
+     * @throws Exception
+     */
+    @Test
+    void testBug120096() throws Exception {
+        createTable("testBug120096", "(val NVARCHAR(100))");
+        this.stmt.executeUpdate("INSERT INTO testBug120096 VALUES ('MySQL Connector/J')");
+
+        for (String enc : new String[] { "UTF-8", "utf-8", "Utf-8", "UTF8", "utf8", "Utf8" }) {
+            final String testCase = String.format("Case: [characterEncoding=%s]", enc);
+
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.characterEncoding.getKeyName(), enc);
+
+            try (Connection testConn = getConnectionWithProps(props); Statement testStmt = testConn.createStatement()) {
+                this.rs = testStmt.executeQuery("SELECT * FROM testBug120096");
+                assertTrue(this.rs.next(), testCase);
+                assertEquals("MySQL Connector/J", this.rs.getString(1), testCase);
+                assertEquals("MySQL Connector/J", this.rs.getNString(1), testCase);
+            }
+        }
+    }
+
 }

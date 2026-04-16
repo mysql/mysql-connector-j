@@ -2101,7 +2101,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     @Override
     public void updateNCharacterStream(int columnIndex, Reader x) throws SQLException {
         String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+        if (!isUtf8Encoding(fieldEncoding)) {
             throw new SQLException(Messages.getString("ResultSet.16"));
         }
 
@@ -2132,7 +2132,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         connectionLock.lock();
         try {
             String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
-            if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+            if (!isUtf8Encoding(fieldEncoding)) {
                 throw new SQLException(Messages.getString("ResultSet.16"));
             }
 
@@ -2163,7 +2163,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     @Override
     public void updateNClob(int columnIndex, Reader reader) throws SQLException {
         String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+        if (!isUtf8Encoding(fieldEncoding)) {
             throw new SQLException(Messages.getString("ResultSet.17"));
         }
         updateCharacterStream(columnIndex, reader);
@@ -2177,7 +2177,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     @Override
     public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException {
         String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+        if (!isUtf8Encoding(fieldEncoding)) {
             throw new SQLException(Messages.getString("ResultSet.17"));
         }
         updateCharacterStream(columnIndex, reader, length);
@@ -2194,7 +2194,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         connectionLock.lock();
         try {
             String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
-            if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+            if (!isUtf8Encoding(fieldEncoding)) {
                 throw new SQLException(Messages.getString("ResultSet.17"));
             }
 
@@ -2229,7 +2229,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         connectionLock.lock();
         try {
             String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
-            if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+            if (!isUtf8Encoding(fieldEncoding)) {
                 throw new SQLException(Messages.getString("ResultSet.18"));
             }
 
@@ -2260,7 +2260,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     @Override
     public Reader getNCharacterStream(int columnIndex) throws SQLException {
         String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+        if (!isUtf8Encoding(fieldEncoding)) {
             throw new SQLException(Messages.getString("ResultSet.11"));
         }
 
@@ -2276,7 +2276,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     public NClob getNClob(int columnIndex) throws SQLException {
         String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
 
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+        if (!isUtf8Encoding(fieldEncoding)) {
             throw new SQLException("Can not call getNClob() when field's charset isn't UTF-8");
         }
 
@@ -2298,7 +2298,7 @@ public class UpdatableResultSet extends ResultSetImpl {
     public String getNString(int columnIndex) throws SQLException {
         String fieldEncoding = getMetadata().getFields()[columnIndex - 1].getEncoding();
 
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+        if (!isUtf8Encoding(fieldEncoding)) {
             throw new SQLException("Can not call getNString() when field's charset isn't UTF-8");
         }
 

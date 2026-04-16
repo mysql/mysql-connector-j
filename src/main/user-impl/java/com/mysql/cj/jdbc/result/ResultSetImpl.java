@@ -28,6 +28,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.sql.Array;
 import java.sql.Date;
 import java.sql.NClob;
@@ -212,6 +214,17 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
 
     protected boolean treatMysqlDatetimeAsTimestamp = false;
     protected boolean yearIsDateType = true;
+
+    protected boolean isUtf8Encoding(String encoding) {
+        if (encoding == null) {
+            return false;
+        }
+        try {
+            return Charset.forName(encoding).equals(StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
+    }
 
     /**
      * Create a result set for an executeUpdate statement.
@@ -1026,7 +1039,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         checkColumnBounds(columnIndex);
 
         String fieldEncoding = this.columnDefinition.getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+        if (!isUtf8Encoding(fieldEncoding)) {
             throw new SQLException("Can not call getNCharacterStream() when field's charset isn't UTF-8");
         }
         return getCharacterStream(columnIndex);
@@ -1043,7 +1056,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         checkColumnBounds(columnIndex);
 
         String fieldEncoding = this.columnDefinition.getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+        if (!isUtf8Encoding(fieldEncoding)) {
             throw new SQLException("Can not call getNClob() when field's charset isn't UTF-8");
         }
 
@@ -1086,7 +1099,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         checkColumnBounds(columnIndex);
 
         String fieldEncoding = this.columnDefinition.getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+        if (!isUtf8Encoding(fieldEncoding)) {
             throw new SQLException("Can not call getNString() when field's charset isn't UTF-8");
         }
         return getString(columnIndex);
