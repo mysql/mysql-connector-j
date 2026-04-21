@@ -1026,7 +1026,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         checkColumnBounds(columnIndex);
 
         String fieldEncoding = this.columnDefinition.getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+        if (fieldEncoding == null || !isUTF8(fieldEncoding)) {
             throw new SQLException("Can not call getNCharacterStream() when field's charset isn't UTF-8");
         }
         return getCharacterStream(columnIndex);
@@ -1043,7 +1043,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         checkColumnBounds(columnIndex);
 
         String fieldEncoding = this.columnDefinition.getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+        if (fieldEncoding == null || !isUTF8(fieldEncoding)) {
             throw new SQLException("Can not call getNClob() when field's charset isn't UTF-8");
         }
 
@@ -1086,7 +1086,7 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         checkColumnBounds(columnIndex);
 
         String fieldEncoding = this.columnDefinition.getFields()[columnIndex - 1].getEncoding();
-        if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+        if (fieldEncoding == null || !isUTF8(fieldEncoding)) {
             throw new SQLException("Can not call getNString() when field's charset isn't UTF-8");
         }
         return getString(columnIndex);
@@ -1753,6 +1753,11 @@ public class ResultSetImpl extends NativeResultset implements ResultSetInternalM
         } finally {
             connectionLock.unlock();
         }
+    }
+
+    private boolean isUTF8(String fieldEncoding) {
+        String UTF = fieldEncoding.toUpperCase();
+        return UTF.equals("UTF-8");
     }
 
     /**
