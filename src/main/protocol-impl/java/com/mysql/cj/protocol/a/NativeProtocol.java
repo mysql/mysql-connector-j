@@ -1796,93 +1796,91 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         RuntimeProperty<String> allowLoadLocaInfileInPath = this.propertySet.getStringProperty(PropertyKey.allowLoadLocalInfileInPath);
         RuntimeProperty<Boolean> allowUrlInLocalInfile = this.propertySet.getBooleanProperty(PropertyKey.allowUrlInLocalInfile);
 
-        if (!allowLoadLocalInfile.getValue() && !allowLoadLocaInfileInPath.isExplicitlySet()) {
+        boolean restrictLocalInfile = allowLoadLocaInfileInPath.isExplicitlySet();
+
+        if (!allowLoadLocalInfile.getValue() && !restrictLocalInfile) {
             throw ExceptionFactory.createException(Messages.getString("MysqlIO.LoadDataLocalNotAllowed"), this.exceptionInterceptor);
         }
 
         if (allowLoadLocalInfile.getValue()) {
-            // "LOAD DATA LOCAL INFILE" is enabled without restrictions.
             InputStream hookedStream = getLocalInfileInputStream();
             if (hookedStream != null) {
                 return new BufferedInputStream(hookedStream);
-            } else if (allowUrlInLocalInfile.getValue()) {
-                // Look for ':'.
-                if (fileName.indexOf(':') != -1) {
-                    try {
-                        URL urlFromFileName = new URL(fileName);
-                        return new BufferedInputStream(urlFromFileName.openStream());
-                    } catch (MalformedURLException e) {
-                        // Ignore and fall back to trying this as a file input stream.
-                    }
-                }
             }
-            return new BufferedInputStream(new FileInputStream(new File(fileName).getCanonicalFile()));
         }
 
-        // Given the code paths above, allowLoadLocaInfileInPath.isExplicitlySet() must be true and restrictions to "LOAD DATA LOCAL INFILE" apply.
-        String safePathValue = allowLoadLocaInfileInPath.getValue();
-        Path safePath;
-        if (safePathValue.length() == 0) {
-            throw ExceptionFactory.createException(
-                    Messages.getString("MysqlIO.60", new Object[] { safePathValue, PropertyKey.allowLoadLocalInfileInPath.getKeyName() }),
-                    this.exceptionInterceptor);
-        }
-        try {
-            safePath = Paths.get(safePathValue).toRealPath();
-        } catch (IOException | InvalidPathException e) {
-            throw ExceptionFactory.createException(
-                    Messages.getString("MysqlIO.60", new Object[] { safePathValue, PropertyKey.allowLoadLocalInfileInPath.getKeyName() }), e,
-                    this.exceptionInterceptor);
+        Path safePath = null;
+        if (restrictLocalInfile) {
+            String safePathValue = allowLoadLocaInfileInPath.getValue();
+            if (safePathValue.length() == 0) {
+                throw ExceptionFactory.createException(
+                        Messages.getString("MysqlIO.60", new Object[] { safePathValue, PropertyKey.allowLoadLocalInfileInPath.getKeyName() }),
+                        this.exceptionInterceptor);
+            }
+            try {
+                safePath = Paths.get(safePathValue).toRealPath();
+            } catch (IOException | InvalidPathException e) {
+                throw ExceptionFactory.createException(
+                        Messages.getString("MysqlIO.60", new Object[] { safePathValue, PropertyKey.allowLoadLocalInfileInPath.getKeyName() }), e,
+                        this.exceptionInterceptor);
+            }
         }
 
         if (allowUrlInLocalInfile.getValue()) {
             try {
                 URL urlFromFileName = new URL(fileName);
+                validateLocalInfileUrl(urlFromFileName, fileName);
 
-                if (!urlFromFileName.getProtocol().equalsIgnoreCase("file")) {
-                    throw ExceptionFactory.createException(Messages.getString("MysqlIO.66", new Object[] { urlFromFileName.getProtocol() }),
-                            this.exceptionInterceptor);
-                }
-
-                try {
-                    InetAddress addr = InetAddress.getByName(urlFromFileName.getHost());
-                    if (!addr.isLoopbackAddress()) {
-                        throw ExceptionFactory.createException(Messages.getString("MysqlIO.67", new Object[] { urlFromFileName.getHost() }),
-                                this.exceptionInterceptor);
-                    }
-                } catch (UnknownHostException e) {
-                    throw ExceptionFactory.createException(Messages.getString("MysqlIO.68", new Object[] { fileName }), e, this.exceptionInterceptor);
-                }
-
-                Path filePath = null;
-                try {
-                    filePath = Paths.get(urlFromFileName.toURI()).toRealPath();
-                } catch (InvalidPathException e) {
-                    // Windows paths often can't be extracted, but the URL is still valid.
-                    String pathString = urlFromFileName.getPath();
-                    if (pathString.indexOf(':') != -1 && (pathString.startsWith("/") || pathString.startsWith("\\"))) {
-                        pathString = pathString.replaceFirst("^[/\\\\]*", "");
-                    }
-                    filePath = Paths.get(pathString).toRealPath();
-                } catch (IllegalArgumentException e) {
-                    // Try the path directly.
-                    filePath = Paths.get(urlFromFileName.getPath()).toRealPath();
-                }
-                if (!filePath.startsWith(safePath)) {
+                Path filePath = getLocalInfileUrlPath(urlFromFileName);
+                if (restrictLocalInfile && !filePath.startsWith(safePath)) {
                     throw ExceptionFactory.createException(Messages.getString("MysqlIO.61", new Object[] { filePath, safePath }), this.exceptionInterceptor);
                 }
 
-                return new BufferedInputStream(urlFromFileName.openStream());
+                return new BufferedInputStream(new FileInputStream(filePath.toFile()));
             } catch (MalformedURLException | URISyntaxException e) {
                 // Fall back to trying this as a file input stream.
             }
         }
 
-        Path filePath = Paths.get(fileName).toRealPath();
-        if (!filePath.startsWith(safePath)) {
+        Path filePath = restrictLocalInfile ? Paths.get(fileName).toRealPath() : new File(fileName).getCanonicalFile().toPath();
+        if (restrictLocalInfile && !filePath.startsWith(safePath)) {
             throw ExceptionFactory.createException(Messages.getString("MysqlIO.61", new Object[] { filePath, safePath }), this.exceptionInterceptor);
         }
         return new BufferedInputStream(new FileInputStream(filePath.toFile()));
+    }
+
+    private void validateLocalInfileUrl(URL urlFromFileName, String fileName) {
+        if (!urlFromFileName.getProtocol().equalsIgnoreCase("file")) {
+            throw ExceptionFactory.createException(Messages.getString("MysqlIO.66", new Object[] { urlFromFileName.getProtocol() }), this.exceptionInterceptor);
+        }
+
+        String host = urlFromFileName.getHost();
+        if (!StringUtils.isNullOrEmpty(host)) {
+            try {
+                InetAddress addr = InetAddress.getByName(host);
+                if (!addr.isLoopbackAddress()) {
+                    throw ExceptionFactory.createException(Messages.getString("MysqlIO.67", new Object[] { host }), this.exceptionInterceptor);
+                }
+            } catch (UnknownHostException e) {
+                throw ExceptionFactory.createException(Messages.getString("MysqlIO.68", new Object[] { fileName }), e, this.exceptionInterceptor);
+            }
+        }
+    }
+
+    private Path getLocalInfileUrlPath(URL urlFromFileName) throws IOException, URISyntaxException {
+        try {
+            return Paths.get(urlFromFileName.toURI()).toRealPath();
+        } catch (InvalidPathException e) {
+            // Windows paths often can't be extracted, but the URL is still valid.
+            String pathString = urlFromFileName.getPath();
+            if (pathString.indexOf(':') != -1 && (pathString.startsWith("/") || pathString.startsWith("\\"))) {
+                pathString = pathString.replaceFirst("^[/\\\\]*", "");
+            }
+            return Paths.get(pathString).toRealPath();
+        } catch (IllegalArgumentException e) {
+            // Try the path directly.
+            return Paths.get(urlFromFileName.getPath()).toRealPath();
+        }
     }
 
     private int alignPacketSize(int a, int l) {
