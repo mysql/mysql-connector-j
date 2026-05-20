@@ -108,6 +108,18 @@ public interface ServerSession {
 
     void setClientParam(long clientParam);
 
+    default int getClientParamExtended() {
+        return 0;
+    }
+
+    default void setClientParamExtended(int clientParamExtended) {
+        // no-op by default; protocol implementations that negotiate extended capabilities override this.
+    }
+
+    default boolean hasCacheMetadataEnabled() {
+        return false;
+    }
+
     boolean hasLongColumnInfo();
 
     boolean useMultiResults();

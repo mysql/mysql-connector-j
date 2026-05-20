@@ -48,7 +48,7 @@ public class NativeServerSession implements ServerSession {
     public static final int SERVER_QUERY_WAS_SLOW = 2048;
     public static final int SERVER_SESSION_STATE_CHANGED = 1 << 14; // 16384
 
-    public static final int CLIENT_LONG_PASSWORD = 0x00000001; /* new more secure passwords */
+    public static final int CLIENT_MYSQL = 0x00000001; /* server is MySQL; cleared by MariaDB */
     public static final int CLIENT_FOUND_ROWS = 0x00000002;
     public static final int CLIENT_LONG_FLAG = 0x00000004; /* Get all column flags */
     public static final int CLIENT_CONNECT_WITH_DB = 0x00000008;
@@ -72,11 +72,17 @@ public class NativeServerSession implements ServerSession {
     public static final int CLIENT_QUERY_ATTRIBUTES = 0x08000000;
     public static final int CLIENT_MULTI_FACTOR_AUTHENTICATION = 0x10000000;
 
+    /**
+     * extended capability bits (sent and received as a separate 4-byte word in the handshake).
+     */
+    public static final int CLIENT_CACHE_METADATA = 0x00000010; // 1 << 4 in extended-cap space
+
     private PropertySet propertySet;
     private NativeCapabilities capabilities;
     private int oldStatusFlags = 0;
     private int statusFlags = 0;
     private long clientParam = 0;
+    private int clientParamExtended = 0;
     private NativeServerSessionStateController serverSessionStateController;
 
     /** The map of server variables that we retrieve at connection init. */
@@ -192,6 +198,21 @@ public class NativeServerSession implements ServerSession {
     @Override
     public void setClientParam(long clientParam) {
         this.clientParam = clientParam;
+    }
+
+    @Override
+    public int getClientParamExtended() {
+        return this.clientParamExtended;
+    }
+
+    @Override
+    public void setClientParamExtended(int clientParamExtended) {
+        this.clientParamExtended = clientParamExtended;
+    }
+
+    @Override
+    public boolean hasCacheMetadataEnabled() {
+        return (this.clientParamExtended & CLIENT_CACHE_METADATA) != 0;
     }
 
     @Override

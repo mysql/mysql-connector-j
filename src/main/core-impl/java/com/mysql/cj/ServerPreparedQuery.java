@@ -330,6 +330,11 @@ public class ServerPreparedQuery extends ClientPreparedQuery {
             T rs = this.session.getProtocol().readAllResults(maxRowsToRetrieve, createStreamingResultSet, resultPacket, true,
                     metadata != null ? metadata : this.resultFields, resultSetFactory);
 
+            // Refresh the cached result-set metadata from the first resultset so that future executes, not PREPARE-time copy
+            if (rs != null && this.resultFields != null) {
+                this.resultFields = rs.getColumnDefinition();
+            }
+
             if (this.session.shouldIntercept()) {
                 T interceptedResults = this.session.invokeQueryInterceptorsPost(this::getOriginalSql, this, rs, true);
 

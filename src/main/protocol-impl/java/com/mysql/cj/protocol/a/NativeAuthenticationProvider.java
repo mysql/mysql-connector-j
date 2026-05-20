@@ -159,7 +159,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         this.useConnectWithDb = this.database != null && this.database.length() > 0
                 && !this.propertySet.getBooleanProperty(PropertyKey.createDatabaseIfNotExist).getValue();
 
-        long clientParam = capabilityFlags & NativeServerSession.CLIENT_LONG_PASSWORD //
+        long clientParam = capabilityFlags & NativeServerSession.CLIENT_MYSQL //
                 | (this.propertySet.getBooleanProperty(PropertyKey.useAffectedRows).getValue() ? //
                         0 : capabilityFlags & NativeServerSession.CLIENT_FOUND_ROWS) //
                 | capabilityFlags & NativeServerSession.CLIENT_LONG_FLAG //
@@ -193,6 +193,9 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
                 | capabilityFlags & NativeServerSession.CLIENT_MULTI_FACTOR_AUTHENTICATION;
 
         sessState.setClientParam(clientParam);
+
+        int clientParamExtended = capabilities.getExtendedCapabilityFlags() & NativeServerSession.CLIENT_CACHE_METADATA;
+        sessState.setClientParamExtended(clientParamExtended);
 
         /* First, negotiate SSL connection */
         if ((clientParam & NativeServerSession.CLIENT_SSL) != 0) {
@@ -614,7 +617,8 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         last_sent.writeInteger(IntegerDataType.INT4, clientParam);
         last_sent.writeInteger(IntegerDataType.INT4, NativeConstants.MAX_PACKET_SIZE);
         last_sent.writeInteger(IntegerDataType.INT1, collationIndex);
-        last_sent.writeBytes(StringLengthDataType.STRING_FIXED, new byte[23]);   // Set of bytes reserved for future use.
+        last_sent.writeBytes(StringLengthDataType.STRING_FIXED, new byte[19]);
+        last_sent.writeInteger(IntegerDataType.INT4, serverSession.getClientParamExtended());
 
         // User/Password data
         last_sent.writeBytes(StringSelfDataType.STRING_TERM, StringUtils.getBytes(this.username, enc));

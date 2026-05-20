@@ -348,7 +348,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
         packet.writeInteger(IntegerDataType.INT4, clientParam);
         packet.writeInteger(IntegerDataType.INT4, NativeConstants.MAX_PACKET_SIZE);
         packet.writeInteger(IntegerDataType.INT1, this.serverSession.getCharsetSettings().configurePreHandshake(false));
-        packet.writeBytes(StringLengthDataType.STRING_FIXED, new byte[23]);  // Set of bytes reserved for future use.
+        packet.writeBytes(StringLengthDataType.STRING_FIXED, new byte[19]);  // Set of bytes reserved for future use.
+        packet.writeInteger(IntegerDataType.INT4, this.serverSession.getClientParamExtended());
 
         send(packet, packet.getPosition());
 

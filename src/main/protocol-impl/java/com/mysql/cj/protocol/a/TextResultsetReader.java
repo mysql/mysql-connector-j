@@ -54,6 +54,11 @@ public class TextResultsetReader implements ProtocolEntityReader<Resultset, Nati
         if (columnCount > 0) {
             // Build a result set with rows.
 
+            if (this.protocol.getServerSession().hasCacheMetadataEnabled()) {
+                // metadata_follows byte: COM_QUERY has no cached metadata to reuse, so the server always sets it to 1. Consume the byte to keep the stream aligned.
+                resultPacket.readInteger(IntegerDataType.INT1);
+            }
+
             // Read in the column information
             ColumnDefinition cdef = this.protocol.read(ColumnDefinition.class, new ColumnDefinitionFactory(columnCount, metadata));
 
