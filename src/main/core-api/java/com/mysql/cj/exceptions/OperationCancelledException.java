@@ -28,18 +28,22 @@ public class OperationCancelledException extends CJException {
 
     public OperationCancelledException() {
         super(Messages.getString("MySQLStatementCancelledException.0"));
+        setSQLState(MysqlErrorNumbers.SQLSTATE_MYSQL_QUERY_INTERRUPTED);
     }
 
     public OperationCancelledException(String message) {
         super(message);
+        setSQLState(MysqlErrorNumbers.SQLSTATE_MYSQL_QUERY_INTERRUPTED);
     }
 
     public OperationCancelledException(Throwable cause) {
         super(cause);
+        setSQLState(MysqlErrorNumbers.SQLSTATE_MYSQL_QUERY_INTERRUPTED);
     }
 
     public OperationCancelledException(String message, Throwable cause) {
         super(message, cause);
+        setSQLState(MysqlErrorNumbers.SQLSTATE_MYSQL_QUERY_INTERRUPTED);
     }
 
 }

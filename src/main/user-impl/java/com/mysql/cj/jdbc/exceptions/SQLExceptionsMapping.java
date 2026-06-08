@@ -99,10 +99,10 @@ public class SQLExceptionsMapping {
             return new PacketTooBigException(ex.getMessage());
 
         } else if (ex instanceof OperationCancelledException) {
-            return new MySQLStatementCancelledException(ex.getMessage());
+            return new MySQLStatementCancelledException(ex.getMessage(), ((CJException) ex).getSQLState(), ((CJException) ex).getVendorCode());
 
         } else if (ex instanceof CJTimeoutException) {
-            return new MySQLTimeoutException(ex.getMessage());
+            return new MySQLTimeoutException(ex.getMessage(), ((CJException) ex).getSQLState(), ((CJException) ex).getVendorCode());
 
         } else if (ex instanceof CJOperationNotSupportedException) {
             return new OperationNotSupportedException(ex.getMessage());
