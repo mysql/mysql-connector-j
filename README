@@ -13,6 +13,9 @@ https://dev.mysql.com/doc/connector-j/en/.
 For additional downloads and the source of MySQL Connector/J,
 visit https://dev.mysql.com/downloads/.
 
+Contributing information for code and non-code submissions can be found in the
+CONTRIBUTING.md file.
+
 MySQL Connector/J is brought to you by the MySQL team at Oracle.
 
 Notice:

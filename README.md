@@ -14,6 +14,10 @@ For more information, please visit the official [MySQL Connector/J documentation
 
 Please refer to the [README](README) and [LICENSE](LICENSE) files, available in this repository, and the [Legal Notices in the MySQL Connector/J documentation](https://dev.mysql.com/doc/connector-j/en/preface.html) for further details.
 
+## Contributing
+
+We greatly appreciate feedback from our users, including bug reports and code contributions. Your input helps us improve, and we thank you for any issues you report or code you contribute. Please refer to the [contributing](CONTRIBUTING.md) document for additional information.
+
 ## Security
 
 Oracle values the independent security research community and believes that responsible disclosure of security vulnerabilities helps us ensure the security and privacy of all our users. Please refer to the [security guidelines](SECURITY.md) document for additional information.
@@ -68,10 +72,6 @@ This driver can also be complied and installed from the source available in this
 
 This repository contains the MySQL Connector/J source code as per the latest release. No changes are made in this repository between releases.
 
-## Contributing
-
-We greatly appreciate feedback from our users, including bug reports and code contributions. Your input helps us improve, and we thank you for any issues you report or code you contribute. Please refer to the [contributing guidelines](CONTRIBUTING.md) document for additional information.
-
 ## Additional Resources
 
 * [MySQL Connector/J Developer Guide](https://dev.mysql.com/doc/connector-j/en/).
@@ -86,4 +86,4 @@ We greatly appreciate feedback from our users, including bug reports and code co
 
 For more information about this and other MySQL products, please visit [MySQL Contact & Questions](https://www.mysql.com/about/contact/).
 
-[![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/MySQL.svg?label=Follow%20%40MySQL&style=social)](https://x.com/intent/follow?screen_name=MySQL)
+[![X Follow](https://img.shields.io/twitter/follow/MySQL.svg?label=Follow%20%40MySQL&style=social)](https://x.com/intent/follow?screen_name=MySQL)

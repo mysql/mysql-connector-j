@@ -1269,6 +1269,7 @@ public class StringUtils {
      *            ` or "
      * @return
      *         <table>
+     *         <caption>Identifier quote handling examples.</caption>
      *         <tr>
      *         <td>Input</td>
      *         <td>|</td>

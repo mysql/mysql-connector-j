@@ -661,12 +661,14 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     </target>
 
 
-    <!-- Copy GPL LICENSE & README files. -->
+    <!-- Copy GPL LICENSE, README & CONTRIBUTING.md files. -->
     <target name="-copy-notices-gpl" unless="${com.mysql.cj.build.commercial}">
         <get src="${com.mysql.cj.dist.licenseUrl}" dest="${com.mysql.cj.build.dir.driver}/LICENSE" verbose="true" />
         <fixcrlf file="${com.mysql.cj.build.dir.driver}/LICENSE" tab="remove" tablength="8" eol="lf" />
 
         <copy file="${basedir}/README" tofile="${com.mysql.cj.build.dir.driver}/README" overwrite="true" />
+
+        <copy file="${basedir}/CONTRIBUTING.md" tofile="${com.mysql.cj.build.dir.driver}/CONTRIBUTING.md" overwrite="true" />
     </target>
 
 
@@ -796,7 +798,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <fileset dir="${com.mysql.cj.build.compiler.output}"
                      includes="**/*.class, **/*.properties*"
                      excludes="demo/**, documentation/**, instrumentation/**, testsuite/**" />
-            <fileset dir="${com.mysql.cj.build.dir.driver}" includes="INFO_BIN, INFO_SRC, LICENSE, README" />
+            <fileset dir="${com.mysql.cj.build.dir.driver}" includes="INFO_BIN, INFO_SRC, LICENSE, README, CONTRIBUTING.md" />
             <metainf dir="${com.mysql.cj.build.dir.driver}/META-INF" />
             <service type="java.sql.Driver" provider="com.mysql.cj.jdbc.Driver" />
         </jar>
@@ -855,7 +857,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
         </patternset>
 
         <copy todir="${com.mysql.cj.dist.dir.package}">
-            <fileset dir="${com.mysql.cj.build.dir.driver}" includes="*.jar, INFO_BIN, INFO_SRC, LICENSE, README">
+            <fileset dir="${com.mysql.cj.build.dir.driver}" includes="*.jar, INFO_BIN, INFO_SRC, LICENSE, README, CONTRIBUTING.md">
                 <patternset refid="exclude.files" />
             </fileset>
 
@@ -935,7 +937,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
     <target name="-create-maven-archive-sources" depends="-create-maven-archive-sources-check" unless="${com.mysql.cj.dist.noMavenSources}">
         <jar jarfile="${com.mysql.cj.dist.dir.maven}/${com.mysql.cj.build.driver.fullName}-sources.jar"
              basedir="${com.mysql.cj.build.dir.driver}"
-             includes="**/*.java, **/*.properties*, INFO_BIN, INFO_SRC, LICENSE, README"
+             includes="**/*.java, **/*.properties*, INFO_BIN, INFO_SRC, LICENSE, README, CONTRIBUTING.md"
              excludes="demo/**, documentation/**, instrumentation/**, testsuite/**" />
         <checksum file="${com.mysql.cj.dist.dir.maven}/${com.mysql.cj.build.driver.fullName}-sources.jar" forceoverwrite="yes" fileext=".md5" algorithm="MD5" />
         <checksum file="${com.mysql.cj.dist.dir.maven}/${com.mysql.cj.build.driver.fullName}-sources.jar"
@@ -975,6 +977,9 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
 
         <copy file="${com.mysql.cj.build.dir.driver}/LICENSE" todir="${com.mysql.cj.build.dir.javadoc}" />
         <copy file="${com.mysql.cj.build.dir.driver}/README" todir="${com.mysql.cj.build.dir.javadoc}" />
+        <copy todir="${com.mysql.cj.build.dir.javadoc}">
+            <fileset dir="${com.mysql.cj.build.dir.driver}" includes="CONTRIBUTING.md" />
+        </copy>
         <copy file="${com.mysql.cj.build.dir.driver}/INFO_BIN" todir="${com.mysql.cj.build.dir.javadoc}" />
         <copy file="${com.mysql.cj.build.dir.driver}/INFO_SRC" todir="${com.mysql.cj.build.dir.javadoc}" />
 
