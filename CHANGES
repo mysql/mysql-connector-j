@@ -1,7 +1,7 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/en/
 
-Version 26.3.0
+Version 26.7.0
 
   - Fix for Bug#39320456, Unexpected behavior with LOAD DATA LOCAL INFILE and connection options.
 
