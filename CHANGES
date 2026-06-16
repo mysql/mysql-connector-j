@@ -3,6 +3,8 @@
 
 Version 26.7.0
 
+  - Fix for Bug#39327277, Restrict SSL keystore loading to local file inputs.
+
   - Fix for Bug#39320456, Unexpected behavior with LOAD DATA LOCAL INFILE and connection options.
 
   - Fix for Bug#120227 (Bug#39204043), LOAD DATA LOCAL INFILE: missing EOF packet on IOException leaves server thread hanging.

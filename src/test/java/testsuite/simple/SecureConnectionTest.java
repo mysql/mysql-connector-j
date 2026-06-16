@@ -43,6 +43,7 @@ import com.mysql.cj.jdbc.JdbcConnection;
 import com.mysql.cj.jdbc.JdbcPropertySet;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.protocol.a.NativeServerSession;
+import com.mysql.cj.util.Util;
 
 import testsuite.BaseTestCase;
 
@@ -407,7 +408,7 @@ public class SecureConnectionTest extends BaseTestCase {
         /*
          * Valid system-wide TrustStore.
          */
-        System.setProperty("javax.net.ssl.trustStore", "file:src/test/config/ssl-test-certs/ca-truststore");
+        System.setProperty("javax.net.ssl.trustStore", "src/test/config/ssl-test-certs/ca-truststore");
         System.setProperty("javax.net.ssl.trustStoreType", "JKS");
         System.setProperty("javax.net.ssl.trustStorePassword", "password");
 
@@ -506,7 +507,7 @@ public class SecureConnectionTest extends BaseTestCase {
         /*
          * Valid system-wide KeyStore.
          */
-        System.setProperty("javax.net.ssl.keyStore", "file:src/test/config/ssl-test-certs/client-keystore");
+        System.setProperty("javax.net.ssl.keyStore", "src/test/config/ssl-test-certs/client-keystore");
         System.setProperty("javax.net.ssl.keyStoreType", "JKS");
         System.setProperty("javax.net.ssl.keyStorePassword", "password");
 
@@ -569,6 +570,75 @@ public class SecureConnectionTest extends BaseTestCase {
         testConn = getConnectionWithProps(this.sslFreeBaseUrl, props);
         assertSecureConnection(testConn, user);
         testConn.close();
+    }
+
+    /**
+     * Tests SSL key store locations.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testKeyStoreLocations() throws Exception {
+        assumeTrue((((MysqlConnection) this.conn).getSession().getServerSession().getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_SSL) != 0,
+                "This test requires server with SSL support.");
+        assumeTrue(supportsTLSv1_2(((MysqlConnection) this.conn).getSession().getServerSession().getServerVersion()),
+                "This test requires server with TLSv1.2+ support.");
+        assumeTrue(supportsTestCertificates(this.stmt),
+                "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
+        props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
+
+        props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "src/test/config/ssl-test-certs/ca-truststore");
+        Connection testConn = getConnectionWithProps(this.sslFreeBaseUrl, props);
+        assertSecureConnection(testConn);
+        testConn.close();
+
+        props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), "file:src/test/config/ssl-test-certs/ca-truststore");
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl, props);
+        assertSecureConnection(testConn);
+        testConn.close();
+
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.toString());
+        props.remove(PropertyKey.trustCertificateKeyStoreUrl.getKeyName());
+        props.remove(PropertyKey.trustCertificateKeyStoreType.getKeyName());
+        props.remove(PropertyKey.trustCertificateKeyStorePassword.getKeyName());
+        props.setProperty(PropertyKey.clientCertificateKeyStoreUrl.getKeyName(), "src/test/config/ssl-test-certs/client-keystore");
+        props.setProperty(PropertyKey.clientCertificateKeyStoreType.getKeyName(), "JKS");
+        props.setProperty(PropertyKey.clientCertificateKeyStorePassword.getKeyName(), "password");
+
+        testConn = getConnectionWithProps(this.sslFreeBaseUrl, props);
+        assertSecureConnection(testConn);
+        testConn.close();
+
+        String[] nonLocalKeyStores = new String[] { "http://localhost/keystore", "https://localhost/keystore", "ftp://localhost/keystore",
+                "jar:file:src/test/config/ssl-test-certs/ca-truststore!/keystore", "file://server/share/keystore", "//server/share/keystore",
+                "\\\\server\\share\\keystore" };
+
+        props.clear();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.VERIFY_CA.toString());
+        props.setProperty(PropertyKey.trustCertificateKeyStoreType.getKeyName(), "JKS");
+        props.setProperty(PropertyKey.trustCertificateKeyStorePassword.getKeyName(), "password");
+        for (String keyStoreUrl : nonLocalKeyStores) {
+            props.setProperty(PropertyKey.trustCertificateKeyStoreUrl.getKeyName(), keyStoreUrl);
+            assertThrows(SQLNonTransientConnectionException.class, "(?s).*KeyStore .*local.*", () -> getConnectionWithProps(this.sslFreeBaseUrl, props));
+        }
+
+        props.clear();
+        props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.REQUIRED.toString());
+        props.setProperty(PropertyKey.clientCertificateKeyStoreType.getKeyName(), "JKS");
+        props.setProperty(PropertyKey.clientCertificateKeyStorePassword.getKeyName(), "password");
+        for (String keyStoreUrl : nonLocalKeyStores) {
+            props.setProperty(PropertyKey.clientCertificateKeyStoreUrl.getKeyName(), keyStoreUrl);
+            assertThrows(SQLNonTransientConnectionException.class, "(?s).*KeyStore .*local.*", () -> getConnectionWithProps(this.sslFreeBaseUrl, props));
+        }
+
+        if (!Util.isRunningOnWindows()) {
+            props.setProperty(PropertyKey.clientCertificateKeyStoreUrl.getKeyName(), "C:/path/to/client-keystore");
+            assertThrows(SQLNonTransientConnectionException.class, "(?s).*KeyStore .*local.*", () -> getConnectionWithProps(this.sslFreeBaseUrl, props));
+        }
     }
 
     /**

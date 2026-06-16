@@ -24,9 +24,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.net.MalformedURLException;
 import java.net.Socket;
-import java.net.URL;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
@@ -96,6 +99,7 @@ import com.mysql.cj.exceptions.SSLParamsException;
 import com.mysql.cj.log.Log;
 import com.mysql.cj.util.Base64Decoder;
 import com.mysql.cj.util.StringUtils;
+import com.mysql.cj.util.Util;
 
 /**
  * Holds functionality that falls under export-control regulations.
@@ -114,6 +118,7 @@ public class ExportControlled {
     private static final String TLS_SETTINGS_RESOURCE = "/com/mysql/cj/TlsSettings.properties";
     private static final List<String> ALLOWED_CIPHERS = new ArrayList<>();
     private static final List<String> UNACCEPTABLE_CIPHER_SUBSTR = new ArrayList<>();
+    private static final String LOCAL_FILE_URL_SCHEME = "file:";
 
     static {
         try {
@@ -338,14 +343,6 @@ public class ExportControlled {
             if (StringUtils.isNullOrEmpty(keyStoreType)) {
                 keyStoreType = propertySet.getStringProperty(PropertyKey.clientCertificateKeyStoreType).getInitialValue();
             }
-            // check URL
-            if (!StringUtils.isNullOrEmpty(keyStoreUrl)) {
-                try {
-                    new URL(keyStoreUrl);
-                } catch (MalformedURLException e) {
-                    keyStoreUrl = "file:" + keyStoreUrl;
-                }
-            }
         }
 
         return new KeyStoreConfigurations(keyStoreUrl, keyStorePassword, keyStoreType);
@@ -363,14 +360,6 @@ public class ExportControlled {
             trustStoreType = System.getProperty("javax.net.ssl.trustStoreType");
             if (StringUtils.isNullOrEmpty(trustStoreType)) {
                 trustStoreType = propertySet.getStringProperty(PropertyKey.trustCertificateKeyStoreType).getInitialValue();
-            }
-            // check URL
-            if (!StringUtils.isNullOrEmpty(trustStoreUrl)) {
-                try {
-                    new URL(trustStoreUrl);
-                } catch (MalformedURLException e) {
-                    trustStoreUrl = "file:" + trustStoreUrl;
-                }
             }
         }
 
@@ -514,47 +503,33 @@ public class ExportControlled {
             }
 
             if (!StringUtils.isNullOrEmpty(this.keyStoreSettings.keyStoreUrl)) {
-                InputStream ksIS = null;
-                try {
-                    if (!StringUtils.isNullOrEmpty(this.keyStoreSettings.keyStoreType)) {
+                if (!StringUtils.isNullOrEmpty(this.keyStoreSettings.keyStoreType)) {
+                    try (InputStream ksIS = openKeyStoreStream(this.keyStoreSettings.keyStoreUrl)) {
                         KeyStore clientKeyStore = StringUtils.isNullOrEmpty(this.keyStoreProvider) ? KeyStore.getInstance(this.keyStoreSettings.keyStoreType)
                                 : KeyStore.getInstance(this.keyStoreSettings.keyStoreType, this.keyStoreProvider);
-                        URL ksURL = new URL(this.keyStoreSettings.keyStoreUrl);
                         char[] password = this.keyStoreSettings.keyStorePassword == null ? new char[0] : this.keyStoreSettings.keyStorePassword.toCharArray();
-                        ksIS = ksURL.openStream();
                         clientKeyStore.load(ksIS, password);
                         kmf.init(clientKeyStore, password);
                         kms = kmf.getKeyManagers();
-                    }
-                } catch (UnrecoverableKeyException e) {
-                    throw ExceptionFactory.createException(SSLParamsException.class, "Could not recover keys from client keystore.  Check password?", e,
-                            this.exceptionInterceptor);
-                } catch (NoSuchAlgorithmException e) {
-                    throw ExceptionFactory.createException(SSLParamsException.class, "Unsupported keystore algorithm [" + e.getMessage() + "]", e,
-                            this.exceptionInterceptor);
-                } catch (NoSuchProviderException e) {
-                    throw ExceptionFactory.createException(SSLParamsException.class,
-                            "Specified KeyStore Provider is invalid. Ensure it is property registered.", e, this.exceptionInterceptor);
-                } catch (KeyStoreException e) {
-                    throw ExceptionFactory.createException(SSLParamsException.class, "Could not create KeyStore instance [" + e.getMessage() + "]", e,
-                            this.exceptionInterceptor);
-                } catch (CertificateException e) {
-                    throw ExceptionFactory.createException(SSLParamsException.class,
-                            "Could not load client" + this.keyStoreSettings.keyStoreType + " keystore from " + this.keyStoreSettings.keyStoreUrl, e,
-                            this.exceptionInterceptor);
-                } catch (MalformedURLException e) {
-                    throw ExceptionFactory.createException(SSLParamsException.class, this.keyStoreSettings.keyStoreUrl + " does not appear to be a valid URL.",
-                            e, this.exceptionInterceptor);
-                } catch (IOException e) {
-                    throw ExceptionFactory.createException(SSLParamsException.class,
-                            "Cannot open " + this.keyStoreSettings.keyStoreUrl + " [" + e.getMessage() + "]", e, this.exceptionInterceptor);
-                } finally {
-                    if (ksIS != null) {
-                        try {
-                            ksIS.close();
-                        } catch (IOException e) {
-                            // Can't close input stream, but the keystore can be properly initialized so there's no need to throw this exception.
-                        }
+                    } catch (UnrecoverableKeyException e) {
+                        throw ExceptionFactory.createException(SSLParamsException.class, "Could not recover keys from client keystore.  Check password?", e,
+                                this.exceptionInterceptor);
+                    } catch (NoSuchAlgorithmException e) {
+                        throw ExceptionFactory.createException(SSLParamsException.class, "Unsupported keystore algorithm [" + e.getMessage() + "]", e,
+                                this.exceptionInterceptor);
+                    } catch (NoSuchProviderException e) {
+                        throw ExceptionFactory.createException(SSLParamsException.class,
+                                "Specified KeyStore Provider is invalid. Ensure it is property registered.", e, this.exceptionInterceptor);
+                    } catch (KeyStoreException e) {
+                        throw ExceptionFactory.createException(SSLParamsException.class, "Could not create KeyStore instance [" + e.getMessage() + "]", e,
+                                this.exceptionInterceptor);
+                    } catch (CertificateException e) {
+                        throw ExceptionFactory.createException(SSLParamsException.class,
+                                "Could not load client" + this.keyStoreSettings.keyStoreType + " keystore from " + this.keyStoreSettings.keyStoreUrl, e,
+                                this.exceptionInterceptor);
+                    } catch (IOException e) {
+                        throw ExceptionFactory.createException(SSLParamsException.class,
+                                "Cannot open " + this.keyStoreSettings.keyStoreUrl + " [" + e.getMessage() + "]", e, this.exceptionInterceptor);
                     }
                 }
             } else {
@@ -566,7 +541,6 @@ public class ExportControlled {
                 }
             }
 
-            InputStream trustStoreIS = null;
             boolean x509TrustManagerFound = false;
             try {
                 if (this.verifyServerCertificate) {
@@ -574,10 +548,11 @@ public class ExportControlled {
                     if (!StringUtils.isNullOrEmpty(this.trustStoreSettings.keyStoreUrl) && !StringUtils.isNullOrEmpty(this.trustStoreSettings.keyStoreType)) {
                         char[] trustStorePassword = this.trustStoreSettings.keyStorePassword == null ? null
                                 : this.trustStoreSettings.keyStorePassword.toCharArray();
-                        trustStoreIS = new URL(this.trustStoreSettings.keyStoreUrl).openStream();
-                        trustKeyStore = StringUtils.isNullOrEmpty(this.keyStoreProvider) ? KeyStore.getInstance(this.trustStoreSettings.keyStoreType)
-                                : KeyStore.getInstance(this.trustStoreSettings.keyStoreType, this.keyStoreProvider);
-                        trustKeyStore.load(trustStoreIS, trustStorePassword);
+                        try (InputStream trustStoreIS = openKeyStoreStream(this.trustStoreSettings.keyStoreUrl)) {
+                            trustKeyStore = StringUtils.isNullOrEmpty(this.keyStoreProvider) ? KeyStore.getInstance(this.trustStoreSettings.keyStoreType)
+                                    : KeyStore.getInstance(this.trustStoreSettings.keyStoreType, this.keyStoreProvider);
+                            trustKeyStore.load(trustStoreIS, trustStorePassword);
+                        }
                     }
 
                     if (trustKeyStore != null || this.fallbackToSystemTrustStore) {
@@ -601,9 +576,6 @@ public class ExportControlled {
                 if (tms.length == 0 && !this.fipsCompliantJsse) {
                     tms = new TrustManager[] { new X509TrustManagerWrapper() };
                 }
-            } catch (MalformedURLException e) {
-                throw ExceptionFactory.createException(SSLParamsException.class, this.trustStoreSettings.keyStoreUrl + " does not appear to be a valid URL.", e,
-                        this.exceptionInterceptor);
             } catch (NoSuchAlgorithmException e) {
                 throw ExceptionFactory.createException(SSLParamsException.class, "Unsupported keystore algorithm [" + e.getMessage() + "]", e,
                         this.exceptionInterceptor);
@@ -620,14 +592,6 @@ public class ExportControlled {
             } catch (IOException e) {
                 throw ExceptionFactory.createException(SSLParamsException.class,
                         "Cannot open " + this.trustStoreSettings.keyStoreUrl + " [" + e.getMessage() + "]", e, this.exceptionInterceptor);
-            } finally {
-                if (trustStoreIS != null) {
-                    try {
-                        trustStoreIS.close();
-                    } catch (IOException e) {
-                        // Can't close input stream, but the keystore can be properly initialized so there's no need to throw this exception.
-                    }
-                }
             }
 
             if (this.verifyServerCertificate && !x509TrustManagerFound) {
@@ -647,6 +611,72 @@ public class ExportControlled {
                         e, this.exceptionInterceptor);
             } catch (KeyManagementException kme) {
                 throw new SSLParamsException("KeyManagementException: " + kme.getMessage(), kme);
+            }
+        }
+
+        private static InputStream openKeyStoreStream(String keyStoreUrl) throws IOException {
+            return Files.newInputStream(getLocalKeyStorePath(keyStoreUrl));
+        }
+
+        private static Path getLocalKeyStorePath(String keyStoreUrl) {
+            if (StringUtils.isNullOrEmpty(keyStoreUrl)) {
+                return null;
+            }
+
+            if (StringUtils.startsWithIgnoreCase(keyStoreUrl, LOCAL_FILE_URL_SCHEME)) {
+                return getLocalKeyStorePathFromFileUrl(keyStoreUrl);
+            }
+
+            if (Util.isUrlLike(keyStoreUrl) && !(Util.isRunningOnWindows() && Util.isWindowsAbsolutePath(keyStoreUrl))) {
+                throw ExceptionFactory.createException(SSLParamsException.class, "KeyStore value must be a local file path or a file URL.");
+            }
+
+            if (Util.isNetworkPath(keyStoreUrl)) {
+                throw ExceptionFactory.createException(SSLParamsException.class, "KeyStore value must refer to a local file.");
+            }
+
+            try {
+                return Paths.get(keyStoreUrl);
+            } catch (InvalidPathException e) {
+                throw ExceptionFactory.createException(SSLParamsException.class, "KeyStore value must be a valid local file path.", e);
+            }
+        }
+
+        private static Path getLocalKeyStorePathFromFileUrl(String keyStoreUrl) {
+            try {
+                URI keyStoreUri = URI.create(keyStoreUrl);
+                if (!StringUtils.isNullOrEmpty(keyStoreUri.getAuthority())) {
+                    throw ExceptionFactory.createException(SSLParamsException.class, "KeyStore file URL must refer to a local file.");
+                }
+
+                String filePath = keyStoreUri.isOpaque() ? keyStoreUri.getSchemeSpecificPart() : keyStoreUri.getPath();
+                if (StringUtils.isNullOrEmpty(filePath) || Util.isNetworkPath(filePath)) {
+                    throw ExceptionFactory.createException(SSLParamsException.class, "KeyStore file URL must refer to a local file.");
+                }
+
+                return keyStoreUri.isOpaque() ? Paths.get(filePath) : Paths.get(keyStoreUri);
+            } catch (IllegalArgumentException e) {
+                try {
+                    // Accept local file URL values with unescaped path characters that strict URI parsing rejects.
+                    String filePath = keyStoreUrl.substring(LOCAL_FILE_URL_SCHEME.length());
+                    if (filePath.startsWith("//")) {
+                        int pathStartPos = filePath.indexOf('/', 2);
+                        String authority = pathStartPos == -1 ? filePath.substring(2) : filePath.substring(2, pathStartPos);
+                        if (!StringUtils.isNullOrEmpty(authority)) {
+                            throw ExceptionFactory.createException(SSLParamsException.class, "KeyStore file URL must refer to a local file.");
+                        }
+                        filePath = pathStartPos == -1 ? "" : filePath.substring(pathStartPos);
+                    }
+
+                    if (StringUtils.isNullOrEmpty(filePath) || Util.isNetworkPath(filePath)) {
+                        throw ExceptionFactory.createException(SSLParamsException.class, "KeyStore file URL must refer to a local file.");
+                    }
+
+                    return Paths.get(filePath);
+                } catch (InvalidPathException e2) {
+                    e.addSuppressed(e2);
+                }
+                throw ExceptionFactory.createException(SSLParamsException.class, "KeyStore value must be a valid local file URL.", e);
             }
         }
 

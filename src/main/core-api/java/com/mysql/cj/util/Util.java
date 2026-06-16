@@ -544,4 +544,57 @@ public class Util {
         }
     }
 
+    /**
+     * Checks whether the given string starts with a URI scheme component.
+     *
+     * @param searchIn
+     *            the string to check
+     *
+     * @return true if the string starts with a valid URI scheme followed by ':'
+     */
+    public static boolean isUrlLike(String searchIn) {
+        if (StringUtils.isNullOrEmpty(searchIn)) {
+            return false;
+        }
+
+        int schemeSeparatorPos = searchIn.indexOf(':');
+        if (schemeSeparatorPos <= 0 || !Character.isLetter(searchIn.charAt(0))) {
+            return false;
+        }
+
+        for (int i = 1; i < schemeSeparatorPos; i++) {
+            char c = searchIn.charAt(i);
+            if (!Character.isLetterOrDigit(c) && c != '+' && c != '-' && c != '.') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Checks whether the given path is a Windows absolute path.
+     *
+     * @param path
+     *            the path to check
+     *
+     * @return true if the path starts with a Windows drive-root prefix
+     */
+    public static boolean isWindowsAbsolutePath(String path) {
+        return path != null && path.length() >= 3 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':'
+                && (path.charAt(2) == '\\' || path.charAt(2) == '/');
+    }
+
+    /**
+     * Checks whether the given path starts with a network path prefix.
+     *
+     * @param path
+     *            the path to check
+     *
+     * @return true if the path starts with '//' or '\\'
+     */
+    public static boolean isNetworkPath(String path) {
+        return path != null && (path.startsWith("//") || path.startsWith("\\\\"));
+    }
+
 }

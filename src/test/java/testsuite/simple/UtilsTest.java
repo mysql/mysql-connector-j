@@ -118,4 +118,39 @@ public class UtilsTest extends BaseTestCase {
         assertEquals(JdbcConnection.class.getPackage().getName(), Util.getPackageName(this.conn.getClass().getInterfaces()[0]));
     }
 
+    /**
+     * Tests Util path classification helpers.
+     */
+    @Test
+    public void testPathClassification() {
+        assertFalse(Util.isUrlLike(null));
+        assertFalse(Util.isUrlLike(""));
+        assertFalse(Util.isUrlLike("relative/path"));
+        assertFalse(Util.isUrlLike("/absolute/path"));
+        assertFalse(Util.isUrlLike("1http://example.com"));
+        assertFalse(Util.isUrlLike("ht_tp://example.com"));
+        assertFalse(Util.isUrlLike(":foo"));
+
+        assertTrue(Util.isUrlLike("file:src/test/config/ssl-test-certs/ca-truststore"));
+        assertTrue(Util.isUrlLike("http://example.com"));
+        assertTrue(Util.isUrlLike("https://example.com"));
+        assertTrue(Util.isUrlLike("jar:file:/tmp/ks!/entry"));
+        assertTrue(Util.isUrlLike("web+mysql://example.com"));
+        assertTrue(Util.isUrlLike("foo-bar://example.com"));
+        assertTrue(Util.isUrlLike("foo.bar://example.com"));
+
+        assertFalse(Util.isWindowsAbsolutePath(null));
+        assertFalse(Util.isWindowsAbsolutePath(""));
+        assertFalse(Util.isWindowsAbsolutePath("C:relative"));
+        assertFalse(Util.isWindowsAbsolutePath("/path/to/file"));
+        assertTrue(Util.isWindowsAbsolutePath("C:\\path\\to\\file"));
+        assertTrue(Util.isWindowsAbsolutePath("C:/path/to/file"));
+
+        assertFalse(Util.isNetworkPath(null));
+        assertFalse(Util.isNetworkPath(""));
+        assertFalse(Util.isNetworkPath("/path/to/file"));
+        assertTrue(Util.isNetworkPath("//server/share/file"));
+        assertTrue(Util.isNetworkPath("\\\\server\\share\\file"));
+    }
+
 }

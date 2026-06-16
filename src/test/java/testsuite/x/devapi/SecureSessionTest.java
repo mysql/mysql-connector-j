@@ -1555,7 +1555,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         /*
          * Valid system-wide TrustStore.
          */
-        System.setProperty("javax.net.ssl.trustStore", "file:src/test/config/ssl-test-certs/ca-truststore");
+        System.setProperty("javax.net.ssl.trustStore", "src/test/config/ssl-test-certs/ca-truststore");
         System.setProperty("javax.net.ssl.trustStoreType", "JKS");
         System.setProperty("javax.net.ssl.trustStorePassword", "password");
 
@@ -1664,7 +1664,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             /*
              * Valid system-wide KeyStore.
              */
-            System.setProperty("javax.net.ssl.keyStore", "file:src/test/config/ssl-test-certs/client-keystore");
+            System.setProperty("javax.net.ssl.keyStore", "src/test/config/ssl-test-certs/client-keystore");
             System.setProperty("javax.net.ssl.keyStoreType", "JKS");
             System.setProperty("javax.net.ssl.keyStorePassword", "password");
 
@@ -1972,6 +1972,58 @@ public class SecureSessionTest extends DevApiBaseTestCase {
         sess = this.fact.getSession(props);
         assertNonSecureSession(sess);
         sess.close();
+    }
+
+    /**
+     * Tests X DevAPI SSL key store locations.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testKeyStoreLocations() throws Exception {
+        assumeTrue(supportsTestCertificates(this.session),
+                "This test requires the server configured with SSL certificates from ConnectorJ/src/test/config/ssl-test-certs");
+
+        Session testSess = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSslMode, XdevapiSslMode.VERIFY_CA)
+                + makeParam(PropertyKey.xdevapiSslTrustStoreUrl, this.trustStorePath) + makeParam(PropertyKey.xdevapiSslTrustStoreType, "JKS")
+                + makeParam(PropertyKey.xdevapiSslTrustStorePassword, this.trustStorePassword));
+        assertSecureSession(testSess);
+        testSess.close();
+
+        testSess = this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSslMode, XdevapiSslMode.REQUIRED)
+                + makeParam(PropertyKey.xdevapiSslKeyStoreUrl, this.clientKeyStorePath) + makeParam(PropertyKey.xdevapiSslKeyStoreType, "JKS")
+                + makeParam(PropertyKey.xdevapiSslKeyStorePassword, this.clientKeyStorePassword));
+        assertSecureSession(testSess);
+        testSess.close();
+
+        String[] nonLocalKeyStores = new String[] { "http://localhost/keystore", "file://server/share/keystore", "//server/share/keystore",
+                "\\\\server\\share\\keystore" };
+
+        for (String keyStoreUrl : nonLocalKeyStores) {
+            Throwable t = assertThrows(CJCommunicationsException.class,
+                    () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSslMode, XdevapiSslMode.VERIFY_CA)
+                            + makeParam(PropertyKey.xdevapiSslTrustStoreUrl, keyStoreUrl) + makeParam(PropertyKey.xdevapiSslTrustStoreType, "JKS")
+                            + makeParam(PropertyKey.xdevapiSslTrustStorePassword, this.trustStorePassword)));
+            assertTrue(exceptionMessageContains(t, "KeyStore") && exceptionMessageContains(t, "local"));
+        }
+
+        for (String keyStoreUrl : nonLocalKeyStores) {
+            Throwable t = assertThrows(CJCommunicationsException.class,
+                    () -> this.fact.getSession(this.sslFreeBaseUrl + makeParam(PropertyKey.xdevapiSslMode, XdevapiSslMode.REQUIRED)
+                            + makeParam(PropertyKey.xdevapiSslKeyStoreUrl, keyStoreUrl) + makeParam(PropertyKey.xdevapiSslKeyStoreType, "JKS")
+                            + makeParam(PropertyKey.xdevapiSslKeyStorePassword, this.clientKeyStorePassword)));
+            assertTrue(exceptionMessageContains(t, "KeyStore") && exceptionMessageContains(t, "local"));
+        }
+    }
+
+    private static boolean exceptionMessageContains(Throwable t, String messagePart) {
+        while (t != null) {
+            if (t.getMessage() != null && t.getMessage().contains(messagePart)) {
+                return true;
+            }
+            t = t.getCause();
+        }
+        return false;
     }
 
     /**
