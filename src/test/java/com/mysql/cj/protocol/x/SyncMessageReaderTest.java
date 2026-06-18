@@ -22,6 +22,7 @@ package com.mysql.cj.protocol.x;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -37,6 +38,8 @@ import org.junit.jupiter.api.Test;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
+import com.mysql.cj.exceptions.CJCommunicationsException;
+import com.mysql.cj.exceptions.CJPacketTooBigException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.FullReadInputStream;
 import com.mysql.cj.x.protobuf.Mysqlx.Error;
@@ -177,6 +180,46 @@ public class SyncMessageReaderTest {
             Message partiallyParsed = parser.parsePartialFrom(new byte[] {});
             assertEquals(messageClass, partiallyParsed.getClass(), "Parsed class should equal the class that mapped to it via type tag");
         }
+    }
+
+    /**
+     * Tests that an oversized X Protocol frame header is rejected before allocating the payload buffer.
+     */
+    @Test
+    public void testPacketTooBigHeaderRead() {
+        int maxAllowedPacket = 1024;
+        byte[] packetHeader = ByteBuffer.allocate(XMessageHeader.HEADER_LENGTH).order(ByteOrder.LITTLE_ENDIAN).putInt(maxAllowedPacket + 1)
+                .put((byte) ServerMessages.Type.OK_VALUE).array();
+        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(packetHeader)), null);
+        this.reader.setMaxAllowedPacket(maxAllowedPacket);
+
+        assertThrows(CJPacketTooBigException.class, () -> this.reader.readHeader());
+    }
+
+    /**
+     * Tests that invalid unsigned X Protocol frame lengths are rejected independently of the configured packet limit.
+     */
+    @Test
+    public void testInvalidUnsignedFrameLengthHeaderRead() {
+        byte[] packetHeader = ByteBuffer.allocate(XMessageHeader.HEADER_LENGTH).order(ByteOrder.LITTLE_ENDIAN).putInt(0x80000000)
+                .put((byte) ServerMessages.Type.OK_VALUE).array();
+        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(packetHeader)), null);
+        this.reader.setMaxAllowedPacket(0);
+
+        assertThrows(CJCommunicationsException.class, () -> this.reader.readHeader());
+    }
+
+    /**
+     * Tests that an X Protocol frame header with no message type byte is rejected.
+     */
+    @Test
+    public void testZeroFrameLengthHeaderRead() {
+        byte[] packetHeader = ByteBuffer.allocate(XMessageHeader.HEADER_LENGTH).order(ByteOrder.LITTLE_ENDIAN).putInt(0)
+                .put((byte) ServerMessages.Type.OK_VALUE).array();
+        this.reader = new SyncMessageReader(new FullReadInputStream(new ByteArrayInputStream(packetHeader)), null);
+        this.reader.setMaxAllowedPacket(0);
+
+        assertThrows(CJCommunicationsException.class, () -> this.reader.readHeader());
     }
 
 }

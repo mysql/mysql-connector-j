@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
@@ -38,6 +39,8 @@ import java.util.zip.DeflaterOutputStream;
 import org.junit.jupiter.api.Test;
 
 import com.google.protobuf.ByteString;
+import com.mysql.cj.exceptions.CJCommunicationsException;
+import com.mysql.cj.exceptions.CJPacketTooBigException;
 import com.mysql.cj.x.protobuf.Mysqlx;
 import com.mysql.cj.x.protobuf.Mysqlx.ClientMessages;
 import com.mysql.cj.x.protobuf.MysqlxConnection.Compression;
@@ -371,6 +374,43 @@ public class CompressionTest {
 
             dataWritten = dataOut.toByteArray();
             assertArrayEquals(uncompressedFrame2, dataWritten);
+        }
+    }
+
+    /**
+     * Tests that an oversized compressed X Protocol frame header is rejected before reading the frame payload.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void downlinkCompressionSplittingPacketTooBig() throws Exception {
+        int maxAllowedPacket = 1024;
+        byte[] packetHeader = ByteBuffer.allocate(XMessageHeader.HEADER_LENGTH).order(ByteOrder.LITTLE_ENDIAN).putInt(maxAllowedPacket + 1)
+                .put((byte) Mysqlx.ServerMessages.Type.COMPRESSION_VALUE).array();
+        ByteArrayInputStream dataIn = new ByteArrayInputStream(packetHeader);
+
+        try (InputStream compressorIn = new CompressionSplittedInputStream(dataIn,
+                new CompressorStreamsFactory(CompressionAlgorithm.getDefaultInstances().get("deflate_stream")))) {
+            ((CompressionSplittedInputStream) compressorIn).setMaxAllowedPacket(maxAllowedPacket);
+            assertThrows(CJPacketTooBigException.class, () -> compressorIn.read(new byte[1]));
+        }
+    }
+
+    /**
+     * Tests that invalid unsigned compressed X Protocol frame lengths are rejected before reading the frame payload.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void downlinkCompressionSplittingInvalidUnsignedFrameLength() throws Exception {
+        byte[] packetHeader = ByteBuffer.allocate(XMessageHeader.HEADER_LENGTH).order(ByteOrder.LITTLE_ENDIAN).putInt(0x80000000)
+                .put((byte) Mysqlx.ServerMessages.Type.COMPRESSION_VALUE).array();
+        ByteArrayInputStream dataIn = new ByteArrayInputStream(packetHeader);
+
+        try (InputStream compressorIn = new CompressionSplittedInputStream(dataIn,
+                new CompressorStreamsFactory(CompressionAlgorithm.getDefaultInstances().get("deflate_stream")))) {
+            ((CompressionSplittedInputStream) compressorIn).setMaxAllowedPacket(0);
+            assertThrows(CJCommunicationsException.class, () -> compressorIn.read(new byte[1]));
         }
     }
 

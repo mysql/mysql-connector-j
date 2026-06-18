@@ -23,6 +23,7 @@ package com.mysql.cj.protocol.x;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.protocol.MessageHeader;
 
 public class XMessageHeader implements MessageHeader {
@@ -30,6 +31,7 @@ public class XMessageHeader implements MessageHeader {
     public static final int MESSAGE_SIZE_LENGTH = 4;
     public static final int MESSAGE_TYPE_LENGTH = 1;
     public static final int HEADER_LENGTH = MESSAGE_SIZE_LENGTH + MESSAGE_TYPE_LENGTH;
+    static final int DEFAULT_MAX_ALLOWED_PACKET = 64 * 1024 * 1024;
 
     private ByteBuffer headerBuf;
     /** Type tag of the message to read (indicates parser to use). */
@@ -48,8 +50,12 @@ public class XMessageHeader implements MessageHeader {
     private void parseBuffer() {
         if (this.messageSize == -1) {
             this.headerBuf.position(0); // process the completed header and initiate message reading
-            this.messageSize = this.headerBuf.getInt() - 1;
-            this.messageType = this.headerBuf.get();
+            long frameLength = Integer.toUnsignedLong(this.headerBuf.getInt());
+            if (frameLength < MESSAGE_TYPE_LENGTH || frameLength > Integer.MAX_VALUE) {
+                throw new CJCommunicationsException("Invalid X Protocol message size: " + frameLength);
+            }
+            this.messageSize = (int) frameLength - MESSAGE_TYPE_LENGTH;
+            this.messageType = Byte.toUnsignedInt(this.headerBuf.get());
         }
     }
 

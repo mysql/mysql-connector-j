@@ -34,7 +34,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
+import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.CJCommunicationsException;
+import com.mysql.cj.exceptions.CJPacketTooBigException;
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.protocol.FullReadInputStream;
@@ -54,6 +56,7 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
 
     /** Stream as a source of messages. */
     private FullReadInputStream inputStream;
+    private int maxAllowedPacket = XMessageHeader.DEFAULT_MAX_ALLOWED_PACKET;
 
     LinkedList<XMessageHeader> headersQueue = new LinkedList<>();
     LinkedList<Message> messagesQueue = new LinkedList<>();
@@ -73,6 +76,16 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
     public SyncMessageReader(FullReadInputStream inputStream, ProtocolEventHandler protocolEventHandler) {
         this.inputStream = inputStream;
         this.protocolEventHandler = protocolEventHandler;
+    }
+
+    /**
+     * Sets the maximum X Protocol message size accepted from the server.
+     *
+     * @param maxAllowedPacket
+     *            the maximum message size in bytes.
+     */
+    public void setMaxAllowedPacket(int maxAllowedPacket) {
+        this.maxAllowedPacket = maxAllowedPacket;
     }
 
     @Override
@@ -132,9 +145,10 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
              * multiplexing is supported by the protocol. The protocol will be able to accommodate it but we will have to separate reading data after the
              * header (size).
              */
-            byte[] buf = new byte[5];
+            byte[] buf = new byte[XMessageHeader.HEADER_LENGTH];
             this.inputStream.readFully(buf);
             header = new XMessageHeader(buf);
+            validateMessageSize(header);
             this.headersQueue.add(header);
         } catch (IOException ex) {
             // TODO close socket?
@@ -157,6 +171,7 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
         }
 
         Parser<T> parser = (Parser<T>) MessageConstants.MESSAGE_CLASS_TO_PARSER.get(messageClass);
+        validateMessageSize(header);
         byte[] packet = new byte[header.getMessageSize()];
 
         try {
@@ -190,6 +205,23 @@ public class SyncMessageReader implements MessageReader<XMessageHeader, XMessage
 
         } catch (InvalidProtocolBufferException ex) {
             throw new WrongArgumentException(ex);
+        }
+    }
+
+    /**
+     * Validates the incoming X Protocol message size before allocating the payload buffer.
+     *
+     * @param header
+     *            the message header to validate.
+     */
+    private void validateMessageSize(XMessageHeader header) {
+        int messageSize = header.getMessageSize();
+        if (messageSize < 0) {
+            throw new CJCommunicationsException("Invalid X Protocol message size: " + messageSize);
+        }
+        long frameLength = (long) messageSize + XMessageHeader.MESSAGE_TYPE_LENGTH;
+        if (this.maxAllowedPacket > 0 && frameLength > this.maxAllowedPacket) {
+            throw new CJPacketTooBigException(Messages.getString("PacketTooBigException.1", new Object[] { frameLength, this.maxAllowedPacket }));
         }
     }
 

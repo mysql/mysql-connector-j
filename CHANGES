@@ -3,6 +3,8 @@
 
 Version 26.7.0
 
+  - Fix for Bug#39328305, X Protocol reader does not validate server-supplied frame length before allocation.
+
   - Fix for Bug#39327277, Restrict SSL keystore loading to local file inputs.
 
   - Fix for Bug#39320456, Unexpected behavior with LOAD DATA LOCAL INFILE and connection options.

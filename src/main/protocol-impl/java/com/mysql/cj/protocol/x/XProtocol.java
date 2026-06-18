@@ -113,6 +113,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     private MessageReader<XMessageHeader, XMessage> reader;
     private MessageSender<XMessage> sender;
+    private CompressionSplittedInputStream compressionInputStream;
     /** We take responsibility of the socket as the managed resource. We close it when we're done. */
     private Closeable managedResource;
 
@@ -288,6 +289,7 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
     @Override
     public void beforeHandshake() {
         this.serverSession = new XServerSession();
+        this.compressionInputStream = null;
 
         try {
             this.sender = new SyncMessageSender(this.socketConnection.getMysqlOutput());
@@ -489,9 +491,9 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
         if (this.compressionEnabled) {
             try {
-                this.reader = new SyncMessageReader(new FullReadInputStream(
-                        new CompressionSplittedInputStream(this.socketConnection.getMysqlInput(), new CompressorStreamsFactory(this.compressionAlgorithm))),
-                        this);
+                this.compressionInputStream = new CompressionSplittedInputStream(this.socketConnection.getMysqlInput(),
+                        new CompressorStreamsFactory(this.compressionAlgorithm));
+                this.reader = new SyncMessageReader(new FullReadInputStream(this.compressionInputStream), this);
             } catch (IOException e) {
                 ExceptionFactory.createException(Messages.getString("Protocol.Compression.6"), e);
             }
@@ -894,6 +896,12 @@ public class XProtocol extends AbstractProtocol<XMessage> implements Protocol<XM
 
     public void setMaxAllowedPacket(int maxAllowedPacket) {
         this.sender.setMaxAllowedPacket(maxAllowedPacket);
+        if (this.reader instanceof SyncMessageReader) {
+            ((SyncMessageReader) this.reader).setMaxAllowedPacket(maxAllowedPacket);
+        }
+        if (this.compressionInputStream != null) {
+            this.compressionInputStream.setMaxAllowedPacket(maxAllowedPacket);
+        }
     }
 
     @Override

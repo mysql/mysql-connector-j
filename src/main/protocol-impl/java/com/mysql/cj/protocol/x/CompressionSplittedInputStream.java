@@ -32,6 +32,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Parser;
 import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.CJCommunicationsException;
+import com.mysql.cj.exceptions.CJPacketTooBigException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.x.protobuf.Mysqlx.ServerMessages;
@@ -50,6 +51,7 @@ public class CompressionSplittedInputStream extends FilterInputStream {
     private int framePayloadLength = 0;
     private int framePayloadConsumed = 0;
     private XMessageHeader xMessageHeader;
+    private int maxAllowedPacket = XMessageHeader.DEFAULT_MAX_ALLOWED_PACKET;
 
     private InputStream compressorIn = null;
 
@@ -60,6 +62,16 @@ public class CompressionSplittedInputStream extends FilterInputStream {
     public CompressionSplittedInputStream(InputStream in, CompressorStreamsFactory streamsFactory) {
         super(in);
         this.compressorIoStreamsFactory = streamsFactory;
+    }
+
+    /**
+     * Sets the maximum X Protocol frame size accepted from the server.
+     *
+     * @param maxAllowedPacket
+     *            the maximum frame size in bytes.
+     */
+    public void setMaxAllowedPacket(int maxAllowedPacket) {
+        this.maxAllowedPacket = maxAllowedPacket;
     }
 
     /**
@@ -183,6 +195,7 @@ public class CompressionSplittedInputStream extends FilterInputStream {
         readFully(this.frameHeader, 0, HEADER_LENGTH);
         this.xMessageHeader = new XMessageHeader(this.frameHeader);
         this.framePayloadLength = this.xMessageHeader.getMessageSize();
+        validateMessageSize();
         this.frameHeaderConsumed = 0;
         this.framePayloadConsumed = 0;
 
@@ -195,6 +208,19 @@ public class CompressionSplittedInputStream extends FilterInputStream {
             // Preemptively set as all bytes consumed since next reads will be redirected to the compressor InputStream.
             this.frameHeaderConsumed = HEADER_LENGTH;
             this.framePayloadConsumed = this.framePayloadLength;
+        }
+    }
+
+    /**
+     * Validates the incoming X Protocol frame size before reading its payload.
+     */
+    private void validateMessageSize() {
+        if (this.framePayloadLength < 0) {
+            throw ExceptionFactory.createException(CJCommunicationsException.class, "Invalid X Protocol message size: " + this.framePayloadLength);
+        }
+        long frameLength = (long) this.framePayloadLength + XMessageHeader.MESSAGE_TYPE_LENGTH;
+        if (this.maxAllowedPacket > 0 && frameLength > this.maxAllowedPacket) {
+            throw new CJPacketTooBigException(Messages.getString("PacketTooBigException.1", new Object[] { frameLength, this.maxAllowedPacket }));
         }
     }
 
@@ -280,7 +306,7 @@ public class CompressionSplittedInputStream extends FilterInputStream {
      * @return
      *         <code>true</code> if the frame header was fully consumed, <code>false</code> otherwise.
      */
-    boolean isFrameHeaderFullyConsumed() {
+    private boolean isFrameHeaderFullyConsumed() {
         return this.frameHeaderConsumed == HEADER_LENGTH;
     }
 
@@ -293,7 +319,7 @@ public class CompressionSplittedInputStream extends FilterInputStream {
      * @exception IOException
      *                if any of the underlying I/O operations fail.
      */
-    public int readFully(byte[] b) throws IOException {
+    private int readFully(byte[] b) throws IOException {
         return readFully(b, 0, b.length);
     }
 

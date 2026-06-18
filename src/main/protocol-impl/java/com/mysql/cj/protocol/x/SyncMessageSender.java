@@ -41,11 +41,6 @@ import com.mysql.cj.protocol.PacketSentTimeHolder;
  */
 public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTimeHolder {
 
-    /**
-     * Header length of X Protocol packet.
-     */
-    static final int HEADER_LEN = 5;
-
     private OutputStream outputStream;
     private long lastPacketSentTime = 0;
     private long previousPacketSentTime = 0;
@@ -65,13 +60,16 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
             MessageLite msg = message.getMessage();
             try {
                 int type = MessageConstants.getTypeForMessageClass(msg.getClass());
-                int size = 1 + msg.getSerializedSize();
-                if (this.maxAllowedPacket > 0 && size > this.maxAllowedPacket) {
-                    throw new CJPacketTooBigException(Messages.getString("PacketTooBigException.1", new Object[] { size, this.maxAllowedPacket }));
+                long frameLength = (long) XMessageHeader.MESSAGE_TYPE_LENGTH + msg.getSerializedSize();
+                if (frameLength > Integer.MAX_VALUE) {
+                    throw new CJPacketTooBigException(Messages.getString("PacketTooBigException.1", new Object[] { frameLength, Integer.MAX_VALUE }));
+                }
+                if (this.maxAllowedPacket > 0 && frameLength > this.maxAllowedPacket) {
+                    throw new CJPacketTooBigException(Messages.getString("PacketTooBigException.1", new Object[] { frameLength, this.maxAllowedPacket }));
                 }
                 // for debugging
-                // System.err.println("Initiating write of message (size=" + size + ", tag=" + ClientMessages.Type.valueOf(type) + ")");
-                byte[] sizeHeader = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(size).array();
+                // System.err.println("Initiating write of message (size=" + frameLength + ", tag=" + ClientMessages.Type.valueOf(type) + ")");
+                byte[] sizeHeader = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt((int) frameLength).array();
                 this.outputStream.write(sizeHeader);
                 this.outputStream.write(type);
                 msg.writeTo(this.outputStream);
@@ -94,7 +92,7 @@ public class SyncMessageSender implements MessageSender<XMessage>, PacketSentTim
             MessageLite msg = message.getMessage();
             try {
                 send(message);
-                long result = 4 + 1 + msg.getSerializedSize();
+                long result = XMessageHeader.HEADER_LENGTH + msg.getSerializedSize();
                 resultHandler.completed(result, null);
             } catch (Throwable t) {
                 resultHandler.failed(t, null);

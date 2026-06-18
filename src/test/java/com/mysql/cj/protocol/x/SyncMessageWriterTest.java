@@ -32,6 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.google.protobuf.ByteString;
+import com.mysql.cj.exceptions.CJPacketTooBigException;
 import com.mysql.cj.exceptions.WrongArgumentException;
 import com.mysql.cj.x.protobuf.Mysqlx.ClientMessages;
 import com.mysql.cj.x.protobuf.Mysqlx.Ok;
@@ -95,6 +96,17 @@ public class SyncMessageWriterTest {
         this.writer.send(new XMessage(Reset.getDefaultInstance()));
         long lastSent2 = this.writer.getLastPacketSentTime();
         assertTrue(lastSent2 >= lastSent1);
+    }
+
+    /**
+     * Tests that the X Protocol message type byte is included in the outbound packet size limit.
+     */
+    @Test
+    public void testPacketTooBigIncludesMessageType() {
+        AuthenticateStart msg = AuthenticateStart.newBuilder().setMechName("Unit-Test").build();
+        this.writer.setMaxAllowedPacket(msg.getSerializedSize());
+
+        assertThrows(CJPacketTooBigException.class, () -> this.writer.send(new XMessage(msg)));
     }
 
 }
