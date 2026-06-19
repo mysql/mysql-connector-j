@@ -3,6 +3,8 @@
 
 Version 26.7.0
 
+  - Fix for Bug#39449361, LOAD DATA LOCAL INFILE accepts ambiguous Windows file URL path forms.
+
   - Fix for Bug#39328305, X Protocol reader does not validate server-supplied frame length before allocation.
 
   - Fix for Bug#39327277, Restrict SSL keystore loading to local file inputs.

@@ -1854,6 +1854,17 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             throw ExceptionFactory.createException(Messages.getString("MysqlIO.66", new Object[] { urlFromFileName.getProtocol() }), this.exceptionInterceptor);
         }
 
+        if (isLocalInfileUrlPathNetworkPath(urlFromFileName.getPath())) {
+            throw ExceptionFactory.createException(Messages.getString("MysqlIO.68", new Object[] { fileName }), this.exceptionInterceptor);
+        }
+        try {
+            if (isLocalInfileUrlPathNetworkPath(urlFromFileName.toURI().getPath())) {
+                throw ExceptionFactory.createException(Messages.getString("MysqlIO.68", new Object[] { fileName }), this.exceptionInterceptor);
+            }
+        } catch (URISyntaxException e) {
+            // Continue validating using the parsed URL details.
+        }
+
         String host = urlFromFileName.getHost();
         if (!StringUtils.isNullOrEmpty(host)) {
             try {
@@ -1865,6 +1876,18 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                 throw ExceptionFactory.createException(Messages.getString("MysqlIO.68", new Object[] { fileName }), e, this.exceptionInterceptor);
             }
         }
+    }
+
+    static boolean isLocalInfileUrlPathNetworkPath(String path) {
+        if (path == null) {
+            return false;
+        }
+
+        if (Util.isRunningOnWindows() && Util.isWindowsAbsolutePath(path.replaceFirst("^[/\\\\]+", ""))) {
+            return false;
+        }
+
+        return Util.isNetworkPath(path) || path.startsWith("/") && Util.isNetworkPath(path.replaceFirst("^/+", ""));
     }
 
     private Path getLocalInfileUrlPath(URL urlFromFileName) throws IOException, URISyntaxException {
