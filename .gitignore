@@ -18,3 +18,7 @@
 .attach_pid*
 hs_err_pid*.log
 *.sh
+/.codex/
+/.agents/
+AGENTS.md
+AGENTS.override.md
