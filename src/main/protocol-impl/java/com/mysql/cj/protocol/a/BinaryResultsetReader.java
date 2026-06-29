@@ -56,8 +56,18 @@ public class BinaryResultsetReader implements ProtocolEntityReader<Resultset, Na
         if (columnCount > 0) {
             // Build a result set with rows.
 
+            // When CLIENT_CACHE_METADATA is negotiated the server inserts a 1-byte flag after the column count:
+            //   1 = column definitions follow (regular protocol)
+            //   0 = column definitions are skipped because metadata is unchanged
+            boolean metadataFollows = true;
+            if (this.protocol.getServerSession().hasCacheMetadataEnabled()) {
+                metadataFollows = resultPacket.readInteger(IntegerDataType.INT1) != 0;
+            }
+
             // Read in the column information
-            ColumnDefinition cdef = this.protocol.read(ColumnDefinition.class, new MergingColumnDefinitionFactory(columnCount, metadata));
+            ColumnDefinition cdef = metadataFollows //
+                    ? this.protocol.read(ColumnDefinition.class, new MergingColumnDefinitionFactory(columnCount, metadata)) //
+                    : metadata;
 
             boolean isCursorPossible = this.protocol.getPropertySet().getBooleanProperty(PropertyKey.useCursorFetch).getValue()
                     && resultSetFactory.getResultSetType() == Type.FORWARD_ONLY && resultSetFactory.getFetchSize() > 0;

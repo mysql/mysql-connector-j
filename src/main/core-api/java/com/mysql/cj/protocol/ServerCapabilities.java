@@ -33,6 +33,10 @@ public interface ServerCapabilities {
 
     ServerVersion getServerVersion();
 
+    default int getExtendedCapabilityFlags() {
+        return 0;
+    }
+
     long getThreadId();
 
     void setThreadId(long threadId);

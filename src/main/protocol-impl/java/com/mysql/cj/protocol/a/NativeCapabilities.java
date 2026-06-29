@@ -38,6 +38,7 @@ public class NativeCapabilities implements ServerCapabilities {
     private long threadId = -1;
     private String seed;
     private int capabilityFlags;
+    private int extendedCapabilityFlags;
     private int serverDefaultCollationIndex;
     private int statusFlags = 0;
     private int authPluginDataLength = 0;
@@ -50,7 +51,8 @@ public class NativeCapabilities implements ServerCapabilities {
         this.protocolVersion = (byte) initialHandshakePacket.readInteger(IntegerDataType.INT1);
 
         try {
-            this.serverVersion = ServerVersion.parseVersion(initialHandshakePacket.readString(StringSelfDataType.STRING_TERM, "ASCII"));
+            String versionString = initialHandshakePacket.readString(StringSelfDataType.STRING_TERM, "ASCII");
+            this.serverVersion = ServerVersion.parseVersion(versionString);
 
             // read connection id
             this.threadId = initialHandshakePacket.readInteger(IntegerDataType.INT4);
@@ -85,8 +87,10 @@ public class NativeCapabilities implements ServerCapabilities {
                 // read filler ([00])
                 initialHandshakePacket.readInteger(IntegerDataType.INT1);
             }
-            // next 10 bytes are reserved (all [00])
-            initialHandshakePacket.setPosition(initialHandshakePacket.getPosition() + 10);
+            // next 6 bytes are reserved (all [00])
+            initialHandshakePacket.setPosition(initialHandshakePacket.getPosition() + 6);
+            // read extended flag (4 bytes)
+            this.extendedCapabilityFlags = (int) initialHandshakePacket.readInteger(IntegerDataType.INT4);
 
             this.serverHasFracSecsSupport = this.serverVersion.meetsMinimum(new ServerVersion(5, 6, 4));
         } catch (Throwable t) {
@@ -118,6 +122,11 @@ public class NativeCapabilities implements ServerCapabilities {
     @Override
     public ServerVersion getServerVersion() {
         return this.serverVersion;
+    }
+
+    @Override
+    public int getExtendedCapabilityFlags() {
+        return this.extendedCapabilityFlags;
     }
 
     @Override
