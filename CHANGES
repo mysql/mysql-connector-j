@@ -1,6 +1,8 @@
 # Changelog
 # https://dev.mysql.com/doc/relnotes/connector-j/en/
 
+Version 26.10.0
+
 Version 26.7.0
 
   - Fix for Bug#39449361, LOAD DATA LOCAL INFILE accepts ambiguous Windows file URL path forms.
