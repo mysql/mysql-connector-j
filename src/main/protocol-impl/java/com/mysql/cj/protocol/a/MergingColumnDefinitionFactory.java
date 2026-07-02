@@ -32,7 +32,7 @@ import com.mysql.cj.result.Field;
 // 2. COM_STMT_EXECUTE returns metadata with actual field data types, they may mismatch those from COM_STMT_PREPARE
 public class MergingColumnDefinitionFactory extends ColumnDefinitionFactory implements ProtocolEntityFactory<ColumnDefinition, NativePacketPayload> {
 
-    public MergingColumnDefinitionFactory(long columnCount, ColumnDefinition columnDefinitionFromCache) {
+    public MergingColumnDefinitionFactory(int columnCount, ColumnDefinition columnDefinitionFromCache) {
         super(columnCount, columnDefinitionFromCache);
     }
 

@@ -32,6 +32,9 @@ public class NativeConstants {
     public static final int HEADER_LENGTH = 4;
     public static final int SEED_LENGTH = 20;
 
+    /** Maximum number of columns in a result set. */
+    public static final int MAX_COLUMN_COUNT = 65535;
+
     /* Type ids of response packets. */
     public static final short TYPE_ID_ERROR = 0xFF;
     public static final short TYPE_ID_EOF = 0xFE;

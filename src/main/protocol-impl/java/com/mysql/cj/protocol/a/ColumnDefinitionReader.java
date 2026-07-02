@@ -40,7 +40,7 @@ public class ColumnDefinitionReader implements ProtocolEntityReader<ColumnDefini
     public ColumnDefinition read(ProtocolEntityFactory<ColumnDefinition, NativePacketPayload> sf) {
         ColumnDefinitionFactory cdf = (ColumnDefinitionFactory) sf;
 
-        long columnCount = cdf.getColumnCount();
+        int columnCount = cdf.getColumnCount();
         ColumnDefinition cdef = cdf.getColumnDefinitionFromCache();
 
         if (cdef != null && !cdf.mergeColumnDefinitions()) {
@@ -51,7 +51,7 @@ public class ColumnDefinitionReader implements ProtocolEntityReader<ColumnDefini
         }
 
         /* read the metadata from the server */
-        Field[] fields = new Field[(int) columnCount];
+        Field[] fields = new Field[columnCount];
 
         for (int i = 0; i < columnCount; i++) {
             NativePacketPayload fieldPacket = this.protocol.readMessage(null);

@@ -27,15 +27,15 @@ import com.mysql.cj.result.Field;
 
 public class ColumnDefinitionFactory implements ProtocolEntityFactory<ColumnDefinition, NativePacketPayload> {
 
-    protected long columnCount;
+    protected int columnCount;
     protected ColumnDefinition columnDefinitionFromCache;
 
-    public ColumnDefinitionFactory(long columnCount, ColumnDefinition columnDefinitionFromCache) {
+    public ColumnDefinitionFactory(int columnCount, ColumnDefinition columnDefinitionFromCache) {
         this.columnCount = columnCount;
         this.columnDefinitionFromCache = columnDefinitionFromCache;
     }
 
-    public long getColumnCount() {
+    public int getColumnCount() {
         return this.columnCount;
     }
 
