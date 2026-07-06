@@ -3,6 +3,8 @@
 
 Version 26.10.0
 
+  - Fix for Bug#39449398, WebAuthn ClientDataJSON is not serialized correctly for relying party IDs containing special characters.
+
   - Fix for Bug#39455455, Reported result set column counts are not properly validated.
 
 Version 26.7.0

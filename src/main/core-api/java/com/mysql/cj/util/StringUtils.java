@@ -1801,6 +1801,51 @@ public class StringUtils {
         return res;
     }
 
+    /**
+     * Returns the given value quoted and escaped as a JSON string.
+     *
+     * @param value
+     *            the value to quote and escape
+     * @return the value as a JSON string
+     */
+    public static String toJsonString(String value) {
+        StringBuilder jsonString = new StringBuilder(value.length() + 2);
+        jsonString.append('"');
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            switch (c) {
+                case '"':
+                    jsonString.append("\\\"");
+                    break;
+                case '\\':
+                    jsonString.append("\\\\");
+                    break;
+                case '\b':
+                    jsonString.append("\\b");
+                    break;
+                case '\f':
+                    jsonString.append("\\f");
+                    break;
+                case '\n':
+                    jsonString.append("\\n");
+                    break;
+                case '\r':
+                    jsonString.append("\\r");
+                    break;
+                case '\t':
+                    jsonString.append("\\t");
+                    break;
+                default:
+                    if (c < 0x20) {
+                        jsonString.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        jsonString.append(c);
+                    }
+            }
+        }
+        return jsonString.append('"').toString();
+    }
+
     public static StringBuilder escapeString(StringBuilder buf, String x, boolean useAnsiQuotedIdentifiers, CharsetEncoder charsetEncoder) {
         int stringLength = x.length();
 

@@ -20,6 +20,9 @@
 
 package com.mysql.cj.protocol.a.authentication;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -38,6 +41,7 @@ import com.mysql.cj.protocol.Protocol;
 import com.mysql.cj.protocol.a.NativeConstants.IntegerDataType;
 import com.mysql.cj.protocol.a.NativeConstants.StringSelfDataType;
 import com.mysql.cj.protocol.a.NativePacketPayload;
+import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.Util;
 
 /**
@@ -49,7 +53,9 @@ import com.mysql.cj.util.Util;
 public class AuthenticationWebAuthnClient implements AuthenticationPlugin<NativePacketPayload> {
 
     public static String PLUGIN_NAME = "authentication_webauthn_client";
-    private static final String CLIENT_DATA_JSON = "{\"type\":\"webauthn.get\",\"challenge\":\"%s\",\"origin\":\"https://%s\",\"crossOrigin\":false }";
+    private static final String CLIENT_DATA_JSON = "{\"type\":\"webauthn.get\",\"challenge\":%s,\"origin\":%s,\"crossOrigin\":false }";
+    private static final int CHALLENGE_LENGTH = 32;
+    private static final int MAX_RELYING_PARTY_ID_LENGTH = 255;
 
     private enum AuthStage {
         INITIAL_DATA, CREDENTIAL_ID, FINISHED;
@@ -147,12 +153,24 @@ public class AuthenticationWebAuthnClient implements AuthenticationPlugin<Native
 
                 fromServer.readInteger(IntegerDataType.INT1); // Reserved for future extensibility.
                 this.challenge = fromServer.readBytes(StringSelfDataType.STRING_LENENC);
-                this.relyingPartyId = fromServer.readString(StringSelfDataType.STRING_LENENC, "UTF-8");
-
+                if (this.challenge == null || this.challenge.length != CHALLENGE_LENGTH) {
+                    throw ExceptionFactory.createException(Messages.getString("AuthenticationWebAuthnClientPlugin.InvalidChallenge"));
+                }
+                byte[] relyingPartyIdBytes = fromServer.readBytes(StringSelfDataType.STRING_LENENC);
+                if (relyingPartyIdBytes == null || relyingPartyIdBytes.length == 0 || relyingPartyIdBytes.length > MAX_RELYING_PARTY_ID_LENGTH) {
+                    throw ExceptionFactory.createException(Messages.getString("AuthenticationWebAuthnClientPlugin.InvalidRelyingPartyId"));
+                }
+                try {
+                    this.relyingPartyId = StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
+                            .onUnmappableCharacter(CodingErrorAction.REPORT).decode(ByteBuffer.wrap(relyingPartyIdBytes)).toString();
+                } catch (CharacterCodingException e) {
+                    throw ExceptionFactory.createException(Messages.getString("AuthenticationWebAuthnClientPlugin.InvalidRelyingPartyId"), e);
+                }
                 // Compute the Client Data Hash.
                 Encoder b64Encoder = Base64.getUrlEncoder().withoutPadding();
                 String b64EncodedChallenge = b64Encoder.encodeToString(this.challenge);
-                this.clientDataJson = String.format(CLIENT_DATA_JSON, b64EncodedChallenge, this.relyingPartyId);
+                this.clientDataJson = String.format(CLIENT_DATA_JSON, StringUtils.toJsonString(b64EncodedChallenge),
+                        StringUtils.toJsonString("https://" + this.relyingPartyId));
                 MessageDigest digest;
                 try {
                     digest = MessageDigest.getInstance("SHA-256");
