@@ -46,6 +46,7 @@ import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.exceptions.WrongImplementationException;
 
 /**
  * Various utility methods for the driver.
@@ -152,6 +153,53 @@ public class Util {
     }
 
     /**
+     * Loads a configured extension class without initializing it. Names must consist of nonempty, dot-separated sequences of Java identifier characters
+     * (JLS 3.8), including '$' for nested, local and anonymous binary names (JLS 13.1). Single-segment names are accepted for short-name fallbacks.
+     * Identifier-ignorable characters are excluded. This deliberately accepts a narrower set of names than the JVM class file format (JVMS 4.2).
+     *
+     * @param className
+     *            the binary name of the class to load.
+     * @param classLoader
+     *            the class loader to use, or {@code null} for the bootstrap class loader.
+     * @return
+     *         the class, without running its static initializer.
+     * @throws ClassNotFoundException
+     *             if a class with the given valid name cannot be found.
+     * @throws WrongArgumentException
+     *             if the name is not valid for a configured extension class.
+     */
+    public static Class<?> loadClass(String className, ClassLoader classLoader) throws ClassNotFoundException {
+        if (!isValidClassName(className)) {
+            throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Util.InvalidClassName", new Object[] { className }));
+        }
+        return Class.forName(className, false, classLoader);
+    }
+
+    private static boolean isValidClassName(String className) {
+        if (StringUtils.isNullOrEmpty(className)) {
+            return false;
+        }
+        boolean segmentStart = true;
+        for (int offset = 0; offset < className.length();) {
+            int codePoint = className.codePointAt(offset);
+            offset += Character.charCount(codePoint);
+            if (codePoint == '.') {
+                if (segmentStart) {
+                    return false;
+                }
+                segmentStart = true;
+            } else {
+                if (Character.isIdentifierIgnorable(codePoint)
+                        || !(segmentStart ? Character.isJavaIdentifierStart(codePoint) : Character.isJavaIdentifierPart(codePoint))) {
+                    return false;
+                }
+                segmentStart = false;
+            }
+        }
+        return !segmentStart;
+    }
+
+    /**
      * Creates an instance of the specified class name through reflection using the given arguments, as long as the class implements the return type specified.
      *
      * @param <T>
@@ -168,6 +216,8 @@ public class Util {
      *            the {@link ExceptionInterceptor} to handle new exceptions thrown.
      * @return
      *         if all validations succeed, an instance of the class with the specified name.
+     * @throws WrongImplementationException
+     *             if the class is not assignable to the requested return type.
      */
     @SuppressWarnings("unchecked")
     public static <T> T getInstance(Class<T> returnType, String className, Class<?>[] argTypes, Object[] args, ExceptionInterceptor exceptionInterceptor) {
@@ -175,9 +225,9 @@ public class Util {
          * TODO: consider overloading this method with a version that uses Super Type Tokens instead of Class<T> in order to support parameterized types.
          */
         try {
-            Class<?> clazz = Class.forName(className, false, Util.class.getClassLoader());
+            Class<?> clazz = loadClass(className, Util.class.getClassLoader());
             if (!returnType.isAssignableFrom(clazz)) {
-                throw ExceptionFactory.createException(WrongArgumentException.class,
+                throw ExceptionFactory.createException(WrongImplementationException.class,
                         Messages.getString("Util.WrongImplementation", new Object[] { className, returnType.getName() }), exceptionInterceptor);
             }
             return handleNewInstance(((Class<T>) clazz).getConstructor(argTypes), args, exceptionInterceptor);

@@ -322,7 +322,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
 
         if (!plugin.isReusable()) {
             try {
-                plugin = plugin.getClass().newInstance();
+                plugin = Util.getInstance(AuthenticationPlugin.class, plugin.getClass().getName(), null, null, getExceptionInterceptor());
             } catch (Throwable t) {
                 throw ExceptionFactory.createException(WrongArgumentException.class,
                         Messages.getString("AuthenticationProvider.BadAuthenticationPlugin", new Object[] { plugin.getClass().getName() }), t,

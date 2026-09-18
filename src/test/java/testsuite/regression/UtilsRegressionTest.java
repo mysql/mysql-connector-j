@@ -20,29 +20,59 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.Socket;
+import java.net.URLEncoder;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 
+import com.mysql.cj.Messages;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
+import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.exceptions.WrongImplementationException;
+import com.mysql.cj.jdbc.CommentClientInfoProvider;
+import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.cj.jdbc.MysqlDataSource;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.ha.StandardLoadBalanceExceptionChecker;
 import com.mysql.cj.log.Log;
+import com.mysql.cj.log.LogFactory;
+import com.mysql.cj.log.StandardLogger;
+import com.mysql.cj.protocol.AuthenticationPlugin;
+import com.mysql.cj.protocol.SocketFactory;
+import com.mysql.cj.protocol.StandardSocketFactory;
+import com.mysql.cj.protocol.a.NativeAuthenticationProvider;
+import com.mysql.cj.protocol.a.NativePacketPayload;
+import com.mysql.cj.protocol.a.NativeSocketConnection;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.TimeUtil;
+import com.mysql.cj.util.Util;
 
 import testsuite.BaseTestCase;
 
@@ -2074,6 +2104,218 @@ public class UtilsRegressionTest extends BaseTestCase {
     @Test
     void testBug99292() throws Exception {
         assertEquals("Etc/UTC", TimeUtil.getCanonicalTimeZone("Coordinated Universal Time", null));
+    }
+
+    /**
+     * Tests fix for Bug#39806615, Validate extension class names supplied through connection properties.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug39806615() throws Exception {
+        List<String> requestedClasses = new ArrayList<>();
+        ClassLoader recordingLoader = new ClassLoader(null) {
+
+            @Override
+            public Class<?> loadClass(String name) throws ClassNotFoundException {
+                requestedClasses.add(name);
+                throw new ClassNotFoundException(name);
+            }
+
+        };
+
+        // Reject locator syntax and malformed names before invoking the class loader, even with initialization disabled.
+        String[] invalidNames = { null, "", ".Plugin", "example.", "example..Plugin", "example.1Plugin", "jar:file:.proc.self.fd.16!.Plugin",
+                "jar:file:/proc/self/fd/16!/Plugin", "http://localhost/Plugin", "file:/tmp/Plugin", "example/Plugin", "example\\Plugin", "example:Plugin",
+                "example!Plugin", "example%3APlugin", "[Ljava.lang.String;", "[I", " example.Plugin", "example.Plugin ", "example.Plu gin", "example.Plugin\n",
+                "example.Plugin\t", "example.Foo" + (char) 0 + "Bar", "example.Foo" + (char) 1 + "Bar", "example.Foo\u200bBar", "example.Foo\ud800",
+                "example.Foo\udc00" };
+        for (String className : invalidNames) {
+            String message = Messages.getString("Util.InvalidClassName", new Object[] { className });
+            WrongArgumentException ex = assertThrows(WrongArgumentException.class, () -> Util.loadClass(className, recordingLoader));
+            assertEquals(message, ex.getMessage());
+            assertNull(ex.getCause());
+            assertTrue(requestedClasses.isEmpty(), "Invalid names must not reach the class loader.");
+
+            ex = assertThrows(WrongArgumentException.class, () -> Util.getInstance(Object.class, className, null, null, null));
+            assertEquals(message, ex.getMessage());
+            assertNull(ex.getCause());
+        }
+
+        // JLS identifier characters and binary names: '$', Unicode letters, combining marks and supplementary code points are supported.
+        for (String className : new String[] { "Plugin", "_Plugin", "$Plugin", "example.Plugin2", "example.Outer$Plugin", "example.Outer$1",
+                "example.Outer$1Local", "example.\u00c9Plugin", "example.Plugi\u0301n", "example.\ud801\udc00Plugin" }) {
+            assertThrows(ClassNotFoundException.class, () -> Util.loadClass(className, recordingLoader));
+            assertEquals(Collections.singletonList(className), requestedClasses);
+            requestedClasses.clear();
+        }
+        assertEquals(String.class, Util.loadClass("java.lang.String", null));
+        assertEquals(TestBug39806615\u00c9Plugin.class,
+                Util.getInstance(SocketFactory.class, TestBug39806615\u00c9Plugin.class.getName(), null, null, null).getClass());
+
+        // Type checks must still precede initialization, and missing classes and constructor failures must retain their causes.
+        WrongArgumentException ex = assertThrows(WrongImplementationException.class,
+                Pattern.quote("The class 'testsuite.regression.UtilsRegressionTest$TestBug39806615WrongType' "
+                        + "does not implement the interface 'com.mysql.cj.protocol.SocketFactory'."),
+                () -> Util.getInstance(SocketFactory.class, TestBug39806615WrongType.class.getName(), null, null, null));
+        assertNull(ex.getCause());
+        ex = assertThrows(WrongArgumentException.class, () -> Util.getInstance(Object.class, "missing.Plugin", null, null, null));
+        assertTrue(ex.getCause() instanceof ClassNotFoundException);
+        ex = assertThrows(WrongArgumentException.class,
+                () -> Util.getInstance(SocketFactory.class, TestBug39806615BrokenPlugin.class.getName(), null, null, null));
+        assertTrue(ex.getCause() instanceof IllegalStateException);
+        assertEquals("Plugin constructor failed", ex.getMessage());
+
+        class TestSocketConnection extends NativeSocketConnection {
+
+            @Override
+            public SocketFactory createSocketFactory(String className) {
+                return super.createSocketFactory(className);
+            }
+
+        }
+        TestSocketConnection socketConnection = new TestSocketConnection();
+        assertEquals(StandardSocketFactory.class, socketConnection.createSocketFactory(StandardSocketFactory.class.getName()).getClass());
+        assertEquals(com.mysql.jdbc.SocketFactoryWrapper.class, socketConnection.createSocketFactory(TestBug39806615LegacyPlugin.class.getName()).getClass());
+        String invalidName = "jar:file:.proc.self.fd.16!.Plugin";
+        String invalidMessage = Messages.getString("Util.InvalidClassName", new Object[] { invalidName });
+        ex = assertThrows(WrongArgumentException.class, () -> socketConnection.createSocketFactory(invalidName));
+        assertEquals(invalidMessage, ex.getMessage());
+        assertEquals(WrongArgumentException.class, ex.getClass(), "Invalid names must not be reported as type mismatches.");
+        assertNull(ex.getCause());
+        assertEquals(StandardLogger.class, LogFactory.getLogger("StandardLogger", "testBug39806615").getClass());
+
+        // Failover matching continues to support classes/interfaces and to ignore missing classes, but rejects invalid names.
+        StandardLoadBalanceExceptionChecker checker = new StandardLoadBalanceExceptionChecker();
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.loadBalanceSQLExceptionSubclassFailover.getKeyName(), "missing.Exception, java.sql.SQLException, java.lang.Runnable");
+        assertDoesNotThrow(() -> checker.init(props));
+        assertTrue(checker.shouldExceptionTriggerFailover(new SQLException()));
+        assertFalse(checker.shouldExceptionTriggerFailover(new IllegalStateException()));
+        props.setProperty(PropertyKey.loadBalanceSQLExceptionSubclassFailover.getKeyName(), invalidName);
+        ex = assertThrows(WrongArgumentException.class, () -> {
+            new StandardLoadBalanceExceptionChecker().init(props);
+            return null;
+        });
+        assertEquals(invalidMessage, ex.getMessage());
+        assertNull(ex.getCause());
+
+        // Non-reusable authentication plugins must be recreated through the common instantiation path.
+        NativeAuthenticationProvider provider = new NativeAuthenticationProvider();
+        TestBug39806615AuthenticationPlugin plugin = new TestBug39806615AuthenticationPlugin();
+        Field pluginsField = NativeAuthenticationProvider.class.getDeclaredField("authenticationPlugins");
+        pluginsField.setAccessible(true);
+        pluginsField.set(provider, Collections.singletonMap(plugin.getProtocolPluginName(), plugin));
+        Method getPlugin = NativeAuthenticationProvider.class.getDeclaredMethod("getAuthenticationPlugin", String.class);
+        getPlugin.setAccessible(true);
+        Object newPlugin = getPlugin.invoke(provider, plugin.getProtocolPluginName());
+        assertEquals(plugin.getClass(), newPlugin.getClass());
+        assertNotSame(plugin, newPlugin);
+
+        // Check decoded URL values and separately supplied properties at the JDBC boundary, before any server connection is needed.
+        String url = "jdbc:mysql://127.0.0.1:1/test";
+        for (PropertyKey key : new PropertyKey[] { PropertyKey.socketFactory, PropertyKey.propertiesTransform, PropertyKey.logger,
+                PropertyKey.exceptionInterceptors, PropertyKey.queryInterceptors }) {
+            boolean useUrl = false;
+            do {
+                Properties connectionProps = new Properties();
+                String connectionUrl = url;
+                if (useUrl) {
+                    connectionUrl += "?" + key.getKeyName() + "=" + URLEncoder.encode(invalidName, "UTF-8");
+                } else {
+                    connectionProps.setProperty(key.getKeyName(), invalidName);
+                }
+                final String testUrl = connectionUrl;
+                SQLException sqlEx = assertThrows(key.getKeyName(), SQLException.class, () -> DriverManager.getConnection(testUrl, connectionProps));
+                Throwable cause = sqlEx;
+                while (cause != null && !invalidMessage.equals(cause.getMessage())) {
+                    cause = cause.getCause();
+                }
+                assertNotNull(cause, key.getKeyName() + " must report invalid class-name syntax.");
+            } while (useUrl = !useUrl);
+        }
+        MysqlDataSource ds = new MysqlDataSource();
+        ds.setUrl(url);
+        ds.getStringProperty(PropertyKey.socketFactory).setValue(invalidName);
+        assertThrows(SQLException.class, Pattern.quote(invalidMessage), ds::getConnection);
+
+        // Verify a real connection with a Unicode extension name and the existing short client-info provider fallback.
+        props.clear();
+        props.setProperty(PropertyKey.socketFactory.getKeyName(), TestBug39806615\u00c9Plugin.class.getName());
+        props.setProperty(PropertyKey.clientInfoProvider.getKeyName(), "CommentClientInfoProvider");
+        try (Connection testConn = getConnectionWithProps(props)) {
+            assertEquals(CommentClientInfoProvider.class, ((JdbcConnection) testConn).getClientInfoProviderImpl().getClass());
+        }
+    }
+
+    public static class TestBug39806615\u00c9Plugin extends StandardSocketFactory {
+    }
+
+    public static class TestBug39806615WrongType {
+
+        static {
+            if (true) {
+                throw new AssertionError("A class of the wrong type must not be initialized.");
+            }
+        }
+
+    }
+
+    public static class TestBug39806615BrokenPlugin extends StandardSocketFactory {
+
+        public TestBug39806615BrokenPlugin() {
+            throw new IllegalStateException("Plugin constructor failed");
+        }
+
+    }
+
+    @SuppressWarnings("deprecation")
+    public static class TestBug39806615LegacyPlugin implements com.mysql.jdbc.SocketFactory {
+
+        @Override
+        public Socket connect(String host, int portNumber, Properties props) {
+            return null;
+        }
+
+        @Override
+        public Socket beforeHandshake() {
+            return null;
+        }
+
+        @Override
+        public Socket afterHandshake() {
+            return null;
+        }
+
+    }
+
+    public static class TestBug39806615AuthenticationPlugin implements AuthenticationPlugin<NativePacketPayload> {
+
+        @Override
+        public String getProtocolPluginName() {
+            return "auth_test_plugin";
+        }
+
+        @Override
+        public boolean requiresConfidentiality() {
+            return false;
+        }
+
+        @Override
+        public boolean isReusable() {
+            return false;
+        }
+
+        @Override
+        public void setAuthenticationParameters(String user, String password) {
+        }
+
+        @Override
+        public boolean nextAuthenticationStep(NativePacketPayload fromServer, List<NativePacketPayload> toServer) {
+            toServer.clear();
+            return true;
+        }
+
     }
 
 }
