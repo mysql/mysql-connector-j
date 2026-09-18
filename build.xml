@@ -1338,7 +1338,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                   name="${com.mysql.cj.testsuite.test.class.sanitized}"
                   methods="${com.mysql.cj.testsuite.test.methods}"
                   outputdir="${com.mysql.cj.testsuite.junit.results}">
-                <fork includeJUnitPlatformLibraries="false">
+                <fork java="${com.mysql.cj.testsuite.jvm.java}" includeJUnitPlatformLibraries="false">
                     <jvmarg value="-Dfile.encoding=UTF-8" />
                     <jvmarg value="-Xmx1024m" />
                     <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
@@ -1352,7 +1352,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
             <test if="${com.mysql.cj.testsuite.run.class}"
                   name="${com.mysql.cj.testsuite.test.class.sanitized}"
                   outputdir="${com.mysql.cj.testsuite.junit.results}">
-                <fork includeJUnitPlatformLibraries="false">
+                <fork java="${com.mysql.cj.testsuite.jvm.java}" includeJUnitPlatformLibraries="false">
                     <jvmarg value="-Dfile.encoding=UTF-8" />
                     <jvmarg value="-Xmx1024m" />
                     <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
@@ -1368,7 +1368,7 @@ See also com.mysql.cj.conf.PropertyDefinitions.SYSP_* variables for other test o
                     <include name="**/*Test.class" />
                     <exclude name="**/perf/*.class" />
                 </fileset>
-                <fork includeJUnitPlatformLibraries="false">
+                <fork java="${com.mysql.cj.testsuite.jvm.java}" includeJUnitPlatformLibraries="false">
                     <jvmarg value="-Dfile.encoding=UTF-8" />
                     <jvmarg value="-Xmx1024m" />
                     <jvmarg value="${com.mysql.cj.testsuite.test.coverage.jvmargfinal}" />
