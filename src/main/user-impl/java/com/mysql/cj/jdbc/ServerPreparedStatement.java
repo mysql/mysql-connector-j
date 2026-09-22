@@ -702,13 +702,15 @@ public class ServerPreparedStatement extends ClientPreparedStatement {
         connectionLock.lock();
         try {
             try {
-                ClientPreparedStatement pstmt = ((Wrapper) localConn.prepareStatement(((PreparedQuery) this.query).getQueryInfo().getSqlForBatch(numBatches),
-                        this.resultSetConcurrency, this.query.getResultType().getIntValue())).unwrap(ClientPreparedStatement.class);
-                pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
+                ClientPreparedStatement pStmt = new ClientPreparedStatement(localConn, "Rewritten batch of: " + ((PreparedQuery) this.query).getOriginalSql(),
+                    getCurrentDatabase(), getQueryInfo().getQueryInfoForBatch(numBatches));
+                pStmt.setResultSetType(this.query.getResultType().getIntValue());
+                pStmt.setResultSetConcurrency(this.resultSetConcurrency);
+                pStmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
 
-                getQueryAttributesBindings().runThroughAll(a -> ((JdbcStatement) pstmt).setAttribute(a.getName(), a.getValue()));
+                getQueryAttributesBindings().runThroughAll(a -> ((JdbcStatement) pStmt).setAttribute(a.getName(), a.getValue()));
 
-                return pstmt;
+                return pStmt;
             } catch (CJException e) {
                 SQLException sqlEx = SQLError.createSQLException(Messages.getString("ServerPreparedStatement.27"),
                         MysqlErrorNumbers.SQLSTATE_CONNJ_GENERAL_ERROR, this.exceptionInterceptor);
