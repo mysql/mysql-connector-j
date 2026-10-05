@@ -39,6 +39,10 @@
 %global dist       .sl15
 %endif
 
+%if 0%{?suse_version} >= 1600 && 0%{?suse_version} < 1699
+%global dist       .sl16
+%endif
+
 # Disable "reproducible builds"
 %global source_date_epoch_from_changelog 0
 
