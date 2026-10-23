@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import com.mysql.cj.conf.PropertyKey;
+import com.mysql.cj.exceptions.CJCommunicationsException;
+import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.protocol.ColumnDefinition;
 import com.mysql.cj.protocol.ProtocolEntityFactory;
 import com.mysql.cj.protocol.ProtocolEntityReader;
@@ -49,7 +51,16 @@ public class TextResultsetReader implements ProtocolEntityReader<Resultset, Nati
             ProtocolEntityFactory<Resultset, NativePacketPayload> resultSetFactory) throws IOException {
         Resultset rs = null;
         //try {
-        long columnCount = resultPacket.readInteger(IntegerDataType.INT_LENENC);
+        boolean isLocalInfileRequest = resultPacket.isLocalInfileRequestPacket();
+        boolean isOkPacket = resultPacket.isOKPacket();
+        long reportedColumnCount = resultPacket.readInteger(IntegerDataType.INT_LENENC);
+        int columnCount = 0;
+        if (!isLocalInfileRequest && !isOkPacket) {
+            if (reportedColumnCount < 1 || reportedColumnCount > NativeConstants.MAX_COLUMN_COUNT) {
+                throw ExceptionFactory.createException(CJCommunicationsException.class, "Invalid result set column count: " + reportedColumnCount);
+            }
+            columnCount = (int) reportedColumnCount;
+        }
 
         if (columnCount > 0) {
             // Build a result set with rows.
@@ -91,7 +102,7 @@ public class TextResultsetReader implements ProtocolEntityReader<Resultset, Nati
 
         } else {
             // check for file request
-            if (columnCount == NativePacketPayload.NULL_LENGTH) {
+            if (isLocalInfileRequest) {
                 String charEncoding = this.protocol.getPropertySet().getStringProperty(PropertyKey.characterEncoding).getValue();
                 String fileName = resultPacket.readString(StringSelfDataType.STRING_TERM,
                         this.protocol.getServerSession().getCharsetSettings().doesPlatformDbCharsetMatches() ? charEncoding : null);

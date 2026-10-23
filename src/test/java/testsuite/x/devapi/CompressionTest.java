@@ -20,6 +20,7 @@
 
 package testsuite.x.devapi;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -38,6 +39,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.InflaterInputStream;
 
@@ -45,12 +47,14 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.mysql.cj.Messages;
 import com.mysql.cj.ServerVersion;
 import com.mysql.cj.conf.PropertyDefinitions;
 import com.mysql.cj.conf.PropertyDefinitions.Compression;
 import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.protocol.x.CompressionAlgorithm;
 import com.mysql.cj.protocol.x.SyncFlushDeflaterOutputStream;
 import com.mysql.cj.xdevapi.AddResult;
 import com.mysql.cj.xdevapi.Collection;
@@ -815,6 +819,25 @@ public class CompressionTest extends DevApiBaseTestCase {
         } finally {
             dropCollection("testBug99708");
         }
+    }
+
+    /**
+     * Tests fix for Bug#39806615, Validate extension class names supplied through connection properties.
+     */
+    @Test
+    public void testBug39806615() {
+        String invalidName = "jar:file:.proc.self.fd.16!.Plugin";
+        String invalidMessage = Messages.getString("Util.InvalidClassName", new Object[] { invalidName });
+
+        // Compression validation must not instantiate stream classes, including abstract classes.
+        assertDoesNotThrow(() -> new CompressionAlgorithm("test_stream", InputStream.class.getName(), OutputStream.class.getName()));
+        assertThrows(WrongArgumentException.class, Pattern.quote(invalidMessage),
+                () -> new CompressionAlgorithm("test_stream", invalidName, OutputStream.class.getName()));
+        assertThrows(WrongArgumentException.class, Pattern.quote(invalidMessage),
+                () -> new CompressionAlgorithm("test_stream", InputStream.class.getName(), invalidName));
+        WrongArgumentException ex = assertThrows(WrongArgumentException.class,
+                () -> new CompressionAlgorithm("test_stream", "missing.InputStream", OutputStream.class.getName()));
+        assertTrue(ex.getCause() instanceof ClassNotFoundException);
     }
 
 }

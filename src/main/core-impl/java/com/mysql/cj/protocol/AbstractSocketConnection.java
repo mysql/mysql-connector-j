@@ -29,7 +29,7 @@ import com.mysql.cj.conf.PropertySet;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
 import com.mysql.cj.exceptions.UnableToConnectException;
-import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.exceptions.WrongImplementationException;
 import com.mysql.cj.util.Util;
 import com.mysql.jdbc.SocketFactoryWrapper;
 
@@ -135,17 +135,14 @@ public abstract class AbstractSocketConnection implements SocketConnection {
 
         try {
             return Util.getInstance(SocketFactory.class, socketFactoryClassName, null, null, getExceptionInterceptor());
-        } catch (WrongArgumentException e1) {
-            if (e1.getCause() == null) {
-                // Wrap legacy socket factories.
-                try {
-                    return new SocketFactoryWrapper(
-                            Util.getInstance(com.mysql.jdbc.SocketFactory.class, socketFactoryClassName, null, null, getExceptionInterceptor()));
-                } catch (Exception e2) {
-                    throw e1;
-                }
+        } catch (WrongImplementationException e1) {
+            // Wrap legacy socket factories.
+            try {
+                return new SocketFactoryWrapper(
+                        Util.getInstance(com.mysql.jdbc.SocketFactory.class, socketFactoryClassName, null, null, getExceptionInterceptor()));
+            } catch (Exception e2) {
+                throw e1;
             }
-            throw e1;
         }
     }
 

@@ -20,29 +20,59 @@
 
 package testsuite.regression;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.Socket;
+import java.net.URLEncoder;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 
+import com.mysql.cj.Messages;
+import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJException;
 import com.mysql.cj.exceptions.ExceptionInterceptor;
+import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.exceptions.WrongImplementationException;
+import com.mysql.cj.jdbc.CommentClientInfoProvider;
+import com.mysql.cj.jdbc.JdbcConnection;
+import com.mysql.cj.jdbc.MysqlDataSource;
 import com.mysql.cj.jdbc.exceptions.SQLError;
+import com.mysql.cj.jdbc.ha.StandardLoadBalanceExceptionChecker;
 import com.mysql.cj.log.Log;
+import com.mysql.cj.log.LogFactory;
+import com.mysql.cj.log.StandardLogger;
+import com.mysql.cj.protocol.AuthenticationPlugin;
+import com.mysql.cj.protocol.SocketFactory;
+import com.mysql.cj.protocol.StandardSocketFactory;
+import com.mysql.cj.protocol.a.NativeAuthenticationProvider;
+import com.mysql.cj.protocol.a.NativePacketPayload;
+import com.mysql.cj.protocol.a.NativeSocketConnection;
 import com.mysql.cj.util.StringUtils;
 import com.mysql.cj.util.TimeUtil;
+import com.mysql.cj.util.Util;
 
 import testsuite.BaseTestCase;
 
@@ -348,6 +378,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Addis Ababa", "Africa/Addis_Ababa");
         tzMap.put("Adelaide", "Australia/Adelaide");
         tzMap.put("Aden", "Asia/Aden");
+        tzMap.put("Aktau", "Asia/Aqtau");
         tzMap.put("Alaska", "US/Alaska");
         tzMap.put("Aleutian", "US/Aleutian");
         tzMap.put("Algiers", "Africa/Algiers");
@@ -361,7 +392,6 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Antananarivo", "Indian/Antananarivo");
         tzMap.put("Antigua", "America/Antigua");
         tzMap.put("Apia", "Pacific/Apia");
-        tzMap.put("Aqtau", "Asia/Aqtau");
         tzMap.put("Aqtobe", "Asia/Aqtobe");
         tzMap.put("Araguaina", "America/Araguaina");
         tzMap.put("Arizona", "US/Arizona");
@@ -423,21 +453,22 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Calcutta", "Asia/Calcutta");
         tzMap.put("Cambridge Bay", "America/Cambridge_Bay");
         tzMap.put("Campo Grande", "America/Campo_Grande");
-        tzMap.put("Canary", "Atlantic/Canary");
+        tzMap.put("Canaries", "Atlantic/Canary");
         tzMap.put("Canberra", "Australia/Canberra");
         tzMap.put("Cancun", "America/Cancun");
+        tzMap.put("Canton Island", "Pacific/Enderbury");
         tzMap.put("Cape Verde", "Atlantic/Cape_Verde");
         tzMap.put("Caracas", "America/Caracas");
         tzMap.put("Casablanca", "Africa/Casablanca");
-        tzMap.put("Casey", "Antarctica/Casey");
+        tzMap.put("Casey Station", "Antarctica/Casey");
         tzMap.put("Catamarca", "America/Catamarca");
         tzMap.put("Cayenne", "America/Cayenne");
         tzMap.put("Cayman", "America/Cayman");
         tzMap.put("Center", "America/North_Dakota/Center");
         tzMap.put("Central", "US/Central");
         tzMap.put("Ceuta", "Africa/Ceuta");
-        tzMap.put("Chagos", "Indian/Chagos");
-        tzMap.put("Chatham", "Pacific/Chatham");
+        tzMap.put("Chagos Archipelago", "Indian/Chagos");
+        tzMap.put("Chatham Islands", "Pacific/Chatham");
         tzMap.put("Chicago", "America/Chicago");
         tzMap.put("Chihuahua", "America/Chihuahua");
         tzMap.put("Chisinau", "Europe/Chisinau");
@@ -451,13 +482,14 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Cocos Islands", "Indian/Cocos");
         tzMap.put("Colombo", "Asia/Colombo");
         tzMap.put("ComodRivadavia", "America/Argentina/ComodRivadavia");
-        tzMap.put("Comoro", "Indian/Comoro");
+        tzMap.put("Comoros", "Indian/Comoro");
         tzMap.put("Conakry", "Africa/Conakry");
         tzMap.put("Continental", "Chile/Continental");
         tzMap.put("Copenhagen", "Europe/Copenhagen");
         tzMap.put("Coral Harbour", "America/Coral_Harbour");
         tzMap.put("Cordoba", "America/Cordoba");
         tzMap.put("Costa Rica", "America/Costa_Rica");
+        tzMap.put("Coyhaique", "America/Coyhaique");
         tzMap.put("Creston", "America/Creston");
         tzMap.put("Cuiaba", "America/Cuiaba");
         tzMap.put("Curacao", "America/Curacao");
@@ -481,7 +513,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Douala", "Africa/Douala");
         tzMap.put("Dubai", "Asia/Dubai");
         tzMap.put("Dublin", "Europe/Dublin");
-        tzMap.put("DumontDUrville", "Antarctica/DumontDUrville");
+        tzMap.put("Dumont d’Urville Station", "Antarctica/DumontDUrville");
         tzMap.put("Dushanbe", "Asia/Dushanbe");
         tzMap.put("East", "Brazil/East");
         tzMap.put("East-Indiana", "US/East-Indiana");
@@ -494,13 +526,12 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Eirunepe", "America/Eirunepe");
         tzMap.put("El Aaiun", "Africa/El_Aaiun");
         tzMap.put("El Salvador", "America/El_Salvador");
-        tzMap.put("Enderbury", "Pacific/Enderbury");
         tzMap.put("Ensenada", "America/Ensenada");
         tzMap.put("Eucla", "Australia/Eucla");
-        tzMap.put("Faeroe", "Atlantic/Faeroe");
         tzMap.put("Fakaofo", "Pacific/Fakaofo");
         tzMap.put("Famagusta", "Asia/Famagusta");
         tzMap.put("Faroe", "Atlantic/Faroe");
+        tzMap.put("Faroes", "Atlantic/Faeroe");
         tzMap.put("Fiji", "Pacific/Fiji");
         tzMap.put("Fort Nelson", "America/Fort_Nelson");
         tzMap.put("Fort Wayne", "America/Fort_Wayne");
@@ -538,7 +569,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("GMT-9", "Etc/GMT-9");
         tzMap.put("GMT0", "Etc/GMT0");
         tzMap.put("Gaborone", "Africa/Gaborone");
-        tzMap.put("Galapagos", "Pacific/Galapagos");
+        tzMap.put("Galápagos Islands", "Pacific/Galapagos");
         tzMap.put("Gambier", "Pacific/Gambier");
         tzMap.put("Gaza", "Asia/Gaza");
         tzMap.put("General", "Mexico/General");
@@ -597,7 +628,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Kashgar", "Asia/Kashgar");
         tzMap.put("Kathmandu", "Asia/Kathmandu");
         tzMap.put("Katmandu", "Asia/Katmandu");
-        tzMap.put("Kerguelen", "Indian/Kerguelen");
+        tzMap.put("Kerguelen Islands", "Indian/Kerguelen");
         tzMap.put("Khandyga", "Asia/Khandyga");
         tzMap.put("Khartoum", "Africa/Khartoum");
         tzMap.put("Kiev", "Europe/Kiev");
@@ -615,8 +646,9 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Kuala Lumpur", "Asia/Kuala_Lumpur");
         tzMap.put("Kuching", "Asia/Kuching");
         tzMap.put("Kuwait", "Asia/Kuwait");
-        tzMap.put("Kwajalein", "Pacific/Kwajalein");
+        tzMap.put("Kwajalein Atoll", "Pacific/Kwajalein");
         tzMap.put("Kyiv", "Europe/Kyiv");
+        tzMap.put("Kyzylorda", "Asia/Qyzylorda");
         tzMap.put("LHI", "Australia/LHI");
         tzMap.put("La Paz", "America/La_Paz");
         tzMap.put("La Rioja", "America/Argentina/La_Rioja");
@@ -657,16 +689,16 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Marengo", "America/Indiana/Marengo");
         tzMap.put("Mariehamn", "Europe/Mariehamn");
         tzMap.put("Marigot", "America/Marigot");
-        tzMap.put("Marquesas", "Pacific/Marquesas");
+        tzMap.put("Marquesas Islands", "Pacific/Marquesas");
         tzMap.put("Martinique", "America/Martinique");
         tzMap.put("Maseru", "Africa/Maseru");
         tzMap.put("Matamoros", "America/Matamoros");
         tzMap.put("Mauritius", "Indian/Mauritius");
-        tzMap.put("Mawson", "Antarctica/Mawson");
+        tzMap.put("Mawson Station", "Antarctica/Mawson");
         tzMap.put("Mayotte", "Indian/Mayotte");
         tzMap.put("Mazatlan", "America/Mazatlan");
         tzMap.put("Mbabane", "Africa/Mbabane");
-        tzMap.put("McMurdo", "Antarctica/McMurdo");
+        tzMap.put("McMurdo Station", "Antarctica/McMurdo");
         tzMap.put("Melbourne", "Australia/Melbourne");
         tzMap.put("Mendoza", "America/Mendoza");
         tzMap.put("Menominee", "America/Menominee");
@@ -674,7 +706,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Metlakatla", "America/Metlakatla");
         tzMap.put("Mexico City", "America/Mexico_City");
         tzMap.put("Michigan", "US/Michigan");
-        tzMap.put("Midway", "Pacific/Midway");
+        tzMap.put("Midway Atoll", "Pacific/Midway");
         tzMap.put("Minsk", "Europe/Minsk");
         tzMap.put("Miquelon", "America/Miquelon");
         tzMap.put("Mogadishu", "Africa/Mogadishu");
@@ -719,7 +751,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Pacific-New", "US/Pacific-New");
         tzMap.put("Pago Pago", "Pacific/Pago_Pago");
         tzMap.put("Palau", "Pacific/Palau");
-        tzMap.put("Palmer", "Antarctica/Palmer");
+        tzMap.put("Palmer Land", "Antarctica/Palmer");
         tzMap.put("Panama", "America/Panama");
         tzMap.put("Pangnirtung", "America/Pangnirtung");
         tzMap.put("Paramaribo", "America/Paramaribo");
@@ -728,7 +760,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Petersburg", "America/Indiana/Petersburg");
         tzMap.put("Phnom Penh", "Asia/Phnom_Penh");
         tzMap.put("Phoenix", "America/Phoenix");
-        tzMap.put("Pitcairn", "Pacific/Pitcairn");
+        tzMap.put("Pitcairn Islands", "Pacific/Pitcairn");
         tzMap.put("Podgorica", "Europe/Podgorica");
         tzMap.put("Pohnpei", "Pacific/Pohnpei");
         tzMap.put("Ponape", "Pacific/Ponape");
@@ -745,7 +777,6 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Pyongyang", "Asia/Pyongyang");
         tzMap.put("Qatar", "Asia/Qatar");
         tzMap.put("Queensland", "Australia/Queensland");
-        tzMap.put("Qyzylorda", "Asia/Qyzylorda");
         tzMap.put("Rainy River", "America/Rainy_River");
         tzMap.put("Rangoon", "Asia/Rangoon");
         tzMap.put("Rankin Inlet", "America/Rankin_Inlet");
@@ -761,7 +792,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Riyadh", "Asia/Riyadh");
         tzMap.put("Rome", "Europe/Rome");
         tzMap.put("Rosario", "America/Rosario");
-        tzMap.put("Rothera", "Antarctica/Rothera");
+        tzMap.put("Rothera Station", "Antarctica/Rothera");
         tzMap.put("Saipan", "Pacific/Saipan");
         tzMap.put("Sakhalin", "Asia/Sakhalin");
         tzMap.put("Salta", "America/Argentina/Salta");
@@ -784,6 +815,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Seoul", "Asia/Seoul");
         tzMap.put("Shanghai", "Asia/Shanghai");
         tzMap.put("Shiprock", "America/Shiprock");
+        tzMap.put("Showa Station", "Antarctica/Syowa");
         tzMap.put("Simferopol", "Europe/Simferopol");
         tzMap.put("Singapore", "Asia/Singapore");
         tzMap.put("Sitka", "America/Sitka");
@@ -804,7 +836,6 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Stockholm", "Europe/Stockholm");
         tzMap.put("Swift Current", "America/Swift_Current");
         tzMap.put("Sydney", "Australia/Sydney");
-        tzMap.put("Syowa", "Antarctica/Syowa");
         tzMap.put("Tahiti", "Pacific/Tahiti");
         tzMap.put("Taipei", "Asia/Taipei");
         tzMap.put("Tallinn", "Europe/Tallinn");
@@ -830,7 +861,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Toronto", "America/Toronto");
         tzMap.put("Tortola", "America/Tortola");
         tzMap.put("Tripoli", "Africa/Tripoli");
-        tzMap.put("Troll", "Antarctica/Troll");
+        tzMap.put("Troll Station", "Antarctica/Troll");
         tzMap.put("Truk", "Pacific/Truk");
         tzMap.put("Tucuman", "America/Argentina/Tucuman");
         tzMap.put("Tunis", "Africa/Tunis");
@@ -840,7 +871,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Ulan Bator", "Asia/Ulan_Bator");
         tzMap.put("Ulyanovsk", "Europe/Ulyanovsk");
         tzMap.put("Universal", "Etc/Universal");
-        tzMap.put("Unknown City", "Etc/Unknown");
+        tzMap.put("Unknown Location", "Etc/Unknown");
         tzMap.put("Urumqi", "Asia/Urumqi");
         tzMap.put("Ushuaia", "America/Argentina/Ushuaia");
         tzMap.put("Ust-Nera", "Asia/Ust-Nera");
@@ -857,7 +888,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Virgin", "America/Virgin");
         tzMap.put("Vladivostok", "Asia/Vladivostok");
         tzMap.put("Volgograd", "Europe/Volgograd");
-        tzMap.put("Vostok", "Antarctica/Vostok");
+        tzMap.put("Vostok Station", "Antarctica/Vostok");
         tzMap.put("Wake Island", "Pacific/Wake");
         tzMap.put("Wallis", "Pacific/Wallis");
         tzMap.put("Warsaw", "Europe/Warsaw");
@@ -932,6 +963,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Atikokan, Canada", "America/Coral_Harbour");
         tzMap.put("Atyrau (Guryev), Kazakhstan", "Asia/Atyrau");
         tzMap.put("Auckland, New Zealand", "Pacific/Auckland");
+        tzMap.put("Aysén Region, Chile", "America/Coyhaique");
         tzMap.put("Azores, Portugal", "Atlantic/Azores");
         tzMap.put("Baghdad, Iraq", "Asia/Baghdad");
         tzMap.put("Bahia, Brazil", "America/Bahia");
@@ -980,7 +1012,6 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Cayman Islands", "America/Cayman");
         tzMap.put("Center (North Dakota), United States", "America/North_Dakota/Center");
         tzMap.put("Ceuta, Spain", "Africa/Ceuta");
-        tzMap.put("Chagos Archipelago", "Indian/Chagos");
         tzMap.put("Chatham Islands, New Zealand", "Pacific/Chatham");
         tzMap.put("Chicago, United States", "America/Chicago");
         tzMap.put("Chihuahua, Mexico", "America/Chihuahua");
@@ -990,7 +1021,6 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Ciudad Juárez, Mexico", "America/Ciudad_Juarez");
         tzMap.put("Cocos (Keeling) Islands", "Indian/Cocos");
         tzMap.put("Colombo, Sri Lanka", "Asia/Colombo");
-        tzMap.put("Comoros", "Indian/Comoro");
         tzMap.put("Conakry, Guinea", "Africa/Conakry");
         tzMap.put("Coordinated Universal Time", "Etc/UTC");
         tzMap.put("Copenhagen, Denmark", "Europe/Copenhagen");
@@ -1040,8 +1070,6 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Greenwich Mean Time", "Etc/GMT");
         tzMap.put("Guadalcanal, Solomon Islands", "Pacific/Guadalcanal");
         tzMap.put("Guayaquil, Ecuador", "America/Guayaquil");
-        tzMap.put("HDT", "Pacific/Honolulu");
-        tzMap.put("HST", "Pacific/Honolulu");
         tzMap.put("Halifax, Canada", "America/Halifax");
         tzMap.put("Harare, Zimbabwe", "Africa/Harare");
         tzMap.put("Havana, Cuba", "America/Havana");
@@ -1170,7 +1198,6 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Petersburg (Indiana), United States", "America/Indiana/Petersburg");
         tzMap.put("Phnom Penh, Cambodia", "Asia/Phnom_Penh");
         tzMap.put("Phoenix, United States", "America/Phoenix");
-        tzMap.put("Pitcairn Islands", "Pacific/Pitcairn");
         tzMap.put("Podgorica, Montenegro", "Europe/Podgorica");
         tzMap.put("Pohnpei, Micronesia", "Pacific/Ponape");
         tzMap.put("Pontianak, Indonesia", "Asia/Pontianak");
@@ -1308,9 +1335,6 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("American Samoa Daylight Time", "Pacific/Pago_Pago");
         tzMap.put("American Samoa Standard Time", "Pacific/Pago_Pago");
         tzMap.put("American Samoa Time", "Pacific/Pago_Pago");
-        tzMap.put("Anadyr Standard Time", "Asia/Anadyr");
-        tzMap.put("Anadyr Summer Time", "Asia/Anadyr");
-        tzMap.put("Anadyr Time", "Asia/Anadyr");
         tzMap.put("Arabian Time", "Asia/Riyadh");
         tzMap.put("Argentina Summer Time", "America/Buenos_Aires");
         tzMap.put("Argentina Time", "America/Buenos_Aires");
@@ -1404,18 +1428,16 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Greenland Time", "America/Godthab");
         tzMap.put("Gulf Standard Time", "Asia/Dubai");
         tzMap.put("Guyana Time", "America/Guyana");
-        tzMap.put("HADT", "Pacific/Honolulu");
-        tzMap.put("HAST", "Pacific/Honolulu");
-        tzMap.put("HAT", "Pacific/Honolulu");
-        tzMap.put("Hawaii-Aleutian Daylight Time", "Pacific/Honolulu");
+        tzMap.put("HADT", "America/Adak");
+        tzMap.put("HAST", "America/Adak");
+        tzMap.put("HAT", "America/Adak");
+        tzMap.put("HST", "Pacific/Honolulu");
+        tzMap.put("Hawaii-Aleutian Daylight Time", "America/Adak");
         tzMap.put("Hawaii-Aleutian Standard Time", "Pacific/Honolulu");
-        tzMap.put("Hawaii-Aleutian Time", "Pacific/Honolulu");
+        tzMap.put("Hawaii-Aleutian Time", "America/Adak");
         tzMap.put("Hong Kong Standard Time", "Asia/Hong_Kong");
         tzMap.put("Hong Kong Summer Time", "Asia/Hong_Kong");
         tzMap.put("Hong Kong Time", "Asia/Hong_Kong");
-        tzMap.put("Hovd Standard Time", "Asia/Hovd");
-        tzMap.put("Hovd Summer Time", "Asia/Hovd");
-        tzMap.put("Hovd Time", "Asia/Hovd");
         tzMap.put("Indian Ocean Time", "Indian/Chagos");
         tzMap.put("Indochina Time", "Asia/Bangkok");
         tzMap.put("Iran Time", "Asia/Tehran");
@@ -1430,6 +1452,9 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Kamchatka Summer Time", "Asia/Kamchatka");
         tzMap.put("Kamchatka Time", "Asia/Kamchatka");
         tzMap.put("Kazakhstan Time", "Asia/Almaty");
+        tzMap.put("Khovd Standard Time", "Asia/Hovd");
+        tzMap.put("Khovd Summer Time", "Asia/Hovd");
+        tzMap.put("Khovd Time", "Asia/Hovd");
         tzMap.put("Korean Daylight Time", "Asia/Seoul");
         tzMap.put("Korean Standard Time", "Asia/Seoul");
         tzMap.put("Korean Time", "Asia/Seoul");
@@ -1471,9 +1496,6 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Norfolk Island Daylight Time", "Pacific/Norfolk");
         tzMap.put("Norfolk Island Standard Time", "Pacific/Norfolk");
         tzMap.put("Norfolk Island Time", "Pacific/Norfolk");
-        tzMap.put("Novosibirsk Standard Time", "Asia/Novosibirsk");
-        tzMap.put("Novosibirsk Summer Time", "Asia/Novosibirsk");
-        tzMap.put("Novosibirsk Time", "Asia/Novosibirsk");
         tzMap.put("Omsk Summer Time", "Asia/Omsk");
         tzMap.put("Omsk Time", "Asia/Omsk");
         tzMap.put("PDT", "America/Los_Angeles");
@@ -1497,8 +1519,6 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Pohnpei Time", "Pacific/Ponape");
         tzMap.put("Rothera Time", "Antarctica/Rothera");
         tzMap.put("Réunion Time", "Indian/Reunion");
-        tzMap.put("Sakhalin Summer Time", "Asia/Sakhalin");
-        tzMap.put("Sakhalin Time", "Asia/Sakhalin");
         tzMap.put("Samara Standard Time", "Europe/Samara");
         tzMap.put("Samara Summer Time", "Europe/Samara");
         tzMap.put("Samara Time", "Europe/Samara");
@@ -1524,6 +1544,9 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Turkmenistan Summer Time", "Asia/Ashgabat");
         tzMap.put("Turkmenistan Time", "Asia/Ashgabat");
         tzMap.put("Tuvalu Time", "Pacific/Funafuti");
+        tzMap.put("Türkiye Standard Time", "Europe/Istanbul");
+        tzMap.put("Türkiye Summer Time", "Europe/Istanbul");
+        tzMap.put("Türkiye Time", "Europe/Istanbul");
         tzMap.put("Ulaanbaatar Summer Time", "Asia/Ulaanbaatar");
         tzMap.put("Ulaanbaatar Time", "Asia/Ulaanbaatar");
         tzMap.put("Uruguay Standard Time", "America/Montevideo");
@@ -1538,13 +1561,9 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Venezuela Time", "America/Caracas");
         tzMap.put("Vladivostok Summer Time", "Asia/Vladivostok");
         tzMap.put("Vladivostok Time", "Asia/Vladivostok");
-        tzMap.put("Volgograd Summer Time", "Europe/Volgograd");
-        tzMap.put("Volgograd Time", "Europe/Volgograd");
         tzMap.put("Vostok Time", "Antarctica/Vostok");
         tzMap.put("Wake Island Time", "Pacific/Wake");
         tzMap.put("Wallis & Futuna Time", "Pacific/Wallis");
-        tzMap.put("West Africa Standard Time", "Africa/Lagos");
-        tzMap.put("West Africa Summer Time", "Africa/Lagos");
         tzMap.put("West Africa Time", "Africa/Lagos");
         tzMap.put("Western European Standard Time", "Atlantic/Canary");
         tzMap.put("Western European Summer Time", "Atlantic/Canary");
@@ -1585,7 +1604,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("America/Thunder_Bay", "America/Toronto");
         tzMap.put("America/Virgin", "America/St_Thomas");
         tzMap.put("America/Yellowknife", "America/Edmonton");
-        tzMap.put("Antarctica/South_Pole", "Pacific/Auckland");
+        tzMap.put("Antarctica/South_Pole", "Antarctica/McMurdo");
         tzMap.put("Asia/Ashkhabad", "Asia/Ashgabat");
         tzMap.put("Asia/Choibalsan", "Asia/Ulaanbaatar");
         tzMap.put("Asia/Chongqing", "Asia/Shanghai");
@@ -1660,6 +1679,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("Iran", "Asia/Tehran");
         tzMap.put("Israel", "Asia/Jerusalem");
         tzMap.put("Japan", "Asia/Tokyo");
+        tzMap.put("Kwajalein", "Pacific/Kwajalein");
         tzMap.put("Libya", "Africa/Tripoli");
         tzMap.put("MET", "Europe/Brussels");
         tzMap.put("MST7MDT", "America/Denver");
@@ -1796,6 +1816,7 @@ public class UtilsRegressionTest extends BaseTestCase {
         tzMap.put("BST", "Europe/London");
         tzMap.put("ChST", "Pacific/Guam");
         tzMap.put("EAT", "Africa/Nairobi");
+        tzMap.put("HDT", "America/Adak");
         tzMap.put("HKT", "Asia/Hong_Kong");
         tzMap.put("IDT", "Asia/Jerusalem");
         tzMap.put("JST", "Asia/Tokyo");
@@ -2083,6 +2104,218 @@ public class UtilsRegressionTest extends BaseTestCase {
     @Test
     void testBug99292() throws Exception {
         assertEquals("Etc/UTC", TimeUtil.getCanonicalTimeZone("Coordinated Universal Time", null));
+    }
+
+    /**
+     * Tests fix for Bug#39806615, Validate extension class names supplied through connection properties.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBug39806615() throws Exception {
+        List<String> requestedClasses = new ArrayList<>();
+        ClassLoader recordingLoader = new ClassLoader(null) {
+
+            @Override
+            public Class<?> loadClass(String name) throws ClassNotFoundException {
+                requestedClasses.add(name);
+                throw new ClassNotFoundException(name);
+            }
+
+        };
+
+        // Reject locator syntax and malformed names before invoking the class loader, even with initialization disabled.
+        String[] invalidNames = { null, "", ".Plugin", "example.", "example..Plugin", "example.1Plugin", "jar:file:.proc.self.fd.16!.Plugin",
+                "jar:file:/proc/self/fd/16!/Plugin", "http://localhost/Plugin", "file:/tmp/Plugin", "example/Plugin", "example\\Plugin", "example:Plugin",
+                "example!Plugin", "example%3APlugin", "[Ljava.lang.String;", "[I", " example.Plugin", "example.Plugin ", "example.Plu gin", "example.Plugin\n",
+                "example.Plugin\t", "example.Foo" + (char) 0 + "Bar", "example.Foo" + (char) 1 + "Bar", "example.Foo\u200bBar", "example.Foo\ud800",
+                "example.Foo\udc00" };
+        for (String className : invalidNames) {
+            String message = Messages.getString("Util.InvalidClassName", new Object[] { className });
+            WrongArgumentException ex = assertThrows(WrongArgumentException.class, () -> Util.loadClass(className, recordingLoader));
+            assertEquals(message, ex.getMessage());
+            assertNull(ex.getCause());
+            assertTrue(requestedClasses.isEmpty(), "Invalid names must not reach the class loader.");
+
+            ex = assertThrows(WrongArgumentException.class, () -> Util.getInstance(Object.class, className, null, null, null));
+            assertEquals(message, ex.getMessage());
+            assertNull(ex.getCause());
+        }
+
+        // JLS identifier characters and binary names: '$', Unicode letters, combining marks and supplementary code points are supported.
+        for (String className : new String[] { "Plugin", "_Plugin", "$Plugin", "example.Plugin2", "example.Outer$Plugin", "example.Outer$1",
+                "example.Outer$1Local", "example.\u00c9Plugin", "example.Plugi\u0301n", "example.\ud801\udc00Plugin" }) {
+            assertThrows(ClassNotFoundException.class, () -> Util.loadClass(className, recordingLoader));
+            assertEquals(Collections.singletonList(className), requestedClasses);
+            requestedClasses.clear();
+        }
+        assertEquals(String.class, Util.loadClass("java.lang.String", null));
+        assertEquals(TestBug39806615\u00c9Plugin.class,
+                Util.getInstance(SocketFactory.class, TestBug39806615\u00c9Plugin.class.getName(), null, null, null).getClass());
+
+        // Type checks must still precede initialization, and missing classes and constructor failures must retain their causes.
+        WrongArgumentException ex = assertThrows(WrongImplementationException.class,
+                Pattern.quote("The class 'testsuite.regression.UtilsRegressionTest$TestBug39806615WrongType' "
+                        + "does not implement the interface 'com.mysql.cj.protocol.SocketFactory'."),
+                () -> Util.getInstance(SocketFactory.class, TestBug39806615WrongType.class.getName(), null, null, null));
+        assertNull(ex.getCause());
+        ex = assertThrows(WrongArgumentException.class, () -> Util.getInstance(Object.class, "missing.Plugin", null, null, null));
+        assertTrue(ex.getCause() instanceof ClassNotFoundException);
+        ex = assertThrows(WrongArgumentException.class,
+                () -> Util.getInstance(SocketFactory.class, TestBug39806615BrokenPlugin.class.getName(), null, null, null));
+        assertTrue(ex.getCause() instanceof IllegalStateException);
+        assertEquals("Plugin constructor failed", ex.getMessage());
+
+        class TestSocketConnection extends NativeSocketConnection {
+
+            @Override
+            public SocketFactory createSocketFactory(String className) {
+                return super.createSocketFactory(className);
+            }
+
+        }
+        TestSocketConnection socketConnection = new TestSocketConnection();
+        assertEquals(StandardSocketFactory.class, socketConnection.createSocketFactory(StandardSocketFactory.class.getName()).getClass());
+        assertEquals(com.mysql.jdbc.SocketFactoryWrapper.class, socketConnection.createSocketFactory(TestBug39806615LegacyPlugin.class.getName()).getClass());
+        String invalidName = "jar:file:.proc.self.fd.16!.Plugin";
+        String invalidMessage = Messages.getString("Util.InvalidClassName", new Object[] { invalidName });
+        ex = assertThrows(WrongArgumentException.class, () -> socketConnection.createSocketFactory(invalidName));
+        assertEquals(invalidMessage, ex.getMessage());
+        assertEquals(WrongArgumentException.class, ex.getClass(), "Invalid names must not be reported as type mismatches.");
+        assertNull(ex.getCause());
+        assertEquals(StandardLogger.class, LogFactory.getLogger("StandardLogger", "testBug39806615").getClass());
+
+        // Failover matching continues to support classes/interfaces and to ignore missing classes, but rejects invalid names.
+        StandardLoadBalanceExceptionChecker checker = new StandardLoadBalanceExceptionChecker();
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.loadBalanceSQLExceptionSubclassFailover.getKeyName(), "missing.Exception, java.sql.SQLException, java.lang.Runnable");
+        assertDoesNotThrow(() -> checker.init(props));
+        assertTrue(checker.shouldExceptionTriggerFailover(new SQLException()));
+        assertFalse(checker.shouldExceptionTriggerFailover(new IllegalStateException()));
+        props.setProperty(PropertyKey.loadBalanceSQLExceptionSubclassFailover.getKeyName(), invalidName);
+        ex = assertThrows(WrongArgumentException.class, () -> {
+            new StandardLoadBalanceExceptionChecker().init(props);
+            return null;
+        });
+        assertEquals(invalidMessage, ex.getMessage());
+        assertNull(ex.getCause());
+
+        // Non-reusable authentication plugins must be recreated through the common instantiation path.
+        NativeAuthenticationProvider provider = new NativeAuthenticationProvider();
+        TestBug39806615AuthenticationPlugin plugin = new TestBug39806615AuthenticationPlugin();
+        Field pluginsField = NativeAuthenticationProvider.class.getDeclaredField("authenticationPlugins");
+        pluginsField.setAccessible(true);
+        pluginsField.set(provider, Collections.singletonMap(plugin.getProtocolPluginName(), plugin));
+        Method getPlugin = NativeAuthenticationProvider.class.getDeclaredMethod("getAuthenticationPlugin", String.class);
+        getPlugin.setAccessible(true);
+        Object newPlugin = getPlugin.invoke(provider, plugin.getProtocolPluginName());
+        assertEquals(plugin.getClass(), newPlugin.getClass());
+        assertNotSame(plugin, newPlugin);
+
+        // Check decoded URL values and separately supplied properties at the JDBC boundary, before any server connection is needed.
+        String url = "jdbc:mysql://127.0.0.1:1/test";
+        for (PropertyKey key : new PropertyKey[] { PropertyKey.socketFactory, PropertyKey.propertiesTransform, PropertyKey.logger,
+                PropertyKey.exceptionInterceptors, PropertyKey.queryInterceptors }) {
+            boolean useUrl = false;
+            do {
+                Properties connectionProps = new Properties();
+                String connectionUrl = url;
+                if (useUrl) {
+                    connectionUrl += "?" + key.getKeyName() + "=" + URLEncoder.encode(invalidName, "UTF-8");
+                } else {
+                    connectionProps.setProperty(key.getKeyName(), invalidName);
+                }
+                final String testUrl = connectionUrl;
+                SQLException sqlEx = assertThrows(key.getKeyName(), SQLException.class, () -> DriverManager.getConnection(testUrl, connectionProps));
+                Throwable cause = sqlEx;
+                while (cause != null && !invalidMessage.equals(cause.getMessage())) {
+                    cause = cause.getCause();
+                }
+                assertNotNull(cause, key.getKeyName() + " must report invalid class-name syntax.");
+            } while (useUrl = !useUrl);
+        }
+        MysqlDataSource ds = new MysqlDataSource();
+        ds.setUrl(url);
+        ds.getStringProperty(PropertyKey.socketFactory).setValue(invalidName);
+        assertThrows(SQLException.class, Pattern.quote(invalidMessage), ds::getConnection);
+
+        // Verify a real connection with a Unicode extension name and the existing short client-info provider fallback.
+        props.clear();
+        props.setProperty(PropertyKey.socketFactory.getKeyName(), TestBug39806615\u00c9Plugin.class.getName());
+        props.setProperty(PropertyKey.clientInfoProvider.getKeyName(), "CommentClientInfoProvider");
+        try (Connection testConn = getConnectionWithProps(props)) {
+            assertEquals(CommentClientInfoProvider.class, ((JdbcConnection) testConn).getClientInfoProviderImpl().getClass());
+        }
+    }
+
+    public static class TestBug39806615\u00c9Plugin extends StandardSocketFactory {
+    }
+
+    public static class TestBug39806615WrongType {
+
+        static {
+            if (true) {
+                throw new AssertionError("A class of the wrong type must not be initialized.");
+            }
+        }
+
+    }
+
+    public static class TestBug39806615BrokenPlugin extends StandardSocketFactory {
+
+        public TestBug39806615BrokenPlugin() {
+            throw new IllegalStateException("Plugin constructor failed");
+        }
+
+    }
+
+    @SuppressWarnings("deprecation")
+    public static class TestBug39806615LegacyPlugin implements com.mysql.jdbc.SocketFactory {
+
+        @Override
+        public Socket connect(String host, int portNumber, Properties props) {
+            return null;
+        }
+
+        @Override
+        public Socket beforeHandshake() {
+            return null;
+        }
+
+        @Override
+        public Socket afterHandshake() {
+            return null;
+        }
+
+    }
+
+    public static class TestBug39806615AuthenticationPlugin implements AuthenticationPlugin<NativePacketPayload> {
+
+        @Override
+        public String getProtocolPluginName() {
+            return "auth_test_plugin";
+        }
+
+        @Override
+        public boolean requiresConfidentiality() {
+            return false;
+        }
+
+        @Override
+        public boolean isReusable() {
+            return false;
+        }
+
+        @Override
+        public void setAuthenticationParameters(String user, String password) {
+        }
+
+        @Override
+        public boolean nextAuthenticationStep(NativePacketPayload fromServer, List<NativePacketPayload> toServer) {
+            toServer.clear();
+            return true;
+        }
+
     }
 
 }

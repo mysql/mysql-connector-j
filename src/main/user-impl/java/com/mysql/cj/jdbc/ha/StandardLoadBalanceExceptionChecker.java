@@ -31,6 +31,7 @@ import com.mysql.cj.conf.PropertyKey;
 import com.mysql.cj.exceptions.CJCommunicationsException;
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.mysql.cj.util.StringUtils;
+import com.mysql.cj.util.Util;
 
 public class StandardLoadBalanceExceptionChecker implements LoadBalanceExceptionChecker {
 
@@ -98,9 +99,9 @@ public class StandardLoadBalanceExceptionChecker implements LoadBalanceException
 
         this.sqlExClassList = StringUtils.split(sqlExClasses, ",", true).stream().filter(s -> !s.isEmpty()).map(s -> {
             try {
-                return Class.forName(s, false, this.getClass().getClassLoader());
+                return Util.loadClass(s, this.getClass().getClassLoader());
             } catch (ClassNotFoundException e) {
-                // Ignore and don't check, class doesn't exist.
+                // Ignore classes that do not exist.
             }
             return null;
         }).filter(Objects::nonNull).collect(Collectors.toList());

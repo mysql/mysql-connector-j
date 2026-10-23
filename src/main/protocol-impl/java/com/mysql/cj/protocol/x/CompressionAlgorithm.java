@@ -29,6 +29,7 @@ import java.util.zip.InflaterInputStream;
 import com.mysql.cj.Messages;
 import com.mysql.cj.exceptions.ExceptionFactory;
 import com.mysql.cj.exceptions.WrongArgumentException;
+import com.mysql.cj.util.Util;
 
 /**
  * Contains all information about a compression algorithm, its name, compression mode and classes that implement the inflating and deflating streams of data.
@@ -87,7 +88,7 @@ public class CompressionAlgorithm {
         }
 
         try {
-            Class.forName(inputStreamClassFqn, false, this.getClass().getClassLoader());
+            Util.loadClass(inputStreamClassFqn, this.getClass().getClassLoader());
         } catch (ClassNotFoundException e) {
             throw ExceptionFactory.createException(WrongArgumentException.class,
                     Messages.getString("Protocol.Compression.5", new Object[] { inputStreamClassFqn }), e);
@@ -95,7 +96,7 @@ public class CompressionAlgorithm {
         this.inputStreamClassFqn = inputStreamClassFqn;
 
         try {
-            Class.forName(outputStreamClassFqn, false, this.getClass().getClassLoader());
+            Util.loadClass(outputStreamClassFqn, this.getClass().getClassLoader());
         } catch (ClassNotFoundException e) {
             throw ExceptionFactory.createException(WrongArgumentException.class,
                     Messages.getString("Protocol.Compression.5", new Object[] { outputStreamClassFqn }), e);

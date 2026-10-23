@@ -205,6 +205,15 @@ public class NativePacketPayload implements Message {
     }
 
     /**
+     * Is it a LOCAL INFILE request packet.
+     *
+     * @return true if it is a LOCAL INFILE request packet
+     */
+    public boolean isLocalInfileRequestPacket() {
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_LOCAL_INFILE;
+    }
+
+    /**
      * Is it a EOF packet.
      * See https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_eof_packet.html
      *
@@ -231,7 +240,7 @@ public class NativePacketPayload implements Message {
      * @return true if it is an OK packet
      */
     public final boolean isOKPacket() {
-        return (this.byteBuffer[0] & 0xff) == TYPE_ID_OK;
+        return (this.byteBuffer[0] & 0xff) == TYPE_ID_OK && this.payloadLength >= 7;
     }
 
     /**

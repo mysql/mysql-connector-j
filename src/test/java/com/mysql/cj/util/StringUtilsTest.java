@@ -1414,6 +1414,17 @@ public class StringUtilsTest extends BaseTestCase {
     }
 
     /**
+     * Tests StringUtils.toJsonString().
+     */
+    @Test
+    public void testToJsonString() {
+        assertEquals("\"\"", StringUtils.toJsonString(""));
+        assertEquals("\"text\"", StringUtils.toJsonString("text"));
+        assertEquals("\"\\\"\\\\\\b\\f\\n\\r\\t\\u0000\\u0001\\u001f\"", StringUtils.toJsonString("\"\\\b\f\n\r\t\u0000\u0001\u001f"));
+        assertEquals("\"MySQL ≈ 𝄞\"", StringUtils.toJsonString("MySQL ≈ 𝄞"));
+    }
+
+    /**
      * Tests StringUtils.enquoteLiteral().
      *
      * @throws Exception

@@ -854,6 +854,7 @@ public class SecureSessionTest extends DevApiBaseTestCase {
             props.setProperty(PropertyKey.tlsCiphersuites.getKeyName(), testCipher1);
             sess = this.fact.getSession(props);
             assertSessionStatusEquals(sess, "mysqlx_ssl_cipher", expectedCipher1);
+            assertSessionStatusEquals(sess, "ssl_cipher", "");
             sess.close();
 
             // 2. Allow only TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384/TLS_AES_128_GCM_SHA256 cipher
