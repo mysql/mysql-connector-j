@@ -43,6 +43,8 @@ import java.lang.reflect.Method;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -1393,6 +1395,93 @@ public class ConnectionTest extends BaseTestCase {
         } finally {
             if (changeMaxAllowedPacket) {
                 this.stmt.executeUpdate("SET GLOBAL max_allowed_packet=" + defaultMaxAllowedPacket);
+            }
+        }
+    }
+
+    /**
+     * Tests zstd compression of the classic protocol, selected with the connection property 'compressionAlgorithms'.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testZstdCompression() throws Exception {
+        assumeTrue(versionMeetsMinimum(8, 0, 18), "MySQL 8.0.18+ is required to run this test.");
+        this.rs = this.stmt.executeQuery("SELECT @@protocol_compression_algorithms");
+        assumeTrue(this.rs.next() && this.rs.getString(1).toLowerCase().contains("zstd"), "This test requires a server that accepts zstd compression.");
+        boolean zstdJni;
+        try {
+            Class.forName("com.github.luben.zstd.ZstdOutputStream");
+            zstdJni = true;
+        } catch (ClassNotFoundException | LinkageError e) {
+            zstdJni = false;
+        }
+        assumeTrue(zstdJni, "This test requires zstd-jni in the class path.");
+
+        StringBuilder data = new StringBuilder();
+        for (int i = 0; data.length() < 100000; i++) {
+            data.append("row ").append(i).append(", ");
+        }
+        String value = data.toString();
+
+        for (String[] algorithmsAndLevel : new String[][] { { "zstd", "3", "zstd" }, { "zstd , zlib", "19", "zstd" }, { "zlib,zstd", "3", "zlib" },
+                { "zlib", "3", "zlib" } }) {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useCompression.getKeyName(), "true");
+            props.setProperty(PropertyKey.compressionAlgorithms.getKeyName(), algorithmsAndLevel[0]);
+            props.setProperty(PropertyKey.zstdCompressionLevel.getKeyName(), algorithmsAndLevel[1]);
+            try (Connection testConn = getConnectionWithProps(props); Statement testStmt = testConn.createStatement()) {
+                ResultSet testRs = testStmt.executeQuery("SHOW SESSION STATUS WHERE Variable_name IN ('Compression_algorithm', 'Compression_level')");
+                while (testRs.next()) {
+                    if (testRs.getString(1).equalsIgnoreCase("Compression_algorithm")) {
+                        assertEquals(algorithmsAndLevel[2], testRs.getString(2), algorithmsAndLevel[0]);
+                    } else if (algorithmsAndLevel[2].equals("zstd")) {
+                        assertEquals(algorithmsAndLevel[1], testRs.getString(2), algorithmsAndLevel[0]);
+                    }
+                }
+                try (PreparedStatement testPstmt = testConn.prepareStatement("SELECT ?, LENGTH(?), REPEAT('a', 4 * 1024 * 1024)")) {
+                    testPstmt.setString(1, value);
+                    testPstmt.setString(2, value);
+                    testRs = testPstmt.executeQuery();
+                    assertTrue(testRs.next());
+                    assertEquals(value, testRs.getString(1), algorithmsAndLevel[0]);
+                    assertEquals(value.length(), testRs.getInt(2), algorithmsAndLevel[0]);
+                    assertEquals(4 * 1024 * 1024, testRs.getString(3).length(), algorithmsAndLevel[0]);
+                }
+            }
+        }
+
+        Properties props = new Properties();
+        props.setProperty(PropertyKey.useCompression.getKeyName(), "true");
+        props.setProperty(PropertyKey.compressionAlgorithms.getKeyName(), "lz4");
+        assertThrows(SQLException.class, ".*lz4.*", () -> getConnectionWithProps(props));
+    }
+
+    /**
+     * Tests that zstd is skipped in 'compressionAlgorithms' when zstd-jni is not in the class path.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testZstdCompressionWithoutZstdJni() throws Exception {
+        assumeTrue(versionMeetsMinimum(8, 0, 18), "MySQL 8.0.18+ is required to run this test.");
+        this.rs = this.stmt.executeQuery("SELECT @@protocol_compression_algorithms");
+        assumeTrue(this.rs.next() && this.rs.getString(1).toLowerCase().contains("zstd"), "This test requires a server that accepts zstd compression.");
+
+        URL driverClasses = NonRegisteringDriver.class.getProtectionDomain().getCodeSource().getLocation();
+        try (URLClassLoader withoutZstdJni = new URLClassLoader(new URL[] { driverClasses }, null)) {
+            java.sql.Driver driver = (java.sql.Driver) withoutZstdJni.loadClass(NonRegisteringDriver.class.getName()).newInstance();
+            Properties props = getPropertiesFromTestsuiteUrl();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useCompression.getKeyName(), "true");
+            props.setProperty(PropertyKey.compressionAlgorithms.getKeyName(), "zstd,zlib");
+            try (Connection testConn = driver.connect(dbUrl, props); Statement testStmt = testConn.createStatement()) {
+                ResultSet testRs = testStmt.executeQuery("SHOW SESSION STATUS LIKE 'Compression_algorithm'");
+                assertTrue(testRs.next());
+                assertEquals("zlib", testRs.getString(2));
             }
         }
     }

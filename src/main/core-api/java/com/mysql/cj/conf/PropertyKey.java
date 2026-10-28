@@ -86,6 +86,7 @@ public enum PropertyKey {
     clobberStreamingResults("clobberStreamingResults", true), //
     clobCharacterEncoding("clobCharacterEncoding", true), //
     compensateOnDuplicateKeyUpdateCounts("compensateOnDuplicateKeyUpdateCounts", true), //
+    compressionAlgorithms("compressionAlgorithms", true), //
     connectionAttributes("connectionAttributes", true), //
     connectionCollation("connectionCollation", true), //
     connectionLifecycleInterceptors("connectionLifecycleInterceptors", true), //
@@ -278,7 +279,8 @@ public enum PropertyKey {
     xdevapiTlsVersions("xdevapi.tls-versions", "xdevapiTlsVersions", true), //
 
     yearIsDateType("yearIsDateType", true), //
-    zeroDateTimeBehavior("zeroDateTimeBehavior", true) //
+    zeroDateTimeBehavior("zeroDateTimeBehavior", true), //
+    zstdCompressionLevel("zstdCompressionLevel", true) //
     ;
 
     private String keyName;

@@ -69,6 +69,7 @@ public class NativeServerSession implements ServerSession {
     public static final int CLIENT_CAN_HANDLE_EXPIRED_PASSWORD = 0x00400000;
     public static final int CLIENT_SESSION_TRACK = 0x00800000;
     public static final int CLIENT_DEPRECATE_EOF = 0x01000000;
+    public static final int CLIENT_ZSTD_COMPRESSION_ALGORITHM = 0x04000000;
     public static final int CLIENT_QUERY_ATTRIBUTES = 0x08000000;
     public static final int CLIENT_MULTI_FACTOR_AUTHENTICATION = 0x10000000;
 

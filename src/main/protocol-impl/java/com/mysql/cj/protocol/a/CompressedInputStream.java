@@ -44,6 +44,9 @@ public class CompressedInputStream extends InputStream {
     /** The ZIP inflater used to un-compress packets */
     private Inflater inflater;
 
+    /** Uncompresses packets when zstd was negotiated, otherwise {@code null} and packets are uncompressed with zlib. */
+    private ZstdPacketDecompressor zstd;
+
     /** Connection property reference */
     private RuntimeProperty<Boolean> traceProtocol;
 
@@ -70,10 +73,30 @@ public class CompressedInputStream extends InputStream {
      *            logger
      */
     public CompressedInputStream(InputStream streamFromServer, RuntimeProperty<Boolean> traceProtocol, Log log) {
+        this(streamFromServer, traceProtocol, log, false);
+    }
+
+    /**
+     * Creates a new CompressedInputStream that reads the given stream from the server and uncompresses its packets with zstd or zlib.
+     *
+     * @param streamFromServer
+     *            original server InputStream
+     * @param traceProtocol
+     *            "traceProtocol" property
+     * @param log
+     *            logger
+     * @param zstd
+     *            {@code true} if zstd was negotiated, {@code false} for zlib
+     */
+    public CompressedInputStream(InputStream streamFromServer, RuntimeProperty<Boolean> traceProtocol, Log log, boolean zstd) {
         this.traceProtocol = traceProtocol;
         this.log = log;
         this.in = streamFromServer;
-        this.inflater = new Inflater();
+        if (zstd) {
+            this.zstd = new ZstdPacketDecompressor();
+        } else {
+            this.inflater = new Inflater();
+        }
     }
 
     @Override
@@ -89,8 +112,14 @@ public class CompressedInputStream extends InputStream {
     public void close() throws IOException {
         this.in.close();
         this.buffer = null;
-        this.inflater.end();
-        this.inflater = null;
+        if (this.inflater != null) {
+            this.inflater.end();
+            this.inflater = null;
+        }
+        if (this.zstd != null) {
+            this.zstd.close();
+            this.zstd = null;
+        }
         this.traceProtocol = null;
         this.log = null;
     }
@@ -129,14 +158,18 @@ public class CompressedInputStream extends InputStream {
 
             readFully(compressedBuffer, 0, compressedPacketLength);
 
-            this.inflater.reset();
+            if (this.zstd != null) {
+                this.zstd.decompress(compressedBuffer, uncompressedData);
+            } else {
+                this.inflater.reset();
 
-            this.inflater.setInput(compressedBuffer);
+                this.inflater.setInput(compressedBuffer);
 
-            try {
-                this.inflater.inflate(uncompressedData);
-            } catch (DataFormatException dfe) {
-                throw new IOException("Error while uncompressing packet from server.");
+                try {
+                    this.inflater.inflate(uncompressedData);
+                } catch (DataFormatException dfe) {
+                    throw new IOException("Error while uncompressing packet from server.");
+                }
             }
 
         } else {

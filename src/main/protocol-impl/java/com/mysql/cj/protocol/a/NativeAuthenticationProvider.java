@@ -164,8 +164,7 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
                         0 : capabilityFlags & NativeServerSession.CLIENT_FOUND_ROWS) //
                 | capabilityFlags & NativeServerSession.CLIENT_LONG_FLAG //
                 | (this.useConnectWithDb ? capabilityFlags & NativeServerSession.CLIENT_CONNECT_WITH_DB : 0) //
-                | (this.propertySet.getBooleanProperty(PropertyKey.useCompression).getValue() ? //
-                        capabilityFlags & NativeServerSession.CLIENT_COMPRESS : 0) //
+                | negotiateCompression(capabilityFlags) //
                 | (this.propertySet.getBooleanProperty(PropertyKey.allowLoadLocalInfile).getValue()
                         || this.propertySet.getStringProperty(PropertyKey.allowLoadLocalInfileInPath).isExplicitlySet() ? //
                                 capabilityFlags & NativeServerSession.CLIENT_LOCAL_FILES : 0) //
@@ -600,6 +599,34 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         this.password = null;
     }
 
+    /**
+     * Selects the first algorithm in 'compressionAlgorithms' that the server supports and the driver can use.
+     *
+     * @param capabilityFlags
+     *            the server capability flags.
+     * @return the capability flag of the selected algorithm, or 0 if compression is not used.
+     */
+    private long negotiateCompression(int capabilityFlags) {
+        if (!this.propertySet.getBooleanProperty(PropertyKey.useCompression).getValue()) {
+            return 0;
+        }
+        for (String algorithm : StringUtils.split(this.propertySet.getStringProperty(PropertyKey.compressionAlgorithms).getValue(), ",", true)) {
+            if ("zlib".equalsIgnoreCase(algorithm)) {
+                if ((capabilityFlags & NativeServerSession.CLIENT_COMPRESS) != 0) {
+                    return NativeServerSession.CLIENT_COMPRESS;
+                }
+            } else if ("zstd".equalsIgnoreCase(algorithm)) {
+                if ((capabilityFlags & NativeServerSession.CLIENT_ZSTD_COMPRESSION_ALGORITHM) != 0 && ZstdCompression.isAvailable()) {
+                    return NativeServerSession.CLIENT_ZSTD_COMPRESSION_ALGORITHM;
+                }
+            } else if (!algorithm.isEmpty()) {
+                throw ExceptionFactory.createException(WrongArgumentException.class, Messages.getString("Protocol.Compression.9", new Object[] { algorithm }),
+                        getExceptionInterceptor());
+            }
+        }
+        return 0;
+    }
+
     private NativePacketPayload createHandshakeResponsePacket(ServerSession serverSession, String pluginName, NativePacketPayload authData) {
         long clientParam = serverSession.getClientParam();
         int collationIndex = serverSession.getCharsetSettings().configurePreHandshake(false);
@@ -636,6 +663,10 @@ public class NativeAuthenticationProvider implements AuthenticationProvider<Nati
         // connection attributes
         if ((clientParam & NativeServerSession.CLIENT_CONNECT_ATTRS) != 0) {
             appendConnectionAttributes(last_sent, this.propertySet.getStringProperty(PropertyKey.connectionAttributes).getValue(), enc);
+        }
+
+        if ((clientParam & NativeServerSession.CLIENT_ZSTD_COMPRESSION_ALGORITHM) != 0) {
+            last_sent.writeInteger(IntegerDataType.INT1, this.propertySet.getIntegerProperty(PropertyKey.zstdCompressionLevel).getValue());
         }
         return last_sent;
     }

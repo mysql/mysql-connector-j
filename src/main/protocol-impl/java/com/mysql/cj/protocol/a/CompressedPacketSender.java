@@ -34,7 +34,11 @@ import com.mysql.cj.protocol.MessageSender;
 public class CompressedPacketSender implements MessageSender<NativePacketPayload> {
 
     private BufferedOutputStream outputStream;
-    private Deflater deflater = new Deflater();
+    private Deflater deflater;
+    /** Compresses packets when zstd was negotiated, otherwise {@code null} and packets are compressed with zlib. */
+    private ZstdPacketCompressor zstd;
+    /** Whether a zstd frame was started for the current compressed packet. */
+    private boolean zstdFrameStarted = false;
     /** Buffer to compress data to. Used only across one send() invocation. */
     private byte compressedPacket[];
     /** Sequence id of compressed packet. Used only across one send() invocation. */
@@ -46,20 +50,69 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
     public static final int MIN_COMPRESS_LEN = 50;
 
     public CompressedPacketSender(BufferedOutputStream outputStream) {
+        this(outputStream, 0);
+    }
+
+    /**
+     * Creates a packet sender that compresses with zstd at the given level, or with zlib if the level is 0.
+     *
+     * @param outputStream
+     *            the stream to the server
+     * @param zstdLevel
+     *            the zstd compression level, or 0 for zlib
+     */
+    public CompressedPacketSender(BufferedOutputStream outputStream, int zstdLevel) {
         this.outputStream = outputStream;
+        if (zstdLevel == 0) {
+            this.deflater = new Deflater();
+        } else {
+            this.zstd = new ZstdPacketCompressor(zstdLevel);
+        }
     }
 
     /**
      * Shut down this packet sender and deallocate any resources.
      */
     public void stop() {
-        this.deflater.end();
-        this.deflater = null;
+        if (this.deflater != null) {
+            this.deflater.end();
+            this.deflater = null;
+        }
+        if (this.zstd != null) {
+            this.zstd.close();
+            this.zstd = null;
+        }
     }
 
     private void resetPacket() {
         this.compressedPayloadLen = 0;
-        this.deflater.reset();
+        if (this.zstd == null) {
+            this.deflater.reset();
+        }
+    }
+
+    /**
+     * Compress bytes into the compressed packet.
+     *
+     * @param data
+     *            bytes to compress
+     * @param offset
+     *            offset
+     * @param len
+     *            length
+     */
+    private void compress(byte[] data, int offset, int len) {
+        if (this.zstd == null) {
+            this.deflater.setInput(data, offset, len);
+            this.compressedPayloadLen += this.deflater.deflate(this.compressedPacket, this.compressedPayloadLen,
+                    this.compressedPacket.length - this.compressedPayloadLen);
+            return;
+        }
+        if (!this.zstdFrameStarted) {
+            this.zstd.start(this.compressedPacket);
+            this.zstdFrameStarted = true;
+        }
+        this.zstd.add(data, offset, len);
     }
 
     /**
@@ -74,9 +127,7 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
         byte uncompressedHeader[] = new byte[NativeConstants.HEADER_LENGTH];
         NativeUtils.encodeMysqlThreeByteInteger(uncompressedPacketLen, uncompressedHeader, 0);
         uncompressedHeader[3] = packetSequence;
-        this.deflater.setInput(uncompressedHeader);
-        this.compressedPayloadLen += this.deflater.deflate(this.compressedPacket, this.compressedPayloadLen,
-                this.compressedPacket.length - this.compressedPayloadLen);
+        compress(uncompressedHeader, 0, uncompressedHeader.length);
     }
 
     /**
@@ -90,18 +141,23 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
      *            length
      */
     private void addPayload(byte[] payload, int payloadOffset, int payloadLen) {
-        this.deflater.setInput(payload, payloadOffset, payloadLen);
-        this.compressedPayloadLen += this.deflater.deflate(this.compressedPacket, this.compressedPayloadLen,
-                this.compressedPacket.length - this.compressedPayloadLen);
+        compress(payload, payloadOffset, payloadLen);
     }
 
     /**
      * Complete compression of the current payload contents to the compressed packet.
      */
     private void completeCompression() {
-        this.deflater.finish();
-        this.compressedPayloadLen += this.deflater.deflate(this.compressedPacket, this.compressedPayloadLen,
-                this.compressedPacket.length - this.compressedPayloadLen);
+        if (this.zstd == null) {
+            this.deflater.finish();
+            this.compressedPayloadLen += this.deflater.deflate(this.compressedPacket, this.compressedPayloadLen,
+                    this.compressedPacket.length - this.compressedPayloadLen);
+            return;
+        }
+        if (this.zstdFrameStarted) {
+            this.compressedPayloadLen = this.zstd.finish();
+            this.zstdFrameStarted = false;
+        }
     }
 
     /**
@@ -172,6 +228,7 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
     @Override
     public void send(byte[] packet, int packetLen, byte packetSequence) throws IOException {
         this.compressedSequenceId = packetSequence;
+        this.zstdFrameStarted = false;
 
         // short-circuit send small packets without compression and return
         if (packetLen < MIN_COMPRESS_LEN) {

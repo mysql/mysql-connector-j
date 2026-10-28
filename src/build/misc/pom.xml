@@ -71,5 +71,12 @@
       <version>3.95.2</version>
       <optional>true</optional>
     </dependency>
+
+    <dependency>
+      <groupId>com.github.luben</groupId>
+      <artifactId>zstd-jni</artifactId>
+      <version>1.5.7-22</version>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
 </project>

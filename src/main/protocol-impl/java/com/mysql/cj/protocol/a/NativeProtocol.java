@@ -418,13 +418,15 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
             //
             // Can't enable compression until after handshake
             //
-            if ((this.serverSession.getCapabilities().getCapabilityFlags() & NativeServerSession.CLIENT_COMPRESS) != 0
-                    && this.propertySet.getBooleanProperty(PropertyKey.useCompression).getValue()
+            long clientParam = this.serverSession.getClientParam();
+            if ((clientParam & (NativeServerSession.CLIENT_COMPRESS | NativeServerSession.CLIENT_ZSTD_COMPRESSION_ALGORITHM)) != 0
                     && !(this.socketConnection.getMysqlInput().getUnderlyingStream() instanceof CompressedInputStream)) {
+                boolean zstd = (clientParam & NativeServerSession.CLIENT_ZSTD_COMPRESSION_ALGORITHM) != 0;
                 this.useCompression = true;
                 this.socketConnection.setMysqlInput(new FullReadInputStream(new CompressedInputStream(this.socketConnection.getMysqlInput(),
-                        this.propertySet.getBooleanProperty(PropertyKey.traceProtocol), this.log)));
-                this.compressedPacketSender = new CompressedPacketSender(this.socketConnection.getMysqlOutput());
+                        this.propertySet.getBooleanProperty(PropertyKey.traceProtocol), this.log, zstd)));
+                this.compressedPacketSender = new CompressedPacketSender(this.socketConnection.getMysqlOutput(),
+                        zstd ? this.propertySet.getIntegerProperty(PropertyKey.zstdCompressionLevel).getValue() : 0);
                 this.packetSender = this.compressedPacketSender;
             }
 
