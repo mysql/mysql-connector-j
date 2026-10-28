@@ -20,6 +20,7 @@
 
 package com.mysql.cj.protocol.a;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,6 +28,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Random;
 import java.util.zip.InflaterOutputStream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -267,8 +270,8 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
         final int packetLen = CompressedPacketSender.MIN_COMPRESS_LEN * 2; // needs to be big enough to compress
 
         byte[] packet = new byte[packetLen];
-        // this sequential data is not easily compressible by the DEFLATE algorithm
-        fillPacketSequentially(packet);
+        // random data is not compressible by the DEFLATE algorithm
+        new Random(1).nextBytes(packet);
 
         final byte packetSequence = 33;
         this.sender.send(packet, packetLen, packetSequence);
@@ -285,7 +288,35 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
 
         assertEquals(packetLen, NativeUtils.decodeMysqlThreeByteInteger(sentPacket, CompressedPacketSender.COMP_HEADER_LENGTH));
         assertEquals(packetSequence, sentPacket[CompressedPacketSender.COMP_HEADER_LENGTH + 3]);
-        checkSequentiallyFilledPacket(sentPacket, CompressedPacketSender.COMP_HEADER_LENGTH + NativeConstants.HEADER_LENGTH, packetLen);
+        assertArrayEquals(packet, Arrays.copyOfRange(sentPacket, CompressedPacketSender.COMP_HEADER_LENGTH + NativeConstants.HEADER_LENGTH, sentPacket.length));
+    }
+
+    @Test
+    public void compressionLevelIsApplied() throws IOException {
+        final int packetLen = 100000;
+        byte[] packet = new byte[packetLen];
+        Random random = new Random(2);
+        for (int i = 0; i < packetLen; i++) {
+            packet[i] = (byte) ('a' + random.nextInt(4));
+        }
+
+        int[] sizes = new int[3];
+        int[] levels = { 1, 9, 0 };
+        for (int i = 0; i < levels.length; i++) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            new CompressedPacketSender(new BufferedOutputStream(out), levels[i]).send(packet, packetLen, (byte) 0);
+            byte[] sent = out.toByteArray();
+            sizes[i] = sent.length;
+
+            CompressedPackets packets = new CompressedPackets(sent);
+            assertTrue(packets.nextPayload());
+            assertArrayEquals(packet, Arrays.copyOfRange(packets.payload, NativeConstants.HEADER_LENGTH, packets.payload.length));
+            if (levels[i] == 0) {
+                assertEquals(0, packets.uncompressedPayloadLen); // stored blocks do not shrink, so the packet is sent uncompressed
+            }
+        }
+        assertTrue(sizes[1] < sizes[0]);
+        assertEquals(packetLen + NativeConstants.HEADER_LENGTH + CompressedPacketSender.COMP_HEADER_LENGTH, sizes[2]);
     }
 
 }

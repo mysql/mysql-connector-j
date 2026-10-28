@@ -326,6 +326,9 @@ public class PropertyDefinitions {
                 new BooleanPropertyDefinition(PropertyKey.useCompression, DEFAULT_VALUE_FALSE, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.useCompression"), "3.0.17", CATEGORY_NETWORK, Integer.MIN_VALUE),
 
+                new IntegerPropertyDefinition(PropertyKey.zlibCompressionLevel, -1, RUNTIME_NOT_MODIFIABLE,
+                        Messages.getString("ConnectionProperties.zlibCompressionLevel"), "27.1.0", CATEGORY_NETWORK, Integer.MIN_VALUE, -1, 9),
+
                 new IntegerPropertyDefinition(PropertyKey.maxAllowedPacket, 65535, RUNTIME_MODIFIABLE,
                         Messages.getString("ConnectionProperties.maxAllowedPacket"), "5.1.8", CATEGORY_NETWORK, Integer.MIN_VALUE, 0, Integer.MAX_VALUE),
 

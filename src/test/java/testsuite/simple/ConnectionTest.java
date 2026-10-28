@@ -925,6 +925,44 @@ public class ConnectionTest extends BaseTestCase {
     }
 
     /**
+     * Tests the connection property 'zlibCompressionLevel'.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testZlibCompressionLevel() throws Exception {
+        StringBuilder data = new StringBuilder();
+        for (int i = 0; data.length() < 100000; i++) {
+            data.append("row ").append(i).append(", ");
+        }
+        String value = data.toString();
+
+        for (String level : new String[] { "-1", "0", "1", "9" }) {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useCompression.getKeyName(), "true");
+            props.setProperty(PropertyKey.zlibCompressionLevel.getKeyName(), level);
+            try (Connection testConn = getConnectionWithProps(props); PreparedStatement testPstmt = testConn.prepareStatement("SELECT ?, LENGTH(?)")) {
+                testPstmt.setString(1, value);
+                testPstmt.setString(2, value);
+                try (ResultSet testRs = testPstmt.executeQuery()) {
+                    assertTrue(testRs.next());
+                    assertEquals(value, testRs.getString(1), level);
+                    assertEquals(value.length(), testRs.getInt(2), level);
+                }
+            }
+        }
+
+        for (String level : new String[] { "-2", "10" }) {
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.useCompression.getKeyName(), "true");
+            props.setProperty(PropertyKey.zlibCompressionLevel.getKeyName(), level);
+            assertThrows(SQLException.class, ".*zlibCompressionLevel.*", () -> getConnectionWithProps(props));
+        }
+    }
+
+    /**
      * Tests feature of "localSocketAddress", by enumerating local IF's and trying each one in turn. This test might take a long time to run, since we can't set
      * timeouts if we're using localSocketAddress. We try and keep the time down on the testcase by spawning the checking of each interface off into separate
      * threads.

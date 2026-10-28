@@ -34,19 +34,39 @@ import com.mysql.cj.protocol.MessageSender;
 public class CompressedPacketSender implements MessageSender<NativePacketPayload> {
 
     private BufferedOutputStream outputStream;
-    private Deflater deflater = new Deflater();
-    /** Buffer to compress data to. Used only across one send() invocation. */
+    private Deflater deflater;
+    /** Buffer to compress data to. Kept between send() invocations unless larger than {@link #MAX_RETAINED_BUFFER_SIZE}. */
     private byte compressedPacket[];
+    /** Number of bytes of {@link #compressedPacket} that the current send() may use. */
+    private int compressedPacketLimit = 0;
+    /** Header of a raw packet, given to the deflater. */
+    private final byte[] uncompressedHeader = new byte[NativeConstants.HEADER_LENGTH];
+    /** Headers written to the output stream. */
+    private final byte[] header = new byte[COMP_HEADER_LENGTH];
     /** Sequence id of compressed packet. Used only across one send() invocation. */
     private byte compressedSequenceId = 0;
     /** Length of current compressed packet. */
     private int compressedPayloadLen = 0;
 
     public static final int COMP_HEADER_LENGTH = 7;
-    public static final int MIN_COMPRESS_LEN = 50;
+    public static final int MIN_COMPRESS_LEN = 512;
+    private static final int MAX_RETAINED_BUFFER_SIZE = 64 * 1024;
 
     public CompressedPacketSender(BufferedOutputStream outputStream) {
+        this(outputStream, Deflater.DEFAULT_COMPRESSION);
+    }
+
+    /**
+     * Creates a packet sender that compresses with the given zlib level.
+     *
+     * @param outputStream
+     *            the stream to write packets to
+     * @param compressionLevel
+     *            zlib compression level, from 0 to 9, or -1 for the zlib default
+     */
+    public CompressedPacketSender(BufferedOutputStream outputStream, int compressionLevel) {
         this.outputStream = outputStream;
+        this.deflater = new Deflater(compressionLevel);
     }
 
     /**
@@ -55,6 +75,7 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
     public void stop() {
         this.deflater.end();
         this.deflater = null;
+        this.compressedPacket = null;
     }
 
     private void resetPacket() {
@@ -71,12 +92,11 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
      *            uncompressed packet length
      */
     private void addUncompressedHeader(byte packetSequence, int uncompressedPacketLen) {
-        byte uncompressedHeader[] = new byte[NativeConstants.HEADER_LENGTH];
-        NativeUtils.encodeMysqlThreeByteInteger(uncompressedPacketLen, uncompressedHeader, 0);
-        uncompressedHeader[3] = packetSequence;
-        this.deflater.setInput(uncompressedHeader);
+        NativeUtils.encodeMysqlThreeByteInteger(uncompressedPacketLen, this.uncompressedHeader, 0);
+        this.uncompressedHeader[3] = packetSequence;
+        this.deflater.setInput(this.uncompressedHeader);
         this.compressedPayloadLen += this.deflater.deflate(this.compressedPacket, this.compressedPayloadLen,
-                this.compressedPacket.length - this.compressedPayloadLen);
+                this.compressedPacketLimit - this.compressedPayloadLen);
     }
 
     /**
@@ -92,7 +112,7 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
     private void addPayload(byte[] payload, int payloadOffset, int payloadLen) {
         this.deflater.setInput(payload, payloadOffset, payloadLen);
         this.compressedPayloadLen += this.deflater.deflate(this.compressedPacket, this.compressedPayloadLen,
-                this.compressedPacket.length - this.compressedPayloadLen);
+                this.compressedPacketLimit - this.compressedPayloadLen);
     }
 
     /**
@@ -101,7 +121,7 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
     private void completeCompression() {
         this.deflater.finish();
         this.compressedPayloadLen += this.deflater.deflate(this.compressedPacket, this.compressedPayloadLen,
-                this.compressedPacket.length - this.compressedPayloadLen);
+                this.compressedPacketLimit - this.compressedPayloadLen);
     }
 
     /**
@@ -117,9 +137,10 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
      *             if write exception occurs
      */
     private void writeCompressedHeader(int compLen, byte seq, int uncompLen) throws IOException {
-        this.outputStream.write(NativeUtils.encodeMysqlThreeByteInteger(compLen));
-        this.outputStream.write(seq);
-        this.outputStream.write(NativeUtils.encodeMysqlThreeByteInteger(uncompLen));
+        NativeUtils.encodeMysqlThreeByteInteger(compLen, this.header, 0);
+        this.header[3] = seq;
+        NativeUtils.encodeMysqlThreeByteInteger(uncompLen, this.header, 4);
+        this.outputStream.write(this.header, 0, COMP_HEADER_LENGTH);
     }
 
     /**
@@ -133,8 +154,9 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
      *             if write exception occurs
      */
     private void writeUncompressedHeader(int packetLen, byte packetSequence) throws IOException {
-        this.outputStream.write(NativeUtils.encodeMysqlThreeByteInteger(packetLen));
-        this.outputStream.write(packetSequence);
+        NativeUtils.encodeMysqlThreeByteInteger(packetLen, this.header, 0);
+        this.header[3] = packetSequence;
+        this.outputStream.write(this.header, 0, NativeConstants.HEADER_LENGTH);
     }
 
     /**
@@ -182,10 +204,9 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
             return;
         }
 
-        if (packetLen + NativeConstants.HEADER_LENGTH > NativeConstants.MAX_PACKET_SIZE) {
-            this.compressedPacket = new byte[NativeConstants.MAX_PACKET_SIZE];
-        } else {
-            this.compressedPacket = new byte[NativeConstants.HEADER_LENGTH + packetLen];
+        this.compressedPacketLimit = Math.min(NativeConstants.MAX_PACKET_SIZE, NativeConstants.HEADER_LENGTH + packetLen);
+        if (this.compressedPacket == null || this.compressedPacket.length < this.compressedPacketLimit) {
+            this.compressedPacket = new byte[this.compressedPacketLimit];
         }
 
         PacketSplitter packetSplitter = new PacketSplitter(packetLen);
@@ -247,8 +268,10 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
 
         this.outputStream.flush();
 
-        // release reference to (possibly large) compressed packet buffer
-        this.compressedPacket = null;
+        if (this.compressedPacket.length > MAX_RETAINED_BUFFER_SIZE) {
+            // release reference to large compressed packet buffer
+            this.compressedPacket = null;
+        }
     }
 
     @Override

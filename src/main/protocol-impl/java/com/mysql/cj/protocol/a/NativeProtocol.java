@@ -424,7 +424,8 @@ public class NativeProtocol extends AbstractProtocol<NativePacketPayload> implem
                 this.useCompression = true;
                 this.socketConnection.setMysqlInput(new FullReadInputStream(new CompressedInputStream(this.socketConnection.getMysqlInput(),
                         this.propertySet.getBooleanProperty(PropertyKey.traceProtocol), this.log)));
-                this.compressedPacketSender = new CompressedPacketSender(this.socketConnection.getMysqlOutput());
+                this.compressedPacketSender = new CompressedPacketSender(this.socketConnection.getMysqlOutput(),
+                        this.propertySet.getIntegerProperty(PropertyKey.zlibCompressionLevel).getValue());
                 this.packetSender = this.compressedPacketSender;
             }
 

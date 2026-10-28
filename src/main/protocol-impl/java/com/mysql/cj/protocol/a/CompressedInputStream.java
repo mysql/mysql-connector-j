@@ -23,6 +23,7 @@ package com.mysql.cj.protocol.a;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -35,8 +36,17 @@ import com.mysql.cj.util.StringUtils;
  */
 public class CompressedInputStream extends InputStream {
 
+    /** Buffers larger than this are not kept once the data in them has been consumed. */
+    private static final int MAX_RETAINED_BUFFER_SIZE = 64 * 1024;
+
     /** The packet data after it has been un-compressed */
     private byte[] buffer;
+
+    /** Number of bytes of packet data in {@link #buffer} */
+    private int bufferLength = 0;
+
+    /** The compressed bytes of the packet being read */
+    private byte[] compressedBuffer;
 
     /** The stream we are reading from the server */
     private InputStream in;
@@ -82,13 +92,14 @@ public class CompressedInputStream extends InputStream {
             return this.in.available();
         }
 
-        return this.buffer.length - this.pos + this.in.available();
+        return this.bufferLength - this.pos + this.in.available();
     }
 
     @Override
     public void close() throws IOException {
         this.in.close();
         this.buffer = null;
+        this.compressedBuffer = null;
         this.inflater.end();
         this.inflater = null;
         this.traceProtocol = null;
@@ -103,8 +114,6 @@ public class CompressedInputStream extends InputStream {
      *             if an I/O error occurs
      */
     private void getNextPacketFromServer() throws IOException {
-        byte[] uncompressedData = null;
-
         int lengthRead = readFully(this.packetHeaderBuffer, 0, 7);
 
         if (lengthRead < 7) {
@@ -122,24 +131,8 @@ public class CompressedInputStream extends InputStream {
             this.log.logTrace("Reading compressed packet of length " + compressedPacketLength + " uncompressed to " + uncompressedLength);
         }
 
-        if (uncompressedLength > 0) {
-            uncompressedData = new byte[uncompressedLength];
-
-            byte[] compressedBuffer = new byte[compressedPacketLength];
-
-            readFully(compressedBuffer, 0, compressedPacketLength);
-
-            this.inflater.reset();
-
-            this.inflater.setInput(compressedBuffer);
-
-            try {
-                this.inflater.inflate(uncompressedData);
-            } catch (DataFormatException dfe) {
-                throw new IOException("Error while uncompressing packet from server.");
-            }
-
-        } else {
+        boolean compressed = uncompressedLength > 0;
+        if (!compressed) {
             if (doTrace) {
                 this.log.logTrace("Packet didn't meet compression threshold, not uncompressing...");
             }
@@ -148,40 +141,105 @@ public class CompressedInputStream extends InputStream {
             // Read data, note this this code is reached when using compressed packets that have not been compressed, as well
             //
             uncompressedLength = compressedPacketLength;
-            uncompressedData = new byte[uncompressedLength];
-            readFully(uncompressedData, 0, uncompressedLength);
+        }
+
+        int remaining = this.buffer == null ? 0 : this.bufferLength - this.pos;
+        byte[] target = carryOverUnreadBytes(remaining, remaining + uncompressedLength, doTrace);
+
+        if (compressed) {
+            this.compressedBuffer = ensureCapacity(this.compressedBuffer, compressedPacketLength);
+            readFully(this.compressedBuffer, 0, compressedPacketLength);
+            inflate(compressedPacketLength, target, remaining, uncompressedLength);
+        } else {
+            readFully(target, remaining, uncompressedLength);
         }
 
         if (doTrace) {
             if (uncompressedLength > 1024) {
-                this.log.logTrace("Uncompressed packet: \n" + StringUtils.dumpAsHex(uncompressedData, 256));
-                byte[] tempData = new byte[256];
-                System.arraycopy(uncompressedData, uncompressedLength - 256, tempData, 0, 256);
-                this.log.logTrace("Uncompressed packet: \n" + StringUtils.dumpAsHex(tempData, 256));
+                this.log.logTrace("Uncompressed packet: \n" + StringUtils.dumpAsHex(Arrays.copyOfRange(target, remaining, remaining + 256), 256));
+                int end = remaining + uncompressedLength;
+                this.log.logTrace("Uncompressed packet: \n" + StringUtils.dumpAsHex(Arrays.copyOfRange(target, end - 256, end), 256));
                 this.log.logTrace("Large packet dump truncated. Showing first and last 256 bytes.");
             } else {
-                this.log.logTrace("Uncompressed packet: \n" + StringUtils.dumpAsHex(uncompressedData, uncompressedLength));
+                this.log.logTrace("Uncompressed packet: \n"
+                        + StringUtils.dumpAsHex(Arrays.copyOfRange(target, remaining, remaining + uncompressedLength), uncompressedLength));
             }
-        }
-
-        if (this.buffer != null && this.pos < this.buffer.length) {
-            if (doTrace) {
-                this.log.logTrace("Combining remaining packet with new: ");
-            }
-
-            int remaining = this.buffer.length - this.pos;
-            byte[] newBuffer = new byte[remaining + uncompressedData.length];
-
-            System.arraycopy(this.buffer, this.pos, newBuffer, 0, remaining);
-            System.arraycopy(uncompressedData, 0, newBuffer, remaining, uncompressedData.length);
-
-            uncompressedData = newBuffer;
         }
 
         this.pos = 0;
-        this.buffer = uncompressedData;
+        this.buffer = target;
+        this.bufferLength = remaining + uncompressedLength;
 
         return;
+    }
+
+    /**
+     * Returns an array of at least {@code capacity} bytes that starts with the unread bytes of {@link #buffer}.
+     *
+     * @param remaining
+     *            number of unread bytes in {@link #buffer}
+     * @param capacity
+     *            the number of bytes needed
+     * @param doTrace
+     *            whether to trace the protocol
+     * @return the array to read the next packet into, after the unread bytes
+     */
+    private byte[] carryOverUnreadBytes(int remaining, int capacity, boolean doTrace) {
+        byte[] target = ensureCapacity(this.buffer, capacity);
+        if (remaining > 0) {
+            if (doTrace) {
+                this.log.logTrace("Combining remaining packet with new: ");
+            }
+            System.arraycopy(this.buffer, this.pos, target, 0, remaining);
+        }
+        return target;
+    }
+
+    /**
+     * Inflates the compressed packet in {@link #compressedBuffer} into {@code target}.
+     *
+     * @param compressedLength
+     *            number of compressed bytes
+     * @param target
+     *            the array to inflate into
+     * @param offset
+     *            where to start writing in {@code target}
+     * @param uncompressedLength
+     *            the uncompressed length announced by the packet header
+     * @throws IOException
+     *             if the packet cannot be inflated or does not inflate to exactly {@code uncompressedLength} bytes
+     */
+    private void inflate(int compressedLength, byte[] target, int offset, int uncompressedLength) throws IOException {
+        this.inflater.reset();
+        this.inflater.setInput(this.compressedBuffer, 0, compressedLength);
+
+        int inflated;
+        try {
+            inflated = this.inflater.inflate(target, offset, uncompressedLength);
+        } catch (DataFormatException dfe) {
+            throw new IOException("Error while uncompressing packet from server.", dfe);
+        }
+
+        if (inflated != uncompressedLength || !this.inflater.finished()) {
+            throw new IOException("Compressed packet from server does not uncompress to its announced length of " + uncompressedLength + " bytes.");
+        }
+    }
+
+    /**
+     * Returns {@code array} if it can hold {@code capacity} bytes, unless it is larger than {@link #MAX_RETAINED_BUFFER_SIZE} and far larger than needed, and
+     * a new array otherwise.
+     *
+     * @param array
+     *            the current array, or null
+     * @param capacity
+     *            the number of bytes needed
+     * @return an array of at least {@code capacity} bytes
+     */
+    private static byte[] ensureCapacity(byte[] array, int capacity) {
+        if (array != null && array.length >= capacity && (array.length <= MAX_RETAINED_BUFFER_SIZE || capacity > MAX_RETAINED_BUFFER_SIZE / 2)) {
+            return array;
+        }
+        return new byte[Math.max(capacity, Math.min(MAX_RETAINED_BUFFER_SIZE, 2 * capacity))];
     }
 
     /**
@@ -195,7 +253,7 @@ public class CompressedInputStream extends InputStream {
      *             if an I/O error occors.
      */
     private void getNextPacketIfRequired(int numBytes) throws IOException {
-        if (this.buffer == null || this.pos + numBytes > this.buffer.length) {
+        if (this.buffer == null || this.pos + numBytes > this.bufferLength) {
             getNextPacketFromServer();
         }
     }
@@ -234,7 +292,7 @@ public class CompressedInputStream extends InputStream {
             return -1;
         }
 
-        int remainingBufferLength = this.buffer.length - this.pos;
+        int remainingBufferLength = this.bufferLength - this.pos;
         int consummedBytesLength = Math.min(remainingBufferLength, len);
 
         System.arraycopy(this.buffer, this.pos, b, off, consummedBytesLength);

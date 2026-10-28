@@ -278,7 +278,8 @@ public enum PropertyKey {
     xdevapiTlsVersions("xdevapi.tls-versions", "xdevapiTlsVersions", true), //
 
     yearIsDateType("yearIsDateType", true), //
-    zeroDateTimeBehavior("zeroDateTimeBehavior", true) //
+    zeroDateTimeBehavior("zeroDateTimeBehavior", true), //
+    zlibCompressionLevel("zlibCompressionLevel", true) //
     ;
 
     private String keyName;
