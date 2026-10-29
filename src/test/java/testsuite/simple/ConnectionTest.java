@@ -20,6 +20,7 @@
 
 package testsuite.simple;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -46,6 +47,7 @@ import java.net.NetworkInterface;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -922,6 +924,38 @@ public class ConnectionTest extends BaseTestCase {
         bIn.close();
 
         is.close();
+    }
+
+    @Test
+    public void testUseCompressWithIncompressibleSplitPacket() throws Exception {
+        this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'");
+        this.rs.next();
+        long defaultMaxAllowedPacket = this.rs.getInt(2);
+
+        try {
+            this.stmt.executeUpdate("SET GLOBAL max_allowed_packet=" + 1024 * 1024 * 33);
+
+            Properties props = new Properties();
+            props.setProperty(PropertyKey.sslMode.getKeyName(), SslMode.DISABLED.name());
+            props.setProperty(PropertyKey.allowPublicKeyRetrieval.getKeyName(), "true");
+            props.setProperty(PropertyKey.useCompression.getKeyName(), "true");
+            props.setProperty(PropertyKey.useServerPrepStmts.getKeyName(), "true");
+
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            for (int paramLen : new int[] { 16777191, 16777192, 16777193, 16777194, 16777200, 20 * 1024 * 1024 }) {
+                byte[] param = new byte[paramLen];
+                new Random(paramLen).nextBytes(param);
+
+                try (Connection testConn = getConnectionWithProps(props); PreparedStatement testPstmt = testConn.prepareStatement("SELECT UNHEX(MD5(?))")) {
+                    testPstmt.setBytes(1, param);
+                    ResultSet testRs = testPstmt.executeQuery();
+                    assertTrue(testRs.next());
+                    assertArrayEquals(md5.digest(param), testRs.getBytes(1));
+                }
+            }
+        } finally {
+            this.stmt.executeUpdate("SET GLOBAL max_allowed_packet=" + defaultMaxAllowedPacket);
+        }
     }
 
     /**

@@ -217,7 +217,7 @@ public class CompressedPacketSender implements MessageSender<NativePacketPayload
                     // combine the unsent and current packet in an uncompressed packet
                     writeCompressedHeader(unsentPayloadLen + len, this.compressedSequenceId++, 0);
                     this.outputStream.write(packet, unsentOffset, unsentPayloadLen);
-                    writeUncompressedHeader(lenNoHdr, packetSequence);
+                    writeUncompressedHeader(packetSplitter.getPacketLen(), packetSequence);
                     this.outputStream.write(packet, packetSplitter.getOffset(), lenNoHdr);
                 } else {
                     sendCompressedPacket(len + unsentPayloadLen);

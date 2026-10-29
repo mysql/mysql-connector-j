@@ -20,6 +20,7 @@
 
 package com.mysql.cj.protocol.a;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Random;
 import java.util.zip.InflaterOutputStream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -38,6 +40,10 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
 
     private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     private MessageSender<NativePacketPayload> sender = new CompressedPacketSender(new BufferedOutputStream(this.outputStream));
+
+    private static final int[] SPLIT_PACKET_LENGTHS = { NativeConstants.MAX_PACKET_SIZE - NativeConstants.HEADER_LENGTH,
+            NativeConstants.MAX_PACKET_SIZE - NativeConstants.HEADER_LENGTH + 1, NativeConstants.MAX_PACKET_SIZE - NativeConstants.HEADER_LENGTH + 2,
+            NativeConstants.MAX_PACKET_SIZE, 20 * 1024 * 1024 };
 
     /**
      * Test utility to transform a buffer containing compressed packets into a sequence of payloads.
@@ -286,6 +292,52 @@ public class CompressedPacketSenderTest extends PacketSenderTestBase {
         assertEquals(packetLen, NativeUtils.decodeMysqlThreeByteInteger(sentPacket, CompressedPacketSender.COMP_HEADER_LENGTH));
         assertEquals(packetSequence, sentPacket[CompressedPacketSender.COMP_HEADER_LENGTH + 3]);
         checkSequentiallyFilledPacket(sentPacket, CompressedPacketSender.COMP_HEADER_LENGTH + NativeConstants.HEADER_LENGTH, packetLen);
+    }
+
+    @Test
+    public void incompressibleSplitPacketKeepsPacketLength() throws IOException {
+        for (int packetLen : SPLIT_PACKET_LENGTHS) {
+            byte[] packet = new byte[packetLen];
+            new Random(packetLen).nextBytes(packet);
+            assertPacketReassembles(packet, (byte) 3);
+        }
+    }
+
+    @Test
+    public void compressibleSplitPacketKeepsPacketLength() throws IOException {
+        for (int packetLen : SPLIT_PACKET_LENGTHS) {
+            byte[] packet = new byte[packetLen];
+            fillPacketSequentially(packet);
+            assertPacketReassembles(packet, (byte) 3);
+        }
+    }
+
+    private void assertPacketReassembles(byte[] packet, byte packetSequence) throws IOException {
+        this.outputStream.reset();
+        this.sender.send(packet, packet.length, packetSequence);
+
+        CompressedPackets packets = new CompressedPackets(this.outputStream.toByteArray());
+        ByteArrayOutputStream uncompressed = new ByteArrayOutputStream();
+        while (packets.nextPayload()) {
+            uncompressed.write(packets.payload);
+        }
+        byte[] data = uncompressed.toByteArray();
+
+        ByteArrayOutputStream reassembled = new ByteArrayOutputStream();
+        byte sequence = packetSequence;
+        int offset = 0;
+        int len;
+        do {
+            len = NativeUtils.decodeMysqlThreeByteInteger(data, offset);
+            assertEquals(sequence++, data[offset + 3]);
+            offset += NativeConstants.HEADER_LENGTH;
+            reassembled.write(data, offset, Math.min(len, data.length - offset));
+            offset += len;
+        } while (len == NativeConstants.MAX_PACKET_SIZE);
+
+        assertEquals(packet.length, reassembled.size());
+        assertEquals(data.length, offset);
+        assertArrayEquals(packet, reassembled.toByteArray());
     }
 
 }
