@@ -740,26 +740,18 @@ public class NativeSession extends CoreSession implements Serializable {
             span.setAttribute(TelemetryAttribute.THREAD_ID, () -> Thread.currentThread().getId());
             span.setAttribute(TelemetryAttribute.THREAD_NAME, () -> Thread.currentThread().getName());
 
-            try {
-                NativePacketPayload resultPacket = (NativePacketPayload) this.protocol
-                        .sendCommand(this.commandBuilder.buildComQuery(null, this, "SELECT " + varName), false, 0);
-                Resultset rs = ((NativeProtocol) this.protocol).readAllResults(-1, false, resultPacket, false, null,
-                        new ResultsetFactory(Type.FORWARD_ONLY, null));
+            Resultset rs = execSQL(null, "SELECT " + varName, -1, null, false, new ResultsetFactory(Type.FORWARD_ONLY, null), null, false);
 
-                ValueFactory<String> svf = new StringValueFactory(this.propertySet);
-                Row r;
-                if ((r = rs.getRows().next()) != null) {
-                    String s = r.getValue(0, svf);
-                    if (s != null) {
-                        return s;
-                    }
+            ValueFactory<String> svf = new StringValueFactory(this.propertySet);
+            Row r;
+            if ((r = rs.getRows().next()) != null) {
+                String s = r.getValue(0, svf);
+                if (s != null) {
+                    return s;
                 }
-
-                return null;
-
-            } catch (IOException e) {
-                throw ExceptionFactory.createException(e.getMessage(), e);
             }
+
+            return null;
         } catch (Throwable t) {
             span.setError(t);
             throw t;
